@@ -1,0 +1,27 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Mar  6 14:13:50 2017
+
+@author: rariniello
+"""
+
+import sys
+sys.path.insert(0, "../python")
+
+from ionization import ionization
+from ionization import adk
+import numpy as np
+
+print(ionization.keldysh(24.6, 15.0, 0.8))
+
+# Test of realistic laser parameters
+E = ionization.field_from_intensity(15)
+
+print(adk.adk_static(24.6, E, 1, 0, 0)*100)
+
+print(adk.adk_linear(24.6, E, 1, 0, 0)*100)
+
+# Test plotting
+I = np.arange(1, 100) * 0.1
+frac = adk.ionization_frac(24.6, I, 100, 1, 0, 0)
