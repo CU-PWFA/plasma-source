@@ -10,7 +10,7 @@ import numpy as np
 from scipy.special import factorial
 from scipy.special import gamma
 from scipy import integrate
-from ionization import ionization
+# from ionization import ionization
 
 
 def rate_static(EI, E, Z, l, m):
@@ -37,8 +37,8 @@ def rate_static(EI, E, Z, l, m):
     w
         Ionization rate in 1/fs
     """
-    # Cast E as an numpy array, handles imputs passed as doubles
-    E = np.array(E)
+    # Cast E as an numpy array, handles imputs passed as naked doubles
+    E = np.array(E, ndmin=1)
     w = np.zeros(np.size(E))
     n = 3.68859*Z / np.sqrt(EI)
     E0 = np.power(EI, 3/2)
@@ -46,11 +46,11 @@ def rate_static(EI, E, Z, l, m):
     N = 1.51927 * (2*l+1) * factorial(l+abs(m)) \
         / (np.power(2, abs(m)) * factorial(abs(m)) * factorial(l-abs(m)))
     # Only calculate the ionization rate when z is nonzero
-    Enz = E[E > 0]
+    Enz = np.array(E > 0)
     if np.size(Enz) > 0:
-        w[E > 0] = N * Cn2 * EI \
-            * np.power(20.4927*E0/Enz, 2*n-abs(m)-1) \
-            * np.exp(-6.83089*E0/Enz)
+        w[Enz] = N * Cn2 * EI \
+            * np.power(20.4927*E0/E[Enz], 2*n-abs(m)-1) \
+            * np.exp(-6.83089*E0/E[Enz])
     return w
 
 
@@ -58,8 +58,8 @@ def rate_linear(EI, E, Z, l, m):
     """ Calculates the ionization rate of a gas using the ADK model.
 
     Calculates the average tunneling ionization rate of a gas in a linearly
-    polarized electric field. Use this function in conjugtion with the envelope
-    of the pulse to find the ionization fraction.
+    polarized electric field. Use this function in conjunction with the
+    envelope of the pulse to find the ionization fraction.
 
     Parameters
     ----------
