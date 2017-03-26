@@ -9,6 +9,7 @@ Created on Mon Mar  6 14:25:13 2017
 import numpy as np
 from scipy.special import factorial
 from scipy.special import gamma
+from scipy.interpolate import interp1d
 from scipy import integrate
 # from ionization import ionization
 
@@ -148,5 +149,50 @@ def gaussian_frac(EI, E, tau, Z, l=0, m=0):
         Fraction of gas atoms ionized.
     """
     rate = rate_static(EI, E, Z, l, m)
-    frac = 1 - np.exp(-6.82909 * E * tau * rate / np.power(EI, 3/2))
+    frac = 1 - np.exp(-0.165188 * E * tau * rate / np.power(EI, 3/2))
     return frac
+
+
+def intensity_func(EI, E, t, f, Z, l=0, m=0):
+    """ Creates an interpolating fuction from ionization fraction to intensity.
+
+    Creates an inperpolating function that takes an ionization fraction and
+    returns the E necessary to ionize that fraction of the gas. The user has
+    freedom to choose what E means; regardless, this function will return a
+    function, g(frac), from frac->E.
+
+    For example, f(E[i], t) could return a Gaussian electric field at times t
+    with a peak field value of E[i]. g(frac) would then return the peak field
+    of the Gaussain necessary to ionize frac of a gas. An electric field given
+    by f(g(frac), t) will ionize frac of the gas.
+
+    Parameters
+    ----------
+    EI : double
+        Ionization energy of the electron in eV.
+    E : array_like
+        Electric field strength in GV/m. Array of E at time t.
+    t : array_like
+        Array of time values, in fs, matching the electric field vector.
+    f : function
+        A function f(E[i],t) that returns a vector of electric field values
+        corresponding to the times in t.
+    Z : int
+        Atomic residue i.e. which electron is being ionizaed (1st, 2nd...).
+    l : int, optional
+        Orbital quantum number of the electron being ionized. Defaults to 0.
+    m : int, optional
+        Magnetic quantum number of the electron being ionized. Defaults to 0.
+
+    Returns
+    -------
+    g : function
+        E as a function of ionization fraction.
+    """
+    N = np.size(E)
+    frac = np.zeros(N)
+    for i in range(0, N):
+        e = abs(f(E[i], t))
+        frac[i] = ionization_frac(EI, e, t, Z, l, m, False)
+    g = interp1d(frac, E)
+    return g
