@@ -42,10 +42,13 @@ def draw_ellipse(eps,T,T_mat=0,plot_on=True,npts=101):
     phi   = np.linspace(0,np.pi,npts)
     r_max = sig
     x     = r_max*np.cos(phi)
-    
+
     # regular phase space ellipse
-    xp_top = (x>=-sig)*(x<=sig)*(1./beta)*(-alpha*x+np.sqrt(eps*beta-x**2))
-    xp_bot = (x>=-sig)*(x<=sig)*(1./beta)*(-alpha*x-np.sqrt(eps*beta-x**2))
+    # note use of abs to avoide edge cases that might go negative
+    xp_top = (x>=-sig)*(x<=sig)*(1./beta)*\
+    (-alpha*x+np.sqrt(np.abs(eps*beta-x**2)))
+    xp_bot = (x>=-sig)*(x<=sig)*(1./beta)*\
+    (-alpha*x-np.sqrt(np.abs(eps*beta-x**2)))
     xp     = np.append(xp_top,xp_bot)
     
     # normalized coordinates
