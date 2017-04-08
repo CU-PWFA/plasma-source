@@ -214,5 +214,6 @@ pip-log.txt
 
 #Mr Developer
 .mr.developer.cfg
-rariniello/.ipynb_checkpoints/Gaussian_comparison-checkpoint.ipynb
-rariniello/.ipynb_checkpoints/Intensity_from_fraction-checkpoint.ipynb
+
+# IPython checkpoints
+.ipynb_checkpoints/
