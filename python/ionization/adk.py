@@ -55,6 +55,47 @@ def rate_static(EI, E, Z, l=0, m=0):
     return w
 
 
+def mo_rate_static(EI, E, Z, cl, l, m=0):
+    """ Calculates the ionization rate of a gas using the ADK model.
+
+    Calculates the tunneling ionization rate of a gas in a constant electric
+    field using the ADK model.
+
+    Parameters
+    ----------
+    EI : double
+        Ionization energy of the electron in eV.
+    E : array_like
+        Electric field strength in GV/m.
+    Z : int
+        Atomic residue i.e. which electron is being ionizaed (1st, 2nd...).
+    cl : array_like
+        Array of coefficents for the sum of spherical harmonics. The number of
+        coefficents past will be the number of partial waves in the sum.
+    l : array_like
+        Array of l's for each coefficent in the cl array.
+    m : int, optional
+        Magnetic quantum number of the electron being ionized. Defaults to 0.
+
+    Returns
+    -------
+    w : array_like
+        Ionization rate in 1/fs.
+    """
+    E = np.array(E, ndmin=1)
+    w = np.zeros(np.size(E))
+    n = 3.68859*Z / np.sqrt(EI)
+    E0 = np.power(EI, 3/2)
+    Qlm = np.power(-1, m) * np.sqrt((2*l+1) * factorial(l+abs(m))
+        / (2 * factorial(l-abs(m))))
+    Bm = np.sum(cl * Qlm)
+    N = 1.51927 / (np.power(2, abs(m))*factorial(abs(m)))
+    w = N * np.power(Bm, 2) * EI \
+        * np.power(20.4927*E0/E, 2*n-abs(m)-1) \
+        * np.exp(-6.83089*E0/E)
+    return w
+
+
 def rate_linear(EI, E, Z, l=0, m=0):
     """ Calculates the ionization rate of a gas using the ADK model.
 
