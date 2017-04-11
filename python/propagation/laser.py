@@ -144,13 +144,14 @@ def beam_prop(E, nih, x, z, lam, nh):
     """
     Nx = np.size(x)
     Nz = np.size(z)
-    e = np.zeros((Nz, Nx))
+    e = np.zeros((Nz, Nx), dtype=np.complex)
     e[0, :] = E
+    T = 1
     for i in range(1, Nz):
         dz = z[i] - z[i-1]
         # Fourier propogate to the next z point
         e[i] = fourier_prop(e[i-1], x, [dz], lam, nh)
-        # Phase transmission function for refraction
-        T = np.exp(1j * np.pi * (nih[i, :]+nih[i+1, :]) * dz)
         e[i] = e[i] * T
+        # Phase transmission function for refraction
+        T = np.exp(1j * np.pi * (nih[:, i-1]+nih[:, i]) * dz)
     return e
