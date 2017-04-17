@@ -75,7 +75,7 @@ bnds = [(-1.0,+1.0),(0.03,0.50),(2.00,2.00)]
 
 # Lp : full length of plasma ramp
 Lp0    = 1.00 # m
-z = linspace(0,2.0,2001)
+z = linspace(0,1.1,1101)
 
 ## constant value arguments
 args = [gb0,eps0,beta0,alpha0,gamma0,\

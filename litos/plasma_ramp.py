@@ -35,8 +35,12 @@ def plasma_ramp(np0,shape,z,args,updown='up'):
     
     if shape.lower() == 'gauss': # normal gauss. func.
         [L,sig] = args[0:2]
-        npl = np0*((z<L)*np.exp(-((z-L)**2)/(2*(sig**2))) +\
-                   (z>=L)*1)
+        if updown.lower() == 'up':
+            npl = np0*((z<L)*np.exp(-((z-L)**2)/(2*(sig**2))) +\
+                       (z>=L)*1)
+        else:
+            npl = np0*((z>L)*np.exp(-((z-L)**2)/(2*(sig**2))) +\
+                       (z<=L)*1)
     elif shape.lower() == 'gen_gauss': # generalized gauss. func.
         [L,sig,P] = args[0:3]
         npl = np0*((z<L)*np.exp(-((z-L)**P)/(2*(sig**P))) +\
@@ -48,8 +52,11 @@ def plasma_ramp(np0,shape,z,args,updown='up'):
                    (z>=L)*1)
     elif shape.lower() == 'sigmoid': # sigmoidal func.
         [L,sig] = args[0:2]
-#        npl = np0*(1/(1+np.exp(-(z-(L-8*sig))/sig)))
-        npl = np0*(1/(1+np.exp(-(z-(L-2*sig))/(sig/4))))
+        if updown.lower() == 'up':
+            #        npl = np0*(1/(1+np.exp(-(z-(L-8*sig))/sig)))
+            npl = np0*(1/(1+np.exp(-(z-(L-2*sig))/(sig/4))))
+        else:
+            npl = np0*(1/(1+np.exp(+(z-(L+2*sig))/(sig/4))))
     elif shape.lower() == 'genlog': # generalized logistical fun.
         [L,sig,P] = args[0:3]
         npl = np0*(1/((1+np.exp(-(z-(L-8*sig))/sig))**P))

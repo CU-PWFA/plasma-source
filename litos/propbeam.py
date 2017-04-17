@@ -32,7 +32,7 @@ def propstep(beam,dz,npl):
     wp = (5.64e4)*sqrt(npl) # rad/s, plasma ang. freq.
     kp = wp/c # m^-1, plasma wave nutarget_betaer
     kb = kp/sqrt(2*gb) # m^-1, betatron wave number
-
+ 
     # beam phase space transfer matrix
     if kb>0: # if plasma density is non-zero
         R = [ [cos(kb*dz)    , sin(kb*dz)/kb], \

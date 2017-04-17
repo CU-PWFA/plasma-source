@@ -21,13 +21,14 @@ from propbeam import propbeam
 from plasma_ramp import plasma_ramp
 from draw_ellipse import draw_ellipse
 from calc_Bmag import calc_Bmag
+from calc_M import calc_M
 
 ## define constants
 c = 3e8 # m/s, speed of light
 
 ## set nominal beam parameters
 # use values for nominal vacuum waist
-gb0   = 10000 # Lorentz factor
+gb0   = 20000 # Lorentz factor
 eps0   = 5e-6 # m-rad
 beta0  = 0.10 # m
 alpha0 = 0.0
@@ -37,18 +38,18 @@ dgb0   = 0.01 # energy spread
 
 ## set plasma parameters
 # use values for main accelerator plasma
-np0 = 5e16 # cm^-3, plasma number density
+np0 = 1e17 # cm^-3, plasma number density
 wp0 = (5.64e4)*sqrt(np0) # rad/s, plasma ang. freq.
 kp0 = wp0/c # m^-1, plasma wave nutarget_betaer
 kb0 = kp0/sqrt(2*gb0) # m^-1, betatron wave number
 #shape = 'gauss'
 #shape = 'gen_gauss'
 #shape = 'trap'
-#shape = 'sigmoid'
+shape = 'sigmoid'
 #shape = 'gomp'
 #shape = 'xu3'
 #shape = 'xu4'
-shape = 'xu5'
+#shape = 'xu5'
 
 #-------------------------
 ## optimize
@@ -111,18 +112,19 @@ npl   = plasma_ramp(np0,shape,z[0:len(z)-1],pargs)
 
 
 # energy spread
-dgb = 0.50
-ngb = 21
+dgb = 0.20
+ngb = 51
 igb = gb0*linspace((1-dgb),(1+dgb),ngb)
 # ramp length error
-dlp = 0.15
-nlp = 111
+dlp = 0.05
+nlp = 51
 ilp = lpfit*linspace((1-dlp),(1+dlp),nlp)
 
 
 Ttarg = [targ_beta,targ_alpha,targ_gamma]
 
 iBmag = zeros((ngb,nlp))
+iM    = zeros((ngb,nlp))
 X     = zeros((ngb,nlp))
 Y     = zeros((ngb,nlp))
 for i in range(0,ngb):
@@ -138,13 +140,8 @@ for i in range(0,ngb):
         X[i][j] = igb[i]
         Y[i][j] = ilp[j]
         iBmag[i][j] = calc_Bmag(iTbeam,Ttarg)
+        iM[i][j]    = calc_M(iTbeam,Ttarg)
         
-
-print(iBmag)
-
-print(iBmag.size)
-
-
 
 #fig = plt.figure()
 #ax = fig.add_subplot(111, projection='3d')
@@ -155,16 +152,50 @@ print(iBmag.size)
 
 
 fig2 = plt.figure()
-plt.contour(X,Y,iBmag,20,\
+plt.contour(X,Y,iM,20,\
             cmap=cm.Vega20c,\
             linewidth=2.0)
 cbar = plt.colorbar()
-cbar.ax.set_ylabel(r'Bmag')
+cbar.ax.set_ylabel(r'M')
 plt.xlabel(r'$\gamma$')
 plt.ylabel(r'ramp half-length (m)')
 plt.title("Ramp Type: %s" % shape)
 plt.show()
 
+
+fig3 = plt.figure()
+plt.plot(igb,iM[int(ceil(ngb/2))][:])
+plt.xlabel(r'$\gamma$')
+plt.ylabel(r'M')
+plt.title("Bandwidth for ramp type %s" % shape)
+plt.show()
+
+bw_ind = argwhere(iM[int(ceil(ngb/2))][:] < 1.1 )
+lo_gb = igb[bw_ind[0]]
+hi_gb = igb[bw_ind[len(bw_ind)-1]]
+
+print(lo_gb)
+print(hi_gb)
+
+print(lo_gb/gb0-1)
+print(hi_gb/gb0-1)
+
+fig4 = plt.figure()
+plt.plot(ilp,iM[:][int(ceil(nlp/2))])
+plt.xlabel(r'ramp half-length (m)')
+plt.ylabel(r'M')
+plt.title("Ramp length tolerance for ramp type %s" % shape)
+plt.show()
+
+bw_ind = argwhere(iM[:][int(ceil(nlp/2))] < 1.1 )
+lo_lp = ilp[bw_ind[0]]
+hi_lp = ilp[bw_ind[len(bw_ind)-1]]
+
+print(lo_lp)
+print(hi_lp)
+
+print(lo_lp/lpfit-1)
+print(hi_lp/lpfit-1)
 
 
 """
