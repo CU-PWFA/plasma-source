@@ -6,6 +6,7 @@ Created on Tue Mar 28 21:28:31 2017
 @author: rariniello
 """
 
+from propagation import C
 import numpy as np
 from numpy.lib.scimath import sqrt
 from numpy.fft import fft, ifft, fft2, ifft2, fftfreq
@@ -38,6 +39,7 @@ def fourier_prop(E, x, z, lam, n=1):
     e : array_like
         The electric field at position (z, x).
     """
+    # Need these to calculate frequencies later on
     Nx = np.size(x)
     Nz = np.size(z)
     X = x[Nx-1]-x[0]
@@ -47,6 +49,7 @@ def fourier_prop(E, x, z, lam, n=1):
     # Calculate the transfer function at every point in Fourier space
     fx = fftfreq(Nx, dx)
     fz = sqrt((n/lam)**2 - fx**2)
+    # Reshape to create the Nz X Nx output array
     z = np.reshape(z, (Nz, 1))
     e = np.exp(1j*2*np.pi*z*fz) * eb
     # Inverse Fourier transform to get the real-space field
@@ -98,6 +101,7 @@ def fourier_prop2(E, x, y, z, lam, n=1):
     fx2 = np.reshape(fftfreq(Nx, dx)**2, (Nx, 1))
     fy2 = fftfreq(Ny, dy)**2
     fz = sqrt((n/lam)**2 - fx2 - fy2)
+    # Reshape to create Nz X Nx X Ny output array
     z = np.reshape(z, (Nz, 1, 1))
     e = np.exp(1j*2*np.pi*z*fz) * eb
     # Inverse fourier transform to get the real-space field
@@ -155,3 +159,103 @@ def beam_prop(E, nih, x, z, lam, nh):
         # Phase transmission function for refraction
         T = np.exp(1j * np.pi * (nih[:, i-1]+nih[:, i]) * dz)
     return e
+
+
+def pulse_prop(E, Et, x, z, t, c=C, n=1):
+    """ Propogates an electromagnetic wave pulse from a 1D boundary.
+
+    Uses the Rayleigh-Sommerfeld transfer function to propagate each temporal
+    frequency componenet of an electromagnetic wave pulse from a 1D boundary.
+    The calculation assumes a homogeneous index of refraction in the region of
+    propagation. Additionally it is assumed the temporal pulse shape is the
+    same throughout the spatial extent of the pulse.
+
+    Parameters
+    ----------
+    E : array_like
+        Array of E field values at points x along the boundary.
+    Et : array_like
+        Array of E field values at points t in time.
+    x : array_like
+        Array of transverse locations in x on the boundary. Elements must be
+        evenly spaced for fft.
+    z : array_like
+        Array of z distances from the boundary to calculate the field at. Does
+        not need to be evenly spaced.
+    t : array_like
+        Array of t times the field is specified at. Elements must be evenly
+        spaced in time for fft.
+    c : double, optional
+        Pass c in the units of time and lam to ensure correct calculation.
+    n : double, optional
+        Index of refraction of the medium the wave is propagating through.
+
+    Returns
+    -------
+    e : array_like
+        The electric field for a given frequency at all x and z positions.
+        e(z, x, ft)
+    """
+    # Calculate time frequencies from t array
+    Nx = np.size(x)
+    Nz = np.size(z)
+    Nt = np.size(t)
+    T = t[Nt-1]-t[0]
+    dt = T / (Nt-1)
+    ft = fftfreq(Nt, dt)
+    # 2/Nt removes the normalization built into the FFT
+    a = 2*fft(Et)/Nt
+    # Array to store field from each frequency
+    e = np.zeros((Nz, Nx, Nt), dtype=np.complex)
+    # Propogate each frequency
+    for i in range(Nt):
+        if ft[i] > 0:
+            l = c/ft[i]
+            ea = E*a[i]
+            e[:, :, i] = fourier_prop(ea, x, z, l, n)
+        else:
+            e[:, :, i] = np.zeros((Nz, Nx), dtype=np.complex)
+    return e
+
+
+def pulse_time(e, t, time):
+    """ Returns the electric field at a given time for a pulse.
+
+    Returns the electric field at a given time at places in the x-z plane. Uses
+    the output of pulse_prop and the same t array passed to pulse_prop. Returns
+    the electric field at a given time. General usage would be:
+
+    e = pulse_prop(E, Et, x, z, t)
+    pulse_time(e, t, time)
+
+    Parameters
+    ----------
+    e : array_like
+        Array returned by pulse_prop, electric field written as e(ft, z, x).
+    t : array_like
+        t array passed to pulse_prop, ft=fftfreq(Nt, dt). Where Nt is the
+        number of elements in t and dt is the spacing of elements in t.
+    time : array_like
+        Time to return the electric field at.
+
+    Returns
+    -------
+    et : array_like
+        The electric field at time, e(time, z, x).
+    """
+    # Cast time as a numpy array, handles imputs passed as naked doubles
+    time = np.array(time, ndmin=1)
+    Ntime = np.size(time)
+    time = np.reshape(time, (Ntime, 1))
+    # Get time frequencies
+    Nt = np.size(t)
+    T = t[Nt-1]-t[0]
+    dt = T / (Nt-1)
+    ft = fftfreq(Nt, dt)
+    # Calculate complex expontential in time
+    exp = np.exp(-1j*2*np.pi*time*ft)
+    exp = np.reshape(exp, (Ntime, 1, Nt, 1))
+    # matmul uses last two indexes of each argument returns a Ntime X Nz X Nx
+    et = np.matmul(e, exp)
+    et = np.squeeze(et)
+    return et

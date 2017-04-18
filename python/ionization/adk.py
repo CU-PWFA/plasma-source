@@ -38,7 +38,7 @@ def rate_static(EI, E, Z, l=0, m=0):
     w : array_like
         Ionization rate in 1/fs.
     """
-    # Cast E as an numpy array, handles imputs passed as naked doubles
+    # Cast E as a numpy array, handles imputs passed as naked doubles
     E = np.array(E, ndmin=1)
     w = np.zeros(np.size(E))
     n = 3.68859*Z / np.sqrt(EI)
@@ -87,7 +87,7 @@ def mo_rate_static(EI, E, Z, cl, l, m=0):
     n = 3.68859*Z / np.sqrt(EI)
     E0 = np.power(EI, 3/2)
     Qlm = np.power(-1, m) * np.sqrt((2*l+1) * factorial(l+abs(m))
-        / (2 * factorial(l-abs(m))))
+          / (2 * factorial(l-abs(m))))
     Bm = np.sum(cl * Qlm)
     N = 1.51927 / (np.power(2, abs(m))*factorial(abs(m)))
     w = N * np.power(Bm, 2) * EI \
