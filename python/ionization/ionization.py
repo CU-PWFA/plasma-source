@@ -88,7 +88,7 @@ def gaussian_field(I, t, f, tau, chirp=0):
     Parameters
     ----------
     I
-        Peak intensity of the pulse.
+        Peak intensity of the pulse in 10^14 W/cm^2.
     t
         Array of time points to return the electric field at.
     f

@@ -50,6 +50,9 @@ def f(t,chi,z):
 def Intensity(E_field):
     return np.power(m_cm,2)*.5*c*eps_0*np.power(E_field*GV_V,2)
 
+def Elefield(Intensity):
+    return 1/GV_V/m_cm*np.sqrt(Intensity*2/c/eps_0)
+
 #Setup the arrays.  t1 is for cosmetics and t2 is more precise
 start = 17
 end = 117

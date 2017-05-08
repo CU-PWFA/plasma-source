@@ -5,3 +5,4 @@ Created on Tue Mar 28 21:22:16 2017
 
 @author: rariniello
 """
+C = 2.99792458e8
