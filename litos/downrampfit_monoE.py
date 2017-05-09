@@ -54,20 +54,20 @@ T0     = [beta0,alpha0,gamma0] # Twiss vector
 # waist : location of vacuum waist in z
 # lp : characteristic ramp length
 
-## define target values
-targ_beta  = 0.15 # m
+## define virtual waist target values
+targ_beta  = 0.105 # m
 targ_alpha = 0
 targ_gamma = (1+(targ_alpha**2))/targ_beta # 1/m
 
 ## initial guess
 # x = [waist location, ramp ~half-length, ramp exponent]
-waist0 = 0.50 # m, w.r.t. Lp
+waist0 = 0.40 # m, w.r.t. Lp
 lp0    = 0.15 # m
 P0     = 2.00
 x0 = [waist0,lp0,P0]
 
 # bounds on variables
-bnds = [(0.50,0.50),(0.10,0.20),(2.00,2.00)]
+bnds = [(0.40,0.40),(0.10,0.25),(2.00,2.00)]
 
 # constraints on variables
 #cons = ({'type': 'ineq', 'fun': lambda x:  x[1] - 5*x[2]})#,\
@@ -93,39 +93,34 @@ xfit = fitres.x
 
 print("Fit results: %s" % str(xfit))
 
-
 lpfit = xfit[1]
 Pfit  = xfit[2]
 pargs = [Lp0,lpfit,Pfit,1e-3]
 npl   = plasma_ramp(np0,shape,z[0:len(z)-1],pargs,'down')
 
-waistfit = xfit[0]
-abs_waistfit = Lp0 + waistfit
-
-iz_w = np.where(z<=Lp0+3*lp0*2)[0]
-z_w = z[iz_w]
 beam0 = [gb0,eps0,beta0,alpha0,gamma0]
 
-beam = propbeam(beam0,z_w,npl[0:len(z_w)-1])
+beam = propbeam(beam0,z,npl[0:len(z)-1])
 [gb,eps,beta,alpha,gamma] = beam[len(beam)-1][:]
 
 print(beta)
 print(alpha)
 print(gamma)
 
-dgb0 = 1.01*gb0
-dbeam0 = [dgb0,eps0,beta0,alpha0,gamma0]
-dbeam = propbeam(dbeam0,z,npl[0:len(z)-1])
-[dgb,eps,dbeta,dalpha,dgamma] = dbeam[len(dbeam)-1][:]
+waistfit = xfit[0]
+iz_w = where(z>=waistfit)[0]
+z_w = z[iz_w]
+    
+vbeam0 = [gb0,eps0,targ_beta,targ_alpha,targ_gamma]
+vbeam = propbeam(vbeam0,z_w)
+[vgb,veps,v_beta,v_alpha,v_gamma] = \
+    vbeam[len(vbeam)-1][:]
 
-dT = [dbeta,dalpha,dgamma]
-Tnom = [beta,alpha,gamma]
-dM = calc_M(dT,Tnom)
-
-print(Tnom)
-print(dT)
-print(dM)
-
+# calculate proximity to target
+Ttarg = [v_beta,v_alpha,v_gamma]
+Tbeam = [beta,alpha,gamma]
+Bmag = calc_Bmag(Tbeam,Ttarg)
+M = calc_M(Tbeam,Ttarg)
 
 ## plot beam evolution
 ymax_plt = 1*beam[len(beam)-1,2]
@@ -143,6 +138,29 @@ plt.ylim((0,ymax_plt))
 plt.axhline(targ_beta,color='r')
 plt.show()
 
+
+[xb,xpb,xpnb] = draw_ellipse(eps,Tbeam,Ttarg,False)
+[xt,xpt,xpnt] = draw_ellipse(eps,Ttarg,Ttarg,False)
+
+plt.figure()
+plt.plot(xb,xpb,'b.',xt,xpt,'r.')
+plt.title('Beam phase space ellipse')
+plt.xlabel(r'$x$ (m)')
+plt.ylabel(r'$x^{\prime}$')
+plt.text(0,0,"M = %.3f" % M,\
+         verticalalignment='center',\
+         horizontalalignment='center')
+plt.show()
+
+plt.figure()
+plt.plot(xb,xpnb,'b.',xt,xpnt,'r.')
+plt.title('Normalized beam phase space ellipse')
+plt.xlabel(r'$\bar{x}$ (m)')
+plt.ylabel(r'$\bar{x^{\prime}}$ (m)')
+plt.text(0,0,"M = %.3f" % M,\
+         verticalalignment='center',\
+         horizontalalignment='center')
+plt.show()
 
 
 

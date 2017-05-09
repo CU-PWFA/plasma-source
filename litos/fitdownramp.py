@@ -25,39 +25,40 @@ def fitdownramp(x,args):
     pargs = [Lp,lp,P,1e-3]
     npl = plasma_ramp(np0,shape,z[0:len(z)-1],pargs,'down')
 
-    # waist given w.r.t. z=L; need to convert
-    abs_waist = Lp+waist
-
-    # define beam
+    # define initial beam
     [gb,eps,beta,alpha,gamma] = args[0:5]
     beam0 = args[0:5]
 
-#    # propagate beam to desired waist location
-#    iz_w = np.where(z<=abs_waist)[0]
-#    z_w = z[iz_w]
-#  
-#    beam = propbeam(beam0,z_w,npl[0:len(z_w)-1])
-#    [gb,eps,beta,alpha,gamma] = beam[len(beam)-1][:]
-#
-#    # calculate proximity to target
-#    targ_beta  = args[9]
-#    targ_alpha = args[10]
-#    targ_gamma = args[11]
-#    
-#    Ttarg = [targ_beta,targ_alpha,targ_gamma]
-#    Tbeam = [beta,alpha,gamma]
-#    Bmag = calc_Bmag(Tbeam,Ttarg)
-#    diff = Bmag - 1
-#    d2 = diff**2
-
-    # minimize gamma approach
-    iz_w = np.where(z<=(Lp+3*lp))[0]
+    # propagate virtual beam from virtual waist
+    # to end of z through vacuum for matching targets
+    v_beta  = args[9]
+    v_alpha = args[10]
+    v_gamma = args[11]
+    vbeam0 = [gb,eps,v_beta,v_alpha,v_gamma]
+    
+    iz_w = np.where(z>=waist)[0]
     z_w = z[iz_w]
-    beam = propbeam(beam0,z_w,npl[0:len(z_w)-1])
+    
+    vbeam = propbeam(vbeam0,z_w)
+    [vgb,veps,targ_beta,targ_alpha,targ_gamma] = \
+        vbeam[len(vbeam)-1][:]
+    
+    # propagate real beam through plasma
+    # from z=0 to end
+    beam = propbeam(beam0,z,npl[0:len(z)-1])
     [gb,eps,beta,alpha,gamma] = beam[len(beam)-1][:]
-    d2 = gamma
-
-    print(lp)
-    print(gamma)
-
+    
+    # calculate proximity to target
+    Ttarg = [targ_beta,targ_alpha,targ_gamma]
+    Tbeam = [beta,alpha,gamma]
+    
+#    print(Ttarg)
+#    print(Tbeam)
+    
+    Bmag = calc_Bmag(Tbeam,Ttarg)
+    diff = Bmag - 1
+    d2 = diff**2
+    
+#    print(d2)
+ 
     return d2

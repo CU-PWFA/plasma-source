@@ -10,7 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def draw_ellipse(eps,T,T_mat=0,plot_on=True,npts=101):
+def draw_ellipse(eps,T,T_mat=0,plot_on=False,npts=101):
     """ Draws beam phase space ellipse.
     
         Parameters
@@ -38,7 +38,7 @@ def draw_ellipse(eps,T,T_mat=0,plot_on=True,npts=101):
             x' points drawn
     """
     [beta,alpha,gamma] = T
-    sig   = np.sqrt(eps*beta)
+    sig   = np.sqrt(eps*beta)    
     phi   = np.linspace(0,np.pi,npts)
     r_max = sig
     x     = r_max*np.cos(phi)

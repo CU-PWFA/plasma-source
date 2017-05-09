@@ -39,8 +39,8 @@ def plasma_ramp(np0,shape,z,args,updown='up'):
             npl = np0*((z<L)*np.exp(-((z-L)**2)/(2*(sig**2))) +\
                        (z>=L)*1)
         else:
-            npl = np0*((z>L)*np.exp(-((z-L)**2)/(2*(sig**2))) +\
-                       (z<=L)*1)
+            npl = np0*((z<L)*np.exp(-(z**2)/(2*(sig**2))) +\
+                       (z>=L)*0)
     elif shape.lower() == 'gen_gauss': # generalized gauss. func.
         [L,sig,P] = args[0:3]
         npl = np0*((z<L)*np.exp(-((z-L)**P)/(2*(sig**P))) +\
