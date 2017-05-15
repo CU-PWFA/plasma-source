@@ -39,8 +39,8 @@ def rate_static(EI, E, Z, l=0, m=0):
         Ionization rate in 1/fs.
     """
     # Cast E as a numpy array, handles imputs passed as naked doubles
-    E = np.array(E, ndmin=1)
-    w = np.zeros(np.size(E))
+    E = np.array(E)
+    w = np.zeros(np.shape(E))
     n = 3.68859*Z / np.sqrt(EI)
     E0 = np.power(EI, 3/2)
     Cn2 = (np.power(4, n)) / (n*gamma(2*n))
