@@ -17,7 +17,10 @@ def fourier_prop(E, x, z, lam, n=1):
 
     Uses the Rayleigh-Sommerfeld transfer function to propagate an
     electromagnetic wave from a 1D boundary. The calculation assumes a
-    homogeneous index of refraction in the region of propagation.
+    homogeneous index of refraction in the region of propagation. This function
+    is not equivalent to taking a slice through the full 2D boundary
+    calculation. For example, it will not give the correct result for the
+    amplitude of a Gaussian beam propagating in z.
 
     Parameters
     ----------
@@ -54,6 +57,73 @@ def fourier_prop(E, x, z, lam, n=1):
     e = np.exp(1j*2*np.pi*z*fz) * eb
     # Inverse Fourier transform to get the real-space field
     e = ifft(e, axis=1)
+    return e
+
+
+def scale_fourier(e):
+    """ Scales the output of fourier_prop to approximate the real 2D field.
+
+    Parameters
+    ----------
+    e : array_like
+        Array of E field values from fourier_prop.
+
+    Returns
+    -------
+    e : array_like
+        Scaled electric field values.
+    """
+    s = np.amax(abs(e), axis=1)
+    return e * np.reshape(s, (np.size(s), 1))
+
+
+def fresnel_prop(E, x, z, lam, n=1):
+    """ Propogates an electromagnetic wave from a 1D boundary.
+
+    Uses the Fresnel transfer function to propagate an electromagnetic wave
+    from a 1D boundary. The calculation assumes a homogeneous index of
+    refraction in the region of propagation. This function is equivalent to
+    taking a slice through the full 2D boundary calculation. However, it is
+    only valid in the paraxial approximation. The beam must be cnetered in the
+    x array in order for this function to work correctly.
+
+    Parameters
+    ----------
+    E : array_like
+        Array of E field values at points x along the boundary.
+    x : array_like
+        Array of transverse locations in x on the boundary. Elements must be
+        evenly spaced for fft.
+    z : array_like
+        Array of z distances from the boundary to calculate the field at. Does
+        not need to be evenly spaced.
+    lam : double
+        Wavelength of the electromagnetic wave in vacuum.
+    n : double, optional
+        Index of refraction of the medium the wave is propagating through.
+
+    Returns
+    -------
+    e : array_like
+        The electric field at position (z, x).
+    """
+    # Need these to calculate frequencies later on
+    Nx = np.size(x)
+    Nz = np.size(z)
+    X = x[Nx-1]-x[0]
+    dx = X / (Nx-1)
+    # Fourier transform the electric field on the boundary
+    eb = fft(E)
+    # Reshape to create the Nz X Nx output array
+    z = np.reshape(z, (Nz, 1))
+    # Calculate the transfer function at every point in Fourier space
+    fx = fftfreq(Nx, dx)
+    H = np.exp(-1j*np.pi*n*z*fx**2/lam)
+    e1 = H * eb
+    # Inverse Fourier transform to get the real-space field
+    e1 = ifft(e1, axis=1)
+    # Multiply by the overal phase shift and handle y component
+    e = np.exp(1j*2*np.pi*n*z/lam) * e1 * np.reshape(e1[:, int(Nx/2)], (Nz, 1))
     return e
 
 
@@ -167,7 +237,7 @@ def pulse_prop(E, Et, x, z, t, c=C, n=1):
     Uses the Rayleigh-Sommerfeld transfer function to propagate each temporal
     frequency componenet of an electromagnetic wave pulse from a 1D boundary.
     The calculation assumes a homogeneous index of refraction in the region of
-    propagation. Additionally it is assumed the temporal pulse shape is the
+    propagation. Additionally it is assumes the temporal pulse shape is the
     same throughout the spatial extent of the pulse.
 
     Parameters
