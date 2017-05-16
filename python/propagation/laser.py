@@ -237,8 +237,8 @@ def pulse_prop(E, Et, x, z, t, c=C, n=1):
     Uses the Rayleigh-Sommerfeld transfer function to propagate each temporal
     frequency componenet of an electromagnetic wave pulse from a 1D boundary.
     The calculation assumes a homogeneous index of refraction in the region of
-    propagation. Additionally it is assumes the temporal pulse shape is the
-    same throughout the spatial extent of the pulse.
+    propagation. Additionally it assumes the temporal pulse shape is the same
+    throughout the spatial extent of the pulse.
 
     Parameters
     ----------
@@ -288,7 +288,70 @@ def pulse_prop(E, Et, x, z, t, c=C, n=1):
     return e
 
 
-def pulse_time(e, t, time):
+def pulse_prop2(E, Et, x, y, z, t, c=C, n=1):
+    """ Propogates an electromagnetic wave pulse from a 2D boundary.
+
+    Uses the Rayleigh-Sommerfeld transfer function to propagate each temporal
+    frequency componenet of an electromagnetic wave pulse from a 2D boundary.
+    The calculation assumes a homogeneous index of refraction in the region of
+    propagation. Additionally it assumes the temporal pulse shape is the same
+    throughout the spatial extent of the pulse.
+
+    Currently returns the field on a plane at y[Ny/2].
+
+    Parameters
+    ----------
+    E : array_like
+        Array of E field values at points x along the boundary.
+    Et : array_like
+        Array of E field values at points t in time.
+    x : array_like
+        Array of transverse locations in x on the boundary. Elements must be
+        evenly spaced for fft.
+    y : array_like
+        Array of transverse locations in y on the boundary. Elements must be
+        evenly spaced for fft.
+    z : array_like
+        Array of z distances from the boundary to calculate the field at. Does
+        not need to be evenly spaced.
+    t : array_like
+        Array of t times the field is specified at. Elements must be evenly
+        spaced in time for fft.
+    c : double, optional
+        Pass c in the units of time and lam to ensure correct calculation.
+    n : double, optional
+        Index of refraction of the medium the wave is propagating through.
+
+    Returns
+    -------
+    e : array_like
+        The electric field for a given frequency at all x and z positions.
+        e(z, x, ft)
+    """
+    # Calculate time frequencies from t array
+    Nx = np.size(x)
+    Ny = np.size(y)
+    Nz = np.size(z)
+    Nt = np.size(t)
+    T = t[Nt-1]-t[0]
+    dt = T / (Nt-1)
+    ft = fftfreq(Nt, dt)
+    # 2/Nt removes the normalization built into the FFT
+    a = 2*fft(Et)/Nt
+    # Array to store field from each frequency
+    e = np.zeros((Nz, Nx, Nt), dtype=np.complex)
+    # Propogate each frequency
+    for i in range(Nt):
+        if ft[i] > 0:
+            l = c/ft[i]
+            ea = E*a[i]
+            e[:, :, i] = fourier_prop2(ea, x, y, z, l, n)[:, :, int(Ny/2)]
+        else:
+            e[:, :, i] = np.zeros((Nz, Nx), dtype=np.complex)
+    return e
+
+
+def pulse_time(e, z, t, time, c=C, n=1):
     """ Returns the electric field at a given time for a pulse.
 
     Returns the electric field at a given time at places in the x-z plane. Uses
@@ -296,12 +359,14 @@ def pulse_time(e, t, time):
     the electric field at a given time. General usage would be:
 
     e = pulse_prop(E, Et, x, z, t)
-    pulse_time(e, t, time)
+    pulse_time(e, z, t, time)
 
     Parameters
     ----------
     e : array_like
         Array returned by pulse_prop, electric field written as e(ft, z, x).
+    z : array_like
+        z array passed to pulse_prop.
     t : array_like
         t array passed to pulse_prop, ft=fftfreq(Nt, dt). Where Nt is the
         number of elements in t and dt is the spacing of elements in t.
@@ -322,10 +387,33 @@ def pulse_time(e, t, time):
     T = t[Nt-1]-t[0]
     dt = T / (Nt-1)
     ft = fftfreq(Nt, dt)
+    Nz = np.size(z)
+    Z = z[Nz-1]-z[0]
     # Calculate complex expontential in time
-    exp = np.exp(-1j*2*np.pi*time*ft)
+    exp = np.exp(-1j*2*np.pi*(time-t[0])*ft)
     exp = np.reshape(exp, (Ntime, 1, Nt, 1))
     # matmul uses last two indexes of each argument returns a Ntime X Nz X Nx
     et = np.matmul(e, exp)
-    et = np.squeeze(et)
+    et = np.squeeze(et, axis=3)
+    # Spatial size of time window T, must be integer multiple of c*T
+    # The +2 ensures the pulse fully leaves the screen before the next pulse
+    dz = c*T/(2*n)
+    size = (int(Z/(c*T)) + 2)*c*T
+    # Set anything not in the time frame to 0
+    for i in range(Ntime):
+        # Center, left, and right sides of time frame
+        zc = c*time[i]/n
+        zl = loop_variable(zc - dz, size) + z[0]
+        zr = loop_variable(zc + dz, size) + z[0]
+        # Check to make sure the left side hasn't looped around
+        if (zr > zl):
+            sel = np.array(z < zl) + np.array(z > zr)
+        elif (zr < zl):
+            sel = np.array(z < zl) * np.array(z > zr)
+        et[i, sel, :] = 0
     return et
+
+
+def loop_variable(var, size):
+    """places a variable, var, in the range 0-size regardless of sign."""
+    return ((int(var/size)+1)*size + var) % size
