@@ -231,6 +231,62 @@ def beam_prop(E, nih, x, z, lam, nh):
     return e
 
 
+def beam_prop2(E, nih, x, y, z, lam, nh):
+    """ Propogates an electromagnetic wave from a 2D boundary.
+
+    Propogates a beam from a 2D boundary through a region with an inhomogenous
+    index of refraction. This algorithm assumes that the variation in index is
+    small enough that their is not significant refraction between grid points
+    and that diffraction can be calculated solely with nh.
+    The function uses the Rayleigh-Sommerfeld transfer function to propagate an
+    electromagnetic wave between grid points and then refracts off of the index
+    of refraction change at the grid point.
+
+    The total index of refraction is given by n = nh + nih, where nh is the
+    homogenous index of refraction and nih is the inhomogenous variation from
+    nh.
+
+    Parameters
+    ----------
+    E : array_like
+        Array of E field values at points (x, y) along the boundary.
+    nih : array_like
+        Variation in index of refraction from nh passed as (x, y, z).
+    x : array_like
+        Array of transverse locations in x on the boundary. Elements must be
+        evenly spaced for fft.
+    y : array_like
+        Array of transverse locations in y on the boundary. Elements must be
+        evenly spaced for fft.
+    z : array_like
+        Array of z distances from the boundary to calculate the field at. Does
+        not need to be evenly spaced.
+    lam : double
+        Wavelength of the electromagnetic wave in vacuum.
+    nh : double
+        Index of refraction of the medium the wave is propagating through.
+
+    Returns
+    -------
+    e : array_like
+        The electric field at position (z, x, y).
+    """
+    Nx = np.size(x)
+    Ny = np.size(y)
+    Nz = np.size(z)
+    e = np.zeros((Nz, Nx, Ny), dtype=np.complex)
+    e[0, :, :] = E
+    T = 1
+    for i in range(1, Nz):
+        dz = z[i] - z[i-1]
+        # Fourier propogate to the next z point
+        e[i] = fourier_prop2(e[i-1], x, y, [dz], lam, nh)
+        e[i] = e[i] * T
+        # Phase transmission function for refraction
+        T = np.exp(1j * np.pi * (nih[:, :, i-1]+nih[:, :, i]) * dz)
+    return e
+
+
 def pulse_prop(E, Et, x, z, t, c=C, n=1):
     """ Propogates an electromagnetic wave pulse from a 1D boundary.
 
@@ -297,7 +353,8 @@ def pulse_prop2(E, Et, x, y, z, t, c=C, n=1):
     propagation. Additionally it assumes the temporal pulse shape is the same
     throughout the spatial extent of the pulse.
 
-    Currently returns the field on a plane at y[Ny/2].
+    Currently returns the field on a plane at y[Ny/2]. We don't return the full
+    field for memory reasons and you can only animate a 2D slice anyways.
 
     Parameters
     ----------
@@ -342,6 +399,7 @@ def pulse_prop2(E, Et, x, y, z, t, c=C, n=1):
     e = np.zeros((Nz, Nx, Nt), dtype=np.complex)
     # Propogate each frequency
     for i in range(Nt):
+        print('Frequency component ', i+1, ' of ', Nt)
         if ft[i] > 0:
             l = c/ft[i]
             ea = E*a[i]
@@ -399,6 +457,11 @@ def pulse_time(e, z, t, time, c=C, n=1):
     # The +2 ensures the pulse fully leaves the screen before the next pulse
     dz = c*T/(2*n)
     size = (int(Z/(c*T)) + 2)*c*T
+
+    def loop_variable(var, size):
+        """places a variable, var, in the range 0-size regardless of sign."""
+        return ((int(var/size)+1)*size + var) % size
+
     # Set anything not in the time frame to 0
     for i in range(Ntime):
         # Center, left, and right sides of time frame
@@ -412,8 +475,3 @@ def pulse_time(e, z, t, time, c=C, n=1):
             sel = np.array(z < zl) * np.array(z > zr)
         et[i, sel, :] = 0
     return et
-
-
-def loop_variable(var, size):
-    """places a variable, var, in the range 0-size regardless of sign."""
-    return ((int(var/size)+1)*size + var) % size
