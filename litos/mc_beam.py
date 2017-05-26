@@ -19,8 +19,12 @@ def mc_beam(Tbeam,npart=100,dE=0):
     gb = np.zeros(npart)
         
     for i in range(0,npart):
-        s   = np.random.uniform(0, 1)
-        r   = np.sqrt(s)*np.sqrt(eps/gb0)
+        s   = np.random.uniform(0,1)
+        
+#        r   = np.sqrt(s)*np.sqrt(eps/gb0) # square distribution
+        r   = np.sqrt(2)*np.sqrt(eps/gb0)*\
+                np.sqrt(-np.log(s)) # gaussian distribution
+
         phi = np.random.uniform(0,2*np.pi)
         
         u[i] = r*np.cos(phi)
