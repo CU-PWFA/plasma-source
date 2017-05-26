@@ -279,11 +279,11 @@ def beam_prop2(E, nih, x, y, z, lam, nh):
     T = 1
     for i in range(1, Nz):
         dz = z[i] - z[i-1]
+        # Phase transmission function for refraction
+        T = np.exp(1j * np.pi * (nih[:, :, i-1]+nih[:, :, i]) * dz)
         # Fourier propogate to the next z point
         e[i] = fourier_prop2(e[i-1], x, y, [dz], lam, nh)
         e[i] = e[i] * T
-        # Phase transmission function for refraction
-        T = np.exp(1j * np.pi * (nih[:, :, i-1]+nih[:, :, i]) * dz)
     return e
 
 

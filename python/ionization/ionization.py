@@ -56,6 +56,28 @@ def field_from_intensity(I, n=1.0):
     return E
 
 
+def intensity_from_field(E, n=1.0):
+    """ Calculates the electric field from the intensity.
+
+    Calculates the peak electric field from the intensity assuming a
+    monochromatic propogating wave.
+
+    Parameters
+    ----------
+    E : double
+        Electric field in GV/m.
+    n : double
+        Index of refraction of the medium the wave propogates through.
+
+    Returns
+    -------
+    I : double
+        Intensity in 10^14 W/cm^2.
+    """
+    I = n * (0.03643 * E)**2
+    return I
+
+
 def gaussian_envelope(I, t, tau, chirp=0):
     """ Returns the envelope of the electric field of a Gaussian pulse.
 
