@@ -7,10 +7,10 @@ Created on Thu May 25 10:18:14 2017
 
 import numpy as np
 from propagation import laser
-from ionization import ionization
 from ionization import adk
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+from propagation import propagation
 
 
 def plasma_refraction(params, Efunc, Tfunc):
@@ -46,6 +46,9 @@ def plasma_refraction(params, Efunc, Tfunc):
                 Duration of the pulse discretization, in fs.
             n0 : double
                 Initial gas density in 10^17 cm^-3.
+            E0 : double
+                Peak elecric field strength. Acts as a multiplier to Efunc, if
+                Efunc and Tfunc aren't normalized this can be set to 1.
             alpha : double
                 Atomic polarizability of the gas in A^3.
             EI : double
@@ -59,10 +62,10 @@ def plasma_refraction(params, Efunc, Tfunc):
         Must be able to x as a  size (Nx, 1) numpy array and y as a
         size (1, Ny) numpy array and return the field in the form
         (x, y). The grid is centered on x = y = 0. Normally Efunc is
-        normallized to 1 and the intensity comes from Tfunc.
+        normallized to 1 and the intensity comes from params[E0].
     Tfunc : function
         Function that returns the pulse envelope as a function of time.
-        The pulse is centered on t = 0.
+        The pulse is centered on t = 0. Normally Tfunc is normalized to 1.
     """
     # Store some useful parameters as variables
     X = params['X']
@@ -160,10 +163,6 @@ def summary_plot(path):
     Nt = params['Nt']
     x = np.linspace(-X/2, X/2, Nx, False)
     t = np.linspace(-T/2, T/2, Nt, False)
-    # Useful prep function
-
-    def prep_data(data):
-        return np.flipud(np.transpose(ionization.intensity_from_field(data)))
 
     # Create the figure
     gridSize = (2, 5)
@@ -173,13 +172,13 @@ def summary_plot(path):
     # Initial electric field
     plt.subplot2grid(gridSize, (0, 0))
     plt.plot(abs(Ei[:, int(Ny/2)]), x/1e3, 'b-')
-    plt.xlabel(r'E (normalized)')
+    plt.xlabel(r'E (GV/m)')
     plt.ylabel(r'x ($mm$)')
     plt.title('Transverse pulse shape')
 
     # Final intensity profile
     plt.subplot2grid(gridSize, (0, 1), colspan=4)
-    plt.imshow(prep_data(Eplot[int(Nt/2), :, :]),
+    plt.imshow(propagation.prep_data(Eplot[int(Nt/2), :, :]),
                aspect='auto',
                extent=[0, Z/1e6, -X/2e3, X/2e3])
     cb = plt.colorbar()
@@ -216,3 +215,10 @@ def summary_plot(path):
     plt.savefig(path+'summaryFig.pdf', format='pdf')
     plt.savefig(path+'summaryFig.png', format='png')
     plt.show()
+
+    # Close the file and clear the memory (fixes a bug in numpy)
+    del Eplot
+    del nplot
+    del Ei
+    del Et
+    del params
