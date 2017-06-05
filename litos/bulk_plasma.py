@@ -53,14 +53,17 @@ beta = zeros(nz)
 beta[0] = beta0
 M = zeros(nz)
 M[0] = 1
-beam = zeros((nz,5))
-beam[0][:] = [gb0,eps0,beta0,alpha0,gamma0]
+beam = zeros((nz,7))
+beam[0][:] = [gb0,eps0,beta0,alpha0,gamma0,0,0]
 for i in range(1,len(z)):
     ibeam = propbeam(beam[i-1][:],[0,dz],[np0,np0])
     beam[i][:] = ibeam[len(ibeam)-1][:]
     beam[i][0] = beam[i][0]+dgdz*dz
     beta[i]    = beam[i][2]
     iTbeam     = [beam[i][2],beam[i][3],beam[i][4]]
+    gb         = beam[i][0]
+    beta_m     = sqrt(2*gb)/kp0
+    Ttarg      = [beta_m,0,1.0/beta_m]
     M[i]       = calc_M(iTbeam,Ttarg)
 
 plt.figure()
