@@ -43,6 +43,7 @@ dependencies:
 - libsodium=1.0.10=0
 - libxcb=1.12=1
 - libxml2=2.9.4=0
+- line_profiler=2.0=py36_0
 - markupsafe=0.23=py36_2
 - matplotlib=2.0.0=np112py36_0
 - mistune=0.7.3=py36_0
@@ -105,6 +106,7 @@ dependencies:
   - jupyter-client==5.0.0
   - jupyter-console==5.1.0
   - jupyter-core==4.3.0
+  - line-profiler==2.0
   - prompt-toolkit==1.0.9
   - rope-py3k==0.9.4.post1
 prefix: /home/robert/anaconda3/envs/CU-PWFA
