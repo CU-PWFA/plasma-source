@@ -33,6 +33,17 @@ def GaussianBeamIntensity(I0,k,w0,z0,z,r):
 def GaussianBeamIntensity_SpotArray(I0,w,w0,r):
     return I0*np.power(w0/w,2)*np.exp(-2*np.power(r/w,2))
 
+#Calculates a  gaussian beam in terms of intensity
+# this one assumes you are given an array of spot sizes, rather than
+# calculating one assuming free space propagation (ie: w obtained from
+# using the ABCD propagation functions with the complex q parameter)
+#  I_0 - Intensity at the initial beam waist
+#  w - array of spot sizes
+#  w0 - waist size of beam initially (corresponding to I0)
+#  r - location transverse to beam for calculation
+def GaussianBeamIntensity_SpotArray_2D(I0,w_x,w_y,w0,x,y):
+    return I0*np.power(w0,2)/(w_x*w_y)*np.exp(-2*np.power(x/w_x,2)-2*np.power(y/w_y,2))
+
 #Calculates the spot size (Transerve spread of beam)
 #  z - distance along propagation axis
 #  z0 - location of beam waist
@@ -100,6 +111,10 @@ def Prop_FreeSpace(q,d,step):
         x=x+step
     return q
 
+def Prop_Cylindrical_FreeSpace(q_P,q_T,d,step):
+    Prop_FreeSpace(q_P,d,step)
+    Prop_FreeSpace(q_T,d,step)
+
 #Propagates q through a thin lens, returning list of q paramters with topmost
 # q updates due to the lens
 #  q - list of q parameters
@@ -107,6 +122,14 @@ def Prop_FreeSpace(q,d,step):
 def Prop_ThinLens(q,f):
     q[-1][0]=Prop_Evolve(1,0,-1/f,1,q[-1])
     return q
+
+#Propagates q through a cylindrcal thin lens, returning list of q paramters 
+# with topmost q updates due to the lens
+#  q_P - list of q parameters Parallel to cyclindrical axis
+#  q_T - list of q parameters Transverse to cylindrical axis
+#  R - radius of curvature in the radial direction
+def Prop_CylindricalLens(q_P,q_T,R):
+    q_T[-1][0]=Prop_Evolve(1,0,-2/R,1,q_T[-1])
 
 #Propagates q through a flat interface (normal to axis of propagation)
 #  q - list of q parameters
@@ -117,7 +140,7 @@ def Prop_FlatInterface(q,n2):
     q[-1][2]=n2
     return q
 
-#Propagates q thorugh a curved interface
+#Propagates q thorugh a spherically curved interface
 #  q - list of q parameters
 #  n2 - new index of refraction
 #  R - radius of curvature of the interface
@@ -126,6 +149,15 @@ def Prop_CurvedInterface(q,n2,R):
     q[-1][0]=Prop_Evolve(1,0,(n1-n2)/(R*n2),n1/n2,q[-1])
     q[-1][2]=n2
     return q
+
+#Propagates q thorugh a cylindrically curved interface
+#  q_P - list of q parameters Parallel to cyclindrical axis
+#  q_T - list of q parameters Transverse to cylindrical axis
+#  n2 - new index of refraction
+#  R - radius of curvature of the interface
+def Prop_CylindricalInterface(q_P,q_T,n2,R):
+    Prop_FlatInterface(q_P,n2)
+    Prop_CurvedInterface(q_T,n2,R)
 
 #Propagates q thorugh two curved interfaces and free space within
 # (for a convex lens, R1 must be positive and R2 must be negative)

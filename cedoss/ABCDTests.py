@@ -13,7 +13,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 #Choice for Testing Gaussian Beam Propagation, 1-5 use old parameters
-choice = 7
+choice = 8
 print(choice)
 
 #Define some values for wavelength, and beam waist
@@ -88,24 +88,48 @@ if choice == 7:
     q=GaussianBeam.Prop_ThickLens(q,1.4,1e-3,8,-8,1e-5)
     q=GaussianBeam.Prop_FreeSpace(q,6,1e-5)
     
+if choice == 8:
+    #Using cylindrical lens with axis in z direction
+    q_y = list(q)
+    q_z = list(q)
+    q_y=GaussianBeam.Prop_FreeSpace(q_y,1,1e-5)
+    q_z=GaussianBeam.Prop_FreeSpace(q_z,1,1e-5)
+    GaussianBeam.Prop_CylindricalLens(q_z, q_y, 8)
+    q_y=GaussianBeam.Prop_FreeSpace(q_y,6,1e-5)
+    q_z=GaussianBeam.Prop_FreeSpace(q_z,6,1e-5)
+    
 #Gets the range over which beam propagated, as well as 
 # radius of curvature, R, and beam spot size, w
-xrange=GaussianBeam.Prop_GetRange(q)
-R=GaussianBeam.Prop_RadiusList(q)
-R[0]=0  #The radius of curvature initially --> infinity
-w=GaussianBeam.Prop_SpotList(q,wavelength)
+if choice < 8:
+    xrange=GaussianBeam.Prop_GetRange(q)
+    R=GaussianBeam.Prop_RadiusList(q)
+    R[0]=0  #The radius of curvature initially --> infinity
+    w=GaussianBeam.Prop_SpotList(q,wavelength)
 
-#Plots spot size
-plt.plot(xrange,w)
-plt.title("Spot size from q parameter")
-plt.ylabel("Spot Size (m)")
-plt.xlabel("Distance (m)")
-plt.show()
+    #Plots spot size
+    plt.plot(xrange,w)
+    plt.title("Spot size from q parameter")
+    plt.ylabel("Spot Size (m)")
+    plt.xlabel("Distance (m)")
+    plt.show()
 
-#Plots radius of curvature (Value can be very 
-# large for when beam focuses on waist)
-plt.plot(xrange,R)
-plt.title("Curvature from q parameter")
-plt.ylabel("Radius of Curvature (m)")
-plt.xlabel("Distance (m)")
-plt.show()
+    #Plots radius of curvature (Value can be very 
+                            # large for when beam focuses on waist)
+    plt.plot(xrange,R)
+    plt.title("Curvature from q parameter")
+    plt.ylabel("Radius of Curvature (m)")
+    plt.xlabel("Distance (m)")
+    plt.show()
+
+if choice >= 8:
+    xrange=GaussianBeam.Prop_GetRange(q_y)
+    wy=GaussianBeam.Prop_SpotList(q_y,wavelength)
+    wz=GaussianBeam.Prop_SpotList(q_z,wavelength)
+
+    #Plots spot size
+    plt.plot(xrange,wy)
+    plt.title("Spot size from q parameter:  blue transverse, orange parallel")
+    plt.ylabel("Spot Size (m)")
+    plt.xlabel("Distance (m)")
+    plt.plot(xrange,wz)
+    plt.show()
