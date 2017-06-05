@@ -34,8 +34,7 @@ def calc_M(Tb,Tl):
                 =1 -> matched beam
                 >1 -> mismatched beam
     """
-    Bmag = calc_Bmag(Tb,Tl)
-    
+    Bmag = calc_Bmag(Tb,Tl)    
     M = Bmag + np.sqrt(Bmag**2 - 1)
 
     return M
