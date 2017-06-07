@@ -76,12 +76,16 @@ def plasma_refraction(params, Efunc, Tfunc):
     Ny = params['Ny']
     Nz = params['Nz']
     Nt = params['Nt']
+    if 'z0' in params:
+        z0 = params['z0']
+    else:
+        z0 = 0
     n0 = params['n0']
     lam = params['lam']
     # Initialize the grid
     x = np.linspace(-X/2, X/2, Nx, False)
     y = np.linspace(-Y/2, Y/2, Ny, False)
-    z = np.linspace(0, Z, Nz)
+    z = np.linspace(z0, z0+Z, Nz)
     t = np.linspace(-T/2, T/2, Nt, False)
     dt = T/(Nt-1)
     # Setup the index of refraction array and plasma density array
@@ -161,6 +165,10 @@ def summary_plot(path):
     Nx = params['Nx']
     Ny = params['Ny']
     Nt = params['Nt']
+    if 'z0' in params:
+        z0 = params['z0']
+    else:
+        z0 = 0
     x = np.linspace(-X/2, X/2, Nx, False)
     t = np.linspace(-T/2, T/2, Nt, False)
 
@@ -180,14 +188,14 @@ def summary_plot(path):
     plt.subplot2grid(gridSize, (0, 1), colspan=4)
     plt.imshow(propagation.prep_data(Eplot[int(Nt/2), :, :]),
                aspect='auto',
-               extent=[0, Z/1e6, -X/2e3, X/2e3])
+               extent=[z0/1e6, (z0+Z)/1e6, -X/2e3, X/2e3])
     cb = plt.colorbar()
     cb.set_label(r'Intensity ($10^{14}\,W/cm^3$)')
     plt.set_cmap('viridis')
     plt.xlabel(r'z ($m$)')
     plt.ylabel(r'x ($mm$)')
     plt.title('Intensity profile at $t=0$ (pulse center)')
-    plt.xlim([0, Z/1e6])
+    plt.xlim([z0/1e6, (z0+Z)/1e6])
     plt.ylim([-X/4e3, X/4e3])
 
     # Temporal pulse shape
@@ -201,14 +209,14 @@ def summary_plot(path):
     plt.subplot2grid(gridSize, (1, 1), colspan=4)
     plt.imshow(np.flipud(nplot[Nt-1, :, :]),
                aspect='auto',
-               extent=[0, Z/1e6, -X/2e3, X/2e3])
+               extent=[z0/1e6, (z0+Z)/1e6, -X/2e3, X/2e3])
     cb = plt.colorbar()
     cb.set_label(r'Plasma density ($10^{17}\,cm^{-3}$)')
     plt.set_cmap('plasma')
     plt.xlabel(r'z ($m$)')
     plt.ylabel(r'x ($mm$)')
     plt.title('Density of the laser ionized plasma')
-    plt.xlim([0, Z/1e6])
+    plt.xlim([z0/1e6, (z0+Z)/1e6])
     plt.ylim([-X/4e3, X/4e3])
     # Save the figure and display it
     plt.tight_layout()

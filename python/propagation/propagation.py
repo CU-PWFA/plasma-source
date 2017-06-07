@@ -60,10 +60,14 @@ def laser_prop(params, Efunc):
     Nx = params['Nx']
     Ny = params['Ny']
     Nz = params['Nz']
+    if 'z0' in params:
+        z0 = params['z0']
+    else:
+        z0 = 0
     # Initialize the grid
     x = np.linspace(-X/2, X/2, Nx, False)
     y = np.linspace(-Y/2, Y/2, Ny, False)
-    z = np.linspace(0, Z, Nz)
+    z = np.linspace(z0, z0+Z, Nz)
     # Setup an array to store the simulation results
     Efile = np.zeros((Nz, Nx, Ny))
     # Calculate the initial electric field on the boundary
@@ -100,6 +104,10 @@ def laser_prop_plot(path):
     Nx = params['Nx']
     Ny = params['Ny']
     Nz = params['Nz']
+    if 'z0' in params:
+        z0 = params['z0']
+    else:
+        z0 = 0
     x = np.linspace(-X/2, X/2, Nx, False)
 
     # Create the figure
@@ -118,14 +126,14 @@ def laser_prop_plot(path):
     plt.subplot2grid(gridSize, (0, 2), colspan=8)
     plt.imshow(prep_data(Eplot[:, :, int(Ny/2)]),
                aspect='auto',
-               extent=[0, Z/1e3, -X/2e3, X/2e3])
+               extent=[z0/1e3, (z0+Z)/1e3, -X/2e3, X/2e3])
     cb = plt.colorbar()
     cb.set_label(r'Intensity ($10^{14}\,W/cm^3$)')
     plt.set_cmap('viridis')
     plt.xlabel(r'z ($mm$)')
     plt.ylabel(r'x ($mm$)')
     plt.title('Intensity profile in the x-z plane')
-    plt.xlim([0, Z/1e3])
+    plt.xlim([z0/1e3, (z0+Z)/1e3])
     plt.ylim([-X/8e3, X/8e3])
 
     # X-Y initial intensity
