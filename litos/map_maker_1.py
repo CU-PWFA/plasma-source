@@ -56,15 +56,15 @@ npart  = 100
 beam0  = [gb0,eps0,beta0,alpha0,gamma0,dE0,npart]
 
 # scan parameters
-nwaist = 51
+nwaist = 21
 waist  = np.linspace(-0.12,0.02,nwaist) # m, waist location w.r.t. L_up
 #waist  = np.linspace(-0.98,-0.94,nwaist) # m, waist location w.r.t. L_up
 #waist  = np.linspace(-0.48,-0.38,nwaist) # m, waist location w.r.t. L_up
-nhw_up = 100
+nhw_up = 21
 hw_up  = np.linspace(0.001,0.050,nhw_up) # m, HWHM of up-ramp
 #hw_up  = np.linspace(0.30,0.32,nhw_up) # m, HWHM of up-ramp
 #hw_up  = np.linspace(0.135,0.160,nhw_up) # m, HWHM of up-ramp
-nlens  = 51
+nlens  = 21
 s0_lens = np.linspace(0.042,0.048,nlens)
 
 #M = np.zeros([nwaist,nhw_up])
@@ -128,11 +128,9 @@ inputs = range(nwaist*nlens)
 num_cores = multiprocessing.cpu_count()
 results = Parallel(n_jobs=num_cores)(delayed(processInput)(k) for k in inputs)
 
-
+M = np.reshape(results,[nwaist,nlens])
 print(M)
 
-
-"""
 
 #X = np.tile(waist.reshape(-1,1),(1,nhw_up))
 #Y = np.tile(hw_up.T,(nwaist,1))
@@ -170,8 +168,6 @@ plt.show()
 #fig = plt.figure()
 #plt.scatter(waist,M[:,M.shape[1]-1])
         
-fig = plt.figure()
-plt.scatter(s_up[0:-1],plas_up)
+#fig = plt.figure()
+#plt.scatter(s_up[0:-1],plas_up)
         
-        
-"""
