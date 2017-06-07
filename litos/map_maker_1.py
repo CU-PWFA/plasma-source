@@ -15,6 +15,8 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 from calc_M import calc_M
 from plasma_lens import plasma_lens
+from joblib import Parallel, delayed
+import multiprocessing
 
 # constants
 c  = 3e8 # m/s
@@ -68,49 +70,69 @@ s0_lens = np.linspace(0.042,0.048,nlens)
 #M = np.zeros([nwaist,nhw_up])
 M = np.zeros([nwaist,nlens])
 #M1 = np.zeros(nwaist)
-for i in range(0,nwaist):
-#    for j in range(0,nhw_up):
-    for j in range(0,nlens):
-            
-        print(i*nhw_up+j+1)
-        
-        iwaist = waist[i]
-#        jhw_up = hw_up[j]
-        jhw_up = 0.03
-        js0_lens = s0_lens[j]        
 
-        # set beam waist
-        s_w   = L_up + iwaist # m
-        ibeam0  = propbeamlast(beam0,[0,-s_w])
-        
-        # make plasma up-ramp
-        s_up     = np.linspace(0,L_up,round(L_up/0.0001))
-        pargs_up = [L_up,jhw_up]
-        [plas_up, dgds_up] =\
-            plasma_ramp(npl0,shape_up,s_up[0:-1],pargs_up,'up',dgds0)
+#for i in range(0,nwaist):
+##    for j in range(0,nhw_up):
+#    for j in range(0,nlens):
+
+
+def processInput(k):
+    
+    i = int(k/nlens)
+    j = k%nlens
             
-        # add plasma lens
-        lens_args = [npl0_lens,L_up-js0_lens,L_lens]
-        [plas_up, dgds_up] =\
-            plasma_lens(plas_up,dgds_up,s_up[0:-1],lens_args,dgds0_lens)
-            
-        # simulate plasma up-ramp
-        beam_up  = propbeamlast(ibeam0,s_up,plas_up,dgds_up)
+    print(i*nhw_up+j+1)
+    
+    iwaist = waist[i]
+#        jhw_up = hw_up[j]
+    jhw_up = 0.03
+    js0_lens = s0_lens[j]        
+
+    # set beam waist
+    s_w   = L_up + iwaist # m
+    ibeam0  = propbeamlast(beam0,[0,-s_w])
+    
+    # make plasma up-ramp
+    s_up     = np.linspace(0,L_up,round(L_up/0.0001))
+    pargs_up = [L_up,jhw_up]
+    [plas_up, dgds_up] =\
+        plasma_ramp(npl0,shape_up,s_up[0:-1],pargs_up,'up',dgds0)
         
+    # add plasma lens
+    lens_args = [npl0_lens,L_up-js0_lens,L_lens]
+    [plas_up, dgds_up] =\
+        plasma_lens(plas_up,dgds_up,s_up[0:-1],lens_args,dgds0_lens)
+        
+    # simulate plasma up-ramp
+    beam_up  = propbeamlast(ibeam0,s_up,plas_up,dgds_up)
+    
 #        # simulate plasma flat-top
 #        s_ft     = np.linspace(0,L_ft,round(L_ft/0.001))
 #        plas_ft  = npl0*np.ones(len(s_ft)-1)
 #        dgds_ft  = dgds0*np.ones(len(s_ft)-1)
 #        beam_ft  = propbeamlast(beam_up,s_ft,plas_ft,dgds_ft)
-       
-        Tbeam = beam_up[2:5]
-        kb     = kp0/np.sqrt(2*beam_up[0])
-        Tmatch = [1.0/kb,0,kb]
+   
+    Tbeam = beam_up[2:5]
+    kb     = kp0/np.sqrt(2*beam_up[0])
+    Tmatch = [1.0/kb,0,kb]
 #        print(Tbeam)
 #        print(Tmatch)
-        M[i,j]   = calc_M(Tbeam,Tmatch)
+#        M[i,j]   = calc_M(Tbeam,Tmatch)
 #        M1[i] = calc_M(Tbeam,Tmatch)
+    M   = calc_M(Tbeam,Tmatch)
 
+    return M
+
+
+inputs = range(nwaist*nlens)
+num_cores = multiprocessing.cpu_count()
+results = Parallel(n_jobs=num_cores)(delayed(processInput)(k) for k in inputs)
+
+
+print(M)
+
+
+"""
 
 #X = np.tile(waist.reshape(-1,1),(1,nhw_up))
 #Y = np.tile(hw_up.T,(nwaist,1))
@@ -152,4 +174,4 @@ fig = plt.figure()
 plt.scatter(s_up[0:-1],plas_up)
         
         
-        
+"""
