@@ -195,7 +195,7 @@ def gaussian_frac(EI, E, tau, Z, l=0, m=0):
 
 
 def intensity_func(EI, E, t, f, Z, l=0, m=0):
-    """ Creates an interpolating fuction from ionization fraction to intensity.
+    """ Creates an interpolating fuction from ionization fraction to field.
 
     Creates an inperpolating function that takes an ionization fraction and
     returns the E necessary to ionize that fraction of the gas. The user has
@@ -206,15 +206,21 @@ def intensity_func(EI, E, t, f, Z, l=0, m=0):
     with a peak field value of E[i]. g(frac) would then return the peak field
     of the Gaussain necessary to ionize frac of a gas. An electric field given
     by f(g(frac), t) will ionize frac of the gas.
+    
+    This function can also be directly used to find the intensity as a function
+    of frac. Pass E as an array of intensity values and define f(E[i], t) in
+    such a way that it returns the electric field when passed the intensity
+    E[i].
 
     Parameters
     ----------
     EI : double
         Ionization energy of the electron in eV.
     E : array_like
-        Electric field strength in GV/m. Array of E at time t.
+        Peak electric field strength in GV/m. 
     t : array_like
-        Array of time values, in fs, matching the electric field vector.
+        Array of time values, in fs, this must resolve the fast oscillations of
+        the field.
     f : function
         A function f(E[i],t) that returns a vector of electric field values
         corresponding to the times in t.
