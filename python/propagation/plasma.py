@@ -2,7 +2,7 @@
 """
 Created on Thu May 25 10:18:14 2017
 
-@author: robert
+@author: rariniello
 """
 
 import numpy as np
@@ -95,7 +95,7 @@ def plasma_refraction(params, Efunc, Tfunc, n0=False):
     nih = np.zeros((Nx, Ny, Nz))
     n = np.zeros((Nx, Ny, Nz))
     # Handle non uniform initial densities
-    if not n0:
+    if n0 is False:
         n0 = params['n0']
     # Setup arrays to store the simulation results
     Efile = np.zeros((Nt, Nz, Nx))
