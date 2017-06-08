@@ -107,8 +107,8 @@ def plasma_refraction(params, Efunc, Tfunc, n0=False):
     # Calculate constants for gas and plasma index of refraction
     # These are (index of refraction - 1) per 10^17 cm^-3 density
     ngas = params['alpha'] * 5e-8
-    nplasma = plasma_index(n0, lam) - 1
-    nh = 1 + ngas*n0
+    nplasma = plasma_index(1, lam) - 1
+    nh = 1 + ngas*params['n0']
     # Main loop through the pulse
     for i in range(Nt):
         E = Ei * Et[i]
@@ -123,7 +123,7 @@ def plasma_refraction(params, Efunc, Tfunc, n0=False):
         n = (n0 - n)*(1 - np.exp(-rate * dt)) + n
         nfile[i, :, :] = n[:, int(Ny/2), :]
         # Calculate new index of refraction
-        nih = n * (ngas + nplasma)
+        nih = n * nplasma + (n0 - n - params['n0']) * ngas
         print('Completed time slice ', i+1, ' of ', Nt)
     # Write params and  results to file
     path = params['path']
