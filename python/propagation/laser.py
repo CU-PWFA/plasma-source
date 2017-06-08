@@ -275,7 +275,8 @@ def beam_prop2(E, nih, x, y, z, lam, nh):
     Ny = np.size(y)
     Nz = np.size(z)
     e = np.zeros((Nz, Nx, Ny), dtype=np.complex)
-    e[0, :, :] = E
+    # Fourier propagate to the first z grid point
+    e[0, :, :] = fourier_prop2(E, x, y, z[0], lam, nh)
     T = 1
     for i in range(1, Nz):
         dz = z[i] - z[i-1]
