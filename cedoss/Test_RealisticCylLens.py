@@ -18,21 +18,22 @@ from ionization import ionization
 from ionization import adk
 
 #Flags for plotting different things
-only_w = 1
+only_w = 0
 cut_plots_H = 0
 contour_plots = 0
-den_plot = 0
+den_plot = 1
 cut_plots_den = 0
 
 c=2.998e8
-P=30e9
+P=2*30e9
 cm_m=100
 wavelength = 785.3e-9
 w0 = 5e-3
 
 I0 = 2*P/(np.pi*np.power(w0,2))*np.power(1/cm_m,2)
-delt_t = 100e-15
-chi = adkD.Get_chi_H()
+delt_t = 50e-15
+#chi = adkD.Get_chi_H()
+chi = 15.426
 
 L_z = 500e-6
 L_r = 500e-6
