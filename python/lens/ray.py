@@ -55,9 +55,10 @@ def uniform_phase(I, z, R, r0=0):
         Iavg = (I[i] + I[i-1]) / 2
         dz = z[i] - z[i-1]
         r[i] = np.sqrt(Iavg*dz/(np.pi*I0) + r[i-1]**2)
+        dr = r[i] - r[i-1]
         sinold = sinnew
         sinnew = r[i] / np.sqrt(r[i]**2 + z[i]**2)
-        phi[i] = phi[i-1] - (sinnew + sinold)/2
+        phi[i] = phi[i-1] - (sinnew + sinold)*dr/2
     # Return everything
     return I0, r, phi
         

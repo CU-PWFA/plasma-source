@@ -13,14 +13,14 @@ from propagation import plasma
 import os
 import matplotlib.pyplot as plt
 
-E0 = 26.90994
+E0 = 38.056404817
 wx = 5.578897e-5*1e6
 wy = 3.571468e-4*1e6
 Px =1.559870e-9*1e6*1e6
 Py =7.644225e-7*1e6*1e6
 phi= 0.639129
 zi = 0.005*1e6
-n0 = 1e18*1e-17
+n0 = 1e20*1e-17
 z_off=1e-3*1e6
 Lr=500e-6*1e6
 Lz=500e-6*1e6
@@ -28,7 +28,8 @@ Lz=500e-6*1e6
 test_density = 0
 free_space = 0
 uniform_den = 0
-gauss_den = 1
+gauss_den = 0
+gasjet_den = 1
 
 def Efunc(x,y):
     r2 = x**2 + y**2
@@ -54,15 +55,15 @@ def Gas_jet_density(x,y,z):
     return nr*nz
 #9,9,7
 # Setup the parameters
-params = {'Nx' : 2**7,
-          'Ny' : 2**7,
+params = {'Nx' : 2**9,
+          'Ny' : 2**9,
           'Nz' : 2**7,
           'Nt' : 2**6,
           'X' : 10.5e2/4,
           'Y' : 10.5e2,
           'Z' : 1e4,
           'T' : 150,
-          'n0' : 5,
+          'n0' : 0,
           'alpha' : 0.787,
           'EI' : 15.426,
           'E0' : E0,
@@ -79,16 +80,18 @@ def SetupArray(denfunc):
     ystep=params['Y']/ny
     zstep=params['Z']/nz
     n = np.zeros((nx,ny,nz))
+    xstart=params['X']/2
+    ystart=params['Y']/2
     for i in range(nx):
         for j in range(ny):
             for k in range(nz):
-                n[i][j][k]=denfunc(i*xstep,j*ystep,k*zstep)
+                n[i][j][k]=denfunc((i*xstep)-xstart,(j*ystep)-ystart,k*zstep)
     return n
 
-path = '~/Desktop/FourierPlots/Users/doss/Documents/Research/Data/FACET_Refraction/'
+path = '/home/chris/Desktop/FourierPlots/real_FACET_Refraction/'
 
 if test_density == 1:
-    h=SetupArray(Gaussian_density)
+    h=SetupArray(Gas_jet_density)
     hh=h[:,round(params['Ny']/2),:]
     plt.imshow(hh, interpolation="none", origin="lower",
                extent=[0,params['Z'],-.5*params['X'],.5*params['X']], aspect='50')
@@ -110,8 +113,8 @@ if free_space == 1:
     propagation.laser_prop_plot(params['path'])
     
 if uniform_den == 1:
-    directory = 'uniform_den_propagation_5e17'
-    params['n0'] = 5
+    directory = 'uniform_den_propagation_1e17_new'
+    params['n0'] = 1
     params['path'] = path + directory+'/'
     # Create the directory if it doesn't exist
     if not os.path.exists(params['path']):
@@ -122,8 +125,20 @@ if uniform_den == 1:
     plasma.summary_plot(params['path'])
     
 if gauss_den == 1:
-    directory = 'guassian_den_propagation_1e18_gridtest'
+    directory = 'guassian_den_propagation_1e20'
     density = SetupArray(Gaussian_density)
+    params['path'] = path + directory+'/'
+    # Create the directory if it doesn't exist
+    if not os.path.exists(params['path']):
+        os.makedirs(params['path'])
+    # Run the simulation      
+    plasma.plasma_refraction(params, Efunc, Tfunc, density)
+    # Create the summary
+    plasma.summary_plot(params['path'])
+    
+if gasjet_den == 1:
+    directory = 'gasjet_den_propagation_1e19'
+    density = SetupArray(Gas_jet_density)
     params['path'] = path + directory+'/'
     # Create the directory if it doesn't exist
     if not os.path.exists(params['path']):

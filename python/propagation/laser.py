@@ -10,6 +10,7 @@ from propagation import C
 import numpy as np
 from numpy.lib.scimath import sqrt
 from numpy.fft import fft, ifft, fft2, ifft2, fftfreq
+from scipy import integrate
 
 
 def fourier_prop(E, x, z, lam, n=1):
@@ -476,3 +477,42 @@ def pulse_time(e, z, t, time, c=C, n=1):
             sel = np.array(z < zl) * np.array(z > zr)
         et[i, sel, :] = 0
     return et
+
+
+def fresnel_axis(E, r, z, lam, n=1):
+    """ Returns the electric field along the optical axis in the Fresnel limit.
+
+    Uses the Fresnel diffraction integral to calculate the electric field along
+    the optical axis resulting from a cylindrically symmetric felectric field.
+    Not this is only valid in the paraxial limit. 
+
+    Parameters
+    ----------
+    E : array_like
+        Array of E field values at points r on the boundary, E(r).
+    r : array_like
+        Array of radial locations in on the boundary. Doesn't need to be evenly
+        spaced.
+    z : array_like
+        Array of z distances from the boundary to calculate the field at. Does
+        not need to be evenly spaced.
+    lam : double
+        Wavelength of the electromagnetic wave in vacuum.
+    n : double, optional
+        Index of refraction of the medium the wave is propagating through.
+
+    Returns
+    -------
+    e : array_like
+        The electric field at position (z).
+    """
+    Nz = np.size(z)
+    k = 2*np.pi*n/lam
+    # Integral prefactor
+    pre = k*np.exp(1j*k*z) / (1j*z)
+    # Reshape to create the Nz X Nr array for integration
+    z = np.reshape(z, (Nz, 1))
+    # Calculate the argument of the integral
+    arg = E * np.exp(1j*k*r**2/(2*z)) * r  
+    e = pre * integrate.simps(arg, r, axis=1)
+    return e
