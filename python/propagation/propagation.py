@@ -37,6 +37,8 @@ def laser_prop(params, Efunc):
                 Width of the grid in y in um.
             Z : double
                 Length of the grid in z in um.
+            z0 : double, optional
+                Beginning of the Z grid. 
             E0 : double
                 Peak elecric field strength. Acts as a multiplier to Efunc, if
                 Efunc isn't normalized this can be set to 1.
