@@ -61,5 +61,3 @@ def uniform_phase(I, z, R, r0=0):
         phi[i] = phi[i-1] - (sinnew + sinold)*dr/2
     # Return everything
     return I0, r, phi
-        
-    
