@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Jun 27 13:29:57 2017
+Contains functions for building 3D Intensity and Ionization fraction profiles,
+and functions to plot cuts along the various axes and 2D planes
 
 @author: chris
 """
@@ -9,29 +11,23 @@ Created on Tue Jun 27 13:29:57 2017
 import sys
 
 import numpy as np
-import GaussianBeam
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
-sys.path.insert(0, "../python")
+sys.path.insert(0, "../../python")
 
 from ionization import ionization
 from ionization import adk
 
+#Modifies np.arange so that the window is centered at zero
 def BuildDomain(size,step):
     return np.arange(-size/2,size/2,step)
 
-def IntensityFromSpotSizes(wy,wz,xrange,yrange,zrange,step,I0,w0):
-    I=np.empty([len(xrange),len(yrange),len(zrange)])
-    i_counter=np.arange(len(xrange))
-    j_counter=np.arange(len(yrange))
-    k_counter=np.arange(len(zrange))
-    for i in i_counter:
-        for j in j_counter:
-            for k in k_counter:
-                I[i][j][k]=GaussianBeam.GaussianBeamIntensity_SpotArray_2D(I0,wy[i],wz[i],w0,yrange[j],zrange[k])
-    return I
-
+#Takes a 3D intensity and returns a 3D ionization fraction
+#!!I want to put this in a better place eventually!!
+#  I - 3D intensity in W/cm^2
+#  chi - Ionization energy of species
+#  delt_t - Temporal pulse length of beam in s
 def IonFracFromIntensity(I,chi,delt_t):
     H=np.empty([len(I[:,0,0]),len(I[0,:,0]),len(I[0,0,:])])
     i_counter=np.arange(len(I[:,0,0]))
@@ -42,7 +38,21 @@ def IonFracFromIntensity(I,chi,delt_t):
             H[i][j] = adk.gaussian_frac(chi,E,delt_t/1e-15,1)
     return H
 
-#Give the data as a 2D plane of data[i][j] where we plot for i and vary j
+#If using data from roberts code, we need to roll the axis to fit my convention
+# Robert: [beam,jet,laser]   Doss: [laser,beam,jet]
+#  data - 3D array in [beam,jet,laser]
+def RobertRoll(data):
+    return np.rollaxis(data,0,3)
+
+#Take a 2D array of data, plots cuts in one direction while varying the other
+#  data - 2D array of [i][j], where i is what is plotted and j is varied
+#  axis - the range of which [i] is plotted against
+#  offset - number of array indices off the center of [j] to offset origin by
+#  number - number of lines to plot iteratively further from origin
+#  spacing - number of array indices that separate sequential lines
+#  unit - factor relating separation distance per array index
+#  plot - labels for the plot, axes, and legend
+#  both - set to True to interate in both directions from the origin
 def VarianceCut(data,axis,offset,number,spacing,unit,plot=['Title','x','f(x)','Legend'],both=False):
     center = round(len(data[0,:])/2)+offset
     
@@ -61,10 +71,16 @@ def VarianceCut(data,axis,offset,number,spacing,unit,plot=['Title','x','f(x)','L
     plt.legend(title=plot[3])
     plt.grid()
     plt.show()
-    
-def RobertRoll(data):
-    return np.rollaxis(data,0,3)
-    
+
+#Takes a 3D array, and plots the 2D planes cut along the 3 axes
+#  data - 3D array in [laser,beam,jet]
+#  x,y,z - axes in x,y,z
+#  x,y,z_off - number of array indices to offset the axes by
+#  zoom - factor to multiply the axes by
+#  units - String for the units of the axes
+#  label - String for the data that is being plotted
+#  label_units - String for the units of the data being plotted
+#  color - set to 1 for 'plasma', otherwise defaults to 'viridis'
 def ImageCut(data,x,y,z,x_off=0,y_off=0,z_off=0,zoom=1,units='',label='',label_units='',color=0):
     xrange_z=[i*zoom for i in x]
     yrange_z=[i*zoom for i in y]

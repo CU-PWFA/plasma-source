@@ -1,17 +1,21 @@
 # -*- coding: utf-8 -*-
 """
-
+Propagates a q parameter using Gaussian Beam, zooms in close to focus, then
+looks at the profiles for intensity, ionization fraction along cuts.  Finally,
+assuming a gas jet density distribution, calculates the plasma density produced.
+Also looks at cuts slightly off the main axis to account for beam size
 @author: chris
 """
 import sys
+sys.path.insert(0, "../")
 
-
-import GaussianBeam
 import numpy as np
 import matplotlib.pyplot as plt
-import ADK_Combined as adkD
-import DensityDistributions as dendis
-import ThreeDimensionAnalysis as ThrDim
+
+from modules import GaussianBeam
+from modules import Doss_Ionization as adkD
+from modules import DensityDistributions as dendis
+from modules import ThreeDimensionAnalysis as ThrDim
 
 #Flags for plotting different things
 only_w = 0
@@ -107,7 +111,7 @@ if only_w == 1:
 # both w(z) and r
 yrange = ThrDim.BuildDomain(y_window,t_step)
 zrange = ThrDim.BuildDomain(z_window,t_step)
-I = ThrDim.IntensityFromSpotSizes(wy,wz,xrange,yrange,zrange,t_step,I0,w0)
+I = GaussianBeam.IntensityFromSpotSizes(wy,wz,xrange,yrange,zrange,I0,w0)
 
 #1-to-1 corresponance between intensity and ADK ionization
 H = ThrDim.IonFracFromIntensity(I,chi,delt_t)
@@ -141,6 +145,7 @@ if contour_plots==1:
     ThrDim.ImageCut(I,xrange,yrange,zrange,0,0,0,1000,'(mm)','Intensity','(W/cm^2)')
     ThrDim.ImageCut(H,xrange,yrange,zrange,0,0,0,1000,'(mm)','Ionization_Frac','(ni/n0)',1)
 
+#If we are analyzing density, then make the density distribution
 if den_plot + cut_plots_den > 0:
     den=np.empty([len(xrange),len(yrange),len(zrange)])
     for x in np.arange(len(xrange)):

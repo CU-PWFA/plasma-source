@@ -9,10 +9,14 @@ to the ADK model for ionization of a gas
 
 @author: chris
 """
-import GaussianBeam
 import numpy as np
 import matplotlib.pyplot as plt
-import ADK_Combined as adk
+
+import sys
+sys.path.insert(0, "../")
+
+from modules import GaussianBeam
+from modules import Doss_Ionization as adk
 
 wavelength = 500e-9
 k=2*np.pi/wavelength

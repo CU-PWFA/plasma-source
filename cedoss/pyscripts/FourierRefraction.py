@@ -2,11 +2,14 @@
 # -*- coding: utf-8 -*-
 """
 Created on Wed Jun  7 15:06:07 2017
+Using Robert's code as an example, this runs realistic refractin
+of a density distribution as the gaussian beam passes through.
+Saves a density distribution in the given directory
 
 @author: chris
 """
 import sys
-sys.path.insert(0, "../python")
+sys.path.insert(0, "../../python")
 import numpy as np
 from propagation import propagation
 from propagation import plasma
@@ -14,6 +17,18 @@ import os
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
+#Script Selection
+test_density = 1
+free_space = 0
+uniform_den = 0
+gauss_den = 0
+gasjet_den = 0
+
+#This is the directory for saving
+path = '/home/chris/Desktop/FourierPlots/real_FACET_Refraction/'
+directory = 'gasjet_den_propagation_1e17'
+
+#Parameters obtained using GaussianBeam.Prop_EPhase
 E0 = 38.056404817
 wx = 5.578897e-5*1e6
 wy = 3.571468e-4*1e6
@@ -21,16 +36,12 @@ Px =1.559870e-9*1e6*1e6
 Py =7.644225e-7*1e6*1e6
 phi= 0.639129
 zi = 0.005*1e6
+
+#Parameters for the gas jet
 n0 = 1e17*1e-17
 z_off=1e-3*1e6
 Lr=500e-6*1e6
 Lz=500e-6*1e6
-
-test_density = 1
-free_space = 0
-uniform_den = 0
-gauss_den = 0
-gasjet_den = 0
 
 def Efunc(x,y):
     r2 = x**2 + y**2
@@ -46,6 +57,7 @@ def Tfunc(t):
     tau = 50
     return np.exp(-1.38629*t**2 / (tau**2))
 
+#DensityDistributions
 def Gaussian_density(x,y,z):
     nr=np.exp(-(np.power(z-zi,2)+np.power(x,2))/(2*np.power(Lr,2)))
     return n0*nr
@@ -54,8 +66,8 @@ def Gas_jet_density(x,y,z):
     nr=Gaussian_density(x,y,z)
     nz=np.exp(-(y+z_off)/Lz)
     return nr*nz
-#9,9,7
-# Setup the parameters
+
+# Setup the parameters, just like in Robert's code
 params = {'Nx' : 2**9,
           'Ny' : 2**9,
           'Nz' : 2**7,
@@ -74,6 +86,7 @@ params = {'Nx' : 2**9,
           'nFinal' : True
           }
 
+#Create the density distribution as n(x,y,z)
 def SetupArray(denfunc):
     nx=params['Nx']
     ny=params['Ny']
@@ -90,8 +103,7 @@ def SetupArray(denfunc):
                 n[i][j][k]=denfunc((i*xstep)-xstart,(j*ystep)-ystart,k*zstep)
     return n
 
-path = '/home/chris/Desktop/FourierPlots/real_FACET_Refraction/'
-
+#Plots density distribution
 if test_density == 1:
     h=SetupArray(Gas_jet_density)
     hh=h[:,round(params['Ny']/2),:]
@@ -145,7 +157,6 @@ if gauss_den == 1:
     plasma.summary_plot(params['path'])
     
 if gasjet_den == 1:
-    directory = 'gasjet_den_propagation_1e20'
     density = SetupArray(Gas_jet_density)
     params['path'] = path + directory+'/'
     # Create the directory if it doesn't exist

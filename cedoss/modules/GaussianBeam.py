@@ -44,6 +44,22 @@ def GaussianBeamIntensity_SpotArray(I0,w,w0,r):
 def GaussianBeamIntensity_SpotArray_2D(I0,w_x,w_y,w0,x,y):
     return I0*np.power(w0,2)/(w_x*w_y)*np.exp(-2*np.power(x/w_x,2)-2*np.power(y/w_y,2))
 
+#Takes a list of spot sizes in y and z and returns a 3D intensity profile
+#  wy,wz - spot size arrays
+#  x,y,z - axes for the 3D array
+#  I0 - initial intensity
+#  w0 - initial spot size
+def IntensityFromSpotSizes(wy,wz,x,y,z,I0,w0):
+    I=np.empty([len(x),len(y),len(z)])
+    i_counter=np.arange(len(x))
+    j_counter=np.arange(len(y))
+    k_counter=np.arange(len(z))
+    for i in i_counter:
+        for j in j_counter:
+            for k in k_counter:
+                I[i][j][k]=GaussianBeamIntensity_SpotArray_2D(I0,wy[i],wz[i],w0,y[j],z[k])
+    return I
+
 #Calculates the spot size (Transerve spread of beam)
 #  z - distance along propagation axis
 #  z0 - location of beam waist
@@ -270,6 +286,12 @@ def Prop_EPhase(q_y, q_z, offset, lmba, E0, w0):
     print("phi =",str((.5*(guoyy+guoyz-phase))%(2*np.pi)))
     print("z_i =",str(xi))
 
+#Takes list of q parameters and prints out the minimum spot size and
+# the location of the spot size along laser propagation
+#  q - q parameter list
+#  lmba - wavelength
+#  label1 - label for minimum spot size
+#  label2 - label for location of minimum spot size
 def Prop_SpotInfo(q,lmba,label1='',label2=''):
     w=Prop_SpotList(q,lmba)
     print(label1+' '+str(min(w)))
