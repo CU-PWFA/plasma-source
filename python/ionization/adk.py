@@ -194,7 +194,7 @@ def gaussian_frac(EI, E, tau, Z, l=0, m=0):
     return frac
 
 
-def intensity_func(EI, E, t, f, Z, l=0, m=0):
+def intensity_func(EI, E, t, f, Z, l=0, m=0, envelope=False):
     """ Creates an interpolating fuction from ionization fraction to field.
 
     Creates an inperpolating function that takes an ionization fraction and
@@ -230,6 +230,10 @@ def intensity_func(EI, E, t, f, Z, l=0, m=0):
         Orbital quantum number of the electron being ionized. Defaults to 0.
     m : int, optional
         Magnetic quantum number of the electron being ionized. Defaults to 0.
+    envelope : bool, optional
+        Specifies whether the envelope of the electric field is passed in or
+        the explicit electric field is passed. Controls whether the function
+        uses the time averaged ADK model or the static ADK model.
 
     Returns
     -------
@@ -240,6 +244,6 @@ def intensity_func(EI, E, t, f, Z, l=0, m=0):
     frac = np.zeros(N)
     for i in range(0, N):
         e = abs(f(E[i], t))
-        frac[i] = ionization_frac(EI, e, t, Z, l, m, False)
+        frac[i] = ionization_frac(EI, e, t, Z, l, m, envelope)
     g = interp1d(frac, E)
     return g
