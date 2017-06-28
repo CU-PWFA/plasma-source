@@ -42,7 +42,7 @@ def IonFracFromIntensity(I,chi,delt_t):
 # Robert: [beam,jet,laser]   Doss: [laser,beam,jet]
 #  data - 3D array in [beam,jet,laser]
 def RobertRoll(data):
-    return np.rollaxis(data,0,3)
+    return np.rollaxis(data,2)
 
 #Take a 2D array of data, plots cuts in one direction while varying the other
 #  data - 2D array of [i][j], where i is what is plotted and j is varied
