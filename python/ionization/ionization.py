@@ -7,6 +7,47 @@ Created on Mon Mar  6 12:39:10 2017
 """
 
 import numpy as np
+from ionization import adk
+
+
+# Define some common gas species
+# These are mol, short for molecule, dictionaries
+"""
+Parameters
+----------
+EI : double
+    Ionization energy of the electron in eV.
+Z : int
+    Atomic residue i.e. which electron is being ionizaed (1st, 2nd...).
+l : int, optional
+    Orbital quantum number of the electron being ionized.
+m : int, optional
+    Magnetic quantum number of the electron being ionized.
+"""
+H = {'EI' : 13.5984,
+     'Z' : 1,
+     'l' : 0,
+     'm' : 0}
+H2 = {'EI' : 15.426,
+     'Z' : 1,
+     'l' : 0,
+     'm' : 0}
+H2p = {'EI' : 29.99,
+     'Z' : 1,
+     'l' : 0,
+     'm' : 0}
+He = {'EI' : 24.5874,
+     'Z' : 1,
+     'l' : 0,
+     'm' : 0}
+Ar = {'EI' : 15.7596,
+     'Z' : 1,
+     'l' : 1,
+     'm' : 0}
+Arp = {'EI' : 27.62965,
+     'Z' : 1,
+     'l' : 1,
+     'm' : 0}
 
 
 def keldysh(EI, I, wavelength):
@@ -18,17 +59,17 @@ def keldysh(EI, I, wavelength):
 
         Parameters
         ----------
-        EI
-            Ionization energy of the electron in eV
-        I
-            Intensity in 10^14 W/cm^2
+        EI : double
+            Ionization energy of the electron in eV.
+        I : array-like
+            Intensity in 10^14 W/cm^2.
         wavelength
-            Laser wavelength in um
+            Laser wavelength in um.
 
         Returns
         -------
-        gamma
-            Keldysh parameter
+        gamma : array-like
+            Keldysh parameter.
     """
     gamma = np.sqrt(EI / (18.6*I*np.power(wavelength, 2)))
     return gamma
@@ -42,14 +83,14 @@ def field_from_intensity(I, n=1.0):
 
         Parameters
         ----------
-        I
+        I : array-like
             Intensity in 10^14 W/cm^2.
-        n
+        n : double
             Index of refraction of the medium the wave propogates through.
 
         Returns
         -------
-        E
+        E : array-like
             Electric field in GV/m.
     """
     E = 27.4492 * np.sqrt(I/n)
@@ -64,14 +105,14 @@ def intensity_from_field(E, n=1.0):
 
     Parameters
     ----------
-    E : double
+    E : array-like
         Electric field in GV/m.
     n : double
         Index of refraction of the medium the wave propogates through.
 
     Returns
     -------
-    I : double
+    I : array-like
         Intensity in 10^14 W/cm^2.
     """
     I = n * (0.03643 * E)**2
@@ -83,18 +124,18 @@ def gaussian_envelope(I, t, tau, chirp=0):
 
     Parameters
     ----------
-    I
+    I : double
         Peak intensity of the pulse.
-    t
+    t : array-like
         Array of time points to return the electric field at.
-    tau
+    tau : double
         RMS length of the pulse.
-    chirp
+    chirp : double
         Frequency chirp of the pulse.
 
     Returns
     -------
-    E
+    E : array-like
         Array of electric field vlues at times given by array t.
     """
     a = np.pi / (2*tau**2)
@@ -109,22 +150,62 @@ def gaussian_field(I, t, f, tau, chirp=0):
 
     Parameters
     ----------
-    I
+    I : double
         Peak intensity of the pulse in 10^14 W/cm^2.
-    t
+    t : array-like
         Array of time points to return the electric field at.
-    f
+    f : double
         Carrier wave frequency.
-    tau
+    tau : double
         RMS length of the pulse.
-    chirp
+    chirp : double
         frequency chirp of the pulse.
 
     Returns
     -------
-    E
+    E : array-like
         Array of electric field vlues at times given by array t.
     """
     w0 = 2*np.pi * f
     E = gaussian_envelope(I, t, tau, chirp) * np.exp(-1j*w0 * t)
     return E
+
+
+def intensity_from_density(ion, frac):
+    """ Retruns the intensity necessary to create a given density of plasma.
+    
+    Uses the ADK model to calculate the intensity needed to ionize a gas for a
+    specific pulse shape.
+    
+    Parameters
+    ----------
+    ion : dictionary
+        atom : dictionary
+            See the description in ionization.ionization for details.
+        tau : double
+            Temporal length of the pulse in fs.
+        type : string
+            The type of pulse, i.e. gaussian, flattop, etc.
+    frac : array-like
+        Array of desired ionization fraction.
+
+    Returns
+    -------
+    I : array-like
+        Array of intensity for each ionization fraction.
+    """
+    tau = ion['tau']
+    atom = ion['atom']
+    # Depending on the type, define the envelope function
+    if ion['type'] == 'gaussian' :
+        def f(I, t):
+            return gaussian_envelope(I, t, tau).real
+        N = 1000
+        # All species we consider are fully ionized by 20X10^14 W/cm^2
+        I = np.linspace(0, 20, N)
+        t = np.linspace(-3*tau, 3*tau, N)
+    # Calculate the interpolating function
+    g = adk.intensity_func(atom['EI'], I, t, f,
+                           atom['Z'], atom['l'], atom['m'], True)
+    I = g(frac)
+    return I
