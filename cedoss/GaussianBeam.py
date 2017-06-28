@@ -230,6 +230,52 @@ def Prop_SpotList(q,lmba):
         W[i]=np.sqrt(lmba*x/np.pi/n[i])
     return W
 
+#Takes data from two orthogonal q parameters and calculates the electric
+# field on a 2D plane at the specified x location.  As of now Prop_EPhase
+# only prints out parameters for use in creating Electric field.
+#  q_y - q parameter list containing narrow waist
+#  q_z - q parameter list containing wide waist
+#  offset - distance from waist of q_y to E field plane (array indices)
+#  lmba - laser wavelength
+#  I0 - initial laser intensity
+#  w0 - initial waist size
+def Prop_EPhase(q_y, q_z, offset, lmba, E0, w0):
+    wy=Prop_SpotList(q_y,lmba)
+    wz=Prop_SpotList(q_z,lmba)
+    
+    Ry=Prop_RadiusList(q_y)
+    Rz=Prop_RadiusList(q_z)
+    
+    xrange=Prop_GetRange(q_y)
+    waist=wy.index(min(wy))
+    plane=waist-offset
+    xi=xrange[plane]
+    
+    zRy=Gauss_zR(min(wy),lmba)
+    zRz=Gauss_zR(min(wz),lmba)
+    
+    xoy=xrange[wy.index(min(wy))]
+    xoz=xrange[wz.index(min(wz))]
+    
+    guoyy=np.arctan((xi-xoy)/zRy)
+    guoyz=np.arctan((xi-xoz)/zRz)
+    
+    phase=2*np.pi/lmba*(2*xi-xoy-xoz)
+    
+    print("E_0 =",str(E0*w0/np.sqrt(wy[waist-offset]*wz[waist-offset])))
+    print("wix =",str(wy[plane]))
+    print("wiy =",str(wz[plane]))
+    print("Px =",str(lmba*Ry[plane]/np.pi))
+    print("Py =",str(lmba*Rz[plane]/np.pi))
+    print("phi =",str((.5*(guoyy+guoyz-phase))%(2*np.pi)))
+    print("z_i =",str(xi))
+
+def Prop_SpotInfo(q,lmba,label1='',label2=''):
+    w=Prop_SpotList(q,lmba)
+    print(label1+' '+str(min(w)))
+    x=Prop_GetRange(q)
+    print(label2+' '+str(x[w.index(min(w))]))
+
 #Unused thus far
 
 #Calculates a static Gausssian beam in terms of electric field strength

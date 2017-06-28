@@ -12,6 +12,7 @@ from propagation import propagation
 from propagation import plasma
 import os
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 
 E0 = 38.056404817
 wx = 5.578897e-5*1e6
@@ -20,16 +21,16 @@ Px =1.559870e-9*1e6*1e6
 Py =7.644225e-7*1e6*1e6
 phi= 0.639129
 zi = 0.005*1e6
-n0 = 1e19*1e-17
+n0 = 1e17*1e-17
 z_off=1e-3*1e6
 Lr=500e-6*1e6
 Lz=500e-6*1e6
 
-test_density = 0
+test_density = 1
 free_space = 0
 uniform_den = 0
 gauss_den = 0
-gasjet_den = 1
+gasjet_den = 0
 
 def Efunc(x,y):
     r2 = x**2 + y**2
@@ -69,7 +70,8 @@ params = {'Nx' : 2**9,
           'E0' : E0,
           'lam' : 0.7853,
           'n' : 1.0,
-          'angle' : 0.75
+          'angle' : 0.75,
+          'nFinal' : True
           }
 
 def SetupArray(denfunc):
@@ -93,8 +95,14 @@ path = '/home/chris/Desktop/FourierPlots/real_FACET_Refraction/'
 if test_density == 1:
     h=SetupArray(Gas_jet_density)
     hh=h[:,round(params['Ny']/2),:]
-    plt.imshow(hh, interpolation="none", origin="lower",
-               extent=[0,params['Z'],-.5*params['X'],.5*params['X']], aspect='50')
+    
+    gridSize = (2,5)
+    plt.figure(figsize=(16,9))
+    gridspec.GridSpec(gridSize[0],gridSize[1])
+    plt.subplot2grid(gridSize, (0,0), colspan=4)
+    plt.imshow(hh,
+               aspect='auto',
+               extent=[0,params['Z'],-.5*params['X'],.5*params['X']])
     CB=plt.colorbar()
     CB.set_label('n')
     plt.ylabel('x (microns)')
@@ -137,7 +145,7 @@ if gauss_den == 1:
     plasma.summary_plot(params['path'])
     
 if gasjet_den == 1:
-    directory = 'gasjet_den_propagation_1e19'
+    directory = 'gasjet_den_propagation_1e20'
     density = SetupArray(Gas_jet_density)
     params['path'] = path + directory+'/'
     # Create the directory if it doesn't exist
