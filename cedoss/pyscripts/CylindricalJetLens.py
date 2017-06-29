@@ -12,7 +12,7 @@ sys.path.insert(0, "../")
 import numpy as np
 import matplotlib.pyplot as plt
 
-from modules import GaussianBeam
+from modules import GaussianBeam as GB
 from modules import Doss_Ionization as adkD
 from modules import DensityDistributions as dendis
 from modules import ThreeDimensionAnalysis as ThrDim
@@ -46,33 +46,59 @@ y_window = 100e-6
 z_window = 400e-6
 t_step = 1e-6
 
-choice=1
+choice=4
 if choice==0:
     #Focuses wz over a distance of 4m with 1 cyl. lens to .2mm
-    q_y = GaussianBeam.Prop_Init_q(wavelength, w0, -3.5, 1)
-    q_z = GaussianBeam.Prop_Init_q(wavelength, w0, -3.5, 1)
-    GaussianBeam.Prop_CylindricalLens(q_y, q_z, 8)
-    GaussianBeam.Prop_Cylindrical_FreeSpace(q_y,q_z,3.5,1e-4)
-    GaussianBeam.Prop_CylindricalLens(q_z, q_y, 1)
-    GaussianBeam.Prop_Cylindrical_FreeSpace(q_y,q_z,1,1e-4)
+    q_y = GB.Prop_Init_q(wavelength, w0, -3.5, 1)
+    q_z = GB.Prop_Init_q(wavelength, w0, -3.5, 1)
+    GB.Prop_CylindricalLens(q_y, q_z, 8)
+    GB.Prop_Cylindrical_FreeSpace(q_y,q_z,3.5,1e-4)
+    GB.Prop_CylindricalLens(q_z, q_y, 1)
+    GB.Prop_Cylindrical_FreeSpace(q_y,q_z,1,1e-4)
 
 if choice==1:
     #Focuses wz over a distance of 1m with 2 cyl. lens to .35mm
-    q_y = GaussianBeam.Prop_Init_q(wavelength, w0, -.5, 1)
-    q_z = GaussianBeam.Prop_Init_q(wavelength, w0, -.5, 1)
+    q_y = GB.Prop_Init_q(wavelength, w0, -.5, 1)
+    q_z = GB.Prop_Init_q(wavelength, w0, -.5, 1)
     
-    GaussianBeam.Prop_CylindricalLens(q_y, q_z, .8)
-    GaussianBeam.Prop_Cylindrical_FreeSpace(q_y,q_z,.35,l_step)
-    GaussianBeam.Prop_CylindricalLens(q_y, q_z, -.105)
-    GaussianBeam.Prop_Cylindrical_FreeSpace(q_y,q_z,.15,l_step)
+    GB.Prop_CylindricalLens(q_y, q_z, .8)
+    GB.Prop_Cylindrical_FreeSpace(q_y,q_z,.35,l_step)
+    GB.Prop_CylindricalLens(q_y, q_z, -.105)
+    GB.Prop_Cylindrical_FreeSpace(q_y,q_z,.15,l_step)
     
-    GaussianBeam.Prop_CylindricalLens(q_z, q_y, 1)
-    GaussianBeam.Prop_Cylindrical_FreeSpace(q_y,q_z,1,l_step)
+    GB.Prop_CylindricalLens(q_z, q_y, 1)
+    GB.Prop_Cylindrical_FreeSpace(q_y,q_z,1,l_step)
+    
+if choice==4:#Probably best option, but needs some tweaking
+    f1 = 0.100 #m
+    f2 = 0.0125
+    L1 = 0.030
+    L2 = 0.088
+    #  0.00625 0.0125 0.025 0.050 0.100
+    #  0.015 0.020 0.030 0.040 0.075 0.150
+    q_y = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    q_z = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_y,q_z,.1,l_step)
+    GB.Prop_CylindricalLens(q_z,q_y,.200)
+    GB.Prop_CylindricalLens(q_y,q_z,.200)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_y,q_z,L1,l_step) 
+    GB.Prop_CylindricalLens(q_z,q_y,-2*f1)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_y,q_z,L2-L1,l_step) 
+    GB.Prop_CylindricalLens(q_y,q_z,-2*f2)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_y,q_z,.4,l_step)
+    
+    I0=I0*2/3
+    L_z=800e-6
+    
 
 #Get the total domain of spot sizes
-xrange_tot=GaussianBeam.Prop_GetRange(q_y)
-wtoty=GaussianBeam.Prop_SpotList(q_y,wavelength)
-wtotz=GaussianBeam.Prop_SpotList(q_z,wavelength)
+xrange_tot=GB.Prop_GetRange(q_y)
+wtoty=GB.Prop_SpotList(q_y,wavelength)
+wtotz=GB.Prop_SpotList(q_z,wavelength)
 
 #Plots spot size
 plt.plot(xrange_tot,wtoty,label="Spot size in y")
@@ -100,18 +126,18 @@ plt.show()
 
 if only_w == 1:
     #Print some diagnostics for minimum spot sizes
-    GaussianBeam.Prop_SpotInfo(q_y,wavelength,'w0y','x(w0y)')
-    GaussianBeam.Prop_SpotInfo(q_z,wavelength,'w0z','x(w0z)')
+    GB.Prop_SpotInfo(q_y,wavelength,'w0y','x(w0y)')
+    GB.Prop_SpotInfo(q_z,wavelength,'w0z','x(w0z)')
     
     E0=adkD.Elefield(I0)
-    GaussianBeam.Prop_EPhase(q_y,q_z,zoom,wavelength,E0,w0)
+    GB.Prop_EPhase(q_y,q_z,zoom,wavelength,E0,w0)
     sys.exit()
 
 #Create a 3D array for the intensity of this guassian beam as a function of
 # both w(z) and r
 yrange = ThrDim.BuildDomain(y_window,t_step)
 zrange = ThrDim.BuildDomain(z_window,t_step)
-I = GaussianBeam.IntensityFromSpotSizes(wy,wz,xrange,yrange,zrange,I0,w0)
+I = GB.IntensityFromSpotSizes(wy,wz,xrange,yrange,zrange,I0,w0)
 
 #1-to-1 corresponance between intensity and ADK ionization
 H = ThrDim.IonFracFromIntensity(I,chi,delt_t)

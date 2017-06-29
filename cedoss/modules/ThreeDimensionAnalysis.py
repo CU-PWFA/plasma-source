@@ -44,6 +44,21 @@ def IonFracFromIntensity(I,chi,delt_t):
 def RobertRoll(data):
     return np.rollaxis(data,2)
 
+#Takes a 3D array, and returns a list containing the x,y,z offset of array
+# indices from the middle to the maximum value, as well as the maximum value
+#  data - 3D array
+#  returns - [x_off,y_off,z_off,max(data)]
+def GetMaximumOffset(data):
+    ret = [0,0,0,0]
+    for i in range(len(data[:,0,0])):
+        for j in range(len(data[0,:,0])):
+            for k in range(len(data[0,0,:])):
+                if data[i,j,k] > ret[3]:
+                    ret=[i,j,k,data[i,j,k]]
+    return [ret[0]-round(len(data[:,0,0])/2),
+            ret[1]-round(len(data[0,:,0])/2), 
+            ret[2]-round(len(data[0,0,:])/2), ret[3]]
+
 #Take a 2D array of data, plots cuts in one direction while varying the other
 #  data - 2D array of [i][j], where i is what is plotted and j is varied
 #  axis - the range of which [i] is plotted against
@@ -87,8 +102,8 @@ def ImageCut(data,x,y,z,x_off=0,y_off=0,z_off=0,zoom=1,units='',label='',label_u
     zrange_z=[i*zoom for i in z]
 
     data_yz=np.transpose(data[round(len(x)/2)+x_off,:,:])
-    data_xy=np.transpose(data[:,round(len(y)/2)+y_off,:])
-    data_xz=np.transpose(data[:,:,round(len(z)/2)+z_off])
+    data_xz=np.transpose(data[:,round(len(y)/2)+y_off,:])
+    data_xy=np.transpose(data[:,:,round(len(z)/2)+z_off])
     
     if color == 1:
         plt.set_cmap('plasma')
@@ -105,28 +120,28 @@ def ImageCut(data,x,y,z,x_off=0,y_off=0,z_off=0,zoom=1,units='',label='',label_u
                  aspect='auto')
     CB=plt.colorbar()
     CB.set_label(label+' '+label_units)
-    plt.ylabel('y '+units+' - Jet')
-    plt.xlabel('x '+units+' - Beam')
+    plt.ylabel('z '+units+' - Jet')
+    plt.xlabel('y '+units+' - Beam')
     plt.title(label+'; x='+str(xrange_z[round(len(x)/2)+x_off])+' '+units)
 
     plt.subplot2grid(gridSize, (0,1), colspan=4)
-    plt.imshow(data_xy, interpolation="none", origin="lower",
+    plt.imshow(data_xz, interpolation="none", origin="lower",
                extent=[xrange_z[0],xrange_z[-1],zrange_z[0],zrange_z[-1]],
                aspect='auto')
     CB=plt.colorbar()
     CB.set_label(label+' '+label_units)
-    plt.xlabel('z '+units+' - Laser')
-    plt.ylabel('y '+units+' - Jet')
+    plt.xlabel('x '+units+' - Laser')
+    plt.ylabel('z '+units+' - Jet')
     plt.title(label+'; y='+str(yrange_z[round(len(y)/2)+y_off])+' '+units)
 
     plt.subplot2grid(gridSize, (1,1), colspan=4)
-    plt.imshow(data_xz, interpolation="none", origin="lower",
+    plt.imshow(data_xy, interpolation="none", origin="lower",
                extent=[xrange_z[0],xrange_z[-1],yrange_z[0],yrange_z[-1],],
                aspect='auto')
     CB=plt.colorbar()
     CB.set_label(label+' '+label_units)
-    plt.xlabel('z '+units+' - Laser')
-    plt.ylabel('x '+units+' - Beam')
+    plt.xlabel('x '+units+' - Laser')
+    plt.ylabel('y '+units+' - Beam')
     plt.title(label+'; z='+str(zrange_z[round(len(z)/2)+z_off])+' '+units)
     
     plt.tight_layout()
