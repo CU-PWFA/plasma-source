@@ -26,9 +26,9 @@ me = 0.511e-3 # GeV
 
 # define plasma bulk (flat-top) properties
 npl0   = 1e17 # cm^-3
-dEds0  = 6.00 # GeV/m
+dEds0  = -20.00 # GeV/m
 dgds0  = dEds0/me
-L_ft   = 0.50 # m
+L_ft   = 0.43 # m
 
 # define plasma up-ramp
 shape_up = 'gauss'
@@ -55,12 +55,12 @@ wp0 = (5.64e4)*np.sqrt(npl0) # rad/s, plasma ang. freq.
 kp0 = wp0/c # m^-1, plasma wave number
 kb0 = kp0/np.sqrt(2*gb0) # m^-1, betatron wave number
 
-#beta0  = 1.0/kb0 # m
-beta0  = 0.10 # m
+beta0  = 1.0/kb0 # m
+#beta0  = 0.10 # m
 alpha0 = 0.00
 gamma0 = (1.0+alpha0**2)/beta0 # 1/m
 dE0    = 0.01
-npart  = 500
+npart  = 1000
 beam0  = [gb0,eps0,beta0,alpha0,gamma0,dE0,npart]
 
 # define imaging spectrometer (not used yet)
@@ -75,26 +75,26 @@ parts0 = np.zeros((npart,6))
 for i in range(0,npart):
     parts0[i][:] = [x[i],xp[i],y[i],yp[i],z[i],gb[i]]
 
-# set beam waist
-s_w   = L_up -0.067 #-0.350 #-0.963 # m
-parts0 = proppartslast(parts0,[0,-s_w])
-beam0  = propbeamlast(beam0,[0,-s_w])
-
-# simulate plasma up-ramp
-s_up     = np.linspace(0,L_up,round(L_up/0.0001))
-pargs_up = [L_up,hw_up]
-[plas_up, dgds_up] = plasma_ramp(npl0,shape_up,s_up[0:len(s_up)-1],pargs_up,'up',dgds0)
-beam_up  = propbeam(beam0,s_up,plas_up,dgds_up)
-parts_up = propparts(parts0,s_up,plas_up,dgds_up)
+## set beam waist
+#s_w   = L_up -0.067 #-0.350 #-0.963 # m
+#parts0 = proppartslast(parts0,[0,-s_w])
+#beam0  = propbeamlast(beam0,[0,-s_w])
+#
+## simulate plasma up-ramp
+#s_up     = np.linspace(0,L_up,round(L_up/0.0001))
+#pargs_up = [L_up,hw_up]
+#[plas_up, dgds_up] = plasma_ramp(npl0,shape_up,s_up[0:len(s_up)-1],pargs_up,'up',dgds0)
+#beam_up  = propbeam(beam0,s_up,plas_up,dgds_up)
+#parts_up = propparts(parts0,s_up,plas_up,dgds_up)
 
 # simulate plasma flat-top
 s_ft     = np.linspace(0,L_ft,round(L_ft/0.001))
 plas_ft  = npl0*np.ones(len(s_ft)-1)
 dgds_ft  = dgds0*np.ones(len(s_ft)-1)
-beam_ft  = propbeam(beam_up[len(beam_up)-1],s_ft,plas_ft,dgds_ft)
-parts_ft = propparts(parts_up[len(parts_up)-1],s_ft,plas_ft,dgds_ft)
-#beam_ft  = propbeam(beam0,s_ft,plas_ft,dgds0)
-#parts_ft = propparts(parts0,s_ft,plas_ft,dgds_ft)
+#beam_ft  = propbeam(beam_up[len(beam_up)-1],s_ft,plas_ft,dgds_ft)
+#parts_ft = propparts(parts_up[len(parts_up)-1],s_ft,plas_ft,dgds_ft)
+beam_ft  = propbeam(beam0,s_ft,plas_ft,dgds_ft)
+parts_ft = propparts(parts0,s_ft,plas_ft,dgds_ft)
 
 ## simulate plasma down-ramp
 #s_dn     = np.linspace(0,L_dn,round(L_dn/0.001))
@@ -105,10 +105,10 @@ parts_ft = propparts(parts_up[len(parts_up)-1],s_ft,plas_ft,dgds_ft)
 
 
 
-beam = np.vstack((beam_up,beam_ft))
-parts = np.vstack((parts_up,parts_ft))
-#beam = beam_ft
-#parts = parts_ft
+#beam = np.vstack((beam_up,beam_ft))
+#parts = np.vstack((parts_up,parts_ft))
+beam = beam_ft
+parts = parts_ft
 
 sig_p  = np.zeros(len(parts))
 eps_p  = np.zeros(len(parts))
@@ -133,11 +133,11 @@ for i in range(0,len(beam)):
 #    print(Tbeam)
 #    print(Tmatch)
     M[i]   = calc_M(Tbeam,Tmatch)
-    print(M[i])
+#    print(M[i])
 
-plot_x = np.hstack((s_up,s_up[len(s_up)-1]+s_ft))
+#plot_x = np.hstack((s_up,s_up[len(s_up)-1]+s_ft))
 #plot_x = np.hstack((plot_x,s_up[len(s_up)-1]+s_ft[len(s_ft)-1]+s_dn))
-#plot_x = s_ft
+plot_x = s_ft
 plot_y1 = eps_p/eps_p[0]
 plot_y2 = M
 fig = plt.figure()

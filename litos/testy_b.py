@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import nat_consts as nc
 import particle_beam as pb
 import plasma_source as ps
+import particle_beam_propagation as pbp
 
 # define plasma bulk (flat-top) properties
 npl0   = 1e17 # cm^-3
@@ -58,7 +59,18 @@ twiss0 = pb.make_twiss(beta,alpha,gamma,eps,gbC,dgb,dz)
 parts0 = pb.make_parts(twiss0,npart,dist)
 ebeam  = pb.make_ebeam(0,twiss0,parts0)
 
+#print(ebeam[len(ebeam)-1]["parts"]["npart"])
+
 # set beam waist position
+s_w   = L_up -0.067 #-0.350 #-0.963 # m
+ebeam = pbp.prop_ebeam_drift(ebeam,[0,-s_w],True)
+
+print(ebeam[len(ebeam)-1]["twiss"])
+
+print(ebeam[len(ebeam)-1]["parts"]["x"][3])
+
+#parts0 = proppartslast(parts0,[0,-s_w])
+#beam0  = propbeamlast(beam0,[0,-s_w])
 
 # propagate beam backward from waist to start of plasma
 
