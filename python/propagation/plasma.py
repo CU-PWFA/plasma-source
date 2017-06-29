@@ -58,6 +58,8 @@ def plasma_refraction(params, Efunc, Tfunc, n0=False):
                 Wavelength of the optical pulse in um.
             path : string
                 File loaction for storing simulation results.
+            nFinal : bool
+                Save the final 3D density profile.
     Efunc : function
         Function that returns the initial E field at z=0, Efunc(x,y).
         Must be able to x as a  size (Nx, 1) numpy array and y as a
@@ -132,6 +134,8 @@ def plasma_refraction(params, Efunc, Tfunc, n0=False):
     np.save(path+'inputField', Ei)
     np.save(path+'inputPulse', Et)
     np.save(path+'params', params)
+    if 'nFinal' in params and 'nFinal':
+        np.save(path+'finalDensity', n)
 
 
 def plasma_index(n, lam):

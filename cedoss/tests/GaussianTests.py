@@ -7,9 +7,13 @@ them in 2D
 """
 
 import numpy as np
-import GaussianBeam
 import matplotlib.pyplot as plt
-import ADK_Combined as adk
+
+import sys
+sys.path.insert(0, "../")
+
+from modules import Doss_Ionization as adk
+from modules import GaussianBeam
 
 #Set up constants and size of our domain in z and r
 size = 500

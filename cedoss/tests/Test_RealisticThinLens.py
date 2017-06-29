@@ -5,10 +5,14 @@ Created on Fri May 26 09:55:45 2017
 @author: chris
 """
 
-import GaussianBeam
 import numpy as np
 import matplotlib.pyplot as plt
-import ADK_Combined as adk
+
+import sys
+sys.path.insert(0, "../")
+
+from modules import GaussianBeam
+from modules import Doss_Ionization as adk
 
 c=2.998e8
 P=4e9

@@ -7,8 +7,10 @@ different combinations of optics (selected with the choice variable)
 
 @author: chris
 """
+import sys
+sys.path.insert(0, "../")
 
-import GaussianBeam
+from modules import GaussianBeam
 import numpy as np
 import matplotlib.pyplot as plt
 

@@ -12,7 +12,11 @@ ionization curves for H, He, Ar, and Ar+2
 
 import numpy as np
 import matplotlib.pyplot as plt
-import ADK_Combined as adk
+
+import sys
+sys.path.insert(0, "../")
+
+from modules import Doss_Ionization as adk
 
 #Enter 1 to print out information on individual ionization levels
 print_table=0
