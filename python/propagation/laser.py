@@ -508,10 +508,10 @@ def fresnel_axis(E, r, z, lam, n=1):
     """
     Nz = np.size(z)
     k = 2*np.pi*n/lam
-    # Integral prefactor
-    pre = k*np.exp(1j*k*z) / (1j*z)
     # Reshape to create the Nz X Nr array for integration
     z = np.reshape(z, (Nz, 1))
+    # Integral prefactor
+    pre = k*np.exp(1j*k*z) / (1j*z)
     # Calculate the argument of the integral
     arg = E * np.exp(1j*k*r**2/(2*z)) * r  
     e = pre * integrate.simps(arg, r, axis=1)
