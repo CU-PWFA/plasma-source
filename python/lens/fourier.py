@@ -12,6 +12,7 @@ from scipy.interpolate import interp1d
 from numpy.fft import fft, ifft, fftfreq, ifftshift
 
 
+#XXX Don't use this, it doesn't converge
 def phase_function(I0, r, I, z, lam, M):
     """ Generates a phase mask to create an on axis intensity profile.
 
