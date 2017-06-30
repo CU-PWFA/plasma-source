@@ -32,7 +32,7 @@ zoom=int(round(window/l_step))
 
 choice=4
 
-if choice==4:#Most simple, but optic is close to gas jet
+if choice==4:
     f1 = 0.100 #m
     f2 = 0.0125
     L1 = 0.030

@@ -278,13 +278,13 @@ def Prop_EPhase(q_y, q_z, offset, lmba, E0, w0):
     
     phase=2*np.pi/lmba*(2*xi-xoy-xoz)
     
-    print("E_0 =",str(E0*w0/np.sqrt(wy[waist-offset]*wz[waist-offset])))
-    print("wix =",str(wy[plane]))
-    print("wiy =",str(wz[plane]))
-    print("Px =",str(lmba*Ry[plane]/np.pi))
-    print("Py =",str(lmba*Rz[plane]/np.pi))
+    print("E0 =",str(E0*w0/np.sqrt(wy[waist-offset]*wz[waist-offset])))
+    print("wx =",str(wy[plane]))
+    print("wy =",str(wz[plane]))
+    print("Px =",str(-lmba*Ry[plane]/np.pi))
+    print("Py =",str(-lmba*Rz[plane]/np.pi))
     print("phi =",str((.5*(guoyy+guoyz-phase))%(2*np.pi)))
-    print("z_i =",str(xi))
+    print("zi =",str(xrange[waist]-xi))
 
 #Takes list of q parameters and prints out the minimum spot size and
 # the location of the spot size along laser propagation
@@ -299,7 +299,7 @@ def Prop_SpotInfo(q,lmba,label1='',label2=''):
     print(label2+' '+str(x[w.index(min(w))]))
 
 #Unused thus far
-
+"""
 #Calculates a static Gausssian beam in terms of electric field strength
 # (unused)
 #  E_0 - Electric Field Strength at waist
@@ -331,3 +331,4 @@ def GaussianBeamTime(E0,k,w0,z0,w,z,r,t):
     static = GaussianBeamStatic(E0,k,w0,z0,z,r)
     E = static*np.exp(-1j*w*t)
     return E
+"""

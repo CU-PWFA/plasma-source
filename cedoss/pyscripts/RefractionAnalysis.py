@@ -14,15 +14,17 @@ sys.path.insert(0, "../")
 from modules import ThreeDimensionAnalysis as ThrDim
 import numpy as np
 
-cuts=0
-max_corrector=1
+cuts=1
+max_corrector=0
 
 #size of window in micrometers
 y_window = 100
 z_window = 400
 
-folder = '/home/chris/Desktop/FourierPlots/real_FACET_Refraction/'
-directory = 'gasjet_den_propagation_1e20/'
+folder = '/home/chris/Desktop/FourierPlots/CompactOptics_DoubleJet/'
+#folder = '/home/chris/Desktop/FourierPlots/CompactOptics/'
+#folder = '/home/chris/Desktop/FourierPlots/real_FACET_Refraction/'
+directory = 'gasjet_den_propagation_1e18/'
 path = folder+directory
 
 nplot = np.load(path+'finalDensity.npy')
@@ -77,13 +79,13 @@ if cuts == 1:
     label=['Density along beam axis (Vary Jet Distance)',
            'Radius from axis (microns)',
            'ni (e17 cm^-3)',
-           'Offset in y(microns)']
+           'Offset in z(microns)']
     ThrDim.VarianceCut(den_plane_yz,y,z_off,5,10,z_step,label)
     ThrDim.VarianceCut(den_plane_yz,y,z_off,5,-10,z_step,label)
     label=['Density along beam axis (Vary Jet Distance)',
            'Radius from axis (microns)',
            'ni (e17 cm^-3)',
-           'Offset in +/- y(microns)']
+           'Offset in +/- z(microns)']
     ThrDim.VarianceCut(den_plane_yz,y,z_off,10,5,z_step,label,True)
     
     den_plane_yx=np.transpose(den[:,:,round(len(z)/2)+z_off])
