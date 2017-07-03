@@ -18,9 +18,22 @@ import numpy as np
 #  z_offset - distance between nozzle and origin (center of beam, for example)
 #  x,y,z - Cartesian coordinates for which to calculate density
 def SimpleGasJet(n0,Lz,Lr,z_offset,x,y,z):
-    if z<(-z_offset):
+    if z < (-z_offset):
         return 0
     else:
         nr=np.exp(-(np.power(x,2)+np.power(y,2))/(2*np.power(Lr,2)))
         nz=np.exp(-(z+z_offset)/Lz)
         return n0*nr*nz
+    
+#Creates a density distribution of two identical gas jets directed at one
+# another.  In other words, there is a first SimpleGasJet located at -z_offset
+# and a second at +z_offset.  Gives desired profile with ADK ionization
+#  n0 - density at nozzles
+#  Lz - scale length of exponential profile in z
+#  Lr - scale length of Gaussian profile in r
+#  z_offset - distance between nozzles and origin (center of beam, for example)
+#  x,y,z - Cartesian coordinates for which to calculate density
+def DoubleGasJet(n0,Lz,Lr,z_offset,x,y,z):
+    jet1 = SimpleGasJet(n0,Lz,Lr,z_offset,x,y,z)
+    jet2 = SimpleGasJet(n0,Lz,Lr,z_offset,x,y,-z)
+    return jet1 + jet2

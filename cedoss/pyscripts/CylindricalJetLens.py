@@ -17,6 +17,9 @@ from modules import Doss_Ionization as adkD
 from modules import DensityDistributions as dendis
 from modules import ThreeDimensionAnalysis as ThrDim
 
+#Set to 0 for SimpleGasJet, 1 for DoubleGasJet
+distribution = 1
+
 #Flags for plotting different things
 only_w = 0
 cut_plots_H = 1
@@ -177,8 +180,14 @@ if den_plot + cut_plots_den > 0:
     for x in np.arange(len(xrange)):
         for y in np.arange(len(yrange)):
             for z in np.arange(len(zrange)):
-                den[x][y][z]=H[x][y][z]*dendis.SimpleGasJet(nozzle_den,
-                   L_z,L_r,nozzle_loc,xrange[x],yrange[y],zrange[z])
+                
+                if distribution == 0:
+                    den[x][y][z]=H[x][y][z]*dendis.SimpleGasJet(nozzle_den,
+                       L_z,L_r,nozzle_loc,xrange[x],yrange[y],zrange[z])
+                    
+                if distribution == 1:
+                    den[x][y][z]=H[x][y][z]*dendis.DoubleGasJet(nozzle_den,
+                       L_z,L_r,nozzle_loc,xrange[x],yrange[y],zrange[z])
 if den_plot == 1:
     ThrDim.ImageCut(den,xrange,yrange,zrange,0,0,0,1000,'(mm)','Plasma Density','(cm^-3)',1)
     

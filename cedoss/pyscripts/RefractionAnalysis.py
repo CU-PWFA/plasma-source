@@ -24,7 +24,7 @@ z_window = 400
 folder = '/home/chris/Desktop/FourierPlots/CompactOptics_DoubleJet/'
 #folder = '/home/chris/Desktop/FourierPlots/CompactOptics/'
 #folder = '/home/chris/Desktop/FourierPlots/real_FACET_Refraction/'
-directory = 'gasjet_den_propagation_1e18/'
+directory = 'gasjet_den_propagation_1e18_Lz500/'
 path = folder+directory
 
 nplot = np.load(path+'finalDensity.npy')
@@ -99,4 +99,4 @@ if cuts == 1:
            'Radius from axis (microns)',
            'ni (e17 cm^-3)',
            'Offset in +/- x(microns)']
-    ThrDim.VarianceCut(den_plane_yx,y,x_off,10,1,x_step,label,True)
+    ThrDim.VarianceCut(den_plane_yx,y,x_off,4,1,x_step,label,True)
