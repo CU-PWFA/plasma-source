@@ -32,7 +32,8 @@ def prop_ebeam_plasma(ebeam,plasma,last_only=False):
     parts = ebeam[len(ebeam)-1]["parts"]
     
     # propagate beam
-    for i in range(1,len(s)):      
+    for i in range(1,len(s)):
+        print(r's = %d',s[i])
         twiss = prop_twiss_plasma_step(twiss,s[i]-s[i-1],npl[i-1],dgds[i-1])
         parts = prop_parts_plasma_step(parts,s[i]-s[i-1],npl[i-1],dgds[i-1])
 
