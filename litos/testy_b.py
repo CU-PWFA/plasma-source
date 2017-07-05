@@ -65,7 +65,7 @@ ebeam  = pb.make_ebeam(0,twiss0,parts0)
 s_w   = L_up -0.067 #-0.350 #-0.963 # m
 ebeam = pbp.prop_ebeam_drift(ebeam,[0,-s_w],True)
 
-print(ebeam[len(ebeam)-1]["twiss"])
+#print(ebeam[len(ebeam)-1]["twiss"])
 
 print(ebeam[len(ebeam)-1]["parts"]["x"][3])
 
