@@ -13,8 +13,7 @@ import particle_beam as pb
 import plasma_source as ps
 import particle_beam_propagation as pbp
 
-
-def derpdaderp():
+if __name__ == '__main__':
     
     # define plasma bulk (flat-top) properties
     npl0   = 1e17 # cm^-3
@@ -58,28 +57,20 @@ def derpdaderp():
     dist  = 'gauss'
     
     # make beam
+    s0     = 0.0
     twiss0 = pb.make_twiss(beta,alpha,gamma,eps,gbC,dgb,dz)
     parts0 = pb.make_parts(twiss0,npart,dist)
-    ebeam  = pb.make_ebeam(0,twiss0,parts0)
+    ebeam  = pb.make_ebeam(s0,twiss0,parts0)
     
     # set beam waist position
     s_w   = L_up -0.067 #-0.350 #-0.963 # m
     
     # propagate beam backward from waist to start of plasma
-    ebeam = pbp.prop_ebeam_drift(ebeam,[0,-s_w],True)
-#    ebeam["s"] = 0
-    
+    ebeam = pbp.prop_ebeam_drift(ebeam,[0,-s_w],last_only=True)
+
     # propagate beam through plasma
-    ebeam = pbp.prop_ebeam_plasma(ebeam,plasma,False)
+    ebeam = pbp.prop_ebeam_plasma(ebeam,plasma,last_only=False)
 
-    return ebeam
-
-
-if __name__ == '__main__':
-        
-    
-    ebeam = derpdaderp()
-    
     
     # analyze results
     
@@ -98,9 +89,16 @@ if __name__ == '__main__':
     #for j in range(0,len(parts[i])):
     #        [x[j],xp[j],y[j],yp[j],z[j],gb[j]] = parts[len(parts)-1,j,:]
     fig = plt.figure()
-    plt.hist(ebeam[0]["parts"]["x"],25)
+    plt.hist(ebeam[0]["x"],25)
     fig = plt.figure()
-    plt.hist(ebeam[0]["parts"]["y"],25)
+    plt.hist(ebeam[0]["y"],25)
     
+    s    = np.zeros(len(ebeam))
+    beta = np.zeros(len(ebeam))
+    for i in range(0,len(ebeam)-1):
+        s[i] = ebeam[i]["s"]
+        beta[i] = ebeam[i]["beta"]
     
+    fig = plt.figure()
+    plt.scatter(s,beta)
 

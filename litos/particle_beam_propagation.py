@@ -24,19 +24,18 @@ def prop_ebeam_drift(ebeam,s,last_only=False):
 
 def prop_ebeam_plasma(ebeam,plasma,last_only=False):
     """function to propagate ebeam through plasma"""
-    s    = plasma["s"]
-    npl  = plasma["npl"]
-    dgds = plasma["dgds"]
-     
-    twiss = ebeam[len(ebeam)-1]["twiss"]
-    parts = ebeam[len(ebeam)-1]["parts"]
+    s     = plasma["s"]
+    npl   = plasma["npl"]
+    dgds  = plasma["dgds"]
+    twiss = pb.get_twiss(ebeam,len(ebeam)-1)
+    parts = pb.get_parts(ebeam,len(ebeam)-1)
     
     # propagate beam
     for i in range(1,len(s)):
         print(r's = %d',s[i])
         twiss = prop_twiss_plasma_step(twiss,s[i]-s[i-1],npl[i-1],dgds[i-1])
         parts = prop_parts_plasma_step(parts,s[i]-s[i-1],npl[i-1],dgds[i-1])
-
+        
         if (last_only):
             continue
         else:
@@ -103,62 +102,6 @@ def prop_twiss_plasma_step(twiss,ds=0,npl=0,dgds=0):
 
 def prop_parts_plasma_step(parts,ds=0,npl=0,dgds=0):
     """propagate all macro particles through plasma for a single step"""
-    
-    """ Old, non-parallel way:
-#    x     = parts["x"]
-#    xp    = parts["xp"]
-#    y     = parts["y"]
-#    yp    = parts["yp"]
-#    z     = parts["z"]
-#    gb    = parts["gb"]
-#    npart = parts["npart"]
-#    
-#    # loop over particles
-#    for i in range(0,npart):
-#    
-#        # calculate kb
-#        wp = (5.64e4)*np.sqrt(npl) # rad/s, plasma ang. freq.
-#        kp = wp/nc.c # m^-1, plasma wave nutarget_betaer
-#        kb = kp/np.sqrt(2*gb[i]) # m^-1, betatron wave number
-#     
-#        # beam phase space transfer matrix
-#        if kb>0: # if plasma density is non-zero
-#            R = [ [np.cos(kb*ds)    , np.sin(kb*ds)/kb], \
-#                  [-kb*np.sin(kb*ds), np.cos(kb*ds)   ]  ]
-#        else: # treat like drift
-#            R = [ [1, ds], \
-#                  [0, 1]  ]
-#    
-#        # perform beam transport
-#        X = [x[i],xp[i]]
-#        Y = [y[i],yp[i]]
-#        
-#        X = np.dot(R,X)
-#        Y = np.dot(R,Y)
-#    
-#        # add energy gain/loss
-#        Dgb = dgds*ds
-#        gb[i]  = gb[i] + Dgb
-#        
-#        # reduce angle from energy gain/loss
-#        if Dgb!=0:
-#            R = [ [1,        0], \
-#                  [0, 1-Dgb/gb[i]]  ]
-#            X = np.dot(R,X)
-#            Y = np.dot(R,Y)
-#        
-#        [x[i],xp[i]] = X
-#        [y[i],yp[i]] = Y
-#
-#    # return transported beam params
-#    parts["x"]  = x
-#    parts["xp"] = xp
-#    parts["y"]  = y
-#    parts["yp"] = yp
-#    parts["z"]  = z
-#    parts["gb"] = gb
-#    parts["npart"] = npart
-    """
 
     # propagate individual particles in parallel
     npart = parts["npart"]

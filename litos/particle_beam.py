@@ -14,16 +14,52 @@ import time as time
 
 def make_ebeam(s,twiss,parts):
     ebeam = defaultdict(dict)
-    ebeam[0]["s"]     = s
-    ebeam[0]["twiss"] = twiss
-    ebeam[0]["parts"] = parts
+    ebeam = append_ebeam_step(ebeam,0,s,twiss,parts)
     return ebeam
 
 def append_ebeam_step(ebeam,step,s,twiss,parts):
     ebeam[step]["s"]     = s
-    ebeam[step]["twiss"] = twiss
-    ebeam[step]["parts"] = parts
+    ebeam[step]["beta"]  = twiss["beta"]
+    ebeam[step]["alpha"] = twiss["alpha"]
+    ebeam[step]["gamma"] = twiss["gamma"]
+    ebeam[step]["eps"]   = twiss["eps"]
+    ebeam[step]["gbC"]   = twiss["gbC"]
+    ebeam[step]["dgb"]   = twiss["dgb"]
+    ebeam[step]["dz"]    = twiss["dz"]
+    ebeam[step]["x"]     = parts["x"]
+    ebeam[step]["xp"]    = parts["xp"]
+    ebeam[step]["y"]     = parts["y"]
+    ebeam[step]["yp"]    = parts["yp"]
+    ebeam[step]["z"]     = parts["z"]
+    ebeam[step]["gb"]    = parts["gb"]
+    ebeam[step]["npart"] = parts["npart"]
+    ebeam[step]["dist"]  = parts["dist"]
     return ebeam
+
+def get_twiss(ebeam,step=0):
+    """generate Twiss parameter dictionary object from ebeam"""
+    twiss = defaultdict(dict)
+    twiss["beta"]  = ebeam[step]["beta"]
+    twiss["alpha"] = ebeam[step]["alpha"]
+    twiss["gamma"] = ebeam[step]["gamma"]
+    twiss["eps"]   = ebeam[step]["eps"]
+    twiss["gbC"]   = ebeam[step]["gbC"]
+    twiss["dgb"]   = ebeam[step]["dgb"]
+    twiss["dz"]    = ebeam[step]["dz"]
+    return twiss
+
+def get_parts(ebeam,step=0):
+    """generate macro particle dictionary object from ebeam"""
+    parts = defaultdict(dict)
+    parts["x"]     = ebeam[step]["x"]
+    parts["xp"]    = ebeam[step]["xp"]
+    parts["y"]     = ebeam[step]["y"]
+    parts["yp"]    = ebeam[step]["yp"]
+    parts["z"]     = ebeam[step]["z"]
+    parts["gb"]    = ebeam[step]["gb"]
+    parts["npart"] = ebeam[step]["npart"]
+    parts["dist"]  = ebeam[step]["dist"]
+    return parts
 
 def make_twiss(beta,alpha,gamma,eps,gbC,dgb,dz):
     """generate Twiss parameter dictionary object"""
@@ -41,62 +77,6 @@ def make_parts(twiss,npart,dist):
     """generate macro particle dictionary object"""
     parts = defaultdict(dict)
 
-    """Old, non-parallel way:
-#    beta  = twiss["beta"]
-#    alpha = twiss["alpha"]
-#    gamma = twiss["gamma"]
-#    eps   = twiss["eps"]
-#    gbC   = twiss["gbC"]
-#    dgb   = twiss["dgb"]
-#    dz    = twiss["dz"]
-#         
-#    x  = np.zeros(npart)
-#    xp = np.zeros(npart)
-#    y  = np.zeros(npart)
-#    yp = np.zeros(npart)
-#    z  = np.zeros(npart)
-#    gb = np.zeros(npart)
-#    
-#    for i in range(0,npart):
-#        rndx = np.random.uniform(0,1)
-#        rndy = np.random.uniform(0,1)
-#        if dist.lower() == 'gauss': # gaussian distribution
-#            rx   = np.sqrt(2)*np.sqrt(eps/gbC)*\
-#                    np.sqrt(-np.log(rndx))
-#            ry   = np.sqrt(2)*np.sqrt(eps/gbC)*\
-#                    np.sqrt(-np.log(rndy))
-#        elif dist.lower() == 'uniform': # uniform distribution
-#            rx   = np.sqrt(rndx)*np.sqrt(eps/gbC)
-#            ry   = np.sqrt(rndy)*np.sqrt(eps/gbC)
-#        else :
-#            print('no particle distribution given')
-#            return
-#                    
-#        phix = np.random.uniform(0,2*np.pi)
-#        ux = rx*np.cos(phix)
-#        vx = rx*np.sin(phix)
-#        x[i]  = ux*np.sqrt(beta)
-#        xp[i] = (vx-(alpha/beta)*x[i])/np.sqrt(beta)
-#        
-#        phiy = np.random.uniform(0,2*np.pi)
-#        uy = ry*np.cos(phiy)
-#        vy = ry*np.sin(phiy)
-#        y[i]  = uy*np.sqrt(beta)
-#        yp[i] = (vy-(alpha/beta)*y[i])/np.sqrt(beta)
-#                
-#        z[i]  = dz*np.random.uniform(-1,1)
-#        gb[i] = gbC*(1+dgb*np.random.uniform(-1,1))
-#
-#    parts["x"]  = x
-#    parts["xp"] = xp
-#    parts["y"]  = y
-#    parts["yp"] = yp
-#    parts["z"]  = z
-#    parts["gb"] = gb
-#    parts["npart"] = npart
-#    parts["dist"]  = dist
-    """
-            
     # propagate individual particles in parallel
     num_cores = multiprocessing.cpu_count()
     phase6D = Parallel(n_jobs=num_cores)\
@@ -105,12 +85,12 @@ def make_parts(twiss,npart,dist):
     phase6D = np.reshape(phase6D,[npart,6])
 
     # return transported beam params
-    parts["x"]  = phase6D[:,0]
-    parts["xp"] = phase6D[:,1]
-    parts["y"]  = phase6D[:,2]
-    parts["yp"] = phase6D[:,3]
-    parts["z"]  = phase6D[:,4]
-    parts["gb"] = phase6D[:,5]
+    parts["x"]     = phase6D[:,0]
+    parts["xp"]    = phase6D[:,1]
+    parts["y"]     = phase6D[:,2]
+    parts["yp"]    = phase6D[:,3]
+    parts["z"]     = phase6D[:,4]
+    parts["gb"]    = phase6D[:,5]
     parts["npart"] = npart
     parts["dist"]  = dist
     return parts
