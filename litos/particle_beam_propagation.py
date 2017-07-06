@@ -32,15 +32,20 @@ def prop_ebeam_plasma(ebeam,plasma,last_only=False):
     
     # propagate beam
     for i in range(1,len(s)):
-        print(r's = %d',s[i])
+#        print('s = ',s[i])
         twiss = prop_twiss_plasma_step(twiss,s[i]-s[i-1],npl[i-1],dgds[i-1])
-        parts = prop_parts_plasma_step(parts,s[i]-s[i-1],npl[i-1],dgds[i-1])
+        if ebeam[0]["npart"]>0:
+            parts = prop_parts_plasma_step(parts,s[i]-s[i-1],npl[i-1],dgds[i-1])
         
         if (last_only):
             continue
         else:
             step  = len(ebeam)
             ebeam = pb.append_ebeam_step(ebeam,step,s[i],twiss,parts)
+
+    if (last_only):
+        step  = len(ebeam)
+        ebeam = pb.append_ebeam_step(ebeam,step,s[-1],twiss,parts)
 
     return ebeam
 

@@ -18,37 +18,47 @@ def calc_dgds(dgds0,npl0,npl,model=0):
         
     return dgds
 
-def make_ramp(s,updn,shape,hw,s_top,npl0,dgds0):
+def make_ramp(s,updn,shape,hw,top_loc,npl0,dgds0):
     ramp = defaultdict(dict)
     
-    ramp["L"]     = np.abs(s[-1]-s[0])
-    ramp["updn"]  = updn
-    ramp["shape"] = shape
-    ramp["hw"]    = hw
-    ramp["s_top"] = s_top
-    ramp["npl0"]  = npl0
-    ramp["dgds0"] = dgds0
+    ramp["L"]       = np.abs(s[-1]-s[0])
+    ramp["updn"]    = updn
+    ramp["shape"]   = shape
+    ramp["hw"]      = hw
+    ramp["top_loc"] = top_loc
+    ramp["npl0"]    = npl0
+    ramp["dgds0"]   = dgds0
     
     # normal gauss. func.
     if shape.lower() == 'gauss':
         sig = hw/(np.sqrt(2*np.log(2)))
+        
+        # crudely avoid NaNs
+        if sig==0:
+            sig = 1e-6
+        
         # up-ramp
         if updn.lower() == 'up':
-            npl = npl0*((s<s_top)*np.exp(-((s-s_top)**2)/(2*(sig**2))) +\
-                       (s>=s_top)*1)
+            npl = npl0*((s<top_loc)*np.exp(-((s-top_loc)**2)/(2*(sig**2))) +\
+                       (s>=top_loc)*1)
         # down-ramp
         else:
-            npl = npl0*((s>s_top)*np.exp(-((s-s_top)**2)/(2*(sig**2))) +\
-                       (s<=s_top)*1)
+            npl = npl0*((s>top_loc)*np.exp(-((s-top_loc)**2)/(2*(sig**2))) +\
+                       (s<=top_loc)*1)
     # sigmoidal func.
     elif shape.lower() == 'sigmoid':
         sig = hw
+        
+        # crudely avoid NaNs
+        if sig==0:
+            sig = 1e-6
+        
         # up-ramp
         if updn.lower() == 'up':
-            npl = npl0*(1/(1+np.exp(-(s-(s_top-2*sig))/(sig/4))))
+            npl = npl0*(1/(1+np.exp(-(s-(top_loc-2*sig))/(sig/4))))
         # down-ramp
         else:
-            npl = npl0*(1/(1+np.exp(+(s-(s_top+2*sig))/(sig/4))))
+            npl = npl0*(1/(1+np.exp(+(s-(top_loc+2*sig))/(sig/4))))
     # no ramp
     else:
         npl = np.zeros(len(s))
