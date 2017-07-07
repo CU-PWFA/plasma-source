@@ -21,12 +21,12 @@ if __name__ == '__main__':
     npl0   = 1e17 # cm^-3
     dEds0  = 6.00e9 # eV/m
     dgds0  = dEds0/nc.me
-    L_ft   = 0.50 # m
+    L_ft   = 0.10 # m
     
     # define plasma up-ramp
     shape_up = 'gauss'
-    hw_up    = 0.15 # m
-    L_up     = 0.50 # m
+    hw_up    = 0.147 # m
+    L_up     = 1.00 # m
     top_up   = L_up # m
     
     # define plasma down-ramp
@@ -65,7 +65,8 @@ if __name__ == '__main__':
     ebeam0 = pb.make_ebeam(s0,twiss0,parts0)
     
     # set beam waist position
-    s_w   = L_up -0.425 # m
+    waist = -0.430 # m, waist location w.r.t L_up
+    s_w   = L_up + waist # m
     
     # propagate beam backward from waist to start of plasma
     ebeam0 = pbp.prop_ebeam_drift(ebeam0,[0,-s_w],last_only=True)
@@ -106,6 +107,7 @@ if __name__ == '__main__':
     ax1 = fig.add_subplot(111)
     ax1.scatter(s,beta)
     ax1.scatter(s,plasma["npl"]*max(beta)/max(plasma["npl"]))
+    plt.ylim([0,1.1*max(beta)])
     
     fig = plt.figure()
     plt.scatter(s,rms_x)

@@ -20,59 +20,49 @@ from calc_M import calc_M
 
 import time as time
 
-def scan_waist_hw_up(ebeam0,plasma,waist,hw_up,ax1,ax2,k):
-    # get scan indices
-    nhw_up = len(hw_up)
-    i = int(k/nhw_up)
-    j = k%nhw_up
-            
-    print(i*nhw_up+j)
-
-    # get scan variables
-    iwaist = waist[i]
-    jhw_up = hw_up[j]
+def scan_waist_hw_up(ebeam0,plasma0,waist,hw_up,k):
 
     # set beam waist position
-    s_w = plasma["up_ramp"]["L"] + iwaist
+    s_w = plasma0["up_ramp"]["L"] + waist
     
-    print(s_w)
+    # make local copy of initial ebeam and plasma
+    s0     = 0
+    twiss0 = pb.get_twiss(ebeam0,len(ebeam0)-1)
+    parts0 = pb.get_parts(ebeam0,len(ebeam0)-1)
+    ebeam  = pb.make_ebeam(s0,twiss0,parts0)
+    plasma = plasma0
     
     # propagate beam backward from waist to start of plasma
-    s0     = 0
-    ebeam  = pbp.prop_ebeam_drift(ebeam0,[0,-s_w],last_only=True)
-    twiss0 = pb.get_twiss(ebeam,len(ebeam)-1)
-    parts0 = pb.get_parts(ebeam,len(ebeam)-1)
-    ebeam  = pb.make_ebeam(s0,twiss0,parts0)
+    ebeam = pbp.prop_ebeam_drift(ebeam,[0,-s_w],last_only=False)
+    twiss = pb.get_twiss(ebeam,len(ebeam)-1)
+    parts = pb.get_parts(ebeam,len(ebeam)-1)
+    ebeam = pb.make_ebeam(s0,twiss,parts)
     
-    print(len(ebeam))
-    
-    
-#    # modify up-ramp
-#    up_ramp  = plasma["up_ramp"]
-#    s_up     = up_ramp["s"]
-#    shape_up = up_ramp["shape"]
-#    top_up   = up_ramp["top_loc"]
-#    npl0     = up_ramp["npl0"]
-#    dgds0    = up_ramp["dgds0"]
-#    up_ramp  = ps.make_ramp(s_up,"up",shape_up,jhw_up,top_up,npl0,dgds0)
-#
-#    # make plasma
-#    bulk     = plasma["bulk"]
-#    dn_ramp  = plasma["dn_ramp"]
-#    plasma  = ps.make_plasma(bulk,up_ramp,dn_ramp)
+    # modify up-ramp
+    up_ramp  = plasma["up_ramp"]
+    s_up     = up_ramp["s"]
+    shape_up = up_ramp["shape"]
+    top_up   = up_ramp["top_loc"]
+    npl0     = up_ramp["npl0"]
+    dgds0    = up_ramp["dgds0"]
+    up_ramp  = ps.make_ramp(s_up,"up",shape_up,hw_up,top_up,npl0,dgds0)
+
+    # make plasma
+    bulk     = plasma["bulk"]
+    dn_ramp  = plasma["dn_ramp"]
+    plasma  = ps.make_plasma(bulk,up_ramp,dn_ramp)
 
     # propagate beam through plasma
     ebeam = pbp.prop_ebeam_plasma(ebeam,plasma,last_only=False)
 
-
-    s     = np.zeros(len(ebeam))
-    beta  = np.zeros(len(ebeam))
-    for i in range(0,len(ebeam)):
-        s[i] = ebeam[i]["s"]
-        beta[i] = ebeam[i]["beta"]
-
-    ax2.scatter(s,beta)
-    ax1.scatter(s,plasma["npl"])
+#    s     = np.zeros(len(ebeam))
+#    beta  = np.zeros(len(ebeam))
+#    for i in range(0,len(ebeam)):
+#        s[i] = ebeam[i]["s"]
+#        beta[i] = ebeam[i]["beta"]
+#
+#    ax2.scatter(s,beta)
+#    ax1.scatter(s,plasma["npl"])
  
 
     # calculate mismatch parameter
@@ -90,7 +80,7 @@ def scan_waist_hw_up(ebeam0,plasma,waist,hw_up,ax1,ax2,k):
 if __name__ == '__main__':
     
     # define plasma bulk (flat-top) properties
-    npl0   = 1e-17 #1e17 # cm^-3
+    npl0   = 1e17 # cm^-3
     dEds0  = 6.00e9 # eV/m
     dgds0  = dEds0/nc.me
     L_ft   = 0.50 # m
@@ -117,7 +107,7 @@ if __name__ == '__main__':
     bulk    = ps.make_bulk(s_ft,npl0,dgds0)
     up_ramp = ps.make_ramp(s_up,'up',shape_up,hw_up,top_up,npl0,dgds0)
     dn_ramp = ps.make_ramp(s_dn,'dn',shape_dn,hw_dn,top_dn,npl0,dgds0)
-    plasma  = ps.make_plasma(bulk,up_ramp,dn_ramp)
+    plasma0 = ps.make_plasma(bulk,up_ramp,dn_ramp)
     
     # define beam parameters
     gbC    = 20000 # relativistic lorentz factor
@@ -137,27 +127,28 @@ if __name__ == '__main__':
     ebeam0 = pb.make_ebeam(s0,twiss0,parts0)
     
     # specify waist scan values
-    nwaist = 3 #61
-    waist  = np.linspace(-1.2,0.0,nwaist) # m, waist location w.r.t. L_up
+    nwaist = 21
+    waist  = np.linspace(-0.35,-0.55,nwaist) # m, waist location w.r.t. L_up
     # specify ramp half-width scan values
-    nhw_up = 3 #50
-    hw_up  = np.linspace(0.01,0.50,nhw_up) # m, HWHM of up-ramp
+    nhw_up = 7*3
+    hw_up  = np.linspace(0.12,0.18,nhw_up) # m, HWHM of up-ramp
     
 #    # initialize mismatch matrix
 #    M = np.zeros([nwaist,nhw_up])
     
-    fig = plt.figure()
-    ax1 = fig.add_subplot(111)
-    
-    fig = plt.figure()
-    ax2 = fig.add_subplot(111)
-
+#    fig = plt.figure()
+#    ax1 = fig.add_subplot(111)
+#    
+#    fig = plt.figure()
+#    ax2 = fig.add_subplot(111)
 
     # perform scan
     num_cores = multiprocessing.cpu_count()
-    num_cores = 1
+#    num_cores = 1
     M = Parallel(n_jobs=num_cores)\
-        (delayed(scan_waist_hw_up)(ebeam0,plasma,waist,hw_up,ax1,ax2,k) for k in range(nwaist*nhw_up))
+        (delayed(scan_waist_hw_up)(ebeam0,plasma0,\
+         waist[int(k/nhw_up)],hw_up[k%nhw_up],k)\
+         for k in range(nwaist*nhw_up))
 
     M = np.reshape(M,[nwaist,nhw_up])
     print(M)
@@ -176,16 +167,16 @@ if __name__ == '__main__':
 #    plt.pcolor(X,Y,M)
     cbar = plt.colorbar()
     cbar.ax.set_ylabel(r'$log_{10}$(M)')
-    
-    min_y = np.zeros(M.shape[0])
-    min_x = np.zeros(M.shape[0])
-    for i in range(0,M.shape[0]):
-        min_y[i] = Y[0,i]
-        min_x[i] = X[np.argmin(M[:,i]),0]
-    
-    plt.scatter(min_x,min_y, s=10, c='b', marker=".", label='first')
-    
-    plt.xlabel(r'$waist$')
-    plt.ylabel(r'ramp half-length (m)')
-    plt.title("Ramp Type: %s" % shape_up)
-    plt.show()
+#    
+#    min_y = np.zeros(M.shape[0])
+#    min_x = np.zeros(M.shape[0])
+#    for i in range(0,M.shape[0]):
+#        min_y[i] = Y[0,i]
+#        min_x[i] = X[np.argmin(M[:,i]),0]
+#    
+#    plt.scatter(min_x,min_y, s=10, c='b', marker=".", label='first')
+#    
+#    plt.xlabel(r'$waist$')
+#    plt.ylabel(r'ramp half-length (m)')
+#    plt.title("Ramp Type: %s" % shape_up)
+#    plt.show()

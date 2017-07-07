@@ -13,13 +13,13 @@ import multiprocessing
 import nat_consts as nc
 import particle_beam as pb
 
-def prop_ebeam_drift(ebeam,s,last_only=False):
+def prop_ebeam_drift(ebeam0,s,last_only=False):
     """function to propagate ebeam through a drift"""
     plasma = defaultdict(dict)
     plasma["s"]    = s
     plasma["npl"]  = np.zeros(len(s))
     plasma["dgds"] = np.zeros(len(s))
-    ebeam = prop_ebeam_plasma(ebeam,plasma,last_only)
+    ebeam = prop_ebeam_plasma(ebeam0,plasma,last_only)
     return ebeam
 
 def prop_ebeam_plasma(ebeam,plasma,last_only=False):
@@ -115,38 +115,43 @@ def prop_twiss_plasma_step(twiss,ds=0,npl=0,dgds=0):
 
 def prop_parts_plasma(parts0,s,npl,dgds):
     parts = defaultdict(dict)
-    parts[0] = parts0
     
-    npart = parts[0]["npart"]
-    phase6D0 = []
-    for i in range(0,npart):
-        x  = parts[0]["x"][i]
-        xp = parts[0]["xp"][i]
-        y  = parts[0]["y"][i]
-        yp = parts[0]["yp"][i]
-        z  = parts[0]["z"][i]
-        gb = parts[0]["gb"][i]
-        phase6D0 = np.append(phase6D0,[x,xp,y,yp,z,gb])
-
-    # propagate individual particles in parallel
     nstep = len(s)
-    num_cores = multiprocessing.cpu_count()
-#    num_cores = 1
-    phase6D = Parallel(n_jobs=num_cores)\
-        (delayed(prop_part_plasma)(phase6D0[i*6:(i+1)*6],s,npl,dgds)\
-         for i in range(0,npart))
-    phase6D = np.reshape(phase6D,[npart,6*nstep])
+    npart = parts0["npart"]
+    
+    if npart>0:
+        parts[0] = parts0
+        phase6D0 = []
+        for i in range(0,npart):
+            x  = parts[0]["x"][i]
+            xp = parts[0]["xp"][i]
+            y  = parts[0]["y"][i]
+            yp = parts[0]["yp"][i]
+            z  = parts[0]["z"][i]
+            gb = parts[0]["gb"][i]
+            phase6D0 = np.append(phase6D0,[x,xp,y,yp,z,gb])
+    
+        # propagate individual particles in parallel
+        num_cores = multiprocessing.cpu_count()
+        phase6D = Parallel(n_jobs=num_cores)\
+            (delayed(prop_part_plasma)(phase6D0[i*6:(i+1)*6],s,npl,dgds)\
+             for i in range(0,npart))
+        phase6D = np.reshape(phase6D,[npart,6*nstep])
+    
+        # loop over steps to create parts dictionary
+        for i in range(0,nstep):
+            parts[i]["x"]  = phase6D[:,i*6+0]
+            parts[i]["xp"] = phase6D[:,i*6+1]
+            parts[i]["y"]  = phase6D[:,i*6+2]
+            parts[i]["yp"] = phase6D[:,i*6+3]
+            parts[i]["z"]  = phase6D[:,i*6+4]
+            parts[i]["gb"] = phase6D[:,i*6+5]
+            parts[i]["npart"] = parts[0]["npart"]
+            parts[i]["dist"]  = parts[0]["dist"]
 
-    # loop over steps to create parts dictionary
-    for i in range(0,nstep):
-        parts[i]["x"]  = phase6D[:,i*6+0]
-        parts[i]["xp"] = phase6D[:,i*6+1]
-        parts[i]["y"]  = phase6D[:,i*6+2]
-        parts[i]["yp"] = phase6D[:,i*6+3]
-        parts[i]["z"]  = phase6D[:,i*6+4]
-        parts[i]["gb"] = phase6D[:,i*6+5]
-        parts[i]["npart"] = parts[0]["npart"]
-        parts[i]["dist"]  = parts[0]["dist"]
+    else:
+        for i in range(0,nstep):
+            parts[i] = parts0
 
     return parts
 
