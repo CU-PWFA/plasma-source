@@ -21,7 +21,7 @@ if __name__ == '__main__':
     npl0   = 1e17 # cm^-3
     dEds0  = 6.00e9 # eV/m
     dgds0  = dEds0/nc.me
-    L_ft   = 0.50 #0.50 # m
+    L_ft   = 0.50 # m
     
     # define plasma up-ramp
     shape_up = 'gauss'
@@ -32,11 +32,11 @@ if __name__ == '__main__':
     # define plasma down-ramp
     shape_dn = shape_up
     hw_dn    = hw_up # m
-    L_dn     = 0 #L_up # m
+    L_dn     = 0.0 #L_up # m
     top_dn   = 0  # m
     
     # define longitudinal steps
-    ds   = 0.005 # m
+    ds   = 0.001 # m
     s_ft = np.linspace(0,L_ft,round(L_ft/ds+1))
     s_up = np.linspace(0,L_up,round(L_up/ds+1))
     s_dn = np.linspace(0,L_dn,round(L_dn/ds+1))
@@ -55,7 +55,7 @@ if __name__ == '__main__':
     gamma  = (1.0+alpha**2)/beta # 1/m
     dgb    = 0.01
     dz     = 0
-    npart  = 0
+    npart  = 1000
     dist   = 'gauss'
     
     # make beam
