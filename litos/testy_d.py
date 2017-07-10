@@ -18,14 +18,14 @@ from calc_M import calc_M
 if __name__ == '__main__':
     
     # define plasma bulk (flat-top) properties
-    npl0   = 1e16 # cm^-3
-    dEds0  = 1.00e9 # eV/m
+    npl0   = 1e17 # cm^-3
+    dEds0  = 6.00e9 # eV/m
     dgds0  = dEds0/nc.me
     L_ft   = 0.10 # m
     
     # define plasma up-ramp
     shape_up = 'gauss'
-    hw_up    = 0.132 # m
+    hw_up    = 0.147 # m
     L_up     = 1.00 # m
     top_up   = L_up # m
     
@@ -35,8 +35,14 @@ if __name__ == '__main__':
     L_dn     = 0.0 #L_up # m
     top_dn   = 0  # m
     
+    # define plasma up-lens
+    lens_npl0_up = 0.0 #1e17 # cm^-3
+    lens_L_up    = 100e-6 # m
+    lens_srel_up = -2*hw_up
+    lens_s0_up   = L_up + lens_srel_up
+    
     # define longitudinal steps
-    ds   = 0.0001 # m
+    ds   = 0.001 # m
     s_ft = np.linspace(0,L_ft,round(L_ft/ds+1))
     s_up = np.linspace(0,L_up,round(L_up/ds+1))
     s_dn = np.linspace(0,L_dn,round(L_dn/ds+1))
@@ -47,9 +53,16 @@ if __name__ == '__main__':
     dn_ramp = ps.make_ramp(s_dn,'dn',shape_dn,hw_dn,top_dn,npl0,dgds0)
     plasma  = ps.make_plasma(bulk,up_ramp,dn_ramp)
     
+    # insert thin plasma lens
+    plasma = ps.insert_lens(plasma,lens_npl0_up,lens_L_up,lens_s0_up)
+    
+    fig = plt.figure()
+    ax1 = fig.add_subplot(111)
+    ax1.scatter(plasma["s"],plasma["npl"])
+       
     # define beam parameters
-    gbC    = 40000 # relativistic lorentz factor
-    eps    = 100e-6  # m-rad, normalized emittance
+    gbC    = 20000 # relativistic lorentz factor
+    eps    = 5e-6  # m-rad, normalized emittance
     beta   = 0.10  # m
     alpha  = 0.00
     gamma  = (1.0+alpha**2)/beta # 1/m
@@ -65,7 +78,7 @@ if __name__ == '__main__':
     ebeam0 = pb.make_ebeam(s0,twiss0,parts0)
     
     # set beam waist position
-    waist = -0.340 # m, waist location w.r.t L_up
+    waist = -0.430 # m, waist location w.r.t L_up
     s_w   = L_up + waist # m
     
     # propagate beam backward from waist to start of plasma
@@ -112,3 +125,4 @@ if __name__ == '__main__':
     fig = plt.figure()
     plt.scatter(s,rms_x)
     plt.ylim([0,5e-6])
+    

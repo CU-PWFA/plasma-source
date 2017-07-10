@@ -80,8 +80,8 @@ def scan_waist_hw_up(ebeam0,plasma0,waist,hw_up,k):
 if __name__ == '__main__':
     
     # define plasma bulk (flat-top) properties
-    npl0   = 1e17 # cm^-3
-    dEds0  = 6.00e9 # eV/m
+    npl0   = 5e16 # cm^-3
+    dEds0  = 2.00e9 # eV/m
     dgds0  = dEds0/nc.me
     L_ft   = 0.50 # m
     
@@ -110,8 +110,8 @@ if __name__ == '__main__':
     plasma0 = ps.make_plasma(bulk,up_ramp,dn_ramp)
     
     # define beam parameters
-    gbC    = 20000 # relativistic lorentz factor
-    eps    = 5e-6  # m-rad, normalized emittance
+    gbC    = 40000 # relativistic lorentz factor
+    eps    = 100e-6  # m-rad, normalized emittance
     beta   = 0.10 # m
     alpha  = 0.00
     gamma  = (1.0+alpha**2)/beta # 1/m
@@ -127,11 +127,13 @@ if __name__ == '__main__':
     ebeam0 = pb.make_ebeam(s0,twiss0,parts0)
     
     # specify waist scan values
-    nwaist = 21
-    waist  = np.linspace(-0.35,-0.55,nwaist) # m, waist location w.r.t. L_up
+    nwaist = 31
+    waist  = np.linspace(-0.36,-0.32,nwaist) # m, waist location w.r.t. L_up
+#    waist  = np.linspace(-0.35,-0.55,nwaist) # m, waist location w.r.t. L_up
     # specify ramp half-width scan values
-    nhw_up = 7*3
-    hw_up  = np.linspace(0.12,0.18,nhw_up) # m, HWHM of up-ramp
+    nhw_up = 51
+    hw_up  = np.linspace(0.126,0.138,nhw_up) # m, HWHM of up-ramp
+#    hw_up  = np.linspace(0.12,0.18,nhw_up) # m, HWHM of up-ramp
     
 #    # initialize mismatch matrix
 #    M = np.zeros([nwaist,nhw_up])
@@ -151,7 +153,7 @@ if __name__ == '__main__':
          for k in range(nwaist*nhw_up))
 
     M = np.reshape(M,[nwaist,nhw_up])
-    print(M)
+#    print(M)
     
     # analyze results
     

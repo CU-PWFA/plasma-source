@@ -108,3 +108,57 @@ def make_plasma(bulk,up_ramp=0,dn_ramp=0):
 
     return plasma
 
+def insert_lens(plasma,lens_npl0,lens_L,lens_s0):
+    """insert a thin plasma lens into plasma source"""
+    s    = plasma["s"]
+    npl  = plasma["npl"]
+
+    # find coarse start & stop indices
+    istart = np.argwhere(s>=lens_s0)[0]
+    istop  = np.argwhere(s>=lens_s0+lens_L)[0]
+    icoarse = np.arange(istart,istop,dtype=np.int)
+    
+    # define fine indices, fine steps
+    nfine   = int((s[istop]-s[istart])/(10e-6)) # m, new incremental size
+    sfine   = np.linspace(s[istart],s[istop],nfine)
+
+    # remove old s values
+    s       = np.delete(s,icoarse)
+
+    # insert new s values
+    s = np.insert(s,istart,sfine)
+
+    # create baseline npl values for fine steps
+    ifstart  = istart
+    ifstop   = ifstart+nfine
+    ifine    = np.arange(ifstart,ifstop,dtype=np.int)
+    icinterp = np.arange(istart-1,istop+1,dtype=np.int)
+    nplfine  = np.interp(ifine,icinterp,npl[icinterp])
+    
+    print(nplfine)
+    
+    # remove old npl values
+    npl = np.delete(npl,icoarse)
+    npl = np.insert(npl,istart,nplfine)
+
+    # find lens start & stop indices
+    ilstart = np.argwhere(s>=lens_s0)[0]
+    ilstop  = np.argwhere(s>=lens_s0+lens_L)[0]
+    ilens   = np.arange(ilstart,ilstop,dtype=np.int)
+    
+    # add lens density into npl
+    npl[ilens] = npl[ilens]+lens_npl0
+    
+    # calculate new dgds array
+    dgds0 = plasma["bulk"]["dgds0"]
+    npl0  = plasma["bulk"]["npl0"]
+    print(dgds0)
+    print(npl0)
+    dgds  = calc_dgds(dgds0,npl0,npl)
+    
+    # modify plasma object
+    plasma["s"]    = s
+    plasma["npl"]  = npl
+    plasma["dgds"] = dgds
+    
+    return plasma
