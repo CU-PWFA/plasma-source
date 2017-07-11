@@ -88,10 +88,10 @@ def plasma_refraction(params, Efunc, Tfunc, n0=False):
         z0 = 0
     lam = params['lam']
     # Initialize the grid
-    x = np.linspace(-X/2, X/2, Nx, False)
-    y = np.linspace(-Y/2, Y/2, Ny, False)
-    z = np.linspace(z0, z0+Z, Nz)
-    t = np.linspace(-T/2, T/2, Nt, False)
+    x = create_centered_grid(X, Nx)
+    y = create_centered_grid(Y, Ny)
+    z = create_z_grid(Z, z0, Nz)
+    t = create_centered_grid(T, Nt)
     dt = T/(Nt-1)
     # Setup the index of refraction array and plasma density array
     nih = np.zeros((Nx, Ny, Nz))
@@ -138,6 +138,44 @@ def plasma_refraction(params, Efunc, Tfunc, n0=False):
         np.save(path+'finalDensity', n)
 
 
+def create_centered_grid(X, N):
+    """ Create numpy array for the grid of width X, centered on 0.
+
+    Parameters
+    ----------
+    X : double
+        Width of the grid, -X/2 to X/2 not including X/2.
+    N : int
+        Number of grid points.
+
+    Returns
+    -------
+    x : array-like
+        The numpy array of grid locations in x.
+    """
+    return np.linspace(-X/2, X/2, N, False)
+
+
+def create_z_grid(Z, z0, N):
+    """ Create numpy array for the grid of width Z, starting at z0.
+
+    Parameters
+    ----------
+    Z : double
+        Width of the grid, z0 to Z inclusive.
+    z0 : double
+        Starting point of the grid.
+    N : int
+        Number of grid points.
+
+    Returns
+    -------
+    z : array-like
+        The numpy array of grid locations in z.
+    """
+    return np.linspace(z0, z0+Z, N)
+
+
 def plasma_index(n, lam):
     """ Calculates the index of refraction of a plasma.
 
@@ -151,11 +189,8 @@ def plasma_index(n, lam):
     return 1 - n * lam**2 * 4.47869e-5
 
 
-def summary_plot(path):
-    """ Creates a summary plot of the results of plasma_refraction.
-
-    Specify the path to the output files and this function will save an image
-    in the results directory that summarizes the simulation.
+def open_data(path):
+    """ Opens the data files and sets up basic variables.
 
     Parameters
     ----------
@@ -174,13 +209,29 @@ def summary_plot(path):
     T = params['T']
     Nx = params['Nx']
     Ny = params['Ny']
+    Nz = params['Nz']
     Nt = params['Nt']
     if 'z0' in params:
         z0 = params['z0']
     else:
         z0 = 0
-    x = np.linspace(-X/2, X/2, Nx, False)
-    t = np.linspace(-T/2, T/2, Nt, False)
+    return Eplot, nplot, Ei, Et, params, X, Z, T, Nx, Ny, Nz, Nt, z0
+
+
+def summary_plot(path):
+    """ Creates a summary plot of the results of plasma_refraction.
+
+    Specify the path to the output files and this function will save an image
+    in the results directory that summarizes the simulation.
+
+    Parameters
+    ----------
+    path : string
+        The path specifying the directory with the simulation results.
+    """
+    Eplot, nplot, Ei, Et, params, X, Z, T, Nx, Ny, Nz, Nt, z0 = open_data(path)
+    x = create_centered_grid(X, Nx)
+    t = create_centered_grid(T, Nt)
 
     # Create the figure
     gridSize = (2, 5)
@@ -232,6 +283,58 @@ def summary_plot(path):
     plt.tight_layout()
     plt.savefig(path+'summaryFig.pdf', format='pdf')
     plt.savefig(path+'summaryFig.png', format='png')
+    plt.show()
+
+    # Close the file and clear the memory (fixes a bug in numpy)
+    del Eplot
+    del nplot
+    del Ei
+    del Et
+    del params
+    
+def profile_plot(path, xlim=None):
+    """ Creates plasma density plots through different profiles.
+
+    Specify the path to the output files and this function will save an image
+    in the results directory that shows how the plasma density varies
+    longitudinally and transversly.
+
+    Parameters
+    ----------
+    path : string
+        The path specifying the directory with the simulation results.
+    xlim : array-like, optional
+        Two element array of limits for x.
+    """
+    Eplot, nplot, Ei, Et, params, X, Z, T, Nx, Ny, Nz, Nt, z0 = open_data(path)
+    x = create_centered_grid(X, Nx)
+    z = create_z_grid(Z, z0, Nz)
+    
+    if xlim is None:
+        xlim = [-X/4, X/4]
+
+    # Create the figure
+    gridSize = (2, 1)
+    plt.figure(figsize=(16, 9))
+    gridspec.GridSpec(gridSize[0], gridSize[1])
+    
+    # On-axis plasma density
+    plt.subplot2grid(gridSize, (0, 0))
+    plt.plot(z/1e6, nplot[Nt-1, int(Nx/2), :], 'b-')
+    plt.xlabel(r'z ($m$)')
+    plt.ylabel(r'Plasma density ($10^{17}\,cm^{-3}$)')
+    plt.title('On-axis plasma density profile')
+    # Transverse plasma density
+    plt.subplot2grid(gridSize, (1, 0))
+    plt.plot(x, nplot[Nt-1, :, int(Nz/2)], 'b-')
+    plt.xlabel(r'x ($\mu m$)')
+    plt.ylabel(r'Plasma density ($10^{17}\,cm^{-3}$)')
+    plt.title('Transverse plasma density profile')
+    plt.xlim(xlim)
+    # Save the figure and display it
+    plt.tight_layout()
+    plt.savefig(path+'profileFig.pdf', format='pdf')
+    plt.savefig(path+'profileFig.png', format='png')
     plt.show()
 
     # Close the file and clear the memory (fixes a bug in numpy)
