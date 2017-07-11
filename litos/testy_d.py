@@ -25,7 +25,7 @@ if __name__ == '__main__':
     
     # define plasma up-ramp
     shape_up = 'gauss'
-    hw_up    = 0.147 # m
+    hw_up    = 0.05 # m
     L_up     = 1.00 # m
     top_up   = L_up # m
     
@@ -36,9 +36,9 @@ if __name__ == '__main__':
     top_dn   = 0  # m
     
     # define plasma up-lens
-    lens_npl0_up = 0.0 #1e17 # cm^-3
+    lens_npl0_up = 0.0#1e17 # cm^-3
     lens_L_up    = 100e-6 # m
-    lens_srel_up = -2*hw_up
+    lens_srel_up = -0.177
     lens_s0_up   = L_up + lens_srel_up
     
     # define longitudinal steps
@@ -78,7 +78,7 @@ if __name__ == '__main__':
     ebeam0 = pb.make_ebeam(s0,twiss0,parts0)
     
     # set beam waist position
-    waist = -0.430 # m, waist location w.r.t L_up
+    waist = -0.139 # m, waist location w.r.t L_up
     s_w   = L_up + waist # m
     
     # propagate beam backward from waist to start of plasma

@@ -114,28 +114,29 @@ def insert_lens(plasma,lens_npl0,lens_L,lens_s0):
     npl  = plasma["npl"]
 
     # find coarse start & stop indices
-    istart = np.argwhere(s>=lens_s0)[0]
+    istart = np.argwhere(s>lens_s0)[0]-1
     istop  = np.argwhere(s>=lens_s0+lens_L)[0]
+#    if istop==istart:
+#        istop=istart+1
     icoarse = np.arange(istart,istop,dtype=np.int)
     
     # define fine indices, fine steps
     nfine   = int((s[istop]-s[istart])/(10e-6)) # m, new incremental size
     sfine   = np.linspace(s[istart],s[istop],nfine)
-
+    ifstart  = istart
+    ifstop   = ifstart+nfine
+    ifine    = np.arange(ifstart,ifstop,dtype=np.int)
+    
     # remove old s values
     s       = np.delete(s,icoarse)
 
     # insert new s values
     s = np.insert(s,istart,sfine)
-
-    # create baseline npl values for fine steps
-    ifstart  = istart
-    ifstop   = ifstart+nfine
-    ifine    = np.arange(ifstart,ifstop,dtype=np.int)
-    icinterp = np.arange(istart-1,istop+1,dtype=np.int)
-    nplfine  = np.interp(ifine,icinterp,npl[icinterp])
     
-    print(nplfine)
+    # create baseline npl values for fine steps
+    slope = (npl[istop]-npl[istart])/(s[istart+nfine]-s[istart])
+    
+    nplfine = npl[istart] + slope*(s[ifine]-s[istart])
     
     # remove old npl values
     npl = np.delete(npl,icoarse)
@@ -152,8 +153,6 @@ def insert_lens(plasma,lens_npl0,lens_L,lens_s0):
     # calculate new dgds array
     dgds0 = plasma["bulk"]["dgds0"]
     npl0  = plasma["bulk"]["npl0"]
-    print(dgds0)
-    print(npl0)
     dgds  = calc_dgds(dgds0,npl0,npl)
     
     # modify plasma object
