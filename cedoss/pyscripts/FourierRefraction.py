@@ -18,12 +18,13 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
 #Script Selection
-test_density = 0
+test_density = 1
 free_space = 0
 
 #This is the directory for saving
-path = '/home/chris/Desktop/FourierPlots/CompactOptics_DoubleJet/'
-directory = 'gasjet_den_propagation_1e18_Lz500'
+#path = '/home/chris/Desktop/FourierPlots/CompactOptics_DoubleJet/'
+path = '/home/chris/Desktop/FourierPlots/CompactOptics/'
+directory = 'gasjet_den_propagation_void'
 #directory = 'testdir'
 
 #Density, converted to e17cm^-3  With a gas jet this is density at nozzle
@@ -43,7 +44,7 @@ zi = 0.005*1e6
 #Gas Jet Parameters, converted to micrometers
 z_off=1e-3 * 1e6
 Lr=500e-6 * 1e6
-Lz=500e-6 * 1e6
+Lz=800e-6 * 1e6
 
 #Our Electric field is a function of the stuff above
 def Efunc(x,y):
@@ -79,11 +80,11 @@ def Mirror_jet_dens(x,y,z):
 
 def Double_Jet(x,y,z):
     j1=Gas_jet_density(x,y,z)
-    j2=Gas_jet_density(x,y,-z)
+    j2=Gas_jet_density(x,-y,z)
     return j1+j2
 
 #False for uniform density, otherwise pick your poison
-distribution = Double_Jet
+distribution = Gas_jet_density
 
 # Setup the parameters, just like in Robert's code
 params = {'Nx' : 2**9,

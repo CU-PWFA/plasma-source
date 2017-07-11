@@ -14,8 +14,12 @@ sys.path.insert(0, "../")
 from modules import ThreeDimensionAnalysis as ThrDim
 import numpy as np
 
-cuts=1
+cuts=0
 max_corrector=0
+
+getfit = 1
+fityx = 1
+infinite_approx = 0
 
 #size of window in micrometers
 y_window = 100
@@ -24,7 +28,8 @@ z_window = 400
 folder = '/home/chris/Desktop/FourierPlots/CompactOptics_DoubleJet/'
 #folder = '/home/chris/Desktop/FourierPlots/CompactOptics/'
 #folder = '/home/chris/Desktop/FourierPlots/real_FACET_Refraction/'
-directory = 'gasjet_den_propagation_1e18_Lz500/'
+
+directory = 'gasjet_den_propagation_1e18/'
 path = folder+directory
 
 nplot = np.load(path+'finalDensity.npy')
@@ -100,3 +105,40 @@ if cuts == 1:
            'ni (e17 cm^-3)',
            'Offset in +/- x(microns)']
     ThrDim.VarianceCut(den_plane_yx,y,x_off,4,1,x_step,label,True)
+    
+if getfit == 1:
+    den_vs_y=den[round(len(x)/2)+x_off,:,round(len(z)/2)]
+    dd = list(den_vs_y)
+    Ltop = np.abs(y[dd.index(next(d for d in dd if d > 0))])
+    guess = [Ltop, Ltop/6., max(den_vs_y)]
+    
+    fity = ThrDim.FitDataDoubleTanh(den_vs_y,y,guess,"Density vs y")
+    
+    den_vs_z=den[round(len(x)/2)+x_off,round(len(y)/2),:]
+    fitz = ThrDim.FitDataDoubleTanh(den_vs_z,z,[guess[0]*10.0,guess[1]*10.,guess[2]],"Density vs z")
+    
+    den_plane_yz=den[round(len(x)/2)+x_off,:,:]
+    
+    #p1 = ThrDim.Fit2DimTanh(den_plane_yz,y,z,[fity[0],fity[1],fity[2],fity[0]/fitz[0]])
+    
+    difyz = ThrDim.Plot2DimDataTanh(den_plane_yz,y,z,fity,fitz,
+                                    '(microns)','Plasma Density','e17(cm^-3)')
+    ThrDim.VarianceCut(np.transpose(difyz),y,0,6,5,z[1]-z[0],
+                ['Plasma density difference along beam','Distance from axis (microns)',
+                 'Density Difference e17(cm^-3)','Offset in z(microns)'],True)
+    #NOW FOR X
+    if fityx == 1:
+        den_vs_x=den[:,round(len(y)/2),round(len(z)/2)]
+        fitx = ThrDim.FitDataGaussian(den_vs_x[64:192],x[64:192],[guess[2],guess[1]*40.,0],"Density vs x")
+    
+        den_plane_yx=np.transpose(den[:,:,round(len(z)/2)])
+    
+        difyx = ThrDim.Plot2DimTanhxGaussian(den_plane_yx,y,x,fity,fitx,
+                    '(microns)','Plasma Density','e17(cm^-3)')
+        ThrDim.VarianceCut(np.transpose(difyx),y,0,4,1,x[1]-x[0],
+                ['Plasma density difference along beam','Distance from axis (microns)',
+                 'Density Difference e17(cm^-3)','Offset in +/- x(microns)'],True)
+    
+    if infinite_approx == 1:
+        ThrDim.Plot2DimDataTanh(den_plane_yz,y,z,[fity[0],fity[1],fity[2],0],fitz,
+                               '(microns)','Plasma Density','e17(cm^-3)')

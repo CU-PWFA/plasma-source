@@ -13,6 +13,7 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+from scipy import optimize
 
 sys.path.insert(0, "../../python")
 
@@ -146,3 +147,219 @@ def ImageCut(data,x,y,z,x_off=0,y_off=0,z_off=0,zoom=1,units='',label='',label_u
     
     plt.tight_layout()
     plt.show()
+    
+#Generic function for a double tanh profile.  Flat in the center with ramps
+# on either side which go to zero.  Centered around x = 0
+#  p - parameters: [a (~top length), b (~ramp length), n_0 (density at center)]
+#  x - array of distances
+def DoubleTanh(p, x):
+    return ((.5 + .5*np.tanh((x+p[0])/p[1])) * 
+            (.5 - .5*np.tanh((x-p[0])/p[1]))) * p[2]
+#Generic function for gaussian
+#  p - parameters: [n_0 (density at center), sigma (distribution), x_0 (offset)]
+#  x - array of distances
+def Gaussian(p, x):
+    return  p[0]*np.exp(-.5*np.square(x-p[2])/np.square(p[1]))
+    
+#Attempts to fit a given 1D data set to a DoubleTanh Profile.
+#  data - 1D data set for which to fit
+#  axis - the independent variable which corresponds to data (ie: distance)
+#  guess - inital guess of parameters [a, b, n_0]  (See DoubleTanh)
+#  datlabel - what to call inital data in the plot's legend
+#Returns the parameter array which fits the data
+def FitDataDoubleTanh(data, axis, guess = [0.,0.,0.], datlabel = 'Simulation'):
+    errfunc = lambda p, x, y: DoubleTanh(p, x) - y
+    p0 = guess
+    p1, success = optimize.leastsq(errfunc,p0[:], args=(axis, data))
+    plt.plot(axis, data, label=datlabel)
+    plt.plot(axis, DoubleTanh(p1,axis), label="Fitted tanh profile")
+    plt.title("Comparison of data with tanh profile")
+    plt.xlabel("Distance from axis (microns)")
+    plt.ylabel("Density (10^17 cm^-3)")
+    plt.legend()
+    plt.grid()
+    plt.show()
+    print("a = " + str(p1[0]))
+    print("b = " + str(p1[1]))
+    print("n_0 = " + str(p1[2]))
+    print()
+    return p1
+
+#Plots 2D images of a 2D data from simulation and an analytical comparison given
+# by the fits of n(y) and n(z).  Rather than fitting the full 2D profile, this 
+# function assumes the fit of n(y) with an elliptical correction r = y + s*z,
+# where the scaling factor s is the ratio between the first DoubleTanh parameters
+# of n(y) and n(z).  Effectively, s is the ratio of flat top lengths
+#  data - 2D data to be compared against.  Given in data[y][z]
+#  y,zrange - axes of the y and z directions as arrays
+#  py,pz - parameter arrays from the output of FitDataDoubleTanh (See DoubleTanh)
+#  units - string of the units of the axes
+#  label - string of what is plotted in the 2D plane
+#  label_units - string of the units of label, what is plotted in the 2D plane
+#Returns the 2D array of the difference between data and analytical
+def Plot2DimDataTanh(data, yrange, zrange, py, pz, units='',label='',label_units=''):
+    
+    p1 = [py[0],py[1],py[2],py[0]/pz[0]]
+    yaxis=np.reshape(yrange, (len(yrange), 1))
+    zaxis=np.reshape(zrange, (1, len(zrange)))
+    
+    effdist = lambda y, z, d: np.sqrt(np.square(y) + np.square(d * z))
+
+    print("a = " + str(p1[0]))
+    print("b = " + str(p1[1]))
+    print("n_0 = " + str(p1[2]))
+    print("scl = " + str(p1[3]))
+    
+    approx = DoubleTanh(p1,effdist(yaxis,zaxis,p1[3]))
+    
+    plt.set_cmap('plasma')
+    gridSize = (2,3)
+    plt.figure(figsize=(16,9))
+    gridspec.GridSpec(gridSize[0], gridSize[1])
+    
+    plt.subplot2grid(gridSize, (0,0), rowspan=2)
+    plt.imshow(np.transpose(data), interpolation="none", origin="lower",
+                 extent=[yaxis[0,0],yaxis[-1,0],zaxis[0,0],zaxis[0,-1]],
+                 aspect='auto')
+    CB=plt.colorbar()
+    CB.set_label(label+' '+label_units)
+    plt.ylabel('z '+units+' - Jet')
+    plt.xlabel('y '+units+' - Beam')
+    plt.title('Simulated ' + label)
+    
+    plt.subplot2grid(gridSize, (0,1), rowspan=2)
+    plt.imshow(np.transpose(approx), interpolation="none", origin="lower",
+                 extent=[yaxis[0,0],yaxis[-1,0],zaxis[0,0],zaxis[0,-1]],
+                 aspect='auto')
+    CB=plt.colorbar()
+    CB.set_label(label+' '+label_units)
+    plt.ylabel('z '+units+' - Jet')
+    plt.xlabel('y '+units+' - Beam')
+    plt.title('Approximate ' + label)
+    
+    difference = np.transpose(data - approx)
+    
+    plt.subplot2grid(gridSize, (0,2), rowspan=2)
+    plt.imshow(difference, interpolation="none", origin="lower",
+                 extent=[yaxis[0,0],yaxis[-1,0],zaxis[0,0],zaxis[0,-1]],
+                 aspect='auto')
+    plt.set_cmap('viridis')
+    CB=plt.colorbar()
+    CB.set_label('Density Difference '+label_units)
+    plt.ylabel('z '+units+' - Jet')
+    plt.xlabel('y '+units+' - Beam')
+    plt.title('Density Difference (sim - fit)')
+    
+    plt.tight_layout()
+    plt.show()
+    return difference
+
+#Attempts to fit a given 1D data set to a Gaussian Profile.
+#  data - 1D data set for which to fit
+#  axis - the independent variable which corresponds to data (ie: distance)
+#  guess - inital guess of parameters [n_0, sigma, x_0]  (See Gaussian)
+#  datlabel - what to call inital data in the plot's legend
+#Returns the parameter array which fits the data
+def FitDataGaussian(data, axis, guess = [0.,0.,0.], datlabel = 'Simulation'):
+    errfunc = lambda p, x, y: Gaussian(p, x) - y
+    p0 = guess
+    p1, success = optimize.leastsq(errfunc,p0[:], args=(axis, data))
+    plt.plot(axis, data, label=datlabel)
+    plt.plot(axis, Gaussian(p1,axis), label="Fitted Gaussian profile")
+    plt.title("Comparison of data with Gaussian profile")
+    plt.xlabel("Distance from axis (microns)")
+    plt.ylabel("Density (10^17 cm^-3)")
+    plt.legend()
+    plt.grid()
+    plt.show()
+    print("n_0 = " + str(p1[0]))
+    print("sig = " + str(p1[1]))
+    print("x_0 = " + str(p1[2]))
+    print()
+    return p1
+
+#Plots 2D images of a 2D data from simulation and an analytical comparison given
+# by the fits of n(y) and n(x).  Rather than fitting the full 2D profile, this 
+# function assumes the 2D fit is n(y)*n(x)/n_0, or a product of a double tanh
+# and a Gaussian.  
+#  data - 2D data to be compared against.  Given in data[y][x]
+#  y,xrange - axes of the y and x directions as arrays
+#  py,px - parameter arrays from the output of FitDataDoubleTanh (See DoubleTanh)
+#               and the output of FitDataGaussian (See Gaussian), respectively
+#  units - string of the units of the axes
+#  label - string of what is plotted in the 2D plane
+#  label_units - string of the units of label, what is plotted in the 2D plane
+#Returns the 2D array of the difference between data and analytical
+def Plot2DimTanhxGaussian(data, yrange, xrange, py, px, units='',label='',label_units=''):
+    print("a = " + str(py[0]))
+    print("b = " + str(py[1]))
+    print("n_0 = " + str(py[2]))
+    print("sig = " + str(px[1]))
+    print("x_0 = " + str(px[2]))
+    
+    yaxis=np.reshape(yrange, (len(yrange), 1))
+    xaxis=np.reshape(xrange, (1, len(xrange)))
+    
+    ny = DoubleTanh(py,yaxis)
+    nx = Gaussian(px,xaxis)
+    approx = ny * nx / py[2]
+    
+    plt.set_cmap('plasma')
+    gridSize = (2,3)
+    plt.figure(figsize=(16,9))
+    gridspec.GridSpec(gridSize[0], gridSize[1])
+    
+    plt.subplot2grid(gridSize, (0,0), rowspan=2)
+    plt.imshow(np.transpose(data), interpolation="none", origin="lower",
+                 extent=[yaxis[0,0],yaxis[-1,0],xaxis[0,0],xaxis[0,-1]],
+                 aspect='auto')
+    CB=plt.colorbar()
+    CB.set_label(label+' '+label_units)
+    plt.ylabel('z '+units+' - Laser')
+    plt.xlabel('y '+units+' - Beam')
+    plt.title('Simulated ' + label)
+    
+    plt.subplot2grid(gridSize, (0,1), rowspan=2)
+    plt.imshow(np.transpose(approx), interpolation="none", origin="lower",
+                 extent=[yaxis[0,0],yaxis[-1,0],xaxis[0,0],xaxis[0,-1]],
+                 aspect='auto')
+    CB=plt.colorbar()
+    CB.set_label(label+' '+label_units)
+    plt.ylabel('x '+units+' - Laser')
+    plt.xlabel('y '+units+' - Beam')
+    plt.title('Approximate ' + label)
+    
+    difference = np.transpose(data - approx)
+    
+    plt.subplot2grid(gridSize, (0,2), rowspan=2)
+    plt.imshow(difference, interpolation="none", origin="lower",
+                 extent=[yaxis[0,0],yaxis[-1,0],xaxis[0,0],xaxis[0,-1]],
+                 aspect='auto')
+    plt.set_cmap('viridis')
+    CB=plt.colorbar()
+    CB.set_label('Density Difference '+label_units)
+    plt.ylabel('x '+units+' - Laser')
+    plt.xlabel('y '+units+' - Beam')
+    plt.title('Density Difference (sim - fit)')
+    
+    plt.tight_layout()
+    plt.show()
+    return difference
+
+#I wanted this to work, but it just isnt at the moment...
+#Currently bypassing optimization by assuming scl = p1[3] = a_y / a_z
+# This works pretty well, so I am reluctant to fix 2D optimization
+"""
+def Fit2DimTanh(data,yrange,zrange, p0 = [0.,0.,0.,0.]):
+    effdist = lambda y, z, scl: np.sqrt(np.square(y) + np.square(scl * z))
+    
+    fitfunc = lambda p, y, z: ((.5 + .5 * np.tanh((effdist(y, z, p[3]) + p[0])/p[1])) * 
+                            (.5 - .5 * np.tanh((effdist(y, z, p[3]) - p[0])/p[1]))) * p[2]   
+    errfunc = lambda p, y, z, val: fitfunc(p, y, z) - val
+    p1, success = optimize.leastsq(errfunc, p0[:], args=(yrange, zrange, data))
+    print("a = " + str(p1[0]))
+    print("b = " + str(p1[1]))
+    print("den = " + str(p1[2]))
+    print("scl = " + str(p1[3]))
+    return p1
+"""

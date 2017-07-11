@@ -37,7 +37,7 @@ I0 = 2*P/(np.pi*np.power(w0,2))*np.power(1/cm_m,2)
 delt_t = 50e-15
 chi = 15.426
 
-L_z = 500e-6
+L_z = 800e-6
 L_r = 500e-6
 nozzle_loc = 1000e-6
 nozzle_den = 1e18
@@ -93,10 +93,6 @@ if choice==4:#Probably best option, but needs some tweaking
     GB.Prop_CylindricalLens(q_y,q_z,-2*f2)
     
     GB.Prop_Cylindrical_FreeSpace(q_y,q_z,.4,l_step)
-    
-    I0=I0*2/3
-    L_z=800e-6
-    
 
 #Get the total domain of spot sizes
 xrange_tot=GB.Prop_GetRange(q_y)
@@ -206,19 +202,19 @@ if cut_plots_den == 1:
     label=['Density along beam axis (Vary Jet Distance)',
            'Radius from axis (microns)',
            'ni',
-           'Offset in x(microns)']
+           'Offset in z(microns)']
     ThrDim.VarianceCut(den_plane_yz,y_axis,0,5,20,t_step*1e6,label)
     ThrDim.VarianceCut(den_plane_yz,y_axis,0,5,-20,t_step*1e6,label)
     label=['Density along beam axis (Vary Jet Distance)',
            'Radius from axis (microns)',
            'ni',
-           'Offset in +/- x(microns)']
-    ThrDim.VarianceCut(den_plane_yz,y_axis,0,11,10,t_step*1e6,label,True)
+           'Offset in +/- z(microns)']
+    ThrDim.VarianceCut(den_plane_yz,y_axis,0,6,10,t_step*1e6,label,True)
     
     z_cut=list(den_plane_zx[:,round(len(xrange)/2)])
     offset=round(z_axis[z_cut.index(max(z_cut))])
     label=['Density along beam axis z='+str(offset)+' (Vary Jet Distance)',
            'Radius from axis (microns)',
            'ni',
-           'Offset in +/- x(microns)']
+           'Offset in +/- z(microns)']
     ThrDim.VarianceCut(den_plane_yz,y_axis,int(offset),11,10,t_step*1e6,label,True)
