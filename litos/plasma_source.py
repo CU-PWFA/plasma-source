@@ -108,7 +108,7 @@ def make_plasma(bulk,up_ramp=0,dn_ramp=0):
 
     return plasma
 
-def insert_lens(plasma,lens_npl0,lens_L,lens_s0):
+def insert_lens(plasma,lens_npl0,lens_L,lens_s0,add='yes'):
     """insert a thin plasma lens into plasma source"""
     s    = plasma["s"]
     npl  = plasma["npl"]
@@ -148,7 +148,10 @@ def insert_lens(plasma,lens_npl0,lens_L,lens_s0):
     ilens   = np.arange(ilstart,ilstop,dtype=np.int)
     
     # add lens density into npl
-    npl[ilens] = npl[ilens]+lens_npl0
+    if (add):
+        npl[ilens] = npl[ilens]+lens_npl0
+    else:
+        npl[ilens] = lens_npl0
     
     # calculate new dgds array
     dgds0 = plasma["bulk"]["dgds0"]
