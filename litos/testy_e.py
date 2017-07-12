@@ -39,10 +39,10 @@ def scan_waist_lens(ebeam0,plasma0,waist,lens_srel,k):
     ebeam = pb.make_ebeam(s0,twiss,parts)
     
     # insert plasma lens
-    lens_npl0 = plasma["bulk"]["npl0"]
+    lens_npl0 = 1e17
     lens_L    = 100e-6
     lens_s0   = plasma0["up_ramp"]["L"] + lens_srel
-    plasma    = ps.insert_lens(plasma0,lens_npl0,lens_L,lens_s0)
+    plasma    = ps.insert_lens(plasma0,lens_npl0,lens_L,lens_s0,add='no')
 
     # propagate beam through plasma
     ebeam = pbp.prop_ebeam_plasma(ebeam,plasma,last_only=False)
@@ -75,7 +75,7 @@ if __name__ == '__main__':
     npl0   = 1e17 # cm^-3
     dEds0  = 6.00e9 # eV/m
     dgds0  = dEds0/nc.me
-    L_ft   = 0.10 # m
+    L_ft   = 0.50 # m
     
     # define plasma up-ramp
     shape_up = 'gauss'
@@ -120,11 +120,11 @@ if __name__ == '__main__':
     
     # specify waist scan values
     nwaist = 51
-    waist  = np.linspace(-0.18,-0.10,nwaist) # m, waist location w.r.t. L_up
+    waist  = np.linspace(-0.25,0.00,nwaist) # m, waist location w.r.t. L_up
 
     # specify relative position of thin plasma lens
     nlens_srel = 51
-    lens_srel  = np.linspace(-0.19,-0.165,nlens_srel)
+    lens_srel  = np.linspace(-0.25,-0.10,nlens_srel)
 
 #    fig = plt.figure()
 #    ax1 = fig.add_subplot(111)
@@ -150,13 +150,28 @@ if __name__ == '__main__':
     X = np.tile(waist.reshape(-1,1),(1,nlens_srel))
     Y = np.tile(lens_srel.T,(nwaist,1))
     
+    levels = np.array([1.0,1.1,1.2,1.3,1.4,1.5,\
+                       2.0,3.0,4.0,5.0,])
+    labels = np.array([1.1,1.5,2.0,3.0,4.0,5.0])
+    
     fig, axes = plt.subplots(1,1, sharey=True)
-    plt.contourf(X,Y,np.log10(M),100,\
-                cmap=cm.Vega20c,\
-                linewidth=2.0)
-#    plt.pcolor(X,Y,M)
+    
+#    plt.contourf(X,Y,np.log10(M),100,\
+#                cmap=cm.Vega20c,\
+#                linewidth=2.0)
+#    im = plt.imshow(M,cmap=cm.gray,origin='lower',extent=(-0.25,0,-0.25,0))
+
+#    plt.contourf(X,Y,M,levels,cmap=cm.tab20b)
+
+    CS = plt.contour(X,Y,M,levels,cmap=cm.tab20b)
+    plt.clabel(CS,labels,fontsize=9, inline=1,fmt='%1.1f')
     cbar = plt.colorbar()
-    cbar.ax.set_ylabel(r'$log_{10}$(M)')
+    cbar.ax.set_ylabel(r'M')
+    cbar.set_ticks(levels)
+#    cbar.set_ticklabels(levels)
+    plt.xlabel(r'waist (m)')
+    plt.ylabel(r'lens pos. (m)')
+    
 #    
 #    min_y = np.zeros(M.shape[0])
 #    min_x = np.zeros(M.shape[0])
