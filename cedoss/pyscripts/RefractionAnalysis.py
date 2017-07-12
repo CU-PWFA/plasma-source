@@ -4,7 +4,8 @@
 Created on Wed Jun 28 13:17:01 2017
 
 Loads a 3D density profile from the output of FourierRefraction and analyzes
-the 2D planes and variance cuts of the profile
+the 2D planes and variance cuts of the profile.  Can also perform tanh and
+Gaussian fits the the yz plane and x axis, respectively.
 
 @author: chris
 """
@@ -14,9 +15,15 @@ sys.path.insert(0, "../")
 from modules import ThreeDimensionAnalysis as ThrDim
 import numpy as np
 
-cuts=0
+#'cuts' will plot density along axis and small variations
+#'max_corrector' will shift the beam axis to the maximum density
+#  poor for most cases-only interesting at high densities ~10e19
+cuts=1
 max_corrector=0
 
+#'getfit' will fit the y and z axes to tanh profiles
+#'fityx' uses getfit to add a Gaussian fit to the x axis
+#'infinite_approx' compares getfit with simply assuming an infinite slab
 getfit = 1
 fityx = 1
 infinite_approx = 0
@@ -25,13 +32,18 @@ infinite_approx = 0
 y_window = 100
 z_window = 400
 
-folder = '/home/chris/Desktop/FourierPlots/CompactOptics_DoubleJet/'
+#Locate the desired data by specifying the folder and directory within
+
+#folder = '/home/chris/Desktop/FourierPlots/CompactOptics_DoubleJet/'
 #folder = '/home/chris/Desktop/FourierPlots/CompactOptics/'
 #folder = '/home/chris/Desktop/FourierPlots/real_FACET_Refraction/'
-
-directory = 'gasjet_den_propagation_1e18/'
+folder = '/home/chris/Desktop/FourierPlots/ApproximateSol/'
+#directory = 'gasjet_den_propagation_1e18/'
+directory = 'ETanhGauss1/'
 path = folder+directory
 
+#Load densities and parameters, and morph Robert's output [beam, jet, laser]
+# into the size and orientation I use [laser, beam, jet]
 nplot = np.load(path+'finalDensity.npy')
 params = np.load(path+'params.npy').item()
 
@@ -56,6 +68,7 @@ den=den[:,yi:yf,zi:zf]
 y=y[yi:yf]
 z=z[zi:zf]
 
+#No offset, unless we run max_corrector
 x_off=0; y_off=0; z_off=0
 if max_corrector == 1:
     maximum = ThrDim.GetMaximumOffset(den)
@@ -65,9 +78,11 @@ if max_corrector == 1:
     print('-Corrected y plane at '+str(y[y_off + round(len(den[0,:,0])/2)])+' microns')
     print('-Corrected z plane at '+str(z[z_off + round(len(den[0,0,:])/2)])+' microns')
 
+#Plot density along the primary planes
 ThrDim.ImageCut(den,x,y,z,x_off,y_off,z_off,1e-3,
                 '(mm)','Plasma Density','e17(cm^-3)',1)
 
+#Perform variance cuts to investigate density profiles on-and off-axis
 if cuts == 1:
     x_step=x[1]-x[0]
     y_step=y[1]-y[0]
@@ -87,6 +102,7 @@ if cuts == 1:
            'Offset in z(microns)']
     ThrDim.VarianceCut(den_plane_yz,y,z_off,5,10,z_step,label)
     ThrDim.VarianceCut(den_plane_yz,y,z_off,5,-10,z_step,label)
+    
     label=['Density along beam axis (Vary Jet Distance)',
            'Radius from axis (microns)',
            'ni (e17 cm^-3)',
@@ -100,45 +116,53 @@ if cuts == 1:
            'Offset in x(microns)']
     ThrDim.VarianceCut(den_plane_yx,y,x_off,5,2,x_step,label)
     ThrDim.VarianceCut(den_plane_yx,y,x_off,5,-2,x_step,label)
+    
     label=['Density along beam axis (Vary Laser Distance)',
            'Radius from axis (microns)',
            'ni (e17 cm^-3)',
            'Offset in +/- x(microns)']
     ThrDim.VarianceCut(den_plane_yx,y,x_off,4,1,x_step,label,True)
     
+#Fit the data to tanh in y, an elliptical tanh in yz, and Gaussian in x
 if getfit == 1:
     den_vs_y=den[round(len(x)/2)+x_off,:,round(len(z)/2)]
+    
+    #Calculate our guess by roughly estimating the length of the narrow waist
     dd = list(den_vs_y)
     Ltop = np.abs(y[dd.index(next(d for d in dd if d > 0))])
     guess = [Ltop, Ltop/6., max(den_vs_y)]
     
+    #Get the tanh paramters for the y axis by fitting den_vs_y
     fity = ThrDim.FitDataDoubleTanh(den_vs_y,y,guess,"Density vs y")
     
+    #Get the tanh parameters for the z axis by fitting den_vs_z
     den_vs_z=den[round(len(x)/2)+x_off,round(len(y)/2),:]
     fitz = ThrDim.FitDataDoubleTanh(den_vs_z,z,[guess[0]*10.0,guess[1]*10.,guess[2]],"Density vs z")
     
+    #Assume an elliptical tanh, plot the simulated and approximate yz planes
+    # and take variance cuts through the 2D plane of their differences
     den_plane_yz=den[round(len(x)/2)+x_off,:,:]
-    
     #p1 = ThrDim.Fit2DimTanh(den_plane_yz,y,z,[fity[0],fity[1],fity[2],fity[0]/fitz[0]])
-    
     difyz = ThrDim.Plot2DimDataTanh(den_plane_yz,y,z,fity,fitz,
                                     '(microns)','Plasma Density','e17(cm^-3)')
     ThrDim.VarianceCut(np.transpose(difyz),y,0,6,5,z[1]-z[0],
                 ['Plasma density difference along beam','Distance from axis (microns)',
                  'Density Difference e17(cm^-3)','Offset in z(microns)'],True)
-    #NOW FOR X
+
+    #Fit the x axis to a Gaussian and investigate the differences if we
+    # multiply the tanh of the y axis to the Gaussian of the x axis
     if fityx == 1:
         den_vs_x=den[:,round(len(y)/2),round(len(z)/2)]
-        fitx = ThrDim.FitDataGaussian(den_vs_x[64:192],x[64:192],[guess[2],guess[1]*40.,0],"Density vs x")
+        fitx = ThrDim.FitDataGaussian(den_vs_x,x,[guess[2],guess[1]*40.,0],"Density vs x")
     
         den_plane_yx=np.transpose(den[:,:,round(len(z)/2)])
-    
         difyx = ThrDim.Plot2DimTanhxGaussian(den_plane_yx,y,x,fity,fitx,
                     '(microns)','Plasma Density','e17(cm^-3)')
         ThrDim.VarianceCut(np.transpose(difyx),y,0,4,1,x[1]-x[0],
                 ['Plasma density difference along beam','Distance from axis (microns)',
                  'Density Difference e17(cm^-3)','Offset in +/- x(microns)'],True)
     
+    #Compare the yz plane simulated to a yz plane of an infinite slab
     if infinite_approx == 1:
         ThrDim.Plot2DimDataTanh(den_plane_yz,y,z,[fity[0],fity[1],fity[2],0],fitz,
                                '(microns)','Plasma Density','e17(cm^-3)')

@@ -3,7 +3,10 @@
 """
 Created on Tue Jun 27 13:29:57 2017
 Contains functions for building 3D Intensity and Ionization fraction profiles,
-and functions to plot cuts along the various axes and 2D planes
+and functions to plot cuts along the various axes and 2D planes.
+
+Second half contains functions to fit various profiles to 1D tanh, 2D tanh,
+or 1D Gaussian profiles; and plot their comparisons.
 
 @author: chris
 """
@@ -148,6 +151,10 @@ def ImageCut(data,x,y,z,x_off=0,y_off=0,z_off=0,zoom=1,units='',label='',label_u
     plt.tight_layout()
     plt.show()
     
+"""
+Data Fit Functions
+"""    
+
 #Generic function for a double tanh profile.  Flat in the center with ramps
 # on either side which go to zero.  Centered around x = 0
 #  p - parameters: [a (~top length), b (~ramp length), n_0 (density at center)]
@@ -155,6 +162,12 @@ def ImageCut(data,x,y,z,x_off=0,y_off=0,z_off=0,zoom=1,units='',label='',label_u
 def DoubleTanh(p, x):
     return ((.5 + .5*np.tanh((x+p[0])/p[1])) * 
             (.5 - .5*np.tanh((x-p[0])/p[1]))) * p[2]
+#Finds the effective distance for an ellipse, y^2 * (scl*z)^2
+#  y,z - array of distances in the elliptical plane
+#  scl - scaling factor between the narrow and wide waists
+def EllipDist(y, z, scl):
+    return np.sqrt(np.square(y) + np.square(scl * z))
+    
 #Generic function for gaussian
 #  p - parameters: [n_0 (density at center), sigma (distribution), x_0 (offset)]
 #  x - array of distances
@@ -202,15 +215,13 @@ def Plot2DimDataTanh(data, yrange, zrange, py, pz, units='',label='',label_units
     p1 = [py[0],py[1],py[2],py[0]/pz[0]]
     yaxis=np.reshape(yrange, (len(yrange), 1))
     zaxis=np.reshape(zrange, (1, len(zrange)))
-    
-    effdist = lambda y, z, d: np.sqrt(np.square(y) + np.square(d * z))
 
     print("a = " + str(p1[0]))
     print("b = " + str(p1[1]))
     print("n_0 = " + str(p1[2]))
     print("scl = " + str(p1[3]))
     
-    approx = DoubleTanh(p1,effdist(yaxis,zaxis,p1[3]))
+    approx = DoubleTanh(p1,EllipDist(yaxis,zaxis,p1[3]))
     
     plt.set_cmap('plasma')
     gridSize = (2,3)
