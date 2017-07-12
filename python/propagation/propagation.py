@@ -94,6 +94,10 @@ def laser_prop_plot(path):
     ----------
     path : string
         The path specifying the directory with the simulation results.
+
+    Possible param options:
+    xlim : array-like
+        Two element array specifying the bounds of the plot in x.
     """
     # Open the data files
     Eplot = np.load(path+'electricField.npy')
@@ -110,6 +114,15 @@ def laser_prop_plot(path):
         z0 = params['z0']
     else:
         z0 = 0
+    if 'xlim' in params:
+        xlim = params['xlim']
+    else:
+        xlim = [-X/8e3, X/8e3]
+    if 'crosslim' in params:
+        crosslim = params['crosslim']
+    else:
+        crosslim = [-X/8e3, X/8e3]
+        
     x = np.linspace(-X/2, X/2, Nx, False)
 
     # Create the figure
@@ -136,7 +149,7 @@ def laser_prop_plot(path):
     plt.ylabel(r'x ($mm$)')
     plt.title('Intensity profile in the x-z plane')
     plt.xlim([z0/1e3, (z0+Z)/1e3])
-    plt.ylim([-X/8e3, X/8e3])
+    plt.ylim(xlim)
 
     # X-Y initial intensity
     plt.subplot2grid(gridSize, (1, 1), colspan=3)
@@ -163,10 +176,10 @@ def laser_prop_plot(path):
     plt.xlabel(r'x ($mm$)')
     plt.ylabel(r'y ($mm$)')
     plt.title('Midpoint (Z/2) transverse intensity')
-    plt.xlim([-X/4e3, X/4e3])
-    plt.ylim([-Y/4e3, Y/4e3])
+    plt.xlim(crosslim)
+    plt.ylim(crosslim)
 
-    # X_Y center intensity
+    # X_Y final intensity
     plt.subplot2grid(gridSize, (1, 7), colspan=3)
     plt.imshow(prep_data(Eplot[Nz-1, :, :]),
                aspect='auto',
@@ -177,8 +190,8 @@ def laser_prop_plot(path):
     plt.xlabel(r'x ($mm$)')
     plt.ylabel(r'y ($mm$)')
     plt.title('Final transverse intensity')
-    plt.xlim([-X/4e3, X/4e3])
-    plt.ylim([-Y/4e3, Y/4e3])
+    plt.xlim(crosslim)
+    plt.ylim(crosslim)
 
     # Save the figure and display it
     plt.tight_layout()
