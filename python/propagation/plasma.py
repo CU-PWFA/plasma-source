@@ -291,7 +291,8 @@ def summary_plot(path):
     del Ei
     del Et
     del params
-    
+
+
 def profile_plot(path, xlim=None):
     """ Creates plasma density plots through different profiles.
 
@@ -309,7 +310,7 @@ def profile_plot(path, xlim=None):
     Eplot, nplot, Ei, Et, params, X, Z, T, Nx, Ny, Nz, Nt, z0 = open_data(path)
     x = create_centered_grid(X, Nx)
     z = create_z_grid(Z, z0, Nz)
-    
+
     if xlim is None:
         xlim = [-X/4, X/4]
 
@@ -317,7 +318,7 @@ def profile_plot(path, xlim=None):
     gridSize = (2, 1)
     plt.figure(figsize=(16, 9))
     gridspec.GridSpec(gridSize[0], gridSize[1])
-    
+
     # On-axis plasma density
     plt.subplot2grid(gridSize, (0, 0))
     plt.plot(z/1e6, nplot[Nt-1, int(Nx/2), :], 'b-')

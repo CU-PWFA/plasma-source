@@ -24,30 +24,30 @@ l : int, optional
 m : int, optional
     Magnetic quantum number of the electron being ionized.
 """
-H = {'EI' : 13.5984,
-     'Z' : 1,
-     'l' : 0,
-     'm' : 0}
-H2 = {'EI' : 15.426,
-     'Z' : 1,
-     'l' : 0,
-     'm' : 0}
-H2p = {'EI' : 29.99,
-     'Z' : 1,
-     'l' : 0,
-     'm' : 0}
-He = {'EI' : 24.5874,
-     'Z' : 1,
-     'l' : 0,
-     'm' : 0}
-Ar = {'EI' : 15.7596,
-     'Z' : 1,
-     'l' : 1,
-     'm' : 0}
-Arp = {'EI' : 27.62965,
-     'Z' : 1,
-     'l' : 1,
-     'm' : 0}
+H = {'EI': 13.5984,
+     'Z': 1,
+     'l': 0,
+     'm': 0}
+H2 = {'EI': 15.426,
+      'Z': 1,
+      'l': 0,
+      'm': 0}
+H2p = {'EI': 29.99,
+       'Z': 1,
+       'l': 0,
+       'm': 0}
+He = {'EI': 24.5874,
+      'Z': 1,
+      'l': 0,
+      'm': 0}
+Ar = {'EI': 15.7596,
+      'Z': 1,
+      'l': 1,
+      'm': 0}
+Arp = {'EI': 27.62965,
+       'Z': 1,
+       'l': 1,
+       'm': 0}
 
 
 def keldysh(EI, I, wavelength):
@@ -173,10 +173,10 @@ def gaussian_field(I, t, f, tau, chirp=0):
 
 def intensity_from_density(ion, frac):
     """ Retruns the intensity necessary to create a given density of plasma.
-    
+
     Uses the ADK model to calculate the intensity needed to ionize a gas for a
     specific pulse shape.
-    
+
     Parameters
     ----------
     ion : dictionary
@@ -197,7 +197,7 @@ def intensity_from_density(ion, frac):
     tau = ion['tau']
     atom = ion['atom']
     # Depending on the type, define the envelope function
-    if ion['type'] == 'gaussian' :
+    if ion['type'] == 'gaussian':
         def f(I, t):
             return gaussian_envelope(I, t, tau).real
         N = 1000

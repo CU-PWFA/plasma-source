@@ -122,7 +122,7 @@ def laser_prop_plot(path):
         crosslim = params['crosslim']
     else:
         crosslim = [-X/8e3, X/8e3]
-        
+
     x = np.linspace(-X/2, X/2, Nx, False)
 
     # Create the figure
