@@ -75,7 +75,7 @@ def arbitrary_phase(I0, rin, I, z, r0=0):
     Parameters
     ----------
     I0 : array-like
-        Intensity at the lens, each element corresponds to an element in r.
+        Intensity at the lens, each element corresponds to an element in rin.
     rin : array-like
         Array of radius values the input beam is specified at.
     I : array-like
@@ -119,3 +119,53 @@ def arbitrary_phase(I0, rin, I, z, r0=0):
         phi[i] = phi[i-1] - (sinnew + sinold)*dr/2
     # Return everything
     return Iamp, r, phi
+
+
+def lens_design(I0, rin, I, rp, L):
+    """ Generates a phase only lens to produce a desired radial intensity.
+
+    Uses ray tracing to produce a phase only lens that will produce a desired
+    radial intensity pattern. Note the intensity patterns must contain the same
+    amount of power.
+
+    Parameters
+    ----------
+    I0 : array-like
+        Intensity at the lens, each element corresponds to an element in rin.
+    rin : array-like
+        Array of radius values the input beam is specified at.
+    I : array-like
+        Array of desired intensity.
+    rp : array-like
+        Array of radiuses the target intensity is specified at.
+    L : double
+        Distance between the phase mask and the target.
+
+    Returns
+    -------
+    r : array-like
+        Radius vector where the phase is specified at. Each radius refracts
+        rays to the corresponding element in rp.
+    phi : array-like
+        Phase of the mask at each r. Note that this phase must be multiplied by
+        k to get the actual phase delay that goes in the argument of the
+        complex exponential.
+    """
+    N = np.size(rp)
+    r = np.zeros(N)
+    phi = np.zeros(N)
+    I0 = interp1d(rin, I0, bounds_error=False, fill_value=0.0)
+    # Calculate r and phi incrementally
+    sinnew = rp[0]/np.sqrt(rp[0]**2 + L**2)
+    for i in range(1, N):
+        dr = rp[i] - rp[i-1]
+        # XXX this will break for donut beams, the annulus will be too big
+        if I0(r[i-1]) == 0.0:
+            r[i] = r[i-1]
+            continue
+        r[i] = np.sqrt((I[i]*rp[i] + I[i-1]*rp[i-1])*dr/I0(r[i-1]) + r[i-1]**2)
+        dr = r[i] - r[i-1]
+        sinold = sinnew
+        sinnew = (r[i] - rp[i]) / np.sqrt((r[i]-rp[i])**2 + L**2)
+        phi[i] = phi[i-1] - (sinnew + sinold)*dr/2
+    return r, phi
