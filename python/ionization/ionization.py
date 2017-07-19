@@ -115,7 +115,7 @@ def intensity_from_field(E, n=1.0):
     I : array-like
         Intensity in 10^14 W/cm^2.
     """
-    I = n * (0.03643 * E)**2
+    I = n * (0.03643 * abs(E))**2
     return I
 
 
