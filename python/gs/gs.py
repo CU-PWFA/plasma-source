@@ -10,7 +10,7 @@ from numpy.fft import fft, ifft, fft2, ifft2
 from numpy.random import rand
 
 
-def gs(source, target, n=100, err=None):
+def gs(source, target, n=100, err=None, zeroPhase=None):
     """ The 1D Gerchberg-Saxton algorithm between a source and a target.
 
     Given two amplitude distributions related by a Fourier transform, this will
@@ -31,6 +31,8 @@ def gs(source, target, n=100, err=None):
     err : double, optional
         Specify a level of convergence, the algorithm will converge once it has
         reached this level or if n is reached.
+    zeroPhase : bool, optional
+        Pass as True to start the phase on the source at 0.
 
     Returns
     -------
@@ -38,7 +40,9 @@ def gs(source, target, n=100, err=None):
         The phase to be applied to the source.
     """
     size = np.size(source)
-    if np.iscomplexobj(source):
+    if zeroPhase is not None:
+        theta = np.zeros(size)
+    elif np.iscomplexobj(source):
         theta = np.angle(source)  # Initial angle
     else:
         theta = 2*np.pi*rand(size)
@@ -63,10 +67,13 @@ def gs(source, target, n=100, err=None):
             source = abs(source) * np.exp(1j*phi)
             delta = np.amax(abs(phiOld-phi))
             phiOld = phi
+            i += 1
+            if i == n:
+                print("Convergence not reached in n=", n, "iterations.")
     return np.unwrap(phi)
 
 
-def gs2(source, target, n=100, err=None):
+def gs2(source, target, n=100, err=None, zeroPhase=None):
     """ The 2D Gerchberg-Saxton algorithm between a source and a target.
 
     Given two amplitude distributions related by a Fourier transform, this will
@@ -87,6 +94,8 @@ def gs2(source, target, n=100, err=None):
     err : double, optional
         Specify a level of convergence, the algorithm will converge once it has
         reached this level or if n is reached.
+    zeroPhase : bool, optional
+        Pass as True to start the phase on the source at 0.
 
     Returns
     -------
@@ -94,10 +103,12 @@ def gs2(source, target, n=100, err=None):
         The phase to be applied to the source.
     """
     shape = np.shape(source)
-    if np.dtype(source) == "complex":
+    if zeroPhase is not None:
+        theta = np.zeros(shape)
+    elif np.iscomplexobj(source):
         theta = np.angle(source)  # Initial angle
     else:
-        theta = 2*np.pi*rand(shape)
+        theta = 2*np.pi*rand(shape[0], shape[1])
     source = abs(source) * np.exp(1j*theta)
     target = abs(target)
     # Run for the specified number of iterations
@@ -119,4 +130,7 @@ def gs2(source, target, n=100, err=None):
             source = abs(source) * np.exp(1j*phi)
             delta = np.amax(abs(phiOld-phi))
             phiOld = phi
+            i += 1
+            if i == n:
+                print("Convergence not reached in n=", n, "iterations.")
     return np.unwrap(phi)
