@@ -69,3 +69,35 @@ def iht(h, k, x):
     f = integrate.simps(h*jn(0, k*x)*k, k)
     f = np.reshape(f, (M))
     return f
+
+
+def ihtn(h, k, x, n):
+    """ Inverse Hankel transform of order n through direct integration.
+
+    Calculates the inverse Hankel transform by directly evaluating the
+    integrals over the Bessel function kernels.
+
+    Parameters
+    ----------
+    h : array-like
+        Array of function values in frequency space.
+    k : array-like
+        Array of frequency values the function is defined at.
+    x : array-like
+        Array of normal space points to find the transform at.
+    n : int
+        Order of the Hankel transform.
+
+    Returns
+    -------
+    f : array-like
+        The function at each point in x.
+    """
+    N = np.size(h)
+    M = np.size(x)
+    k = np.reshape(k, (1, N))
+    h = np.reshape(h, (1, N))
+    x = np.reshape(x, (M, 1))
+    f = integrate.simps(h*jn(n, k*x)*k, k)
+    f = np.reshape(f, (M))
+    return f
