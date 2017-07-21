@@ -80,15 +80,15 @@ def scan_waist_hw_up(ebeam0,plasma0,waist,hw_up,k):
 if __name__ == '__main__':
     
     # define plasma bulk (flat-top) properties
-    npl0   = 5e16 # cm^-3
-    dEds0  = 2.00e9 # eV/m
+    npl0   = 1e17 # cm^-3
+    dEds0  = 6.00e9 # eV/m
     dgds0  = dEds0/nc.me
-    L_ft   = 0.50 # m
+    L_ft   = 0.00 # m
     
     # define plasma up-ramp
-    shape_up = 'gauss'
+    shape_up = 'lorentz'
     hw_up    = 0.01 # m
-    L_up     = 2.00 # m
+    L_up     = 3.00 # m
     top_up   = L_up # m
     
     # define plasma down-ramp
@@ -98,7 +98,7 @@ if __name__ == '__main__':
     top_dn   = 0  # m
     
     # define longitudinal steps
-    ds   = 0.001 # m
+    ds   = 0.00025 # m
     s_ft = np.linspace(0,L_ft,round(L_ft/ds+1))
     s_up = np.linspace(0,L_up,round(L_up/ds+1))
     s_dn = np.linspace(0,L_dn,round(L_dn/ds+1))
@@ -110,8 +110,8 @@ if __name__ == '__main__':
     plasma0 = ps.make_plasma(bulk,up_ramp,dn_ramp)
     
     # define beam parameters
-    gbC    = 40000 # relativistic lorentz factor
-    eps    = 100e-6  # m-rad, normalized emittance
+    gbC    = 20000 # relativistic lorentz factor
+    eps    = 5e-6  # m-rad, normalized emittance
     beta   = 0.10 # m
     alpha  = 0.00
     gamma  = (1.0+alpha**2)/beta # 1/m
@@ -127,12 +127,12 @@ if __name__ == '__main__':
     ebeam0 = pb.make_ebeam(s0,twiss0,parts0)
     
     # specify waist scan values
-    nwaist = 31
-    waist  = np.linspace(-0.36,-0.32,nwaist) # m, waist location w.r.t. L_up
+    nwaist = 51
+    waist  = np.linspace(-3.00,0.00,nwaist) # m, waist location w.r.t. L_up
 #    waist  = np.linspace(-0.35,-0.55,nwaist) # m, waist location w.r.t. L_up
     # specify ramp half-width scan values
     nhw_up = 51
-    hw_up  = np.linspace(0.126,0.138,nhw_up) # m, HWHM of up-ramp
+    hw_up  = np.linspace(0.00,0.50,nhw_up) # m, HWHM of up-ramp
 #    hw_up  = np.linspace(0.12,0.18,nhw_up) # m, HWHM of up-ramp
     
 #    # initialize mismatch matrix
@@ -166,9 +166,35 @@ if __name__ == '__main__':
     plt.contourf(X,Y,np.log10(M),100,\
                 cmap=cm.Vega20c,\
                 linewidth=2.0)
-#    plt.pcolor(X,Y,M)
+#    plt.scatter(-0.43,0.147,color='k')
     cbar = plt.colorbar()
     cbar.ax.set_ylabel(r'$log_{10}$(M)')
+    plt.ylabel(r'ramp width [m]')
+    plt.xlabel(r'waist position [m]')
+    plt.title(r'beam matching optimization')
+    
+    
+    
+    levels = np.array([1.0,1.1,1.2,1.3,1.4,1.5,\
+                       2.0,3.0,4.0,5.0,])
+    labels = np.array([1.1,1.5,2.0,3.0,4.0,5.0])
+    
+    fig, axes = plt.subplots(1,1, sharey=True)
+    CS = plt.contour(X,Y,M,levels,cmap=cm.tab20b)
+    plt.clabel(CS,labels,fontsize=9, inline=1,fmt='%1.1f')
+    cbar = plt.colorbar()
+    cbar.ax.set_ylabel(r'M')
+    cbar.set_ticks(levels)
+#    cbar.set_ticklabels(levels)
+    plt.ylabel(r'ramp width [m]')
+    plt.xlabel(r'waist position [m]')
+    plt.title(r'beam matching for Xu-3 ramp')
+    
+    
+    
+    
+    
+    
 #    
 #    min_y = np.zeros(M.shape[0])
 #    min_x = np.zeros(M.shape[0])

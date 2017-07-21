@@ -75,7 +75,7 @@ if __name__ == '__main__':
     npl0   = 1e17 # cm^-3
     dEds0  = 6.00e9 # eV/m
     dgds0  = dEds0/nc.me
-    L_ft   = 0.50 # m
+    L_ft   = 0.01 # m
     
     # define plasma up-ramp
     shape_up = 'gauss'
@@ -120,11 +120,11 @@ if __name__ == '__main__':
     
     # specify waist scan values
     nwaist = 51
-    waist  = np.linspace(-0.25,0.00,nwaist) # m, waist location w.r.t. L_up
+    waist  = np.linspace(-0.20,-0.06,nwaist) # m, waist location w.r.t. L_up
 
     # specify relative position of thin plasma lens
     nlens_srel = 51
-    lens_srel  = np.linspace(-0.25,-0.10,nlens_srel)
+    lens_srel  = np.linspace(-0.22,-0.12,nlens_srel)
 
 #    fig = plt.figure()
 #    ax1 = fig.add_subplot(111)
@@ -150,6 +150,25 @@ if __name__ == '__main__':
     X = np.tile(waist.reshape(-1,1),(1,nlens_srel))
     Y = np.tile(lens_srel.T,(nwaist,1))
     
+    
+    fig, axes = plt.subplots(1,1, sharey=True)
+    plt.contourf(X,Y,np.log10(M),100,\
+                cmap=cm.Vega20c,\
+                linewidth=2.0)
+#    plt.scatter(-0.43,0.147,color='k')
+    cbar = plt.colorbar()
+    cbar.ax.set_ylabel(r'$log_{10}$(M)')
+    plt.ylabel(r'lens position [m]')
+    plt.xlabel(r'waist position [m]')
+    plt.title(r'beam matching optimization')
+    
+    
+    
+    
+    
+    
+    
+    
     levels = np.array([1.0,1.1,1.2,1.3,1.4,1.5,\
                        2.0,3.0,4.0,5.0,])
     labels = np.array([1.1,1.5,2.0,3.0,4.0,5.0])
@@ -169,8 +188,10 @@ if __name__ == '__main__':
     cbar.ax.set_ylabel(r'M')
     cbar.set_ticks(levels)
 #    cbar.set_ticklabels(levels)
-    plt.xlabel(r'waist (m)')
-    plt.ylabel(r'lens pos. (m)')
+    plt.ylabel(r'lens position [m]')
+    plt.xlabel(r'waist position [m]')
+    plt.title(r'beam matching optimization')
+    
     
 #    
 #    min_y = np.zeros(M.shape[0])
