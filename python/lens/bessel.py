@@ -71,7 +71,7 @@ def kr_from_kz(kz, lam, S=None):
         return kr
 
 
-def uniform_bessel(params, E, z):
+def uniform_bessel(params, E, z, n=0):
     """ Calculate the required electric field to create the passed intensity.
 
     Calculates the electric field necessary to create the passed intensity
@@ -99,6 +99,8 @@ def uniform_bessel(params, E, z):
     z : array-like
         Array of z coordinates along the optical axis. Must be evenly spcaed
         for the FFT.
+    n : int, optional
+        Order of the Bessel function, defaults to order zero.
 
     Returns
     -------
@@ -124,5 +126,5 @@ def uniform_bessel(params, E, z):
     Sn = interp1d(kr, S, fill_value=(S[-1], 0.0), bounds_error=False)
     Sn = Sn(krn)
     r = np.linspace(0, params['rmax'], params['M'])
-    E = intht.iht(Sn, krn, r)
+    E = intht.ihtn(Sn, krn, r, n)
     return r, E
