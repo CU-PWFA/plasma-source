@@ -71,7 +71,7 @@ def kr_from_kz(kz, lam, S=None):
         return kr
 
 
-def uniform_bessel(params, E, z):
+def uniform_bessel(params, Ez, z, n=0):
     """ Calculate the required electric field to create the passed intensity.
 
     Calculates the electric field necessary to create the passed intensity
@@ -94,11 +94,13 @@ def uniform_bessel(params, E, z):
                 Wavelength of the electromagnetic wave in vacuum.
             rmax : double
                 Maximum radius to return the electric field at.
-    E : array-like
+    Ez : array-like
         Desired on axis field in GV/m.
     z : array-like
         Array of z coordinates along the optical axis. Must be evenly spcaed
         for the FFT.
+    n : int, optional
+        Order of the Bessel function, defaults to order zero.
 
     Returns
     -------
@@ -110,7 +112,7 @@ def uniform_bessel(params, E, z):
     #TODO figure out if the normalization is just not enough steps or an error
     lam = params['lam']
     k = 2*np.pi/lam
-    kz, S = spectrum_from_axis(E, z)
+    kz, S = spectrum_from_axis(Ez, z)
     # Add the linear phase based of the width of the Bessel beam
     kr0 = 2.4048 / params['R']
     kz0 = np.sqrt(k**2 - kr0**2)
@@ -124,5 +126,5 @@ def uniform_bessel(params, E, z):
     Sn = interp1d(kr, S, fill_value=(S[-1], 0.0), bounds_error=False)
     Sn = Sn(krn)
     r = np.linspace(0, params['rmax'], params['M'])
-    E = intht.iht(Sn, krn, r)
+    E = intht.ihtn(Sn, krn, r, n)
     return r, E
