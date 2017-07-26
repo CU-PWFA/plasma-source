@@ -25,7 +25,7 @@ max_corrector=0
 #'fityx' uses getfit to add a Gaussian fit to the x axis
 #'infinite_approx' compares getfit with simply assuming an infinite slab
 getfit = 1
-fityx = 1
+fityx = 0
 infinite_approx = 0
 
 #size of window in micrometers
@@ -37,9 +37,12 @@ z_window = 400
 #folder = '/home/chris/Desktop/FourierPlots/CompactOptics_DoubleJet/'
 #folder = '/home/chris/Desktop/FourierPlots/CompactOptics/'
 #folder = '/home/chris/Desktop/FourierPlots/real_FACET_Refraction/'
-folder = '/home/chris/Desktop/FourierPlots/ApproximateSol/'
-#directory = 'gasjet_den_propagation_1e18/'
-directory = 'ETanhGauss1/'
+#folder = '/home/chris/Desktop/FourierPlots/ApproximateSol/'
+folder = '/home/chris/Desktop/FourierPlots/CompactOptics_Source/'
+
+directory = 'propagation_1e17/'
+#directory = 'gasjet_den_propagation_1e17/'
+#directory = 'ETanhGauss1/'
 path = folder+directory
 
 #Load densities and parameters, and morph Robert's output [beam, jet, laser]
