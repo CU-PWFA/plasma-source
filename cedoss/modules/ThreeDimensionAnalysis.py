@@ -313,7 +313,7 @@ def Plot2DimTanhxGaussian(data, yrange, xrange, py, px, units='',label='',label_
     
     ny = DoubleTanh(py,yaxis)
     nx = Gaussian(px,xaxis)
-    approx = ny * nx / py[2]
+    approx = ny * nx / px[0]
     
     plt.set_cmap('plasma')
     gridSize = (2,3)

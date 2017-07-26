@@ -18,17 +18,17 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
 #Script Selection
-test_density = 1
+test_density = 0
 free_space = 0
 
 #This is the directory for saving
 #path = '/home/chris/Desktop/FourierPlots/CompactOptics_DoubleJet/'
-path = '/home/chris/Desktop/FourierPlots/CompactOptics/'
-directory = 'gasjet_den_propagation_void'
+path = '/home/chris/Desktop/FourierPlots/CompactOptics_Source/'
+directory = 'propagation_25e16'
 #directory = 'testdir'
 
 #Density, converted to e17cm^-3  With a gas jet this is density at nozzle
-n0 = 1e18 * 1e-17
+n0 = 2.5e17 * 1e-17
 
 #Parameters obtained using GaussianBeam.Prop_EPhase.  Consult OpticalSetup
 #In order to work with Robert's code, there are a bunch of 1e6 factors to
@@ -84,7 +84,7 @@ def Double_Jet(x,y,z):
     return j1+j2
 
 #False for uniform density, otherwise pick your poison
-distribution = Gas_jet_density
+distribution = False
 
 # Setup the parameters, just like in Robert's code
 params = {'Nx' : 2**9,

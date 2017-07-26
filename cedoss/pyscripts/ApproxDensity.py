@@ -20,8 +20,8 @@ import numpy as np
 sys.path.insert(0, "../")
 from modules import ThreeDimensionAnalysis as ThrDim
 
-save_data = 1
-
+save_data = 0
+""" #1e18 dual jet
 #Parameters for the yz plane's elliptical tanh
 a = 14.3764312172
 b = 2.26796567463
@@ -32,6 +32,30 @@ scl = 0.0660840157499
 #n_0 from above
 sig = 494.534987065
 x_0 = -3.44452948425
+"""
+""" #1e17 dual jet
+#Parameters for the yz plane's elliptical tanh
+a = 12.576465287
+b = 1.68062580235
+n_0 = 0.574848662344
+scl = 0.0581650077666
+
+#Parameters for the x axis Gaussian
+#n_0 from above
+sig = 499.998226448
+x_0 = -0.000233031190014
+"""
+ #Idealized numbers
+#Parameters for the yz plane's elliptical tanh
+a = 12
+b = 2
+n_0 = 1
+scl = 0.05 # ~17./332.
+
+#Parameters for the x axis Gaussian
+#n_0 from above
+sig = 500e100 #~infinity
+x_0 = 0
 
 folder = '/home/chris/Desktop/FourierPlots/ApproximateSol/'
 directory = 'ETanhGauss1/'
