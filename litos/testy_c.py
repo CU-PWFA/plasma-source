@@ -55,40 +55,37 @@ def scan_waist_hw_up(ebeam0,plasma0,waist,hw_up,k):
     # propagate beam through plasma
     ebeam = pbp.prop_ebeam_plasma(ebeam,plasma,last_only=False)
 
-#    s     = np.zeros(len(ebeam))
-#    beta  = np.zeros(len(ebeam))
-#    for i in range(0,len(ebeam)):
-#        s[i] = ebeam[i]["s"]
-#        beta[i] = ebeam[i]["beta"]
-#
-#    ax2.scatter(s,beta)
-#    ax1.scatter(s,plasma["npl"])
- 
-
     # calculate mismatch parameter
-    Tbeam  = [ebeam[len(ebeam)-1]["beta"],\
-              ebeam[len(ebeam)-1]["alpha"],\
-              ebeam[len(ebeam)-1]["gamma"]]
+    eps    = ebeam[len(ebeam)-1]["eps"]
+    beta   = ebeam[len(ebeam)-1]["beta"]
+    alpha  = ebeam[len(ebeam)-1]["alpha"]
+    gamma  = ebeam[len(ebeam)-1]["gamma"]
     wp0    = (5.64e4)*np.sqrt(plasma["npl"][-1]) # rad/s, plasma ang. freq.
     kp0    = wp0/nc.c # m^-1, plasma wave number
-    kb     = kp0/np.sqrt(2*ebeam[len(ebeam)-1]["gbC"])
-    Tmatch = [1.0/kb,0,kb]
+    kb     = kp0/np.sqrt(2*gbC)
+    beta_m = 1.0/kb
+    Tbeam  = [beta,alpha,gamma]
+    Tmatch = [beta_m,0,1.0/beta_m]
+    R_x    = np.sqrt(eps*beta/gbC+(beta_m**2)*eps*gamma/gbC)
+    
     M      = calc_M(Tbeam,Tmatch)
-    return M
+    K      = gbC*kb*R_x
+    
+    return [M,K]
 
 
 if __name__ == '__main__':
     
     # define plasma bulk (flat-top) properties
-    npl0   = 1e17 # cm^-3
-    dEds0  = 6.00e9 # eV/m
+    npl0   = 1e15 # cm^-3
+    dEds0  = 0.10e9 # eV/m
     dgds0  = dEds0/nc.me
     L_ft   = 0.00 # m
     
     # define plasma up-ramp
-    shape_up = 'lorentz'
+    shape_up = 'gauss'
     hw_up    = 0.01 # m
-    L_up     = 3.00 # m
+    L_up     = 2.00 # m
     top_up   = L_up # m
     
     # define plasma down-ramp
@@ -110,8 +107,8 @@ if __name__ == '__main__':
     plasma0 = ps.make_plasma(bulk,up_ramp,dn_ramp)
     
     # define beam parameters
-    gbC    = 20000 # relativistic lorentz factor
-    eps    = 5e-6  # m-rad, normalized emittance
+    gbC    = 200 # relativistic lorentz factor
+    eps    = 1e-6  # m-rad, normalized emittance
     beta   = 0.10 # m
     alpha  = 0.00
     gamma  = (1.0+alpha**2)/beta # 1/m
@@ -127,38 +124,39 @@ if __name__ == '__main__':
     ebeam0 = pb.make_ebeam(s0,twiss0,parts0)
     
     # specify waist scan values
-    nwaist = 51
-    waist  = np.linspace(-3.00,0.00,nwaist) # m, waist location w.r.t. L_up
+    nwaist = 21
+    waist  = np.linspace(-0.45,-0.38,nwaist) # m, waist location w.r.t. L_up
 #    waist  = np.linspace(-0.35,-0.55,nwaist) # m, waist location w.r.t. L_up
     # specify ramp half-width scan values
-    nhw_up = 51
-    hw_up  = np.linspace(0.00,0.50,nhw_up) # m, HWHM of up-ramp
+    nhw_up = 21
+    hw_up  = np.linspace(0.135,0.155,nhw_up) # m, HWHM of up-ramp
 #    hw_up  = np.linspace(0.12,0.18,nhw_up) # m, HWHM of up-ramp
-    
-#    # initialize mismatch matrix
-#    M = np.zeros([nwaist,nhw_up])
-    
-#    fig = plt.figure()
-#    ax1 = fig.add_subplot(111)
-#    
-#    fig = plt.figure()
-#    ax2 = fig.add_subplot(111)
 
     # perform scan
     num_cores = multiprocessing.cpu_count()
 #    num_cores = 1
-    M = Parallel(n_jobs=num_cores)\
-        (delayed(scan_waist_hw_up)(ebeam0,plasma0,\
-         waist[int(k/nhw_up)],hw_up[k%nhw_up],k)\
-         for k in range(nwaist*nhw_up))
+    MK = Parallel(n_jobs=num_cores)\
+            (delayed(scan_waist_hw_up)(ebeam0,plasma0,\
+             waist[int(k/nhw_up)],hw_up[k%nhw_up],k)\
+             for k in range(nwaist*nhw_up))
 
+    M = np.zeros(len(MK))
+    K = np.zeros(len(MK)) 
+    for i in range(len(MK)):
+        M[i] = MK[i][0]
+        K[i] = MK[i][1]
+    
     M = np.reshape(M,[nwaist,nhw_up])
 #    print(M)
-    
+
+    K = np.reshape(K,[nwaist,nhw_up])
+#    print(K)
+
     # analyze results
     
     # plot results
     
+    # filled color contour map of M
     X = np.tile(waist.reshape(-1,1),(1,nhw_up))
     Y = np.tile(hw_up.T,(nwaist,1))
     
@@ -173,8 +171,19 @@ if __name__ == '__main__':
     plt.xlabel(r'waist position [m]')
     plt.title(r'beam matching optimization')
     
+    # filled color contour map of log10(K)
+    fig, axes = plt.subplots(1,1, sharey=True)
+    plt.contourf(X,Y,K,100,\
+                cmap=cm.Vega20c,\
+                linewidth=2.0)
+#    plt.scatter(-0.43,0.147,color='k')
+    cbar = plt.colorbar()
+    cbar.ax.set_ylabel(r'K')
+    plt.ylabel(r'ramp width [m]')
+    plt.xlabel(r'waist position [m]')
+    plt.title(r'beam matching optimization')
     
-    
+    # thin line contour map of M
     levels = np.array([1.0,1.1,1.2,1.3,1.4,1.5,\
                        2.0,3.0,4.0,5.0,])
     labels = np.array([1.1,1.5,2.0,3.0,4.0,5.0])
@@ -188,9 +197,29 @@ if __name__ == '__main__':
 #    cbar.set_ticklabels(levels)
     plt.ylabel(r'ramp width [m]')
     plt.xlabel(r'waist position [m]')
-    plt.title(r'beam matching for Xu-3 ramp')
+    plt.title(r'beam matching for gauss ramp')
     
+    # thin line contour map of K
+#    levels = np.array([1.0,2.0,3.0,4.0,5.0,\
+#                       6.0,7.0,8.0,9.0,\
+#                       10,15,20,25])
+#    labels = np.array([1.0,2.0,3.0,4.0,5.0,\
+#                       6.0,7.0,8.0,9.0,\
+#                       10,15,20,25])
     
+    levels = np.array([0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0])
+    labels = np.array([0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0])
+    
+    fig, axes = plt.subplots(1,1, sharey=True)
+    CS = plt.contour(X,Y,K,levels,cmap=cm.tab20b)
+    plt.clabel(CS,labels,fontsize=9, inline=1,fmt='%1.1f')
+    cbar = plt.colorbar()
+    cbar.ax.set_ylabel(r'K')
+    cbar.set_ticks(levels)
+#    cbar.set_ticklabels(levels)
+    plt.ylabel(r'ramp width [m]')
+    plt.xlabel(r'waist position [m]')
+    plt.title(r'beam matching for gauss ramp')
     
     
     

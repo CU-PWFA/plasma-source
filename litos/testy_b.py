@@ -18,15 +18,15 @@ from calc_M import calc_M
 if __name__ == '__main__':
     
     # define plasma bulk (flat-top) properties
-    npl0   = 1e17 # cm^-3
-    dEds0  = 6.00e9 # eV/m
+    npl0   = 1e18 # cm^-3
+    dEds0  = 0 # 0.10e9 # eV/m
     dgds0  = dEds0/nc.me
-    L_ft   = 0.50 # m
+    L_ft   = 0.20 # m
     
     # define plasma up-ramp
     shape_up = 'gauss'
-    hw_up    = 0.147 #0.05 # m
-    L_up     = 1.00 # m
+    hw_up    = 0.00 #0.147 #0.05 # m
+    L_up     = 0.00 #1.00 # m
     top_up   = L_up # m
     
     # define plasma down-ramp
@@ -36,7 +36,7 @@ if __name__ == '__main__':
     top_dn   = 0  # m
     
     # define longitudinal steps
-    ds   = 0.00025 # m
+    ds   = 0.00010 # m
     s_ft = np.linspace(0,L_ft,round(L_ft/ds+1))
     s_up = np.linspace(0,L_up,round(L_up/ds+1))
     s_dn = np.linspace(0,L_dn,round(L_dn/ds+1))
@@ -48,9 +48,20 @@ if __name__ == '__main__':
     plasma  = ps.make_plasma(bulk,up_ramp,dn_ramp)
     
     # define beam parameters
-    gbC    = 20000 # relativistic lorentz factor
-    eps    = 5e-6  # m-rad, normalized emittance
+    gbC    = 200 # relativistic lorentz factor
+    eps    = 1.0e-6  # m-rad, normalized emittance
     beta   = 0.10  # m
+    
+    # match beam to plasma
+    wp0    = (5.64e4)*np.sqrt(npl0) # rad/s, plasma ang. freq.
+    kp0    = wp0/nc.c # m^-1, plasma wave number
+    kb     = kp0/np.sqrt(2*gbC)
+    beta   = 1.0/kb
+
+    beta   = 100*beta
+
+    eps    = 1.0/(4*kb*gbC)
+
     alpha  = 0.00
     gamma  = (1.0+alpha**2)/beta # 1/m
     dgb    = 0.01
@@ -64,8 +75,11 @@ if __name__ == '__main__':
     parts0 = pb.make_parts(twiss0,npart,dist)
     ebeam0 = pb.make_ebeam(s0,twiss0,parts0)
     
+    # add offset to bunch
+    ebeam0[0]["x"] += 10e-6 # m
+    
     # set beam waist position
-    waist = -0.430 #-0.122 # m, waist location w.r.t L_up
+    waist = 0.00 #-0.430 #-0.122 # m, waist location w.r.t L_up
     s_w   = L_up + waist # m
     
     # propagate beam backward from waist to start of plasma

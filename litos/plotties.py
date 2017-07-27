@@ -20,23 +20,67 @@ import scipy.stats as stats
 
 # do analysis on beam/plasma
 nstep = len(ebeam)
+npart = ebeam[0]["npart"]
 s     = np.zeros(nstep)
+eps   = np.zeros(nstep)
 beta  = np.zeros(nstep)
+alpha = np.zeros(nstep)
+gamma = np.zeros(nstep)
 rms_x = np.zeros(nstep)
-frac  = 0.95
 
-for i in range(0,len(ebeam)):
+Psi_x = np.zeros([nstep,npart])
+K_x   = np.zeros([nstep,npart])
+
+PsiC_x = np.zeros(nstep)
+KC_x   = np.zeros(nstep)
+Krms_x = np.zeros(nstep)
+
+K_twiss = np.zeros(nstep)
+
+frac  = 1.00
+
+for i in range(0,nstep):
     s[i]     = ebeam[i]["s"] # m
+    eps[i]   = ebeam[i]["eps"] # mm-mrad
     beta[i]  = ebeam[i]["beta"] # m
+    alpha[i] = ebeam[i]["alpha"]
+    gamma[i] = ebeam[i]["gamma"] # 1/m
     rms_x[i] = mm.calc_rms(ebeam[i]["x"],frac)/(1e-6) # um
+    
+    wp  = (5.64e4)*np.sqrt(plasma["npl"][i]) # rad/s, plasma ang. freq.
+    kp  = wp/nc.c # m^-1, plasma wave number
+    
+    for j in range(0,npart):
+        x      = ebeam[i]["x"][j]
+        xp     = ebeam[i]["xp"][j]
+        gb     = ebeam[i]["gb"][j]
+        kb     = kp/np.sqrt(2*gb)
+        beta_m = 1.0/kb
+        R_x    = np.sqrt(x**2 + (beta_m*xp)**2)
+        Psi_x[i,j] = np.arctan2(beta_m*xp,x)
+        K_x[i,j]   = gb*kb*R_x
+    
+    # make Psi go from 0 to 2*pi
+    Psi_x[(Psi_x<0)] += 2*np.pi
 
+    frac = 1.0
+    PsiC_x[i] = mm.calc_mean(Psi_x[i,:],frac)
+    KC_x[i]   = mm.calc_mean(K_x[i,:],frac)
+    Krms_x[i] = mm.calc_rms(K_x[i,:],frac)
+
+    gbC    = ebeam[i]["gbC"]
+    kb     = kp/np.sqrt(2*gbC)
+    beta_m = 1.0/kb
+    R_x    = np.sqrt(eps[i]*beta[i]/gbC+(beta_m**2)*eps[i]*gamma[i]/gbC)
+    K_twiss[i] = gbC*kb*R_x
+    
 
 xi  = ebeam[0]["x"] # m
 xf  = ebeam[len(ebeam)-1]["x"] # m
 xpi = ebeam[0]["xp"] # rad
 xpf = ebeam[len(ebeam)-1]["xp"] # rad
 
-frac = 1
+frac = 1.00
 rms_xi = mm.calc_rms(xi,frac)
 rms_xf = mm.calc_rms(xf,frac)
 rms_xpi = mm.calc_rms(xpi,frac)
@@ -72,6 +116,8 @@ kurtf = stats.kurtosis(xf,0,True)
 
 
 ift  = int(np.argwhere(s>plasma["up_ramp"]["top_loc"])[0])
+fft  = int(np.argwhere(s>=plasma["up_ramp"]["top_loc"]+plasma["bulk"]["L"])[0])
+
 Tbft = [ebeam[ift]["beta"],\
         ebeam[ift]["alpha"],\
         ebeam[ift]["gamma"]]
@@ -83,9 +129,14 @@ Tmft = [1.0/kb,0,kb]
 
 Mft  = calc_M(Tbft,Tmft)
 
-
-
-
+sigr = np.sqrt(eps[0]/(gbC*kb))
+lam = np.pi/(kb*(gbC**2))
+print('sigma: ',sigr)
+print('lambda: ',lam)
+print('Lr: ',2*np.pi*(sigr**2)/lam)
+print('Lg: ',(2*np.pi/kb)/(4*np.pi*np.sqrt(3)*(1e-3)))
+print('eps_lim: ',gbC*lam/(4*np.pi))
+print('lambda_beta: ',2*np.pi/kb)
 
 # make plots
 
@@ -104,31 +155,74 @@ ax2  = ax1.twinx()
 ax2.plot(s,rms_x,color='r')
 ax2.set_ylabel(r'rms($x$) [$\mu$m]',color='r')
 ax2.tick_params('y',colors='r')
-ax2.set_ylim([0,1.1*rms_x[0]])
+ax2.set_ylim([0,1.1*max(rms_x)])
 
-plt.title(r'ramp width = 5.0 cm')
+plt.title(r'$\beta$ and beam size')
 
 figA.tight_layout()
 plt.show()
 
 
-# initial and final beam distribution
-edge = (int(np.max([np.abs(np.min(xf/(1e-6))),np.max(xf/(1e-6))])/10)+1)*10
-xbins = np.arange(-edge,edge,2*edge/51)
+## initial and final beam distribution
+#edge = (int(np.max([np.abs(np.min(xf/(1e-6))),np.max(xf/(1e-6))])/10)+1)*10
+#xbins = np.arange(-edge,edge,2*edge/51)
+#
+#figB, ax3 = plt.subplots(1,1,sharey=True)
+#ax3.hist(xf/(1e-6),xbins,ls='solid',fc='none',edgecolor='b',\
+#                label='Final Beam Dist.')
+#ax3.hist(xi/(1e-6),xbins,ls='dashed',fc='none',edgecolor='r',\
+#                label='Initial Beam Dist.')
+#ax3.set_xlabel(r'x [$\mu$m]')
+#ax3.set_ylabel(r'macro particles')
+#
+#plt.legend()
+#
+#plt.title(r'lens-matched beam distribution')
+#
+#figB.tight_layout()
+#plt.show()
 
-figB, ax3 = plt.subplots(1,1,sharey=True)
-ax3.hist(xf/(1e-6),xbins,ls='solid',fc='none',edgecolor='b',\
-                label='Final Beam Dist.')
-ax3.hist(xi/(1e-6),xbins,ls='dashed',fc='none',edgecolor='r',\
-                label='Initial Beam Dist.')
-ax3.set_xlabel(r'x [$\mu$m]')
-ax3.set_ylabel(r'macro particles')
 
-plt.legend()
 
-plt.title(r'lens-matched beam distribution')
 
-figB.tight_layout()
+
+figC = plt.figure()
+ax4  = figC.add_subplot(111)
+#ax4.plot(s,plasma["npl"]*max(test_Psi)/max(plasma["npl"]),color='g')
+
+#ax4.plot(s,test_Psi,color='b')
+#ax4.plot(s,test2_Psi,color='r')
+
+#ax4.scatter(test_Psi,test_xp)
+
+#ax4.plot(s,test_x,color='b')
+#ax4.plot(s,test2_x,color='r')
+
+ax4.plot(s,KC_x,color='b')
+ax4.plot(s,KC_x+Krms_x,color='r')
+ax4.plot(s,KC_x-Krms_x,color='r')
+ax4.plot(s,K_twiss,color='g')
+
+#ax4.hist(K_x[ift,:],21,ls='solid',fc='none',edgecolor='b',\
+#                label='K Dist.')
+#ax4.hist(K_x[fft,:],21,ls='solid',fc='none',edgecolor='r',\
+#                label='K Dist.')
+
+#ax4.scatter(ebeam[ift]["x"],K_x[ift,:])
+
+#ax4.set_ylim([0,+1.1*2*np.pi])
+
+ax4.set_xlabel('s [m]')
+#ax4.set_ylabel(r'$\Psi$ [rad]',color='b')
+#ax4.tick_params('y',colors='b')
+
+ax4.set_ylabel(r'K',color='k')
+ax4.tick_params('y',colors='k')
+
+
+plt.title(r'K and/or $\Psi$')
+
+figC.tight_layout()
 plt.show()
 
 
