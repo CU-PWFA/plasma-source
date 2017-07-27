@@ -173,6 +173,8 @@ def multimode_ionization(params, z, I):
                 Temporal length of the Gaussian ionizing pulse.
             multi : array-like
                 Multiplier for each orders electric field.
+            xlim : array-like, optional
+                Two element array of limits for the transverse density plot.
     z : array-like
         Array of on axis z values the intensity is specified at.
     I : array-like
@@ -251,10 +253,9 @@ def open_data(path):
     """
     # Open the data files
     frac = np.load(path+'ionizationFraction.npy')
-    E = np.load(path+'inputField.npy')
-    rmi = np.load(path+'inputCoordinates.npy')
-    params = np.load(path+'params.npy')
-    print(params)
+    E = np.load(path+'inputField.npy').item()
+    rmi = np.load(path+'inputCoordinates.npy').item()
+    params = np.load(path+'params.npy').item()
     # Useful simulation parameters
     L = params['L']
     X = params['prop']['X']
@@ -265,7 +266,7 @@ def open_data(path):
     return frac, E, rmi, params, L, X, Z, Nx, Ny, Nz
 
 
-def ionization_plot(path):
+def ionization_plot(path, H, dr=None):
     """ Create plots of the ionization fraction and slice profiles.
 
     Specify the path to the output files and this function will save an image
@@ -275,26 +276,38 @@ def ionization_plot(path):
     ----------
     path : string
         The path specifying the directory with the simulation results.
+    H : int
+        The number of lineouts to draw.
+    dx : double
+        Spacing between radial lineouts.
     """
     frac, E, rmi, params, L, X, Z, Nx, Ny, Nz = open_data(path)
-    
+    x = np.linspace(-X/2, X/2, Nx, False)
+    z = np.linspace(0, Z, Nz)
+    if 'xlim' in params:
+        xlim = params['xlim']
+    else:
+        xlim = [-1e3, 1e3]
+    if dr is None:
+        dr = X/32
     # Create the figure
     gridSize = (2, 6)
     plt.figure(figsize=(16, 9))
     gridspec.GridSpec(gridSize[0], gridSize[1])
 
     # Input field plot
-    plt.subplot2grid(gridSize, (0, 0), colspan=2)
-    ax = plt.axes()
-    ax.set_prop_cycle('color', [plt.cm.cool(i) for i in np.linspace(0, 1, L)])
+    ax1 = plt.subplot2grid(gridSize, (0, 0), colspan=2)
+    ax1.set_prop_cycle('color',
+                       [plt.cm.Set1(i) for i in np.linspace(0, 1, L)])
     for i in range(0, L):
-        plt.plot(rmi[i], E[i])
+        plt.plot(rmi[i]/1e3, abs(E[i]))
     plt.title('Input electric field for each order')
-    plt.xlabel('r (m)')
+    plt.xlabel('r (mm)')
     plt.ylabel(r'$|E(r)|$ (GV/m)')
+    plt.legend(['Bessel %d' % i for i in range(0, L)])
 
     # Ionization fraction plot
-    plt.subplot2grid(gridSize, (0, 1), colspan=4)
+    plt.subplot2grid(gridSize, (0, 2), colspan=4)
     plt.imshow(np.flipud(np.transpose(frac[:, :, int(Ny/2)])),
            aspect='auto',
            extent=[0, Z/1e6, -X/2e3, X/2e3])
@@ -306,7 +319,41 @@ def ionization_plot(path):
     plt.title('Combined Ionization fraction')
     plt.xlim([0, Z/1e6])
     plt.ylim([-X/8e3, X/8e3])
-    
+
+    # Transverse density plot
+    ax3 = plt.subplot2grid(gridSize, (1, 0), colspan=3)
+    sliceInd = np.linspace(Nz/3, 2*Nz/3, H, dtype=np.int)
+    dz = Z/(Nz-1)
+    slicePosition = (sliceInd-1)*dz/1e6
+    slicePosition = ['%.2f' % num for num in slicePosition]
+    ax3.set_prop_cycle('color',
+                      [plt.cm.gist_rainbow(i) for i in np.linspace(0, 1, H)])
+    for i in range(0, H):
+        plt.plot(x, frac[sliceInd[i], :, int(Ny/2)])
+    plt.title('Transverse intensity profile at different distances')
+    plt.xlabel('x ($\mu m$)')
+    plt.ylabel('Ionization fraction')
+    plt.legend(slicePosition, title='z in m')
+    plt.xlim(xlim)
+    plt.grid(True)
+
+    # Longitudinal density plot
+    ax4 = plt.subplot2grid(gridSize, (1, 3), colspan=3)
+    dx = X/(Nx-2)
+    sliceInd = np.linspace(Nx/2, Nx/2+dr*H/dx, H, dtype=np.int)
+    slicePosition = (sliceInd-1)*dx - X/2
+    slicePosition = ['%.2f' % num for num in slicePosition]
+    ax4.set_prop_cycle('color',
+                      [plt.cm.winter(i) for i in np.linspace(0, 1, H)])
+    for i in range(0, H):
+        plt.plot(z/1e6, frac[:, sliceInd[i], int(Ny/2)])
+    plt.title('Longitudinal intensity profiles for different radiuses')
+    plt.xlabel('z (m)')
+    plt.ylabel('Ionization fraction')
+    plt.legend(slicePosition, title='Radius in  $\mu m$')
+    plt.grid(True)
+
+    # Save the figure and display it
     plt.tight_layout()
     plt.savefig(path+'ionizationFig.pdf', format='pdf')
     plt.savefig(path+'ionizationFig.png', format='png')
