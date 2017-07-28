@@ -13,7 +13,7 @@ import matplotlib.gridspec as gridspec
 from propagation import propagation
 
 
-def plasma_refraction(params, Efunc, Tfunc, n0=False):
+def plasma_refraction(params, Efunc, Tfunc, n0=None, n=None):
     """ Propagate a laser pulse through a plasma accounting for refraction.
 
     Propogates a laser pulse through a region of partially ionized gas. This
@@ -72,6 +72,9 @@ def plasma_refraction(params, Efunc, Tfunc, n0=False):
     n0 : array_like, optional
         Can pass an (Nx, Ny, Nz) array of gas density. If absent, a uniform gas
         density of params['n0'] will be assumed. Units of 10^17 cm^-3.
+    n : array-like, optional
+        Can pass an (Nx, Ny, Nz) array of initial plasma density. If absent, no
+        initial ionization is assumed.
     """
     # Store some useful parameters as variables
     X = params['X']
@@ -95,9 +98,10 @@ def plasma_refraction(params, Efunc, Tfunc, n0=False):
     dt = T/(Nt-1)
     # Setup the index of refraction array and plasma density array
     nih = np.zeros((Nx, Ny, Nz))
-    n = np.zeros((Nx, Ny, Nz))
+    if n is None:
+        n = np.zeros((Nx, Ny, Nz))
     # Handle non uniform initial densities
-    if n0 is False:
+    if n0 is None:
         n0 = params['n0']
     # Setup arrays to store the simulation results
     Efile = np.zeros((Nt, Nz, Nx))
