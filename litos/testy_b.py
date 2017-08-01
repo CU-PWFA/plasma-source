@@ -7,6 +7,7 @@ Created on Wed Jun 28 15:10:13 2017
 """
 
 import numpy as np
+from collections import defaultdict
 import matplotlib.pyplot as plt
 import nat_consts as nc
 import particle_beam as pb
@@ -71,10 +72,10 @@ if __name__ == '__main__':
     
     # make beam
     s0     = 0.0
-    twiss0 = pb.make_twiss(beta,alpha,gamma,eps,gbC,dgb,dz)
-    parts0 = pb.make_parts(twiss0,npart,dist)
-    ebeam0 = pb.make_ebeam(s0,twiss0,parts0)
-    
+    twiss = pb.make_twiss(beta,alpha,gamma,eps,gbC,dgb,dz)
+    parts = pb.make_parts(twiss,npart,dist)
+    ebeam = pb.make_ebeam(s0,twiss[0],parts[0])
+
 #    # add offset to bunch
 #    ebeam0[0]["x"] += 10e-6 # m
     
@@ -83,16 +84,18 @@ if __name__ == '__main__':
     s_w   = L_up + waist # m
     
     # propagate beam backward from waist to start of plasma
-    ebeam0 = pbp.prop_ebeam_drift(ebeam0,[0,-s_w],last_only=True)
-    twiss0 = pb.get_twiss(ebeam0,len(ebeam0)-1)
-    parts0 = pb.get_parts(ebeam0,len(ebeam0)-1)
-    ebeam0 = pb.make_ebeam(s0,twiss0,parts0)
+    pbp.prop_ebeam_drift(ebeam,[0,-s_w],last_only=True)
+    twiss = pb.get_twiss(ebeam,len(ebeam)-1)
+    parts = pb.get_parts(ebeam,len(ebeam)-1)
+    ebeam = pb.make_ebeam(s0,twiss,parts)
+
 
     # propagate beam through plasma
-    ebeam = pbp.prop_ebeam_plasma(ebeam0,plasma,last_only=False)
-    
+    pbp.prop_ebeam_plasma(ebeam,plasma,last_only=False)
+
     # propagate beam through vacuum
-    vbeam = pbp.prop_ebeam_drift(ebeam0,plasma["s"],last_only=False)
+    pbp.prop_ebeam_drift(vbeam,plasma["s"],last_only=False)
+
 
 #    # analyze results
 #    s     = np.zeros(len(ebeam))
