@@ -58,10 +58,14 @@ def make_ramp(s,updn,shape,hw,top_loc,npl0,dgds0):
         elif shape.lower() == 'sigmoid':
             # up-ramp
             if updn.lower() == 'up':
-                npl = npl0*(1+np.exp(np.log(1e-3)*(s-(top_loc-hw))/hw))
+                npl = npl0*((s<top_loc) /\
+                            (1+np.exp(np.log(1e-3)*((s-top_loc)+hw)/hw)) +\
+                            (s>=top_loc)*1)
             # down-ramp
             else:
-                npl = npl0*(1+np.exp(np.log(1e-3)*((top_loc-hw)-s)/hw))
+                npl = npl0*((s>top_loc) /\
+                            (1+np.exp(np.log(1e-3)*((top_loc-s)+hw)/hw)) +\
+                            (s<=top_loc)*1)
                 
         # trapezoidal func.
         elif shape.lower() == 'trap': # trapezoidal func.
