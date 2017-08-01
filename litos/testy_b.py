@@ -24,9 +24,9 @@ if __name__ == '__main__':
     L_ft   = 0.20 # m
     
     # define plasma up-ramp
-    shape_up = 'sigmoid'
-    hw_up    = 0.147 #0.05 # m
-    L_up     = 1.00 # m
+    shape_up = 'xu5'
+    hw_up    = 0.002 #0.147 #0.05 # m
+    L_up     = 0.20 #1.00 # m
     top_up   = L_up # m
     
     # define plasma down-ramp
@@ -66,7 +66,7 @@ if __name__ == '__main__':
     gamma  = (1.0+alpha**2)/beta # 1/m
     dgb    = 0.01
     dz     = 0
-    npart  = 100
+    npart  = 0
     dist   = 'gauss'
     
     # make beam
@@ -79,7 +79,7 @@ if __name__ == '__main__':
 #    ebeam0[0]["x"] += 10e-6 # m
     
     # set beam waist position
-    waist = -0.430 #-0.122 # m, waist location w.r.t L_up
+    waist = 0.00 #-0.430 #-0.122 # m, waist location w.r.t L_up
     s_w   = L_up + waist # m
     
     # propagate beam backward from waist to start of plasma
@@ -90,6 +90,9 @@ if __name__ == '__main__':
 
     # propagate beam through plasma
     ebeam = pbp.prop_ebeam_plasma(ebeam0,plasma,last_only=False)
+    
+    # propagate beam through vacuum
+    vbeam = pbp.prop_ebeam_drift(ebeam0,plasma["s"],last_only=False)
 
 #    # analyze results
 #    s     = np.zeros(len(ebeam))

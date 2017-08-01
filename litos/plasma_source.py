@@ -10,11 +10,14 @@ import numpy as np
 from collections import defaultdict
 
 def calc_dgds(dgds0,npl0,npl,model=0):
+#    if (dgds0!=0) & (npl0!=0):
     if model==0:
         # wake strength ~sqrt(np), phase ~sqrt(np)
         dgds = dgds0*np.sqrt(npl/npl0)*(2*np.sqrt(npl/npl0)-1)
     else:
         dgds = dgds0
+#    else:
+#        dgds = np.zeros(len(npl))
         
     return dgds
 

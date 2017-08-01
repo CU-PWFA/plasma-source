@@ -83,7 +83,7 @@ if __name__ == '__main__':
     L_ft   = 0.00 # m
     
     # define plasma up-ramp
-    shape_up = 'gauss'
+    shape_up = 'xu3'
     hw_up    = 0.01 # m
     L_up     = 3.00 # m
     top_up   = L_up # m
@@ -125,11 +125,11 @@ if __name__ == '__main__':
     
     # specify waist scan values
     nwaist = 21
-    waist  = np.linspace(-0.20,0.00,nwaist) # m, waist location w.r.t. L_up
+    waist  = np.linspace(-0.50,0.50,nwaist) # m, waist location w.r.t. L_up
 #    waist  = np.linspace(-0.35,-0.55,nwaist) # m, waist location w.r.t. L_up
     # specify ramp half-width scan values
     nhw_up = 21
-    hw_up  = np.linspace(0.00,0.05,nhw_up) # m, HWHM of up-ramp
+    hw_up  = np.linspace(0.00,0.01,nhw_up) # m, HWHM of up-ramp
 #    hw_up  = np.linspace(0.12,0.18,nhw_up) # m, HWHM of up-ramp
 
     # perform scan
