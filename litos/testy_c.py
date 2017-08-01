@@ -83,9 +83,9 @@ if __name__ == '__main__':
     L_ft   = 0.00 # m
     
     # define plasma up-ramp
-    shape_up = 'gauss'
+    shape_up = 'sigmoid'
     hw_up    = 0.01 # m
-    L_up     = 2.00 # m
+    L_up     = 3.00 # m
     top_up   = L_up # m
     
     # define plasma down-ramp
@@ -107,8 +107,8 @@ if __name__ == '__main__':
     plasma0 = ps.make_plasma(bulk,up_ramp,dn_ramp)
     
     # define beam parameters
-    gbC    = 200 # relativistic lorentz factor
-    eps    = 1e-6  # m-rad, normalized emittance
+    gbC    = 20000 # relativistic lorentz factor
+    eps    = 5e-6  # m-rad, normalized emittance
     beta   = 0.10 # m
     alpha  = 0.00
     gamma  = (1.0+alpha**2)/beta # 1/m
@@ -125,11 +125,11 @@ if __name__ == '__main__':
     
     # specify waist scan values
     nwaist = 21
-    waist  = np.linspace(-0.45,-0.38,nwaist) # m, waist location w.r.t. L_up
+    waist  = np.linspace(-1.20,0.00,nwaist) # m, waist location w.r.t. L_up
 #    waist  = np.linspace(-0.35,-0.55,nwaist) # m, waist location w.r.t. L_up
     # specify ramp half-width scan values
     nhw_up = 21
-    hw_up  = np.linspace(0.135,0.155,nhw_up) # m, HWHM of up-ramp
+    hw_up  = np.linspace(0.00,0.50,nhw_up) # m, HWHM of up-ramp
 #    hw_up  = np.linspace(0.12,0.18,nhw_up) # m, HWHM of up-ramp
 
     # perform scan

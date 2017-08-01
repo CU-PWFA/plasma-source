@@ -58,41 +58,63 @@ def make_ramp(s,updn,shape,hw,top_loc,npl0,dgds0):
         elif shape.lower() == 'sigmoid':
             # up-ramp
             if updn.lower() == 'up':
-                npl = npl0*(1/(1+np.exp(-(s-(top_loc-2*hw))/(hw/4))))
+                npl = npl0*(1+np.exp(np.log(1e-3)*(s-(top_loc-hw))/hw))
             # down-ramp
             else:
-                npl = npl0*(1/(1+np.exp(+(s-(top_loc+2*hw))/(hw/4))))
+                npl = npl0*(1+np.exp(np.log(1e-3)*((top_loc-hw)-s)/hw))
                 
         # trapezoidal func.
         elif shape.lower() == 'trap': # trapezoidal func.
             # up-ramp
             if updn.lower() == 'up':
                 npl = npl0*((s<=top_loc-2*hw)*0 +\
-                       (s>top_loc-2*hw)*(s<top_loc)*(s-(top_loc-2*hw))/(2*hw) +\
+                       (s>top_loc-2*hw)*(s<top_loc) *\
+                       (s-(top_loc-2*hw))/(2*hw) +\
                        (s>=top_loc)*1)
+                
             # down-ramp
             else:
                 npl = npl0*((s>=top_loc+2*hw)*0 +\
-                       (s<top_loc+2*hw)*(s>top_loc)*((top_loc+2*hw)-s)/(2*hw) +\
+                       (s<top_loc+2*hw)*(s>top_loc) *\
+                       ((top_loc+2*hw)-s)/(2*hw) +\
                        (s<=top_loc)*1)
 
         # gompertz function
         elif shape.lower() == 'gomp':
             # up-ramp
             if updn.lower() == 'up':
-                npl = npl0*(1-np.exp(-np.exp((s-top_loc)/hw)))
+                npl = npl0*((s<top_loc)*np.exp(1-0.99*(s-top_loc)/hw -\
+                             np.exp(-0.99*(s-top_loc)/hw)) +\
+                       (s>=top_loc)*1)
+
             # down-ramp
             else:
-                npl = npl0*(1-np.exp(-np.exp((top_loc-s)/hw)))
+                npl = npl0*((s>top_loc)*np.exp(1-0.99*(top_loc-s)/hw -\
+                             np.exp(-0.99*(top_loc-s)/hw)) +\
+                       (s<=top_loc)*1)
+                    
+        # negative-gompertz function
+        elif shape.lower() == 'ngomp':
+            # up-ramp
+            if updn.lower() == 'up':
+                npl = npl0*((s<top_loc)*np.exp(1+1.46*(s-top_loc)/hw -\
+                             np.exp(+1.46*(s-top_loc)/hw)) +\
+                       (s>=top_loc)*1)
+
+            # down-ramp
+            else:
+                npl = npl0*((s>top_loc)*np.exp(1+1.46*(top_loc-s)/hw -\
+                             np.exp(+1.46*(top_loc-s)/hw)) +\
+                       (s<=top_loc)*1)            
 
         # lorentzian function
         elif shape.lower() == 'lorentz':
             # up-ramp
             if updn.lower() == 'up':
-                npl = npl0*(hw/np.pi)/((s-top_loc)**2+hw**2)
+                npl = npl0*1/(1+(s-top_loc)**2/hw**2)
             # down-ramp
             else:
-                npl = npl0*(hw/np.pi)/((top_loc-s)**2+hw**2)
+                npl = npl0*1/(1+(top_loc-s)**2/hw**2)
                 
         # Xu PRL 2016 ramp shape 3
         elif shape.lower() == 'xu3':
