@@ -75,14 +75,14 @@ def make_twiss(beta,alpha,gamma,eps,gbC,dgb,dz,step=0):
     twiss[step]["dz"]    = dz
     return twiss
 
-def make_parts(twiss,npart,dist,step=0):
+def make_parts(i_twiss,npart,dist,step=0):
     """generate macro particle dictionary object"""
     parts = defaultdict(dict)
 
     # propagate individual particles in parallel
     num_cores = multiprocessing.cpu_count()
     phase6D = Parallel(n_jobs=num_cores)\
-        (delayed(make_part)(twiss[step],dist,i)\
+        (delayed(make_part)(i_twiss,dist,i)\
          for i in range(0,npart))
     phase6D = np.reshape(phase6D,[npart,6])
 

@@ -67,13 +67,13 @@ if __name__ == '__main__':
     gamma  = (1.0+alpha**2)/beta # 1/m
     dgb    = 0.01
     dz     = 0
-    npart  = 100
+    npart  = 1000
     dist   = 'gauss'
     
     # make beam
     s0     = 0.0
     twiss = pb.make_twiss(beta,alpha,gamma,eps,gbC,dgb,dz)
-    parts = pb.make_parts(twiss,npart,dist)
+    parts = pb.make_parts(twiss[0],npart,dist)
     ebeam = pb.make_ebeam(s0,twiss[0],parts[0])
 
 #    # add offset to bunch
