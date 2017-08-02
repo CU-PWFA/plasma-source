@@ -102,11 +102,13 @@ dependencies:
 - zeromq=4.1.5=0
 - zlib=1.2.8=3
 - pip:
+  - hankel==0.3.1
   - ipython-genutils==0.1.0
   - jupyter-client==5.0.0
   - jupyter-console==5.1.0
   - jupyter-core==4.3.0
   - line-profiler==2.0
+  - mpmath==0.19
   - prompt-toolkit==1.0.9
   - rope-py3k==0.9.4.post1
 prefix: /home/robert/anaconda3/envs/CU-PWFA
