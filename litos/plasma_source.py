@@ -10,36 +10,14 @@ import numpy as np
 from collections import defaultdict
 
 def calc_dgds(dgds0,npl0,npl,model=0):
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
     """calculate energy gain rate for each point in the plasma"""
     dgds = np.zeros(len(npl))
-=======
-<<<<<<< HEAD
->>>>>>> Stashed changes
-=======
-<<<<<<< HEAD
->>>>>>> Stashed changes
 #    if (dgds0!=0) & (npl0!=0):
-=======
->>>>>>> parent of 21bec79... Merge branch 'master' of https://github.com/CU-PWFA/plasma-source
     if model==0:
         # wake strength ~sqrt(np), phase ~sqrt(np)
         dgds = dgds0*np.sqrt(npl/npl0)*(2*np.sqrt(npl/npl0)-1)
     else:
         dgds = dgds0
-<<<<<<< HEAD
-#    else:
-#        dgds = np.zeros(len(npl))
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> parent of 21bec79... Merge branch 'master' of https://github.com/CU-PWFA/plasma-source
-        
->>>>>>> Stashed changes
     return dgds
 
 def make_ramp(s,updn,shape,hw,top_loc,npl0,dgds0):
@@ -65,7 +43,7 @@ def make_ramp(s,updn,shape,hw,top_loc,npl0,dgds0):
         else:
             npl = npl0*((s>top_loc)*0 + (s<=top_loc))
     
-    # non-zero-lenght ramps
+    # non-zero-length ramps
     else:
         # normal gauss. func.
         if shape.lower() == 'gauss':
