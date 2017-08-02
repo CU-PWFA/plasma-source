@@ -33,7 +33,7 @@ def prop_ebeam_plasma(ebeam,plasma,last_only=False):
     # propagate beam
     prop_twiss_plasma(twiss,s,npl,dgds)
     prop_parts_plasma(parts,s,npl,dgds)
-
+    
     nstep = len(s)
     for i in range(1,nstep):
         step = len(ebeam)
@@ -43,10 +43,11 @@ def prop_ebeam_plasma(ebeam,plasma,last_only=False):
 
 def prop_twiss_plasma(twiss,s,npl,dgds):
     nstep = len(s)
-    i_twiss = twiss[len(twiss)-1].copy()
+    j_twiss = twiss[len(twiss)-1].copy()
     for i in range(1,nstep):
-        prop_twiss_plasma_step(i_twiss,s[i]-s[i-1],npl[i-1],dgds[i-1])
-        twiss[len(twiss)] = i_twiss.copy()
+        prop_twiss_plasma_step(j_twiss,s[i]-s[i-1],npl[i-1],dgds[i-1])
+        j = len(twiss)
+        twiss[j] = j_twiss.copy()
     return
 
 def prop_twiss_plasma_step(i_twiss,ds=0,npl=0,dgds=0):
@@ -108,7 +109,7 @@ def prop_twiss_plasma_step(i_twiss,ds=0,npl=0,dgds=0):
 
 def prop_parts_plasma(parts,s,npl,dgds):
     nstep = len(s)
-    npart = parts[len(parts)-1]["npart"]
+    npart = parts[0]["npart"]
     
     if npart>0:
         phase6D0 = []
@@ -120,7 +121,7 @@ def prop_parts_plasma(parts,s,npl,dgds):
             z  = parts[len(parts)-1]["z"][i]
             gb = parts[len(parts)-1]["gb"][i]
             phase6D0 = np.append(phase6D0,[x,xp,y,yp,z,gb])
-   
+    
         # propagate individual particles in parallel
         num_cores = multiprocessing.cpu_count()
         phase6D = Parallel(n_jobs=num_cores)\
@@ -137,8 +138,8 @@ def prop_parts_plasma(parts,s,npl,dgds):
             parts[j]["yp"] = phase6D[:,i*6+3]
             parts[j]["z"]  = phase6D[:,i*6+4]
             parts[j]["gb"] = phase6D[:,i*6+5]
-            parts[j]["npart"] = parts[j-1]["npart"]
-            parts[j]["dist"]  = parts[j-1]["dist"]
+            parts[j]["npart"] = parts[0]["npart"]
+            parts[j]["dist"]  = parts[0]["dist"]
 
     else:
         for i in range(1,nstep):
@@ -147,20 +148,24 @@ def prop_parts_plasma(parts,s,npl,dgds):
 
     return
 
-def prop_part_plasma(phase6D0,s,npl,dgds):
-    """propagate single macro particle through multiple steps"""
-    """needs to return unique object for effective use in parallel"""
-    i_phase6D = phase6D0.copy()
-    phase6D   = []
-    phase6D   = np.append(phase6D,i_phase6D)
+def prop_part_plasma(phase6D,s,npl,dgds):
+    
+#    iphase6D = phase6D0[(i-1)*6:(i-1+1)*6].copy()
+#    phase6D = []
+#    phase6D = np.append(phase6D,iphase6D)
+
+    # loop over steps
+    j_phase6D = phase6D[-6:]
     for i in range(1,len(s)):
-        i_phase6D = prop_part_plasma_step(i_phase6D,s[i]-s[i-1],npl[i],dgds[i])
-        phase6D = np.append(phase6D,i_phase6D)
+        prop_part_plasma_step(j_phase6D,s[i]-s[i-1],npl[i],dgds[i])
+        phase6D = np.append(phase6D,j_phase6D)
+#        iphase6D = prop_part_plasma_step(phase6D[(i-1)*6:(i-1+1)*6],\
+#                                         s[i]-s[i-1],npl[i],dgds[i])
+#        phase6D = np.append(phase6D,iphase6D)
     return phase6D
 
 def prop_part_plasma_step(i_phase6D,ds=0,npl=0,dgds=0):
     """propagate single macro particle through plasma for a single step"""
-    """needs to return unique object for effective use in parallel"""
     [x,xp,y,yp,z,gb] = i_phase6D
 
     # calculate kb
@@ -198,4 +203,4 @@ def prop_part_plasma_step(i_phase6D,ds=0,npl=0,dgds=0):
     [y,yp] = Y
         
     i_phase6D = [x,xp,y,yp,z,gb]
-    return i_phase6D
+    return

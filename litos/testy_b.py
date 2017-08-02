@@ -67,11 +67,7 @@ if __name__ == '__main__':
     gamma  = (1.0+alpha**2)/beta # 1/m
     dgb    = 0.01
     dz     = 0
-<<<<<<< Updated upstream
     npart  = 1000
-=======
-    npart  = 100
->>>>>>> Stashed changes
     dist   = 'gauss'
     
     # make beam
@@ -103,15 +99,14 @@ if __name__ == '__main__':
     pbp.prop_ebeam_drift(ebeam,[0,-s_w],last_only=True)
     twiss = pb.get_twiss(ebeam,len(ebeam)-1)
     parts = pb.get_parts(ebeam,len(ebeam)-1)
-    ebeam = pb.make_ebeam(s0,twiss[len(ebeam)-1],parts[len(ebeam)-1])
-    vbeam = ebeam.copy()
+    ebeam = pb.make_ebeam(s0,twiss,parts)
+
 
     # propagate beam through plasma
 <<<<<<< Updated upstream
     pbp.prop_ebeam_plasma(ebeam,plasma,last_only=False)
 
     # propagate beam through vacuum
-<<<<<<< Updated upstream
     pbp.prop_ebeam_drift(vbeam,plasma["s"],last_only=False)
 
 =======
@@ -159,6 +154,3 @@ if __name__ == '__main__':
 #    fig = plt.figure()
 #    plt.scatter(s,rms_x)
 #    plt.ylim([0,5e-6])
-=======
-    pbp.prop_ebeam_drift(vbeam,plasma["s"],last_only=False)
->>>>>>> Stashed changes
