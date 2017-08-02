@@ -10,8 +10,6 @@ import numpy as np
 from collections import defaultdict
 
 def calc_dgds(dgds0,npl0,npl,model=0):
-    """calculate energy gain rate for each point in the plasma"""
-    dgds = np.zeros(len(npl))
 #    if (dgds0!=0) & (npl0!=0):
     if model==0:
         # wake strength ~sqrt(np), phase ~sqrt(np)
@@ -20,12 +18,11 @@ def calc_dgds(dgds0,npl0,npl,model=0):
         dgds = dgds0
 #    else:
 #        dgds = np.zeros(len(npl))
+        
     return dgds
 
 def make_ramp(s,updn,shape,hw,top_loc,npl0,dgds0):
-    """create dictionary object describing plasma density ramp"""
     ramp = defaultdict(dict)
-    npl  = np.zeros(len(s))
     
     ramp["L"]       = np.abs(s[-1]-s[0])
     ramp["updn"]    = updn
@@ -173,7 +170,6 @@ def make_ramp(s,updn,shape,hw,top_loc,npl0,dgds0):
     return ramp
 
 def make_bulk(s,npl0,dgds0):
-    """create dictionary object describing plasma source bulk"""
     bulk = defaultdict(dict)
     
     bulk["L"]     = np.abs(s[-1]-s[0])
@@ -186,7 +182,6 @@ def make_bulk(s,npl0,dgds0):
     return bulk
 
 def make_plasma(bulk,up_ramp=0,dn_ramp=0):
-    """create plasma source dictionary object"""
     plasma = defaultdict(dict)
     plasma["s"]    = []
     plasma["npl"]  = []
@@ -200,7 +195,7 @@ def make_plasma(bulk,up_ramp=0,dn_ramp=0):
     
     plasma["bulk"] = bulk
     plasma["s"]    = np.append(plasma["s"][:-1],\
-                               plasma["s"][-1]+bulk["s"])
+                                  plasma["s"][-1]+bulk["s"])
     plasma["npl"]  = np.append(plasma["npl"][:-1],bulk["npl"])
     plasma["dgds"] = np.append(plasma["dgds"][:-1],bulk["dgds"])
     
@@ -270,4 +265,4 @@ def insert_lens(plasma,lens_npl0,lens_L,lens_s0,add='yes'):
     plasma["npl"]  = npl
     plasma["dgds"] = dgds
     
-    return
+    return plasma
