@@ -8,12 +8,12 @@ Created on Thu Mar 23 16:06:38 2017
 
 import numpy as np
 
-def plasma_ramp(npl0,shape,s,args,updown='up',dgds0=0):
+def plasma_ramp(np0,shape,s,args,updown='up',dgds0=0):
     """ Creates plasma density profile as a func. of s.
     
         Parameters
         ----------
-        npl0
+        np0
             cm^-3; flat-top plasma density
         shape
             string; ramp shape
@@ -39,83 +39,55 @@ def plasma_ramp(npl0,shape,s,args,updown='up',dgds0=0):
         [L,hw] = args[:2]
         sig = hw/(np.sqrt(2*np.log(2)))
         if updown.lower() == 'up':
-            npl = npl0*((s<L)*np.exp(-((s-L)**2)/(2*(sig**2))) +\
+            npl = np0*((s<L)*np.exp(-((s-L)**2)/(2*(sig**2))) +\
                        (s>=L)*1)
         else:
-            npl = npl0*((s<L)*np.exp(-(s**2)/(2*(sig**2))) +\
+            npl = np0*((s<L)*np.exp(-(s**2)/(2*(sig**2))) +\
                        (s>=L)*0)
     elif shape.lower() == 'sigmoid': # sigmoidal func.
         [L,hw] = args[:2]
         sig = hw
         if updown.lower() == 'up':
-            #        npl = npl0*(1/(1+np.exp(-(s-(L-8*sig))/sig)))
-#            npl = npl0*(1/(1+np.exp(-(s-(L-2*sig))/(sig/4))))
-            npl = npl0*(1+np.exp(np.log(1e-3)*(s-(L-sig))/sig))
+            #        npl = np0*(1/(1+np.exp(-(s-(L-8*sig))/sig)))
+            npl = np0*(1/(1+np.exp(-(s-(L-2*sig))/(sig/4))))
         else:
-#            npl = npl0*(1/(1+np.exp(+(s-(L+2*sig))/(sig/4))))
-            npl = npl0*(1+np.exp(np.log(1e-3)*((L-sig)-s)/sig))
+            npl = np0*(1/(1+np.exp(+(s-(L+2*sig))/(sig/4))))
     elif shape.lower() == 'gen_gauss': # generalized gauss. func.
         [L,hw,P] = args[:3]
         sig = hw/(np.sqrt(2*np.log(2)))
-        npl = npl0*((s<L)*np.exp(-((s-L)**P)/(2*(sig**P))) +\
+        npl = np0*((s<L)*np.exp(-((s-L)**P)/(2*(sig**P))) +\
                    (s>=L)*1)
     elif shape.lower() == 'trap': # trapezoidal func.
         [L,hw] = args[:2]
-        npl = npl0*((s<=L-2*hw)*0 +\
+        npl = np0*((s<=L-2*hw)*0 +\
                    (s>L-2*hw)*(s<L)*(s-(L-2*hw))/(2*hw) +\
                    (s>=L)*1)
     elif shape.lower() == 'genlog': # generalized logistical fun.
         [L,hw,P] = args[:3]
         sig = hw
-        npl = npl0*(1/((1+np.exp(-(s-(L-8*sig))/sig))**P))
+        npl = np0*(1/((1+np.exp(-(s-(L-8*sig))/sig))**P))
     elif shape.lower() == 'gomp': # gompertz func.
         [L,hw] = args[:2]
         sig = hw
-        if updown.lower() == 'up':
-            npl = npl0*((s<L)*np.exp(1-0.99(s-L)/sig -\
-                             np.exp(-0.99*(s-L)/sig)) +\
-                       (s>=L)*1)
-        else:
-            npl = npl0*((s>L)*np.exp(1+0.99(s-L)/sig -\
-                             np.exp(+0.99*(s-L)/sig)) +\
-                       (s<=L)*1)
-    elif shape.lower() == 'ngomp': # negative-gompertz func.
-        [L,hw] = args[:2]
-        sig = hw
-        if updown.lower() == 'up':
-            npl = npl0*(np.exp(1+1.46(s-L)/sig-np.exp(+1.46*(s-L)/sig)))
-        else:
-            npl = npl0*(np.exp(1-1.46(s-L)/sig-np.exp(-1.46*(s-L)/sig)))       
+        npl = np0*(1-np.exp(-np.exp((s-L)/sig)))
     elif shape.lower() == 'xu3': # Xu PRL 2016 ramp shapes
         [L,hw] =  args[:2]
         sig = 2*hw
-        if updown.lower() == 'up':
-            npl = npl0*((s<L)*(1/(1-(s-L)/sig)) +\
-                       (s>=L)*1)
-        else:
-            npl = npl0*((s>L)*(1/(1+(s-L)/sig)) +\
-                       (s<=L)*1)
+        npl = np0*((s<L)*(1/(1-2*(s-L)/sig)) +\
+                   (s>=L)*1)
     elif shape.lower() == 'xu4': # Xu PRL 2016 ramp shapes
         [L,sig] =  args[:2]
         sig = hw/(np.sqrt(2)-1)
-        if updown.lower() == 'up':
-            npl = npl0*((s<L)*(1/((1-(s-L)/sig)**2)) +\
-                       (s>=L)*1)
-        else:
-            npl = npl0*((s>L)*(1/((1+(s-L)/sig)**2)) +\
-                       (s<=L)*1)
+        npl = np0*((s<L)*(1/((1-(s-L)/sig)**2)) +\
+                   (s>=L)*1)
     elif shape.lower() == 'xu5': # Xu PRL 2016 ramp shapes
         [L,hw] =  args[:2]
         sig = hw/(2**(1/4)-1)
-        if updown.lower() == 'up':
-            npl = npl0*((s<L)*(1/((1-(s-L)/(2*sig))**4)) +\
-                       (s>=L)*1)
-        else:
-            npl = npl0*((s>L)*(1/((1+(s-L)/(2*sig))**4)) +\
-                       (s<=L)*1)
+        npl = np0*((s<L)*(1/((1-(s-L)/(2*sig))**4)) +\
+                   (s>=L)*1)
     else:
         print('bad plasma ramp shape' ) 
 
-    dgds = dgds0*np.sqrt(npl/npl0)*(2*np.sqrt(npl/npl0)-1) # wake strength ~sqrt(np), phase ~sqrt(np)
+    dgds = dgds0*np.sqrt(npl/np0)*(2*np.sqrt(npl/np0)-1) # wake strength ~sqrt(np), phase ~sqrt(np)
 
     return [npl, dgds]

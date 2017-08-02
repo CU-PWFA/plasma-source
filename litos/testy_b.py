@@ -67,7 +67,7 @@ if __name__ == '__main__':
     gamma  = (1.0+alpha**2)/beta # 1/m
     dgb    = 0.01
     dz     = 0
-    npart  = 0
+    npart  = 100
     dist   = 'gauss'
     
     # make beam
@@ -87,48 +87,11 @@ if __name__ == '__main__':
     pbp.prop_ebeam_drift(ebeam,[0,-s_w],last_only=True)
     twiss = pb.get_twiss(ebeam,len(ebeam)-1)
     parts = pb.get_parts(ebeam,len(ebeam)-1)
-    ebeam = pb.make_ebeam(s0,twiss,parts)
-
+    ebeam = pb.make_ebeam(s0,twiss[len(ebeam)-1],parts[len(ebeam)-1])
+    vbeam = ebeam.copy()
 
     # propagate beam through plasma
     pbp.prop_ebeam_plasma(ebeam,plasma,last_only=False)
 
     # propagate beam through vacuum
     pbp.prop_ebeam_drift(vbeam,plasma["s"],last_only=False)
-
-
-#    # analyze results
-#    s     = np.zeros(len(ebeam))
-#    beta  = np.zeros(len(ebeam))
-#    rms_x = np.zeros(len(ebeam))
-#    frac  = 0.95
-#    for i in range(0,len(ebeam)):
-#        s[i] = ebeam[i]["s"]
-#        beta[i] = ebeam[i]["beta"]
-#        rms_x[i] = mm.calc_rms(ebeam[i]["x"],frac)
-#    
-#    Tbeam  = [ebeam[len(ebeam)-1]["beta"],\
-#              ebeam[len(ebeam)-1]["alpha"],\
-#              ebeam[len(ebeam)-1]["gamma"]]
-#    wp0    = (5.64e4)*np.sqrt(plasma["npl"][-1]) # rad/s, plasma ang. freq.
-#    kp0    = wp0/nc.c # m^-1, plasma wave number
-#    kb     = kp0/np.sqrt(2*ebeam[len(ebeam)-1]["gbC"])
-#    Tmatch = [1.0/kb,0,kb]
-#    M      = calc_M(Tbeam,Tmatch)
-#    print('M = ',M)
-#    
-#    # plot results
-#    fig = plt.figure()
-#    plt.hist(ebeam[0]["x"],25)
-#    fig = plt.figure()
-#    plt.hist(ebeam[len(ebeam)-1]["x"],25)
-#    
-#    fig = plt.figure()
-#    ax1 = fig.add_subplot(111)
-#    ax1.scatter(s,beta)
-#    ax1.scatter(s,plasma["npl"]*max(beta)/max(plasma["npl"]))
-#    plt.ylim([0,1.1*max(beta)])
-#    
-#    fig = plt.figure()
-#    plt.scatter(s,rms_x)
-#    plt.ylim([0,5e-6])

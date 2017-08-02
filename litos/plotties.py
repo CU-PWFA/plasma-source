@@ -185,46 +185,45 @@ plt.show()
 
 
 
-## K evolution
-#
-#figC = plt.figure()
-#ax4  = figC.add_subplot(111)
-##ax4.plot(s,plasma["npl"]*max(test_Psi)/max(plasma["npl"]),color='g')
-#
-##ax4.plot(s,test_Psi,color='b')
-##ax4.plot(s,test2_Psi,color='r')
-#
-##ax4.scatter(test_Psi,test_xp)
-#
-##ax4.plot(s,test_x,color='b')
-##ax4.plot(s,test2_x,color='r')
-#
-#ax4.plot(s,KC_x,color='b')
-#ax4.plot(s,KC_x+Krms_x,color='r')
-#ax4.plot(s,KC_x-Krms_x,color='r')
-#ax4.plot(s,K_twiss,color='g')
-#
-##ax4.hist(K_x[ift,:],21,ls='solid',fc='none',edgecolor='b',\
-##                label='K Dist.')
-##ax4.hist(K_x[fft,:],21,ls='solid',fc='none',edgecolor='r',\
-##                label='K Dist.')
-#
-##ax4.scatter(ebeam[ift]["x"],K_x[ift,:])
-#
-##ax4.set_ylim([0,+1.1*2*np.pi])
-#
-#ax4.set_xlabel('s [m]')
-##ax4.set_ylabel(r'$\Psi$ [rad]',color='b')
-##ax4.tick_params('y',colors='b')
-#
-#ax4.set_ylabel(r'K',color='k')
-#ax4.tick_params('y',colors='k')
-#
-#
-#plt.title(r'K and/or $\Psi$')
-#
-#figC.tight_layout()
-#plt.show()
+
+figC = plt.figure()
+ax4  = figC.add_subplot(111)
+#ax4.plot(s,plasma["npl"]*max(test_Psi)/max(plasma["npl"]),color='g')
+
+#ax4.plot(s,test_Psi,color='b')
+#ax4.plot(s,test2_Psi,color='r')
+
+#ax4.scatter(test_Psi,test_xp)
+
+#ax4.plot(s,test_x,color='b')
+#ax4.plot(s,test2_x,color='r')
+
+ax4.plot(s,KC_x,color='b')
+ax4.plot(s,KC_x+Krms_x,color='r')
+ax4.plot(s,KC_x-Krms_x,color='r')
+ax4.plot(s,K_twiss,color='g')
+
+#ax4.hist(K_x[ift,:],21,ls='solid',fc='none',edgecolor='b',\
+#                label='K Dist.')
+#ax4.hist(K_x[fft,:],21,ls='solid',fc='none',edgecolor='r',\
+#                label='K Dist.')
+
+#ax4.scatter(ebeam[ift]["x"],K_x[ift,:])
+
+#ax4.set_ylim([0,+1.1*2*np.pi])
+
+ax4.set_xlabel('s [m]')
+#ax4.set_ylabel(r'$\Psi$ [rad]',color='b')
+#ax4.tick_params('y',colors='b')
+
+ax4.set_ylabel(r'K',color='k')
+ax4.tick_params('y',colors='k')
+
+
+plt.title(r'K and/or $\Psi$')
+
+figC.tight_layout()
+plt.show()
 
 
 #    return 0
