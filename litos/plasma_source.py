@@ -10,16 +10,22 @@ import numpy as np
 from collections import defaultdict
 
 def calc_dgds(dgds0,npl0,npl,model=0):
+    """calculate energy gain rate for each point in the plasma"""
+    dgds = np.zeros(len(npl))
+#    if (dgds0!=0) & (npl0!=0):
     if model==0:
         # wake strength ~sqrt(np), phase ~sqrt(np)
         dgds = dgds0*np.sqrt(npl/npl0)*(2*np.sqrt(npl/npl0)-1)
     else:
         dgds = dgds0
-        
+#    else:
+#        dgds = np.zeros(len(npl))
     return dgds
 
 def make_ramp(s,updn,shape,hw,top_loc,npl0,dgds0):
+    """create dictionary object describing plasma density ramp"""
     ramp = defaultdict(dict)
+    npl  = np.zeros(len(s))
     
     ramp["L"]       = np.abs(s[-1]-s[0])
     ramp["updn"]    = updn
@@ -58,41 +64,67 @@ def make_ramp(s,updn,shape,hw,top_loc,npl0,dgds0):
         elif shape.lower() == 'sigmoid':
             # up-ramp
             if updn.lower() == 'up':
-                npl = npl0*(1/(1+np.exp(-(s-(top_loc-2*hw))/(hw/4))))
+                npl = npl0*((s<top_loc) /\
+                            (1+np.exp(np.log(1e-3)*((s-top_loc)+hw)/hw)) +\
+                            (s>=top_loc)*1)
             # down-ramp
             else:
-                npl = npl0*(1/(1+np.exp(+(s-(top_loc+2*hw))/(hw/4))))
+                npl = npl0*((s>top_loc) /\
+                            (1+np.exp(np.log(1e-3)*((top_loc-s)+hw)/hw)) +\
+                            (s<=top_loc)*1)
                 
         # trapezoidal func.
         elif shape.lower() == 'trap': # trapezoidal func.
             # up-ramp
             if updn.lower() == 'up':
                 npl = npl0*((s<=top_loc-2*hw)*0 +\
-                       (s>top_loc-2*hw)*(s<top_loc)*(s-(top_loc-2*hw))/(2*hw) +\
+                       (s>top_loc-2*hw)*(s<top_loc) *\
+                       (s-(top_loc-2*hw))/(2*hw) +\
                        (s>=top_loc)*1)
+                
             # down-ramp
             else:
                 npl = npl0*((s>=top_loc+2*hw)*0 +\
-                       (s<top_loc+2*hw)*(s>top_loc)*((top_loc+2*hw)-s)/(2*hw) +\
+                       (s<top_loc+2*hw)*(s>top_loc) *\
+                       ((top_loc+2*hw)-s)/(2*hw) +\
                        (s<=top_loc)*1)
 
         # gompertz function
         elif shape.lower() == 'gomp':
             # up-ramp
             if updn.lower() == 'up':
-                npl = npl0*(1-np.exp(-np.exp((s-top_loc)/hw)))
+                npl = npl0*((s<top_loc)*np.exp(1-0.99*(s-top_loc)/hw -\
+                             np.exp(-0.99*(s-top_loc)/hw)) +\
+                       (s>=top_loc)*1)
+
             # down-ramp
             else:
-                npl = npl0*(1-np.exp(-np.exp((top_loc-s)/hw)))
+                npl = npl0*((s>top_loc)*np.exp(1-0.99*(top_loc-s)/hw -\
+                             np.exp(-0.99*(top_loc-s)/hw)) +\
+                       (s<=top_loc)*1)
+                    
+        # negative-gompertz function
+        elif shape.lower() == 'ngomp':
+            # up-ramp
+            if updn.lower() == 'up':
+                npl = npl0*((s<top_loc)*np.exp(1+1.46*(s-top_loc)/hw -\
+                             np.exp(+1.46*(s-top_loc)/hw)) +\
+                       (s>=top_loc)*1)
+
+            # down-ramp
+            else:
+                npl = npl0*((s>top_loc)*np.exp(1+1.46*(top_loc-s)/hw -\
+                             np.exp(+1.46*(top_loc-s)/hw)) +\
+                       (s<=top_loc)*1)            
 
         # lorentzian function
         elif shape.lower() == 'lorentz':
             # up-ramp
             if updn.lower() == 'up':
-                npl = npl0*(hw/np.pi)/((s-top_loc)**2+hw**2)
+                npl = npl0*1/(1+(s-top_loc)**2/hw**2)
             # down-ramp
             else:
-                npl = npl0*(hw/np.pi)/((top_loc-s)**2+hw**2)
+                npl = npl0*1/(1+(top_loc-s)**2/hw**2)
                 
         # Xu PRL 2016 ramp shape 3
         elif shape.lower() == 'xu3':
@@ -141,6 +173,7 @@ def make_ramp(s,updn,shape,hw,top_loc,npl0,dgds0):
     return ramp
 
 def make_bulk(s,npl0,dgds0):
+    """create dictionary object describing plasma source bulk"""
     bulk = defaultdict(dict)
     
     bulk["L"]     = np.abs(s[-1]-s[0])
@@ -153,6 +186,7 @@ def make_bulk(s,npl0,dgds0):
     return bulk
 
 def make_plasma(bulk,up_ramp=0,dn_ramp=0):
+    """create plasma source dictionary object"""
     plasma = defaultdict(dict)
     plasma["s"]    = []
     plasma["npl"]  = []
@@ -166,7 +200,7 @@ def make_plasma(bulk,up_ramp=0,dn_ramp=0):
     
     plasma["bulk"] = bulk
     plasma["s"]    = np.append(plasma["s"][:-1],\
-                                  plasma["s"][-1]+bulk["s"])
+                               plasma["s"][-1]+bulk["s"])
     plasma["npl"]  = np.append(plasma["npl"][:-1],bulk["npl"])
     plasma["dgds"] = np.append(plasma["dgds"][:-1],bulk["dgds"])
     
@@ -236,4 +270,4 @@ def insert_lens(plasma,lens_npl0,lens_L,lens_s0,add='yes'):
     plasma["npl"]  = npl
     plasma["dgds"] = dgds
     
-    return plasma
+    return
