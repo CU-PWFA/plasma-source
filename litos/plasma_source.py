@@ -11,8 +11,12 @@ from collections import defaultdict
 
 def calc_dgds(dgds0,npl0,npl,model=0):
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     """calculate energy gain rate for each point in the plasma"""
     dgds = np.zeros(len(npl))
+=======
+<<<<<<< HEAD
+>>>>>>> Stashed changes
 =======
 <<<<<<< HEAD
 >>>>>>> Stashed changes
@@ -28,7 +32,10 @@ def calc_dgds(dgds0,npl0,npl,model=0):
 #    else:
 #        dgds = np.zeros(len(npl))
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> parent of 21bec79... Merge branch 'master' of https://github.com/CU-PWFA/plasma-source
         
