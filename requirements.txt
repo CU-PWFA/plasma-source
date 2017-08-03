@@ -18,6 +18,8 @@ dependencies:
 - glib=2.50.2=1
 - gst-plugins-base=1.8.0=0
 - gstreamer=1.8.0=0
+- h5py=2.7.0=np112py36_0
+- hdf5=1.8.17=2
 - html5lib=0.999=py36_0
 - icu=54.1=0
 - imagesize=0.7.1=py36_0
