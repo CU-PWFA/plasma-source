@@ -157,7 +157,7 @@ def get_species_attrs(fileName, speciesName):
     attrs['time'] = pts['time']
     attrs['dim'] = pts['numSpatialDims']
     # Get the data column headings
-    attrs['columns'] = pts['vsLabels'].split(',')
+    attrs['columns'] = pts['vsLabels'].split(b',')
     return attrs
 
 
@@ -192,8 +192,8 @@ def load_species(path, simName, speciesName):
         for fileName in files:
             dumpInd = int(fileName.split('.h5')[-2].split('_')[-1])
             # Get the data from the file
-            pData = get_field_data(fileName, speciesName)
-            pAttrs = get_field_attrs(fileName, speciesName)
+            pData = get_species_data(fileName, speciesName)
+            pAttrs = get_species_attrs(fileName, speciesName)
             attrs['time'][dumpInd] = pAttrs['time']
             data[dumpInd] = pData
         for name in pAttrs:
