@@ -165,6 +165,7 @@ def calc_ebeam_rms(ebeam,step=0,frac=1.00):
     rms_x_beta  = avg_gb*(rms_x**2)/rms_x_eps
     rms_x_gamma = avg_gb*(rms_xp**2)/rms_x_eps
     rms_x_alpha = -avg_gb*rms_xxp/rms_x_eps
+    rms_x_phase = np.arctan2(2*rms_x_alpha,rms_x_gamma-rms_x_beta)/2
     
     ebeam_rms["x"]       = rms_x
     ebeam_rms["xp"]      = rms_xp
@@ -173,10 +174,11 @@ def calc_ebeam_rms(ebeam,step=0,frac=1.00):
     ebeam_rms["x_beta"]  = rms_x_beta
     ebeam_rms["x_alpha"] = rms_x_alpha
     ebeam_rms["x_gamma"] = rms_x_gamma
+    ebeam_rms["x_phase"] = rms_x_phase
     
     return ebeam_rms
 
-def calc_ebeam_kurt(ebeam,plasma,step=0,frac=1.00):
+def calc_ebeam_kurt(ebeam,plasma,ebeam_rms,step=0,frac=1.00):
     ebeam_kurt = defaultdict(dict)
     
     x   = ebeam[step]["x"] # m
@@ -193,12 +195,21 @@ def calc_ebeam_kurt(ebeam,plasma,step=0,frac=1.00):
     xpn = np.sqrt(beta_m)*xp
     rn  = np.sqrt(xn**2 + xpn**2)
     
+    phase = ebeam_rms["x_phase"]
+    U = np.array([xn,xpn])
+    R = np.array([[ np.cos(phase), np.sin(phase)],\
+                  [-np.sin(phase), np.cos(phase)]])
+    UU = np.dot(R,U)
+    [rn,rpn] = UU
+    
+    
     x_kurt  = stats.kurtosis(x,0,True)
     xp_kurt = stats.kurtosis(xp,0,True)
     rn_kurt = stats.kurtosis(rn,0,True)
     
-    ebeam_kurt["x"]  = x_kurt
-    ebeam_kurt["xp"] = xp_kurt
-    ebeam_kurt["rn"] = rn_kurt
+    ebeam_kurt["x"]   = x_kurt
+    ebeam_kurt["xp"]  = xp_kurt
+    ebeam_kurt["rn"]  = rn_kurt
+#    ebeam_kurt["rpn"] = rpn_kurt
 
     return ebeam_kurt

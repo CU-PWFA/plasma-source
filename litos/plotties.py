@@ -16,6 +16,17 @@ import mike_math as mm
 from   calc_M import calc_M
 import scipy.stats as stats
 
+
+
+
+def make_patch_spines_invisible(ax):
+    ax.set_frame_on(True)
+    ax.patch.set_visible(False)
+    for sp in ax.spines.values():
+        sp.set_visible(False)
+
+
+
 #def plotties(ebeam,plasma):
 
 # do analysis on beam/plasma
@@ -50,19 +61,19 @@ frac  = 1.00
 for i in range(0,nstep):
     s[i]     = ebeam[i]["s"] # m
     eps[i]   = ebeam[i]["eps"] # mm-mrad
-    beta[i]  = ebeam[i]["beta"] # m
+    beta[i]  = ebeam[i]["beta"]/(1e-2) # m
     alpha[i] = ebeam[i]["alpha"]
     gamma[i] = ebeam[i]["gamma"] # 1/m
     ebeam_rms = pb.calc_ebeam_rms(ebeam,i,frac)
-    rms_x[i]     = ebeam_rms["x"]
-    rms_x_eps[i] = ebeam_rms["x_eps"]
-    ebeam_kurt = pb.calc_ebeam_kurt(ebeam,plasma,i,frac)
+    rms_x[i]     = ebeam_rms["x"]/(1e-6)
+    rms_x_eps[i] = ebeam_rms["x_eps"]/(1e-6)
+    ebeam_kurt = pb.calc_ebeam_kurt(ebeam,plasma,ebeam_rms,i,frac)
     rn_kurt[i] = ebeam_kurt["rn"]
 #    x_kurt[i]    = stats.kurtosis(ebeam[i]["x"],0,True)
     
-    v_beta[i] = vbeam[i]["beta"]
+    v_beta[i] = vbeam[i]["beta"]/(1e-2)
     vbeam_rms = pb.calc_ebeam_rms(vbeam,i,frac)
-    v_rms_x[i]   = vbeam_rms["x"]
+    v_rms_x[i]   = vbeam_rms["x"]/(1e-6)
 
     wp  = (5.64e4)*np.sqrt(plasma["npl"][i]) # rad/s, plasma ang. freq.
     kp  = wp/nc.c # m^-1, plasma wave number
@@ -159,37 +170,61 @@ print('lambda_beta: ',2*np.pi/kb)
 
 
 # beta and rms_x evolution through plasma
-figA = plt.figure()
-ax1  = figA.add_subplot(111)
-ax1.plot(s,plasma["npl"]*beta[0]/max(plasma["npl"]),color='g')
+#figA = plt.figure()
+figA, ax1 = plt.subplots()
+#figA.subplots_adjust(right=0.5)
+#figA.subplots_adjust(left=-0.5)
+
+norm1 = min(v_beta)
+#ax1  = figA.add_subplot(111)
+#ax1.plot(s,plasma["npl"]*1.5*norm1/max(plasma["npl"]),color='g')
 ax1.plot(s,v_beta,color='b',linestyle='dashed')
 ax1.plot(s,beta,color='b',linestyle='solid')
-ax1.set_ylim([0,1.1*beta[0]])
+ax1.set_ylim([0,2.0*norm1])
 ax1.set_xlabel('s [m]')
-ax1.set_ylabel(r'$\beta$ [m]',color='b')
+ax1.set_ylabel(r'$\beta$ [cm]',color='b')
 ax1.tick_params('y',colors='b')
 
+norm2 = min(v_rms_x)
 ax2  = ax1.twinx()
 ax2.plot(s,v_rms_x,color='r',linestyle='dashed')
 ax2.plot(s,rms_x,color='r',linestyle='solid')
 ax2.set_ylabel(r'$\sigma_r$ [$\mu$m]',color='r')
 ax2.tick_params('y',colors='r')
-ax2.set_ylim([0,1.1*max(rms_x)])
+ax2.set_ylim([0,1.5*norm2])
 
 ax3  = ax1.twinx()
+ax3.spines["right"].set_position(("axes", 1.2))
+make_patch_spines_invisible(ax3)
+ax3.spines["right"].set_visible(True)
 ax3.plot(s,rms_x_eps,color='k',linestyle='solid')
 ax3.set_ylabel(r'$\varepsilon$ [mm-mrad]',color='k')
 ax3.tick_params('y',colors='k')
-ax3.set_ylim([0,1.1*max(rms_x_eps)])
+ax3.set_ylim([0.9*min(rms_x_eps),1.1*max(rms_x_eps)])
 
+norm4 = 1e16
+npl = plasma["npl"]/norm4
 ax4  = ax1.twinx()
-ax4.plot(s,rn_kurt,color='k',linestyle='dashed')
-ax4.set_ylabel(r'kurtosis',color='k')
-ax4.tick_params('y',colors='k')
-ax4.set_ylim([0,1.1*max(rn_kurt)])
+ax4.spines["left"].set_position(("axes", -0.30))
+make_patch_spines_invisible(ax4)
+ax4.spines["left"].set_visible(True)
+ax4.yaxis.set_label_position('left')
+ax4.spines["left"].set_visible(True)
+ax4.yaxis.set_label_position('left')
+ax4.yaxis.set_ticks_position('left')
+ax4.plot(s,npl,color='g',linestyle='solid')
+ax4.set_ylabel(r'$n_p$ [$10^{17}\,{\rm cm}^{-3}$]',color='g')
+ax4.tick_params('y',colors='g')
+ax4.set_ylim([0,1.5*max(npl)])
 
+#ax4  = ax1.twinx()
+#ax4.plot(s,rn_kurt,color='k',linestyle='dashed')
+#ax4.set_ylabel(r'kurtosis',color='k')
+#ax4.tick_params('y',colors='k')
+#ax4.set_ylim([1.1*min(rn_kurt),1.1*max(rn_kurt)])
 
-plt.title(r'$\beta$ and beam size')
+npl0 = plasma["bulk"]["npl0"]
+plt.title(r'beam matching into %.1e $cm^{-3}$ plasma source'%npl0)
 
 figA.tight_layout()
 plt.show()
