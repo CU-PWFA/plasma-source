@@ -86,6 +86,9 @@ def drive_witness_density(params):
                 The simulation name, the first part of every simulation file.
             zoom : float
                 Increase in the number of pixels, spline interpolation used.
+            alphaCutoff : float
+                Must be between 0-1, start with 0.05, if you can't see the
+                drive beam, increase
     """
     # Grad items we use alot from the params
     path = params['path']
@@ -120,7 +123,7 @@ def drive_witness_density(params):
     gs = gridspec.GridSpec(2, 2, width_ratios=[24, 1])
     # Create the two colormaps
     cmapD = plt.cm.bone
-    cmapW = alpha_colormap_cutoff(plt.cm.pink, 0.01, False)
+    cmapW = alpha_colormap_cutoff(plt.cm.pink, params['alphaCutoff'], False)
 
     # Create the axis grid spaces
     colorAx1 = plt.subplot(gs[0, 1])
@@ -241,10 +244,11 @@ def phase_space_animation(params):
             ylim : array-like
                 Y plot limits, two element array [ymin, ymax].
     """
-    Nt = params['Nt'] = 400
+    Nt = params['Nt']
     path = params['path']
     simName = params['simName']
     species = params['species']
+    ind = params['dumpInd']
     
     pFile = get_filename(path, simName, species, 0)
     pAttrs = load.get_species_attrs(pFile, species)
@@ -270,7 +274,7 @@ def phase_space_animation(params):
         return ptWeight, ptX, ptUx
     
     # Get the first piece of data
-    ptWeight, ptX, ptUx = get_data(0)
+    ptWeight, ptX, ptUx = get_data(ind)
 
     # Create the plot
     fig = plt.figure(figsize=(16, 9))
@@ -285,7 +289,7 @@ def phase_space_animation(params):
     plt.grid(True)
 
     # Update the scatter plot data
-    i = 1;
+    i = ind+1;
     def updatefig(*args):
         nonlocal i
         ptWeight, ptX, ptUx = get_data(i)
