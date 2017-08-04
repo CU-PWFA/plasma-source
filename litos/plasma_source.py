@@ -243,3 +243,14 @@ def insert_lens(plasma,lens_npl0,lens_L,lens_s0,add='yes'):
     plasma["dgds"] = dgds
     
     return
+
+def deform_plasma(plasma,shape,amp,period,add='no'):
+    """add periodic deformation to plasma density"""
+    s   = plasma["s"]
+    npl = plasma["npl"]
+    
+    npl = npl*(1+amp*np.sin(2*np.pi*s/period))
+    
+    plasma["npl"] = npl
+    
+    return

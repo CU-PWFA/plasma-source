@@ -60,6 +60,8 @@ def scan_waist_hw_up(ebeam0,plasma0,waist,hw_up,k):
     bulk     = plasma["bulk"]
     dn_ramp  = plasma["dn_ramp"]
     plasma  = ps.make_plasma(bulk,up_ramp,dn_ramp)
+    
+    ps.deform_plasma(plasma,'sin',0.01,0.05)
 
     # propagate beam through plasma
     pbp.prop_ebeam_plasma(ebeam,plasma,last_only=False)
@@ -138,11 +140,11 @@ if __name__ == '__main__':
     
     # specify waist scan values
     nwaist = 101
-    waist  = np.linspace(-3.00,0.00,nwaist) # m, waist location w.r.t. L_up
+    waist  = np.linspace(-0.55,-0.300,nwaist) # m, waist location w.r.t. L_up
 #    waist  = np.linspace(-0.35,-0.55,nwaist) # m, waist location w.r.t. L_up
     # specify ramp half-width scan values
     nhw_up = 101
-    hw_up  = np.linspace(0.00,1.5,nhw_up) # m, HWHM of up-ramp
+    hw_up  = np.linspace(0.18,0.12,nhw_up) # m, HWHM of up-ramp
 #    hw_up  = np.linspace(0.12,0.18,nhw_up) # m, HWHM of up-ramp
 
     # perform scan
@@ -171,6 +173,9 @@ if __name__ == '__main__':
     i_Mmin_y = np.argmin(np.min(M,0))
     Mmin_x = waist[i_Mmin_x]
     Mmin_y = hw_up[i_Mmin_y]
+    
+    print('min waist: ',Mmin_x)
+    print('min ramp: ',Mmin_y)
     
     # plot results
     
@@ -201,21 +206,23 @@ if __name__ == '__main__':
 #    plt.xlabel(r'waist position [m]')
 #    plt.title(r'beam matching optimization')
     
-#    # thin line contour map of M
-#    levels = np.array([1.0,1.1,1.2,1.3,1.4,1.5,\
-#                       2.0,3.0,4.0,5.0,])
-#    labels = np.array([1.1,1.5,2.0,3.0,4.0,5.0])
-#    
-#    fig, axes = plt.subplots(1,1, sharey=True)
-#    CS = plt.contour(X,Y,M,levels,cmap=cm.tab20b)
-#    plt.clabel(CS,labels,fontsize=9, inline=1,fmt='%1.1f')
-#    cbar = plt.colorbar()
-#    cbar.ax.set_ylabel(r'M')
-#    cbar.set_ticks(levels)
-##    cbar.set_ticklabels(levels)
-#    plt.ylabel(r'ramp width [m]')
-#    plt.xlabel(r'waist position [m]')
-#    plt.title(r'beam matching for gauss ramp')
+    # thin line contour map of M
+    levels = np.array([1.0,1.1,1.2,1.3,1.4,1.5,\
+                       2.0,3.0,4.0,5.0,])
+    labels = np.array([1.1,1.5,2.0,3.0,4.0,5.0])
+    
+    fig, axes = plt.subplots(1,1, sharey=True)
+    CS = plt.contour(X,Y,M,levels,cmap=cm.tab20b)
+    plt.clabel(CS,labels,fontsize=9, inline=1,fmt='%1.1f')
+    cbar = plt.colorbar()
+    plt.scatter(Mmin_x,Mmin_y,color='k')
+    cbar.ax.set_ylabel(r'M')
+    cbar.set_ticks(levels)
+#    cbar.set_ticklabels(levels)
+    plt.ylabel(r'ramp half-width [m]')
+    plt.xlabel(r'waist position [m]')
+    plt.title(r'beam matching for %s ramp'%shape_up)
+    
     
 #    # thin line contour map of K
 ##    levels = np.array([1.0,2.0,3.0,4.0,5.0,\

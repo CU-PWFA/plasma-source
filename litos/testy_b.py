@@ -22,12 +22,12 @@ if __name__ == '__main__':
     npl0   = 1e17 # cm^-3
     dEds0  = 6e9 # eV/m
     dgds0  = dEds0/nc.me
-    L_ft   = 0.20 # m
+    L_ft   = 0.50 # m
     
     # define plasma up-ramp
-    shape_up = 'xu5'
-    hw_up    = 0.002 #0.147 #0.05 # m
-    L_up     = 0.20 #1.00 # m
+    shape_up = 'gauss'
+    hw_up    = 0.15 #0.05 # m
+    L_up     = 5*hw_up # m
     top_up   = L_up # m
     
     # define plasma down-ramp
@@ -35,18 +35,6 @@ if __name__ == '__main__':
     hw_dn    = hw_up # m
     L_dn     = L_up # m
     top_dn   = 0  # m
-    
-    # define longitudinal steps
-    ds   = 250.0e-6 # m
-    s_ft = np.linspace(0,L_ft,round(L_ft/ds+1))
-    s_up = np.linspace(0,L_up,round(L_up/ds+1))
-    s_dn = np.linspace(0,L_dn,round(L_dn/ds+1))
-    
-    # make plasma
-    bulk    = ps.make_bulk(s_ft,npl0,dgds0)
-    up_ramp = ps.make_ramp(s_up,'up',shape_up,hw_up,top_up,npl0,dgds0)
-    dn_ramp = ps.make_ramp(s_dn,'dn',shape_dn,hw_dn,top_dn,npl0,dgds0)
-    plasma  = ps.make_plasma(bulk,up_ramp,dn_ramp)
     
     # define beam parameters
     gbC    = 20000 # relativistic lorentz factor
@@ -80,8 +68,27 @@ if __name__ == '__main__':
 #    ebeam0[0]["x"] += 10e-6 # m
     
     # set beam waist position
-    waist = 0.00 #-0.430 #-0.122 # m, waist location w.r.t L_up
+    waist = -0.440 #-0.105 # m, waist location w.r.t L_up
     s_w   = L_up + waist # m
+    
+    # define longitudinal steps
+    wp0    = (5.64e4)*np.sqrt(npl0) # rad/s, plasma ang. freq.
+    kp0    = wp0/nc.c # m^-1, plasma wave number
+    kb     = kp0/np.sqrt(2*gbC)
+    
+    ds   = (np.pi/kb)*(1./10.) # m
+    s_ft = np.linspace(0,L_ft,int(L_ft/ds+1))
+    s_up = np.linspace(0,L_up,int(L_up/ds+1))
+    s_dn = np.linspace(0,L_dn,int(L_dn/ds+1))
+       
+    # make plasma
+    bulk    = ps.make_bulk(s_ft,npl0,dgds0)
+    up_ramp = ps.make_ramp(s_up,'up',shape_up,hw_up,top_up,npl0,dgds0)
+    dn_ramp = ps.make_ramp(s_dn,'dn',shape_dn,hw_dn,top_dn,npl0,dgds0)
+    plasma  = ps.make_plasma(bulk,up_ramp,dn_ramp)
+    
+    # deform plasma
+#    ps.deform_plasma(plasma,'sin',0.01,0.05)
     
     # propagate beam backward from waist to start of plasma
     pbp.prop_ebeam_drift(ebeam,[0,-s_w],last_only=True)

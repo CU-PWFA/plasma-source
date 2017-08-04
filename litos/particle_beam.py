@@ -11,6 +11,9 @@ from collections import defaultdict
 from joblib import Parallel, delayed
 import multiprocessing
 import time as time
+import mike_math as mm
+import nat_consts as nc
+import scipy.stats as stats
 
 def make_ebeam(s,i_twiss,i_parts):
     """create ebeam dictionary object"""
@@ -140,3 +143,62 @@ def make_part(i_twiss,dist,i=0):
     
     phase6D = [x,xp,y,yp,z,gb]
     return phase6D
+
+def calc_ebeam_rms(ebeam,step=0,frac=1.00):
+    ebeam_rms = defaultdict(dict)
+    
+    x  = ebeam[step]["x"] # m
+    xp = ebeam[step]["xp"] # rad
+
+    rms_x = mm.calc_rms(x,frac)
+    rms_xp = mm.calc_rms(xp,frac)
+    rms_xxp = mm.calc_rms(x*xp,frac)
+    
+    gb = ebeam[step]["gb"]
+    avg_gb = np.mean(gb)
+    
+    avg_x2  = np.mean(x**2)
+    avg_xp2 = np.mean(xp**2)
+    avg_xxp = np.mean(x*xp)
+    
+    rms_x_eps   = avg_gb*np.sqrt(avg_x2*avg_xp2-avg_xxp**2)
+    rms_x_beta  = avg_gb*(rms_x**2)/rms_x_eps
+    rms_x_gamma = avg_gb*(rms_xp**2)/rms_x_eps
+    rms_x_alpha = -avg_gb*rms_xxp/rms_x_eps
+    
+    ebeam_rms["x"]       = rms_x
+    ebeam_rms["xp"]      = rms_xp
+    ebeam_rms["xxp"]     = rms_xxp
+    ebeam_rms["x_eps"]   = rms_x_eps
+    ebeam_rms["x_beta"]  = rms_x_beta
+    ebeam_rms["x_alpha"] = rms_x_alpha
+    ebeam_rms["x_gamma"] = rms_x_gamma
+    
+    return ebeam_rms
+
+def calc_ebeam_kurt(ebeam,plasma,step=0,frac=1.00):
+    ebeam_kurt = defaultdict(dict)
+    
+    x   = ebeam[step]["x"] # m
+    xp  = ebeam[step]["xp"] # rad
+    gbC = mm.calc_mean(ebeam[step]["gb"],frac)
+    npl = plasma["npl"][step]
+
+    wp  = (5.64e4)*np.sqrt(npl) # rad/s, plasma ang. freq.
+    kp  = wp/nc.c # m^-1, plasma wave number
+    kb  = kp/np.sqrt(2*gbC)
+    beta_m = 1.0/kb
+    
+    xn  = x/np.sqrt(beta_m)
+    xpn = np.sqrt(beta_m)*xp
+    rn  = np.sqrt(xn**2 + xpn**2)
+    
+    x_kurt  = stats.kurtosis(x,0,True)
+    xp_kurt = stats.kurtosis(xp,0,True)
+    rn_kurt = stats.kurtosis(rn,0,True)
+    
+    ebeam_kurt["x"]  = x_kurt
+    ebeam_kurt["xp"] = xp_kurt
+    ebeam_kurt["rn"] = rn_kurt
+
+    return ebeam_kurt

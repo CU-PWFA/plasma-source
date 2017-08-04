@@ -27,6 +27,14 @@ beta  = np.zeros(nstep)
 alpha = np.zeros(nstep)
 gamma = np.zeros(nstep)
 rms_x = np.zeros(nstep)
+rms_x_eps = np.zeros(nstep)
+x_kurt  = np.zeros(nstep)
+xp_kurt = np.zeros(nstep)
+rn_kurt = np.zeros(nstep)
+
+
+v_beta = np.zeros(nstep)
+v_rms_x = np.zeros(nstep)
 
 Psi_x = np.zeros([nstep,npart])
 K_x   = np.zeros([nstep,npart])
@@ -45,8 +53,17 @@ for i in range(0,nstep):
     beta[i]  = ebeam[i]["beta"] # m
     alpha[i] = ebeam[i]["alpha"]
     gamma[i] = ebeam[i]["gamma"] # 1/m
-    rms_x[i] = mm.calc_rms(ebeam[i]["x"],frac)/(1e-6) # um
+    ebeam_rms = pb.calc_ebeam_rms(ebeam,i,frac)
+    rms_x[i]     = ebeam_rms["x"]
+    rms_x_eps[i] = ebeam_rms["x_eps"]
+    ebeam_kurt = pb.calc_ebeam_kurt(ebeam,plasma,i,frac)
+    rn_kurt[i] = ebeam_kurt["rn"]
+#    x_kurt[i]    = stats.kurtosis(ebeam[i]["x"],0,True)
     
+    v_beta[i] = vbeam[i]["beta"]
+    vbeam_rms = pb.calc_ebeam_rms(vbeam,i,frac)
+    v_rms_x[i]   = vbeam_rms["x"]
+
     wp  = (5.64e4)*np.sqrt(plasma["npl"][i]) # rad/s, plasma ang. freq.
     kp  = wp/nc.c # m^-1, plasma wave number
     
@@ -145,17 +162,32 @@ print('lambda_beta: ',2*np.pi/kb)
 figA = plt.figure()
 ax1  = figA.add_subplot(111)
 ax1.plot(s,plasma["npl"]*beta[0]/max(plasma["npl"]),color='g')
-ax1.plot(s,beta,color='b')
+ax1.plot(s,v_beta,color='b',linestyle='dashed')
+ax1.plot(s,beta,color='b',linestyle='solid')
 ax1.set_ylim([0,1.1*beta[0]])
 ax1.set_xlabel('s [m]')
 ax1.set_ylabel(r'$\beta$ [m]',color='b')
 ax1.tick_params('y',colors='b')
 
 ax2  = ax1.twinx()
-ax2.plot(s,rms_x,color='r')
-ax2.set_ylabel(r'rms($x$) [$\mu$m]',color='r')
+ax2.plot(s,v_rms_x,color='r',linestyle='dashed')
+ax2.plot(s,rms_x,color='r',linestyle='solid')
+ax2.set_ylabel(r'$\sigma_r$ [$\mu$m]',color='r')
 ax2.tick_params('y',colors='r')
 ax2.set_ylim([0,1.1*max(rms_x)])
+
+ax3  = ax1.twinx()
+ax3.plot(s,rms_x_eps,color='k',linestyle='solid')
+ax3.set_ylabel(r'$\varepsilon$ [mm-mrad]',color='k')
+ax3.tick_params('y',colors='k')
+ax3.set_ylim([0,1.1*max(rms_x_eps)])
+
+ax4  = ax1.twinx()
+ax4.plot(s,rn_kurt,color='k',linestyle='dashed')
+ax4.set_ylabel(r'kurtosis',color='k')
+ax4.tick_params('y',colors='k')
+ax4.set_ylim([0,1.1*max(rn_kurt)])
+
 
 plt.title(r'$\beta$ and beam size')
 
@@ -185,45 +217,46 @@ plt.show()
 
 
 
-
-figC = plt.figure()
-ax4  = figC.add_subplot(111)
-#ax4.plot(s,plasma["npl"]*max(test_Psi)/max(plasma["npl"]),color='g')
-
-#ax4.plot(s,test_Psi,color='b')
-#ax4.plot(s,test2_Psi,color='r')
-
-#ax4.scatter(test_Psi,test_xp)
-
-#ax4.plot(s,test_x,color='b')
-#ax4.plot(s,test2_x,color='r')
-
-ax4.plot(s,KC_x,color='b')
-ax4.plot(s,KC_x+Krms_x,color='r')
-ax4.plot(s,KC_x-Krms_x,color='r')
-ax4.plot(s,K_twiss,color='g')
-
-#ax4.hist(K_x[ift,:],21,ls='solid',fc='none',edgecolor='b',\
-#                label='K Dist.')
-#ax4.hist(K_x[fft,:],21,ls='solid',fc='none',edgecolor='r',\
-#                label='K Dist.')
-
-#ax4.scatter(ebeam[ift]["x"],K_x[ift,:])
-
-#ax4.set_ylim([0,+1.1*2*np.pi])
-
-ax4.set_xlabel('s [m]')
-#ax4.set_ylabel(r'$\Psi$ [rad]',color='b')
-#ax4.tick_params('y',colors='b')
-
-ax4.set_ylabel(r'K',color='k')
-ax4.tick_params('y',colors='k')
-
-
-plt.title(r'K and/or $\Psi$')
-
-figC.tight_layout()
-plt.show()
+## K evolution
+#
+#figC = plt.figure()
+#ax4  = figC.add_subplot(111)
+##ax4.plot(s,plasma["npl"]*max(test_Psi)/max(plasma["npl"]),color='g')
+#
+##ax4.plot(s,test_Psi,color='b')
+##ax4.plot(s,test2_Psi,color='r')
+#
+##ax4.scatter(test_Psi,test_xp)
+#
+##ax4.plot(s,test_x,color='b')
+##ax4.plot(s,test2_x,color='r')
+#
+#ax4.plot(s,KC_x,color='b')
+#ax4.plot(s,KC_x+Krms_x,color='r')
+#ax4.plot(s,KC_x-Krms_x,color='r')
+#ax4.plot(s,K_twiss,color='g')
+#
+##ax4.hist(K_x[ift,:],21,ls='solid',fc='none',edgecolor='b',\
+##                label='K Dist.')
+##ax4.hist(K_x[fft,:],21,ls='solid',fc='none',edgecolor='r',\
+##                label='K Dist.')
+#
+##ax4.scatter(ebeam[ift]["x"],K_x[ift,:])
+#
+##ax4.set_ylim([0,+1.1*2*np.pi])
+#
+#ax4.set_xlabel('s [m]')
+##ax4.set_ylabel(r'$\Psi$ [rad]',color='b')
+##ax4.tick_params('y',colors='b')
+#
+#ax4.set_ylabel(r'K',color='k')
+#ax4.tick_params('y',colors='k')
+#
+#
+#plt.title(r'K and/or $\Psi$')
+#
+#figC.tight_layout()
+#plt.show()
 
 
 #    return 0
