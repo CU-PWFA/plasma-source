@@ -82,11 +82,13 @@ def drive_witness_density(params):
         witness = zoom(np.flipud(np.transpose(wData[ind][:, :, 0])), zf)
         plasmaZ = pData[ind][:, 0] * 1e3
         plasmaX = pData[ind][:, 1] * 1e6
+    else:
+        print('Only 2D simulations are currently supported.')
 
     plt.figure(figsize=(16, 9))
     gs = gridspec.GridSpec(2, 2, width_ratios=[24, 1])
     # Create the two colormaps
-    cmapD = alpha_colormap_cutoff(plt.cm.bone, 0.01, False)
+    cmapD = plt.cm.bone
     cmapW = alpha_colormap_cutoff(plt.cm.pink, 0.01, False)
 
     # Create the axis grid spaces
@@ -113,6 +115,61 @@ def drive_witness_density(params):
 
     # Save the figure and display it
     plt.tight_layout()
-    plt.savefig(path+'DriveWitnessDensity.pdf', format='pdf')
-    plt.savefig(path+'DriveWitnessDensity.png', format='png')
+    plt.savefig(path+'DriveWitnessDensity_'+str(ind)+'.pdf', format='pdf')
+    plt.savefig(path+'DriveWitnessDensity_'+str(ind)+'.png', format='png')
+    plt.show()
+
+
+def phase_space(params):
+    """ Plot the macroparticles of a beam in transverse phase space.
+
+    Plots the macro particles in a beam in transverse phase space, each
+    particle is color coded according to its weight, particles with weights
+    below a certain cutoff are ignored.
+
+    Parameters
+    ----------
+    params : dictionary
+        Params should have the following items:
+            species : string
+                The species name for the beam of interest.
+            dumpInd : int
+                The dump index to plot the beam at.
+            path : string
+                The path to the VSim output folder.
+            simName : strign
+                The simulation name, the first part of every simulation file.
+            cutoff : float
+                The minimum weight cutoff. Note maximum weight seems to be ~1.
+    """
+    path = params['path']
+    simName = params['simName']
+    ind = params['dumpInd']
+    species = params['species']
+    pData, pAttrs = load_species(path, simName, species)
+    # Grab the dump we are interested in
+    ptWeight = pData[ind][:, 6]
+    sel = ptWeight > params['cutoff']
+    ptWeight = ptWeight[sel]
+    ptX = pData[ind][:, 1][sel] * 1e6
+    ptUx = (pData[ind][:, 3] / pData[ind][:, 2])[sel]*1e3
+
+    # Sort the arrays so heavier particles appear on top
+    sort = np.argsort(ptWeight)
+    ptWeight = ptWeight[sort]
+    ptX = ptX[sort]
+    ptUx = ptUx[sort]
+    # Create the plot
+    plt.figure(figsize=(16, 9))
+    plt.scatter(ptX, ptUx, c=ptWeight, cmap=plt.cm.hot_r)
+    cb = plt.colorbar()
+    cb.set_label('Particle weight')
+    plt.xlabel(r'x ($\mu m$)')
+    plt.ylabel(r"x' ($mrad$)")
+    plt.title(species+' transverse phase space distribution')
+    plt.grid(True)
+
+    # Save the figure and display it
+    plt.savefig(path+species+'PhaseSpace_'+str(ind)+'.pdf', format='pdf')
+    plt.savefig(path+species+'PhaseSpace_'+str(ind)+'.png', format='png')
     plt.show()
