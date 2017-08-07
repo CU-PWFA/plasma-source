@@ -19,7 +19,7 @@ from calc_M import calc_M
 if __name__ == '__main__':
     
     # define plasma bulk (flat-top) properties
-    npl0   = 1e16 # cm^-3
+    npl0   = 1e17 # cm^-3
     dEds0  = 6e9 # eV/m
     dgds0  = dEds0/nc.me
     L_ft   = 0.50 # m
