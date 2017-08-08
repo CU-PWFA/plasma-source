@@ -303,3 +303,8 @@ def phase_space_animation(params):
 
     ani = animation.FuncAnimation(fig, updatefig, blit=True, frames=Nt)
     ani.save(params['path']+'PhaseSpaceEvolution.mp4', fps=params['fps'])
+
+
+def emittance_energy(params):
+    """ Plots the emittance growth and energy evolution of a given species
+    """
