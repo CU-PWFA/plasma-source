@@ -16,9 +16,7 @@ import particle_beam as pb
 import plasma_source as ps
 import particle_beam_propagation as pbp
 import mike_math as mm
-from calc_M import calc_M
-
-import time as time
+import beam_ana as ba
 
 def scan_waist_hw_up(ebeam0,plasma0,waist,hw_up,k):
 
@@ -79,7 +77,7 @@ def scan_waist_hw_up(ebeam0,plasma0,waist,hw_up,k):
     Tmatch = [beta_m,0,1.0/beta_m]
     R_x    = np.sqrt(eps*beta/gbC+(beta_m**2)*eps*gamma/gbC)
     
-    M      = calc_M(Tbeam,Tmatch)
+    M      = ba.calc_M(Tbeam,Tmatch)
     K      = gbC*kb*R_x
     
     return [M,K]

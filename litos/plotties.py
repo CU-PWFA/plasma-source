@@ -17,7 +17,9 @@ import mike_math as mm
 from   calc_M import calc_M
 import scipy.stats as stats
 import scipy.optimize as opt
-
+from collections import defaultdict
+import beam_ana as ba
+import scipy.spatial as spatial
 
 
 def make_patch_spines_invisible(ax):
@@ -104,20 +106,49 @@ for i in range(0,nstep):
     K_twiss[i] = gbC*kb*R_x
     
 
+# propagate final beam back to virtual waist
+wbeam = defaultdict(dict)
+wbeam[0] = ebeam[len(ebeam)-1].copy()
+# virtual waist position
+v_waist = wbeam[0]["alpha"]/wbeam[0]["gamma"]
+pbp.prop_ebeam_drift(wbeam,[0,v_waist],last_only=False)
+
+
+
 i_flat_start = np.argwhere(plasma["s"]>=plasma["up_ramp"]["top_loc"])[0][0]
 i_flat_stop  = np.argwhere(plasma["s"]<=\
                            plasma["up_ramp"]["top_loc"]+\
                            plasma["bulk"]["L"])[-1][0]
-i_beta_min = np.argmin(beta)
+
+i_beta_min = np.argmin(v_beta)
 i_beta_end = np.argwhere(beta<=beta[0])[-1][0]
 
 i_rms_x_end = np.argwhere(rms_x<=rms_x[0])[-1][0]
 
-xi  = ebeam[0]["x"]/(1e-6) # um
-xf  = ebeam[i_beta_end]["x"]/(1e-6) # um
-xpi = ebeam[0]["xp"] # rad
-xpf = ebeam[i_rms_x_end]["xp"] # rad
-#
+xi  = vbeam[i_beta_min]["x"]/(1e-6) # um -- Vacuum waist
+#xf  = wbeam[len(wbeam)-1]["x"]/(1e-6) # um -- Virtual waist
+xf  = ebeam[i_flat_stop]["x"]/(1e-6)
+
+xpi = vbeam[i_beta_min]["xp"]/(1e-6) # urad
+#xpf = wbeam[len(wbeam)-1]["xp"]/(1e-6) # urad
+xpf = ebeam[i_flat_stop]["xp"]/(1e-6)
+
+gbi = vbeam[i_beta_min]["gb"]/np.mean(vbeam[i_beta_min]["gb"])
+#gbf = wbeam[len(wbeam)-1]["gb"]/np.mean(wbeam[len(wbeam)-1]["gb"])
+gbf = ebeam[i_flat_stop]["gb"]/np.mean(ebeam[i_flat_stop]["gb"])
+
+
+#wp  = (5.64e4)*np.sqrt(plasma["npl"][i_flat_stop]) # rad/s, plasma ang. freq.
+#kp  = wp/nc.c # m^-1, plasma wave number
+#kbf = kp/np.sqrt(2*gbf)
+#betaf_m = (1.0/kbf)
+
+betaf  = ebeam[i_flat_stop]["beta"]
+alphaf = ebeam[i_flat_stop]["alpha"]
+[uf,vf] = ba.real2norm_coords(xf,xpf,betaf,alphaf)
+#uf = (1e-6)*xf/np.sqrt(betaf_m)
+#vf = (1e-6)*xpf*np.sqrt(betaf_m)
+
 #frac = 1.00
 #rms_xi = mm.calc_rms(xi,frac)
 #rms_xf = mm.calc_rms(xf,frac)
@@ -196,7 +227,7 @@ ax1.plot(s,v_beta,color='b',linestyle='dashed')
 ax1.plot(s,beta,color='b',linestyle='solid')
 #ax1.set_ylim([0,2.0*norm1])
 ax1.set_ylim([0,20])
-ax1.set_xlabel('s [m]')
+ax1.set_xlabel('z [m]')
 ax1.set_ylabel(r'$\beta$ [cm]',color='b')
 ax1.tick_params('y',colors='b')
 
@@ -235,7 +266,7 @@ ax4.tick_params('y',colors='g')
 #ax4.set_ylim([0,1.5*max(npl)])
 ax4.set_ylim([0,1.4])
 
-ax4.text(0.50, 0.75, r'$n_p \times 10$',
+ax4.text(0.50, 0.75, r'$n_p / 10$',
         verticalalignment='center', horizontalalignment='center',
         transform=ax4.transAxes,
         color='green', fontsize=12)
@@ -262,18 +293,18 @@ plt.show()
 # initial and final beam distribution
 
 #edge = (int(np.max([np.abs(np.min(xf/(1e-6))),np.max(xf/(1e-6))])/10)+1)*10
-edge = 80
-nbins = 25
+edge = 20
+nbins = 40
 xbins = np.arange(-edge,edge,2*edge/nbins)
 
 ki = stats.kurtosis(xi,0,True)
 kf = stats.kurtosis(xf,0,True)
 
-figB, ax3 = plt.subplots(1,1,sharey=True)
-hi = ax3.hist(xf,xbins,ls='-.',fc='none',edgecolor='b',\
-              normed=True,label='Final Beam Dist.\n kurtosis = %.1f'%ki)
-hf = ax3.hist(xi,xbins,ls='dashed',fc='none',edgecolor='r',\
-              normed=True,label='Initial Beam Dist.\n kurtosis = %.1f'%kf)
+figB, axB1 = plt.subplots(1,1,sharey=True)
+hi = axB1.hist(xi,xbins,ls='-',fc='none',edgecolor='r',\
+              normed=True,label='Vacuum Waist\n kurtosis = %.2f'%ki)
+hf = axB1.hist(xf,xbins,ls='dashed',fc='none',edgecolor='b',\
+              normed=True,label='Virtual Waist\n kurtosis = %.2f'%kf)
 
 
 
@@ -283,19 +314,19 @@ hf = ax3.hist(xi,xbins,ls='dashed',fc='none',edgecolor='r',\
 # add a 'best fit' line
 xx = np.linspace(-edge,+edge,200)
 yy = mlab.normpdf( xx, mui, sigmai)
-li = plt.plot(xx, yy, 'r--', linewidth=1)
+li = plt.plot(xx, yy, 'r-', linewidth=1)
 
 # best fit of data
 (muf, sigmaf) = stats.norm.fit(xf)
 # add a 'best fit' line
 xx = np.linspace(-edge,+edge,200)
 yy = mlab.normpdf( xx, muf, sigmaf)
-lf = plt.plot(xx, yy, 'b-.', linewidth=1)
+lf = plt.plot(xx, yy, 'b--', linewidth=1)
 
 
-ax3.set_xlim([-edge,+edge])
-ax3.set_xlabel(r'r [$\mu$m]')
-ax3.set_ylabel(r'fraction of macro particles / %.1f $\mu$m'%(2*edge/nbins))
+axB1.set_xlim([-edge,+edge])
+axB1.set_xlabel(r'r [$\mu$m]')
+axB1.set_ylabel(r'fraction of macro particles / %.1f $\mu$m'%(2*edge/nbins))
 
 plt.legend()
 
@@ -304,6 +335,30 @@ plt.legend()
 figB.tight_layout()
 plt.show()
 
+
+
+# phase space
+
+
+hull = spatial.ConvexHull(np.vstack((uf,vf)).T)
+
+figC, axC1 = plt.subplots(1,1,sharey=True)
+
+#axC1.scatter(xi,xpi,c='r',s=0.1)
+Csf = axC1.scatter(uf,vf,c=gbf,s=0.5,cmap=plt.cm.coolwarm)
+
+cbar = plt.colorbar(Csf)
+
+#axC1.set_xlim([-20,+20])
+#axC1.set_ylim([-200,+200])
+#axC1.set_xlim([-2,+2])
+#axC1.set_ylim([-2000,+2000])
+axC1.set_xlabel(r'x [$\mu$m]')
+axC1.set_ylabel(r'x$^{\prime}$ [$\mu$rad]')
+cbar.ax.set_ylabel(r'$\delta_p$')
+
+figC.tight_layout()
+plt.show()
 
 
 
