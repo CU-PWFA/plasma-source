@@ -7,6 +7,9 @@ Created on Tue Aug  8 16:20:28 2017
 """
 
 import numpy as np
+from collections import defaultdict
+import mvee as mvee
+import scipy.spatial as spatial
 
 def calc_Bmag(Tb,Tl):
     """ Calculates Bmag.
@@ -79,3 +82,21 @@ def norm2real_coords(u,v,beta,alpha):
     x  = u*np.sqrt(beta)
     xp = (v-(alpha/beta)*x)/np.sqrt(beta)
     return [x,xp]
+
+def calc_95ellipse(ebeam,step,tol=0.01):
+    lips = defaultdict(dict)
+
+    [u,v] = real2norm_coords(ebeam[step]["x"],ebeam[step]["xp"],\
+                             ebeam[step]["beta"],ebeam[step]["alpha"])
+    
+    P = np.vstack((u,v)).T
+
+    ET = mvee.EllipsoidTool()
+    (center, radii, rotation) = ET.getMinVolEllipse(P,tol)
+
+    lips["center"] = center
+    lips["radii"]  = radii
+    lips["rot"]    = rotation
+    
+    return lips
+    
