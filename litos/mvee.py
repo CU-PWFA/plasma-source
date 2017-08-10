@@ -95,16 +95,14 @@ class EllipsoidTool:
             ax = fig.add_subplot(111)
             
         u = np.linspace(0.0, 2.0 * np.pi, 100)
-        v = np.linspace(0.0, np.pi, 100)
-        
+      
         # cartesian coordinates that correspond to the spherical angles:
-        x = radii[0] * np.outer(np.cos(u), np.sin(v))
-        y = radii[1] * np.outer(np.sin(u), np.sin(v))
+        x = radii[0] * np.cos(u)
+        y = radii[1] * np.sin(u)
         # rotate accordingly
         for i in range(len(x)):
-            for j in range(len(x)):
-                [x[i,j],y[i,j]] = np.dot([x[i,j],y[i,j]], rotation) + center
-    
+            [x[i],y[i]] = np.dot([x[i],y[i]], rotation) + center
+   
         if plotAxes:
             # make some purdy axes
             axes = np.array([[radii[0],0.0],

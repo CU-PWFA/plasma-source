@@ -100,7 +100,7 @@ def make_parts(i_twiss,npart,dist,step=0):
     parts[step]["dist"]  = dist
     return parts
 
-def make_part(i_twiss,dist,i=0):
+def make_part(i_twiss,dist='gauss',i=0):
     """generate single macro particle phase space parameters"""
     beta  = i_twiss["beta"]
     alpha = i_twiss["alpha"]
@@ -118,7 +118,7 @@ def make_part(i_twiss,dist,i=0):
         rx   = np.sqrt(2)*np.sqrt(eps/gbC)*\
                 np.sqrt(-np.log(rndx))
         ry   = np.sqrt(2)*np.sqrt(eps/gbC)*\
-                np.sqrt(-np.log(rndy))
+                np.sqrt(-np.log(rndy)) 
     elif dist.lower() == 'uniform': # uniform distribution
         rx   = np.sqrt(rndx)*np.sqrt(eps/gbC)
         ry   = np.sqrt(rndy)*np.sqrt(eps/gbC)
