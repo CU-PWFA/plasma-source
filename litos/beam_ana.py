@@ -10,6 +10,7 @@ import numpy as np
 from collections import defaultdict
 import mvee as mvee
 import scipy.spatial as spatial
+import matplotlib.pyplot as plt
 
 def calc_Bmag(Tb,Tl):
     """ Calculates Bmag.
@@ -83,165 +84,137 @@ def norm2real_coords(u,v,beta,alpha):
     xp = (v-(alpha/beta)*x)/np.sqrt(beta)
     return [x,xp]
 
-def calc_95ellipse(u,v,hires=True,tol=0.01):
+def calc_frac_ellipse(u,v,frac=0.95,hires=False,tol=0.01):
     lips = defaultdict(dict)
 
     # define points
+    npoint = len(u)
     P = np.vstack((u,v)).T
-    npoint = len(P)
 
     # use only points of convex hull for speed
-    hull = spatial.ConvexHull(P)
-    P = hull.points
-    P = np.unique(P,axis=0)
+    # NOTE: *could* be useful, but need to figure out
+    # how to make it select fewer points!
+#    hull = spatial.ConvexHull(P,qhull_options='QbB')
+#    P = hull.points
+#    P = np.unique(P,axis=0)
+#    print(len(hull.points))
+#    print(len(P))
 
     # find minimum volume enclosing ellipsoid for 100% of points
     ET = mvee.EllipsoidTool()
     (cent, rad, rot) = ET.getMinVolEllipse(P,tol)
 
-    # define ellipse foci
-    focmag = np.sqrt((rad[0]/2)**2+(rad[1]/2)**2)
-    foc1 = np.dot([0,focmag],rot)+cent
-    foc2 = -foc1
-    
-    # calculate string length of points wrt ellipse foci
-    s = np.sqrt((u-foc1[0])**2+(v-foc1[1])**2) +\
-        np.sqrt((u-foc2[0])**2+(v-foc2[1])**2)
+    # center points
+    Pc = np.zeros([len(P),2])
+    Pc[:,0] = P[:,0] - cent[0]
+    Pc[:,1] = P[:,1] - cent[1]
 
-    # reduce ellipse to only include 95% of particles
+    # rotate points
+    R = np.rot90(rot)
+    Pr = np.zeros([len(Pc),2])
+    for i in range(len(Pc)):
+        Pr[i,:] = np.dot(R,Pc[i,:].T)
+
+#    # plot to check
+#    figA, axA1 = plt.subplots(1,1,sharey=True)
+#    axA1.scatter(u,v,c='r',s=0.5)
+#    axA1.scatter(Pr[:,0],Pr[:,1],c='b',s=0.5)
+#    axA1.set_xlim([-1.1*max(abs(u)),+1.1*max(abs(u))])
+#    axA1.set_ylim([-1.1*max(abs(v)),+1.1*max(abs(v))])
+#    plt.show()
+
+    # normalize points
+    Pn = np.zeros([len(Pr),2])
+    Pn[:,0] = Pr[:,0]/max(abs(Pr[:,0]))
+    Pn[:,1] = Pr[:,1]/max(abs(Pr[:,1]))
+    
+    # calculate radius^2 of all points
+    Cn = [np.mean(Pn[:,0]),np.mean(Pn[:,1])]
+    r2 = (Pn[:,0]-Cn[0])**2 + (Pn[:,1]-Cn[1])**2
+    Pt = Pn
+    
+    # reduce ellipse to only include fraction of particles
     if (hires):
-        # cut a few points at a time until 5% are outside of ellipse
-        i_s = np.argsort(s)
-        ifrac = 1
-        while len(i_s)>=0.95*npoint:
-            # subtract 0.05*npart*(1/2)**ifrac particles
-            sub = round(0.05*npoint*(0.5**ifrac))
+        # cut a few points at a time until (1-frac) are outside of ellipse
+        # NOTE: not obvious that this method is measurably better
+        # than the other method
+        i_r2 = np.argsort(r2)
+        Pt = Pt[i_r2,:]
+        ipow = 1
+        while len(i_r2)>=frac*npoint:
+            # subtract (1-frac)*npart*(1/2)**ipow particles
+            sub = round((1-frac)*npoint*(0.5**ipow))
             if sub==0:
                 break
-            i_s = i_s[:-sub]
-            u = u[i_s]
-            v = v[i_s]
-    
-            # define points
-            P = np.vstack((u,v)).T
-        
-            # use only points of convex hull for speed
-            hull = spatial.ConvexHull(P)
-            P = hull.points
-            P = np.unique(P,axis=0)
-        
-            # find minimum volume enclosing ellipsoid for 100% of points
-            ET = mvee.EllipsoidTool()
-            (cent, rad, rot) = ET.getMinVolEllipse(P,tol)
-    
-            # define ellipse foci
-            focmag = np.sqrt((rad[0]/2)**2+(rad[1]/2)**2)
-            foc1 = np.dot([0,focmag],rot)
-            foc2 = -foc1
-            
-            # calculate string length of points wrt ellipse foci
-            s = np.sqrt((u-foc1[0])**2+(v-foc1[0])**2) +\
-                np.sqrt((u-foc2[0])**2+(v-foc2[0])**2)
-            i_s = np.argsort(s)
-    
-            ifrac += 1
+            Pt = Pt[:-sub,:]
+            # calculate radius^2 of all points
+            Ct = [np.mean(Pt[:,0]),np.mean(Pt[:,1])]
+            r2 = (Pt[:,0]-Ct[0])**2 + (Pt[:,1]-Ct[1])**2
+            i_r2 = np.argsort(r2)
+            Pt = Pt[i_r2,:]
+            ipow += 1
             continue
     else:
-        # cut the outer 5% of points in one go
-        i_s = np.argsort(s)
-        i_s = i_s[:-round(0.05*len(i_s))]
-
-    u = u[i_s]
-    v = v[i_s]
-
-    # define points
-    P = np.vstack((u,v)).T
+        # cut the outer fraction of points in one go
+        i_r2 = np.argsort(r2)
+        i_r2 = i_r2[:-round((1-frac)*len(i_r2))]
+        Pt = Pn[i_r2,:]
+    
+#    # plot to check
+#    figB, axB1 = plt.subplots(1,1,sharey=True)
+##    axB1.scatter(u,v,c='r',s=0.5)
+#    axB1.scatter(Pn[:,0],Pn[:,1],c='b',s=0.5)
+#    axB1.scatter(Pt[:,0],Pt[:,1],c='r',s=0.5)
+##    axB1.set_xlim([-1.1*max(abs(u)),+1.1*max(abs(u))])
+##    axB1.set_ylim([-1.1*max(abs(v)),+1.1*max(abs(v))])
+#    plt.show()
+    
+    # un-normalize points
+    Pt[:,0] = Pt[:,0]*max(abs(Pr[:,0]))
+    Pt[:,1] = Pt[:,1]*max(abs(Pr[:,1]))
+    # rotate back to normal orientation
+    for i in range(len(Pt)):
+        Pt[i,:] = np.dot(np.linalg.inv(R),Pt[i,:])
+    # un-center points
+    Pt[:,0] = Pt[:,0] + cent[0]
+    Pt[:,1] = Pt[:,1] + cent[1]
+    
+#    # plot
+#    axA1.scatter(Pt[:,0],Pt[:,1],c='g',s=0.5)
+#    plt.show()
+    
+#    # plot
+#    figC, axC1 = plt.subplots(1,1,sharey=True)
+#    axC1.scatter(u,v,c='r',s=1.0)
+#    axC1.scatter(Pt[:,0],Pt[:,1],c='g',s=0.1)
+#    axC1.set_xlim([-1.1*max(abs(u)),+1.1*max(abs(u))])
+#    axC1.set_ylim([-1.1*max(abs(v)),+1.1*max(abs(v))])
+#    plt.show()
 
     # use only points of convex hull for speed
-    hull = spatial.ConvexHull(P)
-    P = hull.points
-    P = np.unique(P,axis=0)
+    # NOTE: *could* be useful, but need to figure out
+    # how to make it select fewer points!
+#    hull  = spatial.ConvexHull(Pt)
+#    Pt = hull.points
+#    Pt = np.unique(Pt,axis=0)
 
-    # find minimum volume enclosing ellipsoid for 100% of points
+    # find minimum volume enclosing ellipsoid for remaining points
     ET = mvee.EllipsoidTool()
-    (cent, rad, rot) = ET.getMinVolEllipse(P,tol)
-    
+    (cent, rad, rot) = ET.getMinVolEllipse(Pt,tol)
+
     # define ellipse foci
-    focmag = np.sqrt((rad[0]/2)**2+(rad[1]/2)**2)
-    foc1 = np.dot([0,focmag],rot)
+    R    = np.rot90(rot)
+    focd = 2*np.sqrt((rad[0]/2)**2+(rad[1]/2)**2)
+    foc1 = np.dot(np.linalg.inv(R),[focd/2,0])
     foc2 = -foc1
 
     lips["center"] = cent
     lips["radii"]  = rad
     lips["rot"]    = rot
+    lips["focd"]   = focd
     lips["foci"]   = [foc1,foc2]
-    lips["ecc"]    = np.sqrt(1-(max(rad)/min(rad))**2)
+    lips["ecc"]    = np.sqrt(1-(min(rad)/max(rad))**2)
     lips["area"]   = np.pi*rad[0]*rad[1]
+    lips["Pt"]     = Pt
 
     return lips
-
-#def calc_95ellipseB(u,v,beta,alpha,hires=True,tol=0.01):
-#    lips = defaultdict(dict)
-#
-#    # define points
-#    P = np.vstack((u,v)).T
-#    npoint = len(P)
-#
-#    # use only points of convex hull for speed
-#    hull = spatial.ConvexHull(P)
-#    P = hull.points
-#    P = np.unique(P,axis=0)
-#
-#    # angle of major axis
-#    gamma = (1+alpha**2)/beta
-#    theta = 0.5*np.arctan2(2*alpha,gamma-beta)
-#    
-#    # rotate points
-#    rot = [[ np.cos(theta), np.sin(theta)],\
-#           [-np.sin(theta), np.cos(theta)]]
-#    P = np.dot(rot,P)
-#
-#    # first guess for foci: half of max
-#    focd = max(abs(P[:,0]))
-#    foc1 = [-focd/2,0]
-#    foc2 = [+focd/2,0]
-#    
-#    # calculate string length of points wrt ellipse foci
-#    s = np.sqrt((u-foc1[0])**2+(v-foc1[1])**2) +\
-#        np.sqrt((u-foc2[0])**2+(v-foc2[1])**2)
-#    
-#    
-#    
-#    args = [gb0,eps0,beta0,alpha0,gamma0,\
-#        np0,shape,z,Lp0,\
-#        targ_beta,targ_alpha,targ_gamma]
-#    
-#    x0 = [focd,ecc]
-#    ## perform fit
-#    fitres = minimize(max_s,x0,(args,),\
-#                      bounds=bnds,\
-#                      method='L-BFGS-B',\
-#                      options={'disp':False})
-##                  constraints=cons,\
-#    
-#    
-#    
-#    
-#
-#    lips["center"] = cent
-#    lips["radii"]  = rad
-#    lips["rot"]    = rot
-#    lips["foci"]   = [foc1,foc2]
-#    lips["ecc"]    = np.sqrt(1-(max(rad)/min(rad))**2)
-#    lips["area"]   = np.pi*rad[0]*rad[1]
-#
-#    return lips
-#
-#def find_max_s(x,args):
-#    [focd,ecc] = x
-#    [u,v] = args
-#    foc1 = [-focd/2,0]
-#    foc2 = [+focd/2,0]
-#    s = np.sqrt((u-foc1[0])**2+(v-foc1[1])**2) +\
-#        np.sqrt((u-foc2[0])**2+(v-foc2[1])**2)
-#    return max(s)
