@@ -6,11 +6,13 @@ Created on Thu Aug  3 13:55:08 2017
 @author: robert
 """
 
+from vsim import C
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 import matplotlib.gridspec as gridspec
 from vsim import load
+from vsim import analyze
 from scipy.ndimage.interpolation import zoom
 # This needs to be before animation is imported
 plt.rcParams['animation.ffmpeg_path'] = '/home/robert/anaconda3/envs/CU-PWFA/bin/ffmpeg'
@@ -306,5 +308,98 @@ def phase_space_animation(params):
 
 
 def emittance_energy(params):
-    """ Plots the emittance growth and energy evolution of a given species
+    """ Plots the emittance growth and energy evolution of a given species.
+
+    Parameters
+    ----------
+    params : dictionary
+        Params should have the following items:
+            species : string
+                The species name for the beam of interest.
+            path : string
+                The path to the VSim output folder.
+            simName : strign
+                The simulation name, the first part of every simulation file.
+            Nt : int
+                The number of dumps to use, set to the last dump number.
+            mass : double
+                The mass of the particle in GeV.
     """
+    Nt = params['Nt']
+    path = params['path']
+    simName = params['simName']
+    species = params['species']
+    
+    en = np.zeros(Nt+1) # normalized emittance
+    energy = np.zeros(Nt+1)
+    time = np.zeros(Nt+1)
+
+    for i in range(0, Nt+1):
+        pFile = get_filename(path, simName, species, i)
+        pData = load.get_species_data(pFile, species)
+        pAttrs = load.get_species_attrs(pFile, species)
+        en[i] = analyze.get_normemittance(pData)
+        energy[i] = analyze.get_energy(pData, params['mass'])
+        time[i] = pAttrs['time']
+    
+    d = time*C*1e2
+    fig = plt.figure(figsize=(16, 9))
+    ax = fig.add_subplot(111)
+    p1 = plt.plot(d, en, 'b-', label='Emittance')
+    plt.title('Transverse emittance and energy evolution')
+    plt.xlabel('Distance (cm)')
+    plt.ylabel(r'Normalized emittance ($mm\cdot mrad$)')
+    plt.twinx()
+    p2 = plt.plot(d, energy, 'm-', label='Energy')
+    plt.ylabel('Energy (GeV)')
+    p = p1 + p2
+    ax.legend(p, [l.get_label() for l in p])
+    
+    # Save the figure and display it
+    plt.savefig(path+species+'emittanceEnergy.pdf', format='pdf')
+    plt.savefig(path+species+'emittanceEnergy.png', format='png')
+    plt.show()
+
+
+def energy_distribution(params):
+    """ Plots the distribution of energy of a given species.
+
+    Parameters
+    ----------
+    params : dictionary
+        Params should have the following items:
+            species : string
+                The species name for the beam of interest.
+            path : string
+                The path to the VSim output folder.
+            simName : strign
+                The simulation name, the first part of every simulation file.
+            dumpInd : int
+                The dump index to plot the beam at.
+            mass : double
+                The mass of the particle in GeV.
+            bins : int
+                The number of bins in the histogram.
+    """
+    path = params['path']
+    simName = params['simName']
+    species = params['species']
+    ind = params['dumpInd']
+    
+    pFile = get_filename(path, simName, species, ind)
+    pData = load.get_species_data(pFile, species)
+    # pAttrs = load.get_species_attrs(pFile, species)
+    
+    weights = analyze.get_weights(pData)
+    energy = analyze.get_ptc_energy(pData, params['mass'])
+    
+    plt.figure(figsize=(16, 9))
+    plt.hist(energy, params['bins'], weights=weights)
+    plt.title('Energy distribution of '+species)
+    plt.xlabel('Energy (GeV)')
+    plt.ylabel('Counts')
+    
+    # Save the figure and display it
+    plt.savefig(path+'EnergySpread_'+species+'_'+str(ind)+'.pdf', format='pdf')
+    plt.savefig(path+'EnergySpread_'+species+'_'+str(ind)+'.png', format='png')
+    plt.show()

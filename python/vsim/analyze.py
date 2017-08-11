@@ -10,6 +10,26 @@ from vsim import C
 import numpy as np
 
 
+def get_ptc_gamma(data):
+    """ Calculates the relativistic factor for each particle in the beam.
+
+    Parameters
+    ----------
+    data : HDF5 dataset
+        The data set for the beam of interest, use load.get_species_data to
+        load the dataset object from a file.
+
+    Returns
+    -------
+    gamma : array-like
+        The gamma of each particle in the beam.
+    """
+    ux = get_ux(data)
+    uy = get_uy(data)
+    gamma = np.sqrt(1 + (ux**2 + uy**2)/C**2)
+    return gamma
+
+
 def get_gamma(data):
     """ Calculates the relativistic factor from the data object for the beam.
 
@@ -24,12 +44,54 @@ def get_gamma(data):
     gammaAvg : double
         The average gamma of all the particles in the beam.
     """
-    ux = get_ux(data)
-    uy = get_uy(data)
     weights = get_weights(data)
-    gamma = np.sqrt(1 + (ux**2 + uy**2)/C**2)
+    gamma = get_ptc_gamma(data)
     gammaAvg = np.average(gamma, weights=weights)
     return gammaAvg
+
+
+def get_ptc_energy(data, mass):
+    """ Calculates the energy of each particle from the data object for a beam.
+
+    Parameters
+    ----------
+    data : HDF5 dataset
+        The data set for the beam of interest, use load.get_species_data to
+        load the dataset object from a file.
+    mass : double
+        The mass of the particle in energy units. The units of energy determine
+        the return units. me=0.511 MeV, returns energy in MeV.
+
+    Returns
+    -------
+    energy : double
+        The energy of each particle in the beam.
+    """
+    gamma = get_ptc_gamma(data)
+    energy = gamma * mass
+    return energy
+
+
+def get_energy(data, mass):
+    """ Calculates the energy of the beam from the data object for a beam.
+
+    Parameters
+    ----------
+    data : HDF5 dataset
+        The data set for the beam of interest, use load.get_species_data to
+        load the dataset object from a file.
+    mass : double
+        The mass of the particle in energy units. The units of energy determine
+        the return units. me=0.511 MeV, returns energy in MeV.
+
+    Returns
+    -------
+    energyAvg : double
+        The average energy of all the particles in the beam.
+    """
+    gamma = get_gamma(data)
+    energyAvg = gamma * mass
+    return energyAvg
 
 
 def get_emittance(data):
