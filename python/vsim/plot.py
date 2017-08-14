@@ -304,7 +304,8 @@ def phase_space_animation(params):
         return sct,
 
     ani = animation.FuncAnimation(fig, updatefig, blit=True, frames=Nt)
-    ani.save(params['path']+'PhaseSpaceEvolution.mp4', fps=params['fps'])
+    ani.save(params['path']+'PhaseSpaceEvolution_'+species+'.mp4',
+             fps=params['fps'])
 
 
 def emittance_energy(params):
