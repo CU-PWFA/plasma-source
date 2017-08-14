@@ -296,5 +296,3 @@ Cell[3068, 95, 9378, 171, 269, "Output"]
 ]
 *)
 
-(* End of internal cache information *)
-
