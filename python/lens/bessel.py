@@ -13,6 +13,7 @@ from numpy.fft import fft, ifft, fftfreq, fftshift
 from ionization import ionization
 from ionization import adk
 from propagation import propagation
+from propagation import plasma
 from scipy.interpolate import interp1d
 from ht import intht
 import os
@@ -160,7 +161,8 @@ def multimode_ionization(params, z, I):
                 Wavelength of the electromagnetic wave in vacuum.
             rmax : array-like
                 Maximum radius to return the electric field at. Pass an array
-                of length L, one for each Bessel mode.
+                of length L, one for each Bessel mode. Must be a factor of root
+                2 larger than the grid in prop.
             prop : dictionary
                 See the params dictionary for laser_prop for details.
             order : array-like
@@ -220,6 +222,7 @@ def multimode_ionization(params, z, I):
         besselParams['rmax'] = params['rmax'][i]
         rmi[i], E[i] = uniform_bessel(besselParams, Ez, z, order[i])
         E[i] = 8.15e6*E[i] # Normalization factor I still need to fix
+        E[i] *= params['multi'][i]
         # Propagate the modes to find the electric field
         prop['Efield'] = interp1d(rmi[i], E[i])
         prop['order'] = order[i]
@@ -228,7 +231,6 @@ def multimode_ionization(params, z, I):
             os.makedirs(prop['path'])
         propagation.laser_prop(prop, Efunc)
         Efield[i] = np.load(prop['path'] + 'electricField.npy')
-        Efield[i] *= params['multi'][i]
         # Find the ionization fraction and update the total ionization fraction
         frac[i] = adk.gaussian_frac(atom['EI'], abs(Efield[i]), params['tau'],
                                     atom['Z'], atom['l'], atom['m'])
@@ -243,16 +245,86 @@ def multimode_ionization(params, z, I):
     np.save(path+'params', params)
 
 
-def open_data(path):
+def multimode_refraction(params, Tfunc):
+    """ Calculates the ionization fraction including refraction.
+
+    This function calculates the ionization fraction from multiple, time
+    delayed, Bessel modes accounting for refractive effects as the plasma
+    ionizes. Note that multimode_ionization should be run first to calculate
+    the inital fields. The output can also be used to verify the input
+    parameters are correct before running this time consuming function.
+
+    Parameters
+    ----------
+    params : dictionary
+        Params should have the following items:
+            seq : array-like
+                The sequence in which the modes propagate, i.e. [0, 1] means
+                0 order first followed by first order.
+            path : string
+                Path to the output folder from multimode_ionization
+            plasma : dictionary
+                Additionaly parameters needed by plasma_refraction, see plasma_
+                refraction for details about the elements
+                    Nt : int
+                        Number of temporal grid points.
+                    T : double
+                        Time duration.
+                    n0 : double
+                        Initial gas density in 10^17 cm^-3.
+                    alpha : double
+                        Atomic polarizability of the gas in A^3.
+                    EI : double
+                        Ionization energy in eV.
+    """
+    path = params['path']
+    plasmaPar = params['plasma']
+    directory = 'Density-' + str(plasmaPar['n0']) + '_' + \
+                str(params['seq']) + '/' 
+    if not os.path.exists(path+directory):
+        os.makedirs(path+directory)
+    
+    # Define the initial electric field loader
+    def Efunc(x, y):
+        E0 = np.load(modePar['Esource']+'inputField.npy')
+        return E0
+    
+    n = None # No initial ionization
+    
+    for i in params['seq']:
+        modeName = 'Bessel_' + str(i) + '/'
+        EsourcePath = path + modeName
+        modePar = np.load(EsourcePath+'params.npy').item()
+        for name in plasmaPar:
+            modePar[name] = plasmaPar[name]
+        modePar['Esource'] = EsourcePath
+        modePar['nFinal'] = True
+        modePar['path'] = path + directory + modeName
+        if not os.path.exists(modePar['path']):
+            os.makedirs(modePar['path'])
+        # Run the refraction calculation
+        plasma.plasma_refraction(modePar, Efunc, Tfunc, n=n)
+        plasma.summary_plot(modePar['path'])
+        n = np.load(modePar['path'] + 'finalDensity.npy')
+
+
+def open_data(path, data=None):
     """ Opens the data files and sets up basic variables.
 
     Parameters
     ----------
     path : string
         The path specifying the directory with the simulation results.
+    data : string, optional
+        Optional path to load the ionization fraction from. Used for plotting
+        the output of a refraction calculation.
     """
     # Open the data files
-    frac = np.load(path+'ionizationFraction.npy')
+    if data is None:
+        frac = np.load(path+'ionizationFraction.npy')
+    else:
+        frac = np.load(data)
+        frac = np.moveaxis(frac, 2, 0)
     E = np.load(path+'inputField.npy').item()
     rmi = np.load(path+'inputCoordinates.npy').item()
     params = np.load(path+'params.npy').item()
@@ -266,7 +338,7 @@ def open_data(path):
     return frac, E, rmi, params, L, X, Z, Nx, Ny, Nz
 
 
-def ionization_plot(path, H, dr=None):
+def ionization_plot(path, H, dr=None, data=None):
     """ Create plots of the ionization fraction and slice profiles.
 
     Specify the path to the output files and this function will save an image
@@ -278,10 +350,13 @@ def ionization_plot(path, H, dr=None):
         The path specifying the directory with the simulation results.
     H : int
         The number of lineouts to draw.
-    dx : double
+    dr : double, optional
         Spacing between radial lineouts.
+    data : string, optional
+        Optional path to load the ionization fraction from. Used for plotting
+        the output of a refraction calculation.
     """
-    frac, E, rmi, params, L, X, Z, Nx, Ny, Nz = open_data(path)
+    frac, E, rmi, params, L, X, Z, Nx, Ny, Nz = open_data(path, data)
     x = np.linspace(-X/2, X/2, Nx, False)
     z = np.linspace(0, Z, Nz)
     if 'xlim' in params:
