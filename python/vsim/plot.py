@@ -156,6 +156,96 @@ def drive_witness_density(params):
     plt.show()
 
 
+def drive_witness_animation(params):
+    """ Creates an animation of the electron wake and beam density evolution.
+
+    An animation of drive_witness_density where each dump is a frame in the
+    animation.
+
+    Parameters
+    ----------
+    params : dictionary
+        Params should have the following items:
+    """
+    path = params['path']
+    simName = params['simName']
+    ind = params['dumpInd']
+    zf = params['zoom']
+    drive = params['drive']
+    witness = params['witness']
+    plasma = params['plasma']
+    Nt = params['Nt']
+    
+    dFile = get_filename(path, simName, drive, ind)
+    dAttrs = load.get_field_attrs(dFile, drive)
+    
+    fig = plt.figure(figsize=(16, 9))
+    gs = gridspec.GridSpec(2, 2, width_ratios=[24, 1])
+    # Create the two colormaps
+    cmapD = plt.cm.bone
+    cmapW = alpha_colormap_cutoff(plt.cm.pink, params['alphaCutoff'], False)
+
+    # Create the axis grid spaces
+    colorAx1 = plt.subplot(gs[0, 1])
+    colorAx2 = plt.subplot(gs[1, 1])
+    # Convert units
+    extent = np.array(dAttrs['bounds'])
+    extent[:2] *= 1e3
+    extent[2:] *= 1e6
+    
+    # Grab the dump we are interested in
+    def get_data(ind):
+        dFile = get_filename(path, simName, drive, ind)
+        wFile = get_filename(path, simName, witness, ind)
+        pFile = get_filename(path, simName, plasma, ind)
+        dData = load.get_field_data(dFile, drive)
+        wData = load.get_field_data(wFile, witness)
+        pData = load.get_species_data(pFile, plasma)
+        
+        driveData = zoom(np.flipud(np.transpose(dData[:, :, 0])), zf)
+        witnessData = zoom(np.flipud(np.transpose(wData[:, :, 0])), zf)
+        plasmaZ = pData[:, 0] * 1e3
+        plasmaX = pData[:, 1] * 1e6
+        return driveData, witnessData, plasmaZ, plasmaX
+    
+    driveData, witnessData, plasmaZ, plasmaX = get_data(ind)
+    
+    # Create the actual plot
+    plt.subplot(gs[:, 0])
+    im1 = plt.imshow(driveData, aspect='auto', animated=True,
+                     extent=extent, cmap=cmapD)
+    cb1 = plt.colorbar(cax=colorAx1)
+    cb1.set_label(r'Drive beam - Charge density ($C/m^3$)')
+    im2 = plt.imshow(witnessData, aspect='auto', animated=True,
+                     extent=extent, cmap=cmapW)
+    cb2 = plt.colorbar(cax=colorAx2)
+    cb2.set_label(r'Wintess Beam - Charge density ($C/m^3$)')
+    # Plasma electrons
+    ax1 = plt.plot(plasmaZ, plasmaX, 'bo', markersize=0.25, animated=True)
+    plt.xlabel(r'z ($mm$)')
+    plt.ylabel(r'x ($\mu m$)')
+    plt.title('Drive and witness beam charge density with electron wake')
+    plt.tight_layout()
+    
+    # Update the scatter plot data
+    i = ind+1;
+    def updatefig(*args):
+        nonlocal i
+        driveData, witnessData, plasmaZ0, plasmaX = get_data(i)
+        im1.set_array(driveData)
+        im2.set_array(witnessData)
+        print(ax1) #XXX I don't know, this is the correct object
+        ax1.get_data(plasmaZ, plasmaX)
+        i += 1
+        # If we run over, loop
+        if i == Nt+1:
+            i = ind
+        return im1, im2, ax1
+
+    ani = animation.FuncAnimation(fig, updatefig, blit=True, frames=Nt)
+    ani.save(path+'WakefieldEvolution.mp4', fps=params['fps'])
+
+
 def phase_space(params):
     """ Plot the macroparticles of a beam in transverse phase space.
 
@@ -300,7 +390,7 @@ def phase_space_animation(params):
         i += 1
         # If we run over, loop
         if i == Nt+1:
-            i = 0
+            i = ind
         return sct,
 
     ani = animation.FuncAnimation(fig, updatefig, blit=True, frames=Nt)

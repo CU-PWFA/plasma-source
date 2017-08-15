@@ -387,7 +387,7 @@ def evolution_animation(path, denMax, xlim=None, fps=None):
                aspect='auto', animated=True,
                extent=[z0/1e6, (z0+Z)/1e6, -X/2e3, X/2e3])
     cb1 = plt.colorbar()
-    cb1.set_label(r'E (normalized to $E_0(t_0)$)')
+    cb1.set_label(r'E normalized to $E_0(t_0)$')
     plt.set_cmap('viridis')
     plt.ylabel(r'x ($mm$)')
     plt.title(r'Evolution of laser intensity and ionization fraction')
@@ -399,7 +399,7 @@ def evolution_animation(path, denMax, xlim=None, fps=None):
                aspect='auto', animated=True, clim=(0.0, denMax),
                extent=[z0/1e6, (z0+Z)/1e6, -X/2e3, X/2e3])
     cb2 = plt.colorbar()
-    cb2.set_label(r'Ionization fraction')
+    cb2.set_label(r'Plasma density ($10^{17}\,cm^{-3}$)')
     plt.set_cmap('plasma')
     plt.xlabel(r'z ($m$)')
     plt.ylabel(r'x ($mm$)')
