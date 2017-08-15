@@ -11,6 +11,9 @@ from ionization import adk
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from propagation import propagation
+# This needs to be before animation is imported
+plt.rcParams['animation.ffmpeg_path'] = '/home/robert/anaconda3/envs/CU-PWFA/bin/ffmpeg'
+import matplotlib.animation as animation
 
 
 def plasma_refraction(params, Efunc, Tfunc, n0=None, n=None):
@@ -348,3 +351,72 @@ def profile_plot(path, xlim=None):
     del Ei
     del Et
     del params
+
+
+def evolution_animation(path, denMax, xlim=None, fps=None):
+    """ Creates an animation of the beam evolution and plasma evolution.
+
+    Creates an animation of the beam evolution and the plasma density
+    evolution. The beam intensity is normalized by the temporal pulse shape to
+    make it clear how the beam weakens due to refraction.
+
+    Parameters
+    ----------
+    path : string
+        The path specifying the directory with the simulation results.
+    denMax : double
+        The maximum density of the plasma, defines the top of the colorbar
+    xlim : array-like, optional
+        Two element array of limits for x.
+    fps : int, optional
+        The frames per second of the video, default is 25.
+    """
+    Eplot, nplot, Ei, Et, params, X, Z, T, Nx, Ny, Nz, Nt, z0 = open_data(path)
+    Evideo = Eplot / np.reshape(Et, (Nt, 1, 1))
+    
+    if xlim is None:
+        xlim = [-X/4e3, X/4e3]
+    if fps is None:
+        fps = 25
+    
+    # Create the plot
+    fig = plt.figure(figsize=(16, 9))
+     # Laser intensity
+    plt.subplot(211)
+    im1 = plt.imshow(propagation.prep_data(Evideo[0, :, :]),
+               aspect='auto', animated=True,
+               extent=[z0/1e6, (z0+Z)/1e6, -X/2e3, X/2e3])
+    cb1 = plt.colorbar()
+    cb1.set_label(r'E (normalized to $E_0(t_0)$)')
+    plt.set_cmap('viridis')
+    plt.ylabel(r'x ($mm$)')
+    plt.title(r'Evolution of laser intensity and ionization fraction')
+    plt.xlim([z0/1e6, (z0+Z)/1e6])
+    plt.ylim(xlim)
+    # Plasma density
+    plt.subplot(212)
+    im2 = plt.imshow(np.flipud(nplot[0, :, :]),
+               aspect='auto', animated=True, clim=(0.0, denMax),
+               extent=[z0/1e6, (z0+Z)/1e6, -X/2e3, X/2e3])
+    cb2 = plt.colorbar()
+    cb2.set_label(r'Ionization fraction')
+    plt.set_cmap('plasma')
+    plt.xlabel(r'z ($m$)')
+    plt.ylabel(r'x ($mm$)')
+    plt.xlim([z0/1e6, (z0+Z)/1e6])
+    plt.ylim(xlim)
+    plt.tight_layout()
+    
+    # Update the plot data
+    i = 1
+    def updatefig(*args):
+        nonlocal i
+        im1.set_array(propagation.prep_data(Evideo[i, :, :]))
+        im2.set_array(np.flipud(nplot[i, :, :]))
+        i += 1
+        # If we run over, loop
+        if i == Nt:
+            i = 0
+        return im1, im2
+    ani = animation.FuncAnimation(fig, updatefig, blit=True, frames=Nt)
+    ani.save(path+'PlasmaBeamEvolution.mp4', fps=fps)

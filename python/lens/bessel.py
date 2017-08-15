@@ -338,7 +338,7 @@ def open_data(path, data=None):
     return frac, E, rmi, params, L, X, Z, Nx, Ny, Nz
 
 
-def ionization_plot(path, H, dr=None, data=None):
+def ionization_plot(path, H, dr=None, data=None, suffix=''):
     """ Create plots of the ionization fraction and slice profiles.
 
     Specify the path to the output files and this function will save an image
@@ -355,6 +355,8 @@ def ionization_plot(path, H, dr=None, data=None):
     data : string, optional
         Optional path to load the ionization fraction from. Used for plotting
         the output of a refraction calculation.
+    suffix : string, optional
+        Suffix to add to the end of the filename.
     """
     frac, E, rmi, params, L, X, Z, Nx, Ny, Nz = open_data(path, data)
     x = np.linspace(-X/2, X/2, Nx, False)
@@ -430,8 +432,8 @@ def ionization_plot(path, H, dr=None, data=None):
 
     # Save the figure and display it
     plt.tight_layout()
-    plt.savefig(path+'ionizationFig.pdf', format='pdf')
-    plt.savefig(path+'ionizationFig.png', format='png')
+    plt.savefig(path+'ionizationFig'+suffix+'.pdf', format='pdf')
+    plt.savefig(path+'ionizationFig'+suffix+'.png', format='png')
     plt.show()
     
     # Close the file and clear the memory (fixes a bug in numpy)
