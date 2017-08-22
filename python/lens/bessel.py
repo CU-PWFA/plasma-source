@@ -14,6 +14,7 @@ from ionization import ionization
 from ionization import adk
 from propagation import propagation
 from propagation import plasma
+from lens import ray
 from scipy.interpolate import interp1d
 from ht import intht
 import os
@@ -140,7 +141,7 @@ def multimode_ionization(params, z, I):
     """ Calculates the ionization fraction from multiple Bessel modes.
 
     This function calculates the ionization fraction resulting from a series
-    of temporally seperated pulses. Each pulse has a a lateral intensity
+    of temporally seperated pulses. Each pulse has a a transverse intensity
     profile given by a Bessel function of order n. Modes should be ordered
     temporally.
 
@@ -306,6 +307,176 @@ def multimode_refraction(params, Tfunc):
         plasma.plasma_refraction(modePar, Efunc, Tfunc, n=n)
         plasma.summary_plot(modePar['path'])
         n = np.load(modePar['path'] + 'finalDensity.npy')
+
+
+def multimode_lens_ionization(params, z, I):
+    """ Calculates the ionization fraction from multiple Bessel modes.
+
+    This function calculates the ionization fraction resulting from a primary
+    Bessel function with a specific on axis intensity profile and a series of
+    higher order Bessel functions created with annular super Gaussian beams.
+    Each pulse has a a transverse intensity profile given by a Bessel function
+    of order n. Modes should be ordered temporally.
+
+    Parameters
+    ----------
+    params : dictionary
+        Params should have the following items:
+            L : int
+                Number of pulses to include.
+            N : int
+                Number of integration steps in Bessel integrals. Try 1000.
+            M : int
+                Number of r values to calculate, each requires an integral.
+            R : double
+                Radius to the first zero of the zero order Bessel function.This
+                only effects the primary Bessel function.
+            lam : double
+                Wavelength of the electromagnetic wave in vacuum.
+            rmax : array-like
+                Maximum radius to return the electric field at. Pass an array
+                of length L, one for each Bessel mode. Must be a factor of root
+                2 larger than the grid in prop.
+            r0 : array-like
+                Array of center loactions for the super Gaussians. L-1 length.
+            w : array-like
+                Array of widths for the super Gaussians. L-1 length.
+            nGauss : array-like
+                Order of the super Gaussians. L-1 length.
+            m : array-like
+                Multiplier for the arbitrary phase function, test before use.
+                L-1 length.
+            prop : dictionary
+                See the params dictionary for laser_prop for details.
+            order : array-like
+                Array of length L with the order of each Bessel function.
+            path : string
+                File loaction for storing simulation results.
+            atom : dictionary
+                See ionization for details and several examples.
+            tau : double
+                Temporal length of the Gaussian ionizing pulse.
+            multi : array-like
+                Multiplier for each orders electric field.
+            xlim : array-like, optional
+                Two element array of limits for the transverse density plot.
+    z : array-like
+        Array of on axis z values the intensity is specified at.
+    I : array-like
+        Desired Intensity profile along the optical axis.
+    """
+    L = params['L']
+    order = params['order']
+    prop = params['prop']
+    atom = params['atom']
+    Ez = ionization.field_from_intensity(I)
+    besselParams = {'N': params['N'],
+                    'M': params['M'],
+                    'lam': params['lam']
+                    }
+    k = 2*np.pi/params['lam']
+    E = {} # Stores electric fields on the boundaries, input to laser_prop
+    rmi = {}
+    Efield = {} # Stores output electric fields
+    frac = {}
+    # TODO figure out how to make this a standalone function so we don't have two copies of it
+    # Define the Efunc for laser_prop with Fourier series phi components
+    def Efunc(x, y): # This is complicated because of the atan range
+        r = np.sqrt(x**2 + y**2)
+        Efield = prop['Efield']
+        phi = np.zeros(np.shape(r)) 
+        # Handle when x/y -> ininity
+        phi[int(prop['Nx']/2), int(prop['Ny']/2):] = np.pi/2
+        phi[int(prop['Nx']/2), :int(prop['Ny']/2)] = -np.pi/2
+        # Handle the positive x half plane
+        sel = np.array(x > 0)
+        xp = x[sel]
+        xp = np.reshape(xp, (np.size(xp), 1))
+        phi[int(prop['Nx']/2+1):, :] = np.arctan(y/xp)
+        # Handle the negative x half plane
+        sel = np.array(x < 0)
+        xn = x[sel]
+        xn = np.reshape(xn, (np.size(xn), 1))
+        phi[:int(prop['Nx']/2), :] = np.arctan(y/xn) + np.pi
+        E0 = Efield(r) * np.exp(1j*prop['order']*phi)
+        return E0
+    
+    for i in range(0, L):
+        # Find the boundary electric field necessary to create the Bessel mode
+        multi = params['multi'][i]
+        if i == 0:
+            besselParams['R'] = params['R']
+            besselParams['rmax'] = params['rmax'][i]
+            rmi[i], E[i] = uniform_bessel(besselParams, Ez, z, order[i])
+            E[i] = 8.15e6*E[i] # Normalization factor I still need to fix
+            E[i] *= multi
+        else:
+            rmax = params['rmax'][i-1]
+            r0 = params['r0'][i-1]
+            w = params['w'][i-1]
+            m = params['m'][i-1]
+            n = params['nGauss'][i-1]
+            # Create the super-Gaussian
+            rin = np.linspace(0, rmax, 1000)
+            I0 = np.exp(-2*((rin-r0)/w)**n)
+            Iamp, rmi[i], phi = ray.arbitrary_phase(I0, rin, I, z, m=m)
+            E[i] = Iamp * multi * np.exp(-2*((rmi[i]-r0)/w)**n)
+            E[i] = ionization.field_from_intensity(E[i]) * np.exp(1j*k*phi)
+        # Propagate the modes to find the electric field
+        prop['Efield'] = interp1d(rmi[i], E[i], bounds_error=False,
+                                  fill_value=0.0)
+        prop['order'] = order[i]
+        prop['path'] = params['path'] + 'Bessel_' + str(i) +'/'
+        if not os.path.exists(prop['path']):
+            os.makedirs(prop['path'])
+        propagation.laser_prop(prop, Efunc)
+        Efield[i] = np.load(prop['path'] + 'electricField.npy')
+        # Find the ionization fraction and update the total ionization fraction
+        frac[i] = adk.gaussian_frac(atom['EI'], abs(Efield[i]), params['tau'],
+                                    atom['Z'], atom['l'], atom['m'])
+        if i == 0:
+            frac['tot'] = frac[i]
+        else:
+            frac['tot'] += (1- frac['tot'])*frac[i]
+    path = params['path']
+    np.save(path+'ionizationFraction', frac['tot'])
+    np.save(path+'inputField', E)
+    np.save(path+'inputCoordinates', rmi)
+    np.save(path+'params', params)
+
+
+def multimode_lens_refraction(params):
+    """ Calculates the ionization fraction including refraction.
+
+    This function calculates the ionization fraction from multiple, time
+    delayed, Bessel modes accounting for refractive effects as the plasma
+    ionizes. Note that multimode_ionization should be run first to calculate
+    the inital fields. The output can also be used to verify the input
+    parameters are correct before running this time consuming function.
+
+    Parameters
+    ----------
+    params : dictionary
+        Params should have the following items:
+            seq : array-like
+                The sequence in which the modes propagate, i.e. [0, 1] means
+                0 order first followed by first order.
+            path : string
+                Path to the output folder from multimode_ionization
+            plasma : dictionary
+                Additionaly parameters needed by plasma_refraction, see plasma_
+                refraction for details about the elements
+                    Nt : int
+                        Number of temporal grid points.
+                    T : double
+                        Time duration.
+                    n0 : double
+                        Initial gas density in 10^17 cm^-3.
+                    alpha : double
+                        Atomic polarizability of the gas in A^3.
+                    EI : double
+                        Ionization energy in eV.
+    """
 
 
 def open_data(path, data=None):
