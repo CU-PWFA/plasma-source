@@ -64,7 +64,7 @@ def uniform_phase(I, z, R, r0=0):
     return I0, r, phi
 
 
-def arbitrary_phase(I0, rin, I, z, r0=0):
+def arbitrary_phase(I0, rin, I, z, r0=0, m=1.0):
     """ Generates a phase mask to create a on axis intensity profile.
 
     Generates a phase mask to produce a passed longitudinal on axis intensity
@@ -85,6 +85,10 @@ def arbitrary_phase(I0, rin, I, z, r0=0):
     r0 : double, optional
         Starting radius of the phase mask, places a hole of radius r0 in the
         middle of the phase mask.
+    m : double, optional
+        Correction factor since 2D->1D energy mapping isn't exact, decrease if
+        the output doesn't cover the entire lens. If a outside of interpolation
+        error is thrown, increase it.
 
     Returns
     -------
@@ -105,7 +109,7 @@ def arbitrary_phase(I0, rin, I, z, r0=0):
     r[0] = r0
     # Calculate the required input intensity
     Iamp = integrate.trapz(I, z) / integrate.trapz(2*np.pi*I0*rin, rin)
-    I0 = I0*Iamp
+    I0 = I0*Iamp*m
     I0 = interp1d(rin, I0)
     # Calculate r and phi incrementally
     sinnew = r0/np.sqrt(r0**2 + z[0]**2)
