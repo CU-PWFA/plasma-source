@@ -87,8 +87,7 @@ def arbitrary_phase(I0, rin, I, z, r0=0, m=1.0):
         middle of the phase mask.
     m : double, optional
         Correction factor since 2D->1D energy mapping isn't exact, decrease if
-        the output doesn't cover the entire lens. If a outside of interpolation
-        error is thrown, increase it.
+        the output doesn't cover the entire lens. 
 
     Returns
     -------
@@ -110,9 +109,12 @@ def arbitrary_phase(I0, rin, I, z, r0=0, m=1.0):
     # Calculate the required input intensity
     Iamp = integrate.trapz(I, z) / integrate.trapz(2*np.pi*I0*rin, rin)
     I0 = I0*Iamp*m
-    I0 = interp1d(rin, I0)
+    I0 = interp1d(rin, I0, bounds_error=False, fill_value=0.0)
     # Calculate r and phi incrementally
-    sinnew = r0/np.sqrt(r0**2 + z[0]**2)
+    if r0 == 0:
+        sinnew = 0.0
+    else:
+        sinnew = r0/np.sqrt(r0**2 + z[0]**2)
     for i in range(1, Nz):
         Iavg = (I[i] + I[i-1]) / 2
         dz = z[i] - z[i-1]
