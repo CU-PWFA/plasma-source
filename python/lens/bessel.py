@@ -423,7 +423,6 @@ def multimode_lens_ionization(params, z, I):
             rin = np.linspace(r0, rmax, 10000)
             I0 = np.exp(-2*((rin-rc)/w)**n)
             Iamp, rmi[i], phi = ray.arbitrary_phase(I0, rin, I, z, r0=r0, m=m)
-            print(rmi[i])
             E[i] = Iamp * multi * np.exp(-2*((rmi[i]-rc)/w)**n)
             E[i] = ionization.field_from_intensity(E[i]) * np.exp(1j*k*phi)
         # Propagate the modes to find the electric field
@@ -447,40 +446,6 @@ def multimode_lens_ionization(params, z, I):
     np.save(path+'inputField', E)
     np.save(path+'inputCoordinates', rmi)
     np.save(path+'params', params)
-
-
-def multimode_lens_refraction(params):
-    """ Calculates the ionization fraction including refraction.
-
-    This function calculates the ionization fraction from multiple, time
-    delayed, Bessel modes accounting for refractive effects as the plasma
-    ionizes. Note that multimode_ionization should be run first to calculate
-    the inital fields. The output can also be used to verify the input
-    parameters are correct before running this time consuming function.
-
-    Parameters
-    ----------
-    params : dictionary
-        Params should have the following items:
-            seq : array-like
-                The sequence in which the modes propagate, i.e. [0, 1] means
-                0 order first followed by first order.
-            path : string
-                Path to the output folder from multimode_ionization
-            plasma : dictionary
-                Additionaly parameters needed by plasma_refraction, see plasma_
-                refraction for details about the elements
-                    Nt : int
-                        Number of temporal grid points.
-                    T : double
-                        Time duration.
-                    n0 : double
-                        Initial gas density in 10^17 cm^-3.
-                    alpha : double
-                        Atomic polarizability of the gas in A^3.
-                    EI : double
-                        Ionization energy in eV.
-    """
 
 
 def open_data(path, data=None):
