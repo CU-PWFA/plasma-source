@@ -337,8 +337,10 @@ def multimode_lens_ionization(params, z, I):
                 Maximum radius to return the electric field at. Pass an array
                 of length L, one for each Bessel mode. Must be a factor of root
                 2 larger than the grid in prop.
+            rc : array-like
+                Array of center locations for the super Gaussians. L-1 length.
             r0 : array-like
-                Array of center loactions for the super Gaussians. L-1 length.
+                Beginning radius of the higher order Beams. L-1 length.
             w : array-like
                 Array of widths for the super Gaussians. L-1 length.
             nGauss : array-like
@@ -412,15 +414,17 @@ def multimode_lens_ionization(params, z, I):
             E[i] *= multi
         else:
             rmax = params['rmax'][i-1]
+            rc = params['rc'][i-1]
             r0 = params['r0'][i-1]
             w = params['w'][i-1]
             m = params['m'][i-1]
             n = params['nGauss'][i-1]
             # Create the super-Gaussian
-            rin = np.linspace(0, rmax, 1000)
-            I0 = np.exp(-2*((rin-r0)/w)**n)
-            Iamp, rmi[i], phi = ray.arbitrary_phase(I0, rin, I, z, m=m)
-            E[i] = Iamp * multi * np.exp(-2*((rmi[i]-r0)/w)**n)
+            rin = np.linspace(r0, rmax, 10000)
+            I0 = np.exp(-2*((rin-rc)/w)**n)
+            Iamp, rmi[i], phi = ray.arbitrary_phase(I0, rin, I, z, r0=r0, m=m)
+            print(rmi[i])
+            E[i] = Iamp * multi * np.exp(-2*((rmi[i]-rc)/w)**n)
             E[i] = ionization.field_from_intensity(E[i]) * np.exp(1j*k*phi)
         # Propagate the modes to find the electric field
         prop['Efield'] = interp1d(rmi[i], E[i], bounds_error=False,
