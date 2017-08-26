@@ -36,6 +36,7 @@ def make_patch_spines_invisible(ax):
 nstep = len(ebeam)
 npart = ebeam[0]["npart"]
 s     = np.zeros(nstep)
+gbC   = np.zeros(nstep)
 eps   = np.zeros(nstep)
 beta  = np.zeros(nstep)
 alpha = np.zeros(nstep)
@@ -45,7 +46,9 @@ rms_x_eps = np.zeros(nstep)
 x_kurt  = np.zeros(nstep)
 xp_kurt = np.zeros(nstep)
 rn_kurt = np.zeros(nstep)
+un_kurt = np.zeros(nstep)
 
+x_95_eps = np.zeros(nstep)
 
 v_beta = np.zeros(nstep)
 v_rms_x = np.zeros(nstep)
@@ -59,10 +62,15 @@ Krms_x = np.zeros(nstep)
 
 K_twiss = np.zeros(nstep)
 
+J_kurt = np.zeros(nstep)
+
+lips = defaultdict(dict)
+
 frac  = 1.00
 
 for i in range(0,nstep):
-    s[i]     = ebeam[i]["s"] # m
+    s[i]     = ebeam[i]["s"] # m\
+    gbC[i]   = ebeam[i]["gbC"]
     eps[i]   = ebeam[i]["eps"] # mm-mrad
     beta[i]  = ebeam[i]["beta"]/(1e-2) # m
     alpha[i] = ebeam[i]["alpha"]
@@ -71,8 +79,24 @@ for i in range(0,nstep):
     rms_x[i]     = ebeam_rms["x"]/(1e-6)
     rms_x_eps[i] = ebeam_rms["x_eps"]/(1e-6)
     ebeam_kurt = pb.calc_ebeam_kurt(ebeam,plasma,ebeam_rms,i,frac)
-    rn_kurt[i] = ebeam_kurt["rn"]
+#    rn_kurt[i] = ebeam_kurt["rn"]
 #    x_kurt[i]    = stats.kurtosis(ebeam[i]["x"],0,True)
+    [u,v] = ba.real2norm_coords(ebeam[i]["x"],ebeam[i]["xp"],\
+                                ebeam[i]["beta"],ebeam[i]["alpha"])
+    J = (u**2+v**2)/2
+    phi = np.arctan2(v,u)
+    un = np.sqrt(2*J*ebeam[i]["gbC"])*np.cos(phi)/np.sqrt(rms_x_eps[i])
+    un_kurt[i] = stats.kurtosis(un,0,True)
+    
+    J_kurt[i] = stats.kurtosis(2*J*ebeam[i]["gbC"]/rms_x_eps[i],0,True)
+#    rn = np.arctan2(v,u)
+#    rn_kurt[i] = stats.kurtosis(rn,0,True)
+#    lips[i] = ba.calc_frac_ellipse(u,v,frac=0.95,hires=False)
+#    x_95_eps[i] = (lips[i]["area"]*np.mean(ebeam[i]["gb"])/np.pi)/(1e-6)
+
+
+
+
     
     v_beta[i] = vbeam[i]["beta"]/(1e-2)
     vbeam_rms = pb.calc_ebeam_rms(vbeam,i,frac)
@@ -99,11 +123,10 @@ for i in range(0,nstep):
     KC_x[i]   = mm.calc_mean(K_x[i,:],frac)
     Krms_x[i] = mm.calc_rms(K_x[i,:],frac)
 
-    gbC    = ebeam[i]["gbC"]
-    kb     = kp/np.sqrt(2*gbC)
+    kb     = kp/np.sqrt(2*gbC[i])
     beta_m = 1.0/kb
-    R_x    = np.sqrt(eps[i]*beta[i]/gbC+(beta_m**2)*eps[i]*gamma[i]/gbC)
-    K_twiss[i] = gbC*kb*R_x
+    R_x    = np.sqrt(eps[i]*beta[i]/gbC[i]+(beta_m**2)*eps[i]*gamma[i]/gbC[i])
+    K_twiss[i] = gbC[i]*kb*R_x
     
 
 # propagate final beam back to virtual waist
@@ -215,8 +238,13 @@ alphaf = ebeam[i_flat_stop]["alpha"]
 
 
 # beta and rms_x evolution through plasma
+
+figA, (ax1, ax3) = plt.subplots(2, sharex=True, sharey=False)
+
+
+
 #figA = plt.figure()
-figA, ax1 = plt.subplots(figsize=(8,4))
+#figA, ax1 = plt.subplots(figsize=(8,4))
 #figA.subplots_adjust(right=0.5)
 #figA.subplots_adjust(left=-0.5)
 
@@ -231,58 +259,85 @@ ax1.set_xlabel('z [m]')
 ax1.set_ylabel(r'$\beta$ [cm]',color='b')
 ax1.tick_params('y',colors='b')
 
-norm2 = min(v_rms_x)
+npl = plasma["npl"]/plasma["bulk"]["npl0"]
 ax2  = ax1.twinx()
-ax2.plot(s,v_rms_x,color='r',linestyle='dashed')
-ax2.plot(s,rms_x,color='r',linestyle='solid')
-ax2.set_ylabel(r'$\sigma_{r,{\rm rms}}$ [$\mu$m]',color='r')
-ax2.tick_params('y',colors='r')
-#ax2.set_ylim([0,1.5*norm2])
-ax2.set_ylim([0,8])
+#ax2.spines["left"].set_position(("axes", -0.20))
+#make_patch_spines_invisible(ax2)
+#ax2.spines["left"].set_visible(True)
+#ax2.yaxis.set_label_position('left')
+#ax2.spines["left"].set_visible(True)
+#ax2.yaxis.set_label_position('left')
+#ax2.yaxis.set_ticks_position('left')
+ax2.plot(s,npl,color='g',linestyle='solid')
+ax2.set_ylabel(r'$n_p/n_{p,0}$',color='g')
+ax2.tick_params('y',colors='g')
+#ax2.set_ylim([0,1.5*max(npl)])
+ax2.set_ylim([0,1.4])
 
-ax3  = ax1.twinx()
-ax3.spines["right"].set_position(("axes", 1.15))
-make_patch_spines_invisible(ax3)
-ax3.spines["right"].set_visible(True)
+ax2.text(0.50, 0.80, r'$n_{p,0} = %2.1e$'%plasma["bulk"]["npl0"],
+        verticalalignment='center', horizontalalignment='center',
+        transform=ax2.transAxes,
+        color='green', fontsize=12)
+
+
+
+#norm2 = min(v_rms_x)
+#ax2  = ax1.twinx()
+#ax2.plot(s,v_rms_x,color='r',linestyle='dashed')
+#ax2.plot(s,rms_x,color='r',linestyle='solid')
+#ax2.set_ylabel(r'$\sigma_{r,{\rm rms}}$ [$\mu$m]',color='r')
+#ax2.tick_params('y',colors='r')
+##ax2.set_ylim([0,1.5*norm2])
+#ax2.set_ylim([0,8])
+
+
+
+
+
+#ax3  = ax1.twinx()
+#ax3.spines["right"].set_position(("axes", 1.15))
+#make_patch_spines_invisible(ax3)
+#ax3.spines["right"].set_visible(True)
 ax3.plot(s,rms_x_eps,color='k',linestyle='solid')
+#ax3.plot(s,x_95_eps/x_95_eps[0],color='k',linestyle='dashed')
 ax3.set_ylabel(r'$\varepsilon_{\rm rms}$ [mm-mrad]',color='k')
 ax3.tick_params('y',colors='k')
 #ax3.set_ylim([0.9*min(rms_x_eps),1.1*max(rms_x_eps)])
-ax3.set_ylim([4.0,8.0])
+ax3.set_ylim([0.0,11.0])
 
-norm4 = plasma["bulk"]["npl0"]
-npl = plasma["npl"]/norm4
-ax4  = ax1.twinx()
-ax4.spines["left"].set_position(("axes", -0.20))
-make_patch_spines_invisible(ax4)
-ax4.spines["left"].set_visible(True)
-ax4.yaxis.set_label_position('left')
-ax4.spines["left"].set_visible(True)
-ax4.yaxis.set_label_position('left')
-ax4.yaxis.set_ticks_position('left')
-ax4.plot(s,npl,color='g',linestyle='solid')
-ax4.set_ylabel(r'$n_p$ [$10^{17}\,{\rm cm}^{-3}$]',color='g')
-ax4.tick_params('y',colors='g')
-#ax4.set_ylim([0,1.5*max(npl)])
-ax4.set_ylim([0,1.4])
 
-ax4.text(0.50, 0.75, r'$n_p / 10$',
-        verticalalignment='center', horizontalalignment='center',
-        transform=ax4.transAxes,
-        color='green', fontsize=12)
+ax4 = ax3.twinx()
+#ax4.spines["right"].set_position(("axes", 1.30))
+#make_patch_spines_invisible(ax4)
+#ax4.spines["right"].set_visible(True)
+ax4.plot(s,J_kurt,color='k',linestyle='dashed')
+#ax3.plot(s,x_95_eps/x_95_eps[0],color='k',linestyle='dashed')
+ax4.set_ylabel(r'residual kurtosis',color='k')
+ax4.tick_params('y',colors='k')
+#ax3.set_ylim([0.9*min(rms_x_eps),1.1*max(rms_x_eps)])
+ax4.set_ylim([-2.5,22.5])
 
-#ax4  = ax1.twinx()
-#ax4.plot(s,rn_kurt,color='k',linestyle='dashed')
-#ax4.set_ylabel(r'kurtosis',color='k')
-#ax4.tick_params('y',colors='k')
-#ax4.set_ylim([1.1*min(rn_kurt),1.1*max(rn_kurt)])
 
-npl0 = plasma["bulk"]["npl0"]
+
+
+#ax5  = ax1.twinx()
+
+
+
+#npl0 = plasma["bulk"]["npl0"]
 #plt.title(r'beam matching into %.1e $cm^{-3}$ plasma source'%npl0)
 
+
+
 figA.tight_layout()
-plt.subplots_adjust(left=0.225)
-plt.subplots_adjust(right=0.800)
+#plt.subplots_adjust(left=0.225)
+#plt.subplots_adjust(left=0.200)
+#plt.subplots_adjust(right=0.800)
+#plt.subplots_adjust(right=0.775)
+
+figA.subplots_adjust(hspace=0)
+plt.setp([a.get_xticklabels() for a in figA.axes[:-1]], visible=False)
+
 plt.show()
 
 
@@ -337,6 +392,128 @@ plt.show()
 
 
 
+
+
+
+
+
+
+
+r2i = np.zeros(nstep)
+#[ui,vi] = ba.real2norm_coords(vbeam[i_beta_min]["x"],vbeam[i_beta_min]["xp"],\
+#                              vbeam[i_beta_min]["beta"],vbeam[i_beta_min]["alpha"])
+[ui,vi] = ba.real2norm_coords(ebeam[0]["x"],ebeam[0]["xp"],\
+                              ebeam[0]["beta"],ebeam[0]["alpha"])
+Ji = (ui**2 + vi**2)/2
+
+r2f = np.zeros(nstep)
+[uf,vf] = ba.real2norm_coords(ebeam[nstep-1]["x"],ebeam[nstep-1]["xp"],\
+                              ebeam[nstep-1]["beta"],ebeam[nstep-1]["alpha"])
+#[uf,vf] = ba.real2norm_coords(wbeam[len(wbeam)-1]["x"],wbeam[len(wbeam)-1]["xp"],\
+#                              wbeam[len(wbeam)-1]["beta"],wbeam[len(wbeam)-1]["alpha"])
+Jf = (uf**2 + vf**2)/2
+
+phi_i = np.arctan2(vi,ui)
+uui = np.sqrt(2*Ji*ebeam[0]["gbC"])*np.cos(phi_i)/np.sqrt(rms_x_eps[0])
+
+phi_f = np.arctan2(vf,uf)
+uuf = np.sqrt(2*Jf*ebeam[nstep-1]["gbC"])*np.cos(phi_f)/np.sqrt(rms_x_eps[nstep-1])
+
+
+edge = 50
+nbins = 25
+xbins = np.linspace(-edge,edge,nbins+1)
+
+figD, axD1 = plt.subplots(1,1,sharey=True)
+
+Dh1 = axD1.hist(uui/(1e-4),xbins,ls='-',fc='none',edgecolor='r',\
+                normed=True,label='Initial Beam\n kurtosis = %.2f'%stats.kurtosis(xxi,0,True))
+Dh2 = axD1.hist(uuf/(1e-4),xbins,ls='dashed',fc='none',edgecolor='b',\
+                normed=True,label='Final Beam\n kurtosis = %.2f'%stats.kurtosis(xxf,0,True))
+
+#plt.yscale('log', nonposy='clip')
+
+axD1.set_xlim([-edge,+edge])
+axD1.set_xlabel(r'$u\,\varepsilon_{\rm rms}^{-1/2}$')
+axD1.set_ylabel(r'$f\,(u\,\varepsilon_{\rm rms}^{-1/2})$')
+
+plt.legend()
+
+#plt.title(r'lens-matched beam distribution')
+
+figD.tight_layout()
+plt.show()
+
+
+print(stats.kurtosis(xxi,0,True))
+print(stats.kurtosis(xxf,0,True))
+
+
+
+
+edge = 150
+nbins = 30
+xbins = np.linspace(0,edge,nbins+1)
+
+figD, axD1 = plt.subplots(1,1,sharey=True)
+Dh1 = axD1.hist(2*Ji*ebeam[0]["gbC"]/(1e-6),xbins,ls='-',fc='none',edgecolor='r',\
+                normed=True,label='Initial Beam\n kurtosis = %.2f'%ki)
+Dh2 = axD1.hist(2*Jf*ebeam[nstep-1]["gbC"]/(1e-6),xbins,ls='dashed',fc='none',edgecolor='b',\
+                normed=True,label='Final Beam\n kurtosis = %.2f'%kf)
+
+plt.yscale('log', nonposy='clip')
+
+axD1.set_xlim([0,+edge])
+axD1.set_xlabel(r'$2\,J\,\gamma_b$ [mm-mrad]')
+axD1.set_ylabel(r'log(fraction of particles / %.1f mm-mrad)'%(edge/nbins))
+
+plt.legend()
+
+#plt.title(r'lens-matched beam distribution')
+
+figD.tight_layout()
+plt.show()
+
+
+print(stats.kurtosis(2*Ji*ebeam[0]["gbC"],0,True))
+print(stats.kurtosis(2*Jf*ebeam[nstep-1]["gbC"],0,True))
+
+
+
+
+figX, axX = plt.subplots(1,1,sharey=True)
+axX.plot(s,rn_kurt)
+axX.plot(s,J_kurt)
+plt.show()
+
+
+
+
+
+
+##[m,v,s,k] = sstats.halfnorm.stats(moments='mvsk')
+#
+#
+#def gfunc(r,A,sig):
+##    return (r**2)*A*np.exp(-(r**2)/(2*(sig**2)))
+#    return A*np.exp(-(r**2)/(2*(sig**2)))
+#
+#rr = xbins
+#
+#figX, axX = plt.subplots(1,1)
+#axX.plot(rr,gfunc(rr,1,10))
+#axX.yscale('log', nonposy='clip')
+#axX.set_xlim([0,+edge])
+#plt.show()
+#
+#figX, axX = plt.subplots(1,1)
+#axX.plot(rr,gfunc(rr,1,10))
+#axX.set_xlim([0,+edge])
+#plt.show()
+
+
+
+
 # phase space
 
 
@@ -359,6 +536,8 @@ cbar.ax.set_ylabel(r'$\delta_p$')
 
 figC.tight_layout()
 plt.show()
+
+
 
 
 

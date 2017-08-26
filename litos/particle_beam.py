@@ -110,33 +110,49 @@ def make_part(i_twiss,dist='gauss',i=0):
     dgb   = i_twiss["dgb"]
     dz    = i_twiss["dz"]
     
+    # generate random seeds (2 per dimension)
     iseed = int((time.time()%1e2)*1e7 + i)
-    np.random.seed(iseed)    
-    rndx = np.random.uniform(0,1)
-    rndy = np.random.uniform(0,1)
+    np.random.seed(iseed)
+    R1x  = np.random.uniform(0,1)
+    R2x  = np.random.uniform(0,1)
+    R1y  = np.random.uniform(0,1)
+    R2y  = np.random.uniform(0,1)
+
+    # generate action J
     if dist.lower() == 'gauss': # gaussian distribution
-        rx   = np.sqrt(2)*np.sqrt(eps/gbC)*\
-                np.sqrt(-np.log(rndx))
-        ry   = np.sqrt(2)*np.sqrt(eps/gbC)*\
-                np.sqrt(-np.log(rndy)) 
+        Jx   = -(eps/gbC)*np.log(R1x)
+        Jy   = -(eps/gbC)*np.log(R1y)    
+#        rx   = np.sqrt(2)*np.sqrt(eps/gbC)*\
+#                np.sqrt(-np.log(rndx))
+#        ry   = np.sqrt(2)*np.sqrt(eps/gbC)*\
+#                np.sqrt(-np.log(rndy)) 
     elif dist.lower() == 'uniform': # uniform distribution
-        rx   = np.sqrt(rndx)*np.sqrt(eps/gbC)
-        ry   = np.sqrt(rndy)*np.sqrt(eps/gbC)
+        Jx   = (eps/gbC)*R1x/2
+        Jy   = (eps/gbC)*R2x/2    
+#        rx   = np.sqrt(rndx)*np.sqrt(eps/gbC)
+#        ry   = np.sqrt(rndy)*np.sqrt(eps/gbC)
     else :
         print('no particle distribution given')
         return
                 
-    phix = np.random.uniform(0,2*np.pi)
-    ux = rx*np.cos(phix)
-    vx = rx*np.sin(phix)
-    x  = ux*np.sqrt(beta)
-    xp = (vx-(alpha/beta)*x)/np.sqrt(beta)
+    # generate action angle phi
+    phix = 2*np.pi*R2x
+    phiy = 2*np.pi*R2y
+
+    # construe coordinates    
+    ux   = np.sqrt(2*Jx)*np.cos(phix)
+    vx   = -np.sqrt(2*Jx)*np.sin(phix)
+#    ux = rx*np.cos(phix)
+#    vx = rx*np.sin(phix)
+    x    = ux*np.sqrt(beta)
+    xp   = (vx-alpha*ux)/np.sqrt(beta)
     
-    phiy = np.random.uniform(0,2*np.pi)
-    uy = ry*np.cos(phiy)
-    vy = ry*np.sin(phiy)
-    y  = uy*np.sqrt(beta)
-    yp = (vy-(alpha/beta)*y)/np.sqrt(beta)
+    uy   = np.sqrt(2*Jy)*np.cos(phiy)
+    vy   = -np.sqrt(2*Jy)*np.sin(phiy)
+#    uy = ry*np.cos(phiy)
+#    vy = ry*np.sin(phiy)
+    y    = uy*np.sqrt(beta)
+    yp   = (vy-alpha*uy)/np.sqrt(beta)
             
     z  = dz*np.random.uniform(-1,1)
     gb = gbC*(1+dgb*np.random.uniform(-1,1))

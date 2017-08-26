@@ -19,13 +19,13 @@ if __name__ == '__main__':
     
     # define plasma bulk (flat-top) properties
     npl0   = 1e17 # cm^-3
-    dEds0  = 6e9 # eV/m
+    dEds0  = 10e9 # eV/m
     dgds0  = dEds0/nc.me
     L_ft   = 0.50 # m
     
     # define plasma up-ramp
     shape_up = 'gauss'
-    hw_up    = 0.15 #0.05 # m
+    hw_up    = 0.147 #0.05 # m
     L_up     = 5*hw_up # m
     top_up   = L_up # m
     
@@ -54,7 +54,7 @@ if __name__ == '__main__':
     gamma  = (1.0+alpha**2)/beta # 1/m
     dgb    = 0.01
     dz     = 0
-    npart  = 1000
+    npart  = 100
     dist   = 'gauss'
     
     # make beam
@@ -67,7 +67,7 @@ if __name__ == '__main__':
 #    ebeam0[0]["x"] += 10e-6 # m
     
     # set beam waist position
-    waist = -0.44 #-0.105 # m, waist location w.r.t L_up
+    waist = -0.441 #-0.105 # m, waist location w.r.t L_up
     s_w   = L_up + waist # m
     
     # define longitudinal steps

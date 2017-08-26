@@ -41,8 +41,8 @@ class EllipsoidTool:
         
         """
         
-        hull = spatial.ConvexHull(P,qhull_options='QbBJ')
-        P = hull.points
+#        hull = spatial.ConvexHull(P,qhull_options='QbBJ')
+#        P = hull.points
         P = np.unique(P,axis=0)
         
         (N, d) = np.shape(P)

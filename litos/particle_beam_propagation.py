@@ -87,6 +87,9 @@ def prop_twiss_plasma_step(i_twiss,ds=0,npl=0,dgds=0):
     # add energy gain/loss
     dgb = dgds*ds
     gbC = gbC + dgb
+    if gbC<0:
+        gbC = 1.01
+#        print('warning: total energy loss!')
 
     # reduce angle from energy gain/loss
     dgb = dgds*ds

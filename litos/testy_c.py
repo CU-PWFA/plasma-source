@@ -87,14 +87,14 @@ if __name__ == '__main__':
     
     # define plasma bulk (flat-top) properties
     npl0   = 1e17 # cm^-3
-    dEds0  = 6e9 # eV/m
+    dEds0  = 10e9 # eV/m
     dgds0  = dEds0/nc.me
     L_ft   = 0.00 # m
     
     # define plasma up-ramp
     shape_up = 'gauss'
     hw_up    = 0.01 # m
-    L_up     = 2.00 # m
+    L_up     = 5.00 # m
     top_up   = L_up # m
     
     # define plasma down-ramp
@@ -138,11 +138,11 @@ if __name__ == '__main__':
     
     # specify waist scan values
     nwaist = 101
-    waist  = np.linspace(-0.55,-0.300,nwaist) # m, waist location w.r.t. L_up
+    waist  = np.linspace(-0.60,-0.30,nwaist) # m, waist location w.r.t. L_up
 #    waist  = np.linspace(-0.35,-0.55,nwaist) # m, waist location w.r.t. L_up
     # specify ramp half-width scan values
     nhw_up = 101
-    hw_up  = np.linspace(0.18,0.12,nhw_up) # m, HWHM of up-ramp
+    hw_up  = np.linspace(0.10,0.20,nhw_up) # m, HWHM of up-ramp
 #    hw_up  = np.linspace(0.12,0.18,nhw_up) # m, HWHM of up-ramp
 
     # perform scan
@@ -190,7 +190,7 @@ if __name__ == '__main__':
     cbar.ax.set_ylabel(r'$log_{10}$(M)')
     plt.ylabel(r'ramp half-width [m]')
     plt.xlabel(r'waist position [m]')
-    plt.title(r'beam matching for %s ramp'%shape_up)
+#    plt.title(r'beam matching for %s ramp'%shape_up)
     
 #    # filled color contour map of log10(K)
 #    fig, axes = plt.subplots(1,1, sharey=True)
@@ -206,7 +206,7 @@ if __name__ == '__main__':
     
     # thin line contour map of M
     levels = np.array([1.0,1.1,1.2,1.3,1.4,1.5,\
-                       2.0,3.0,4.0,5.0,])
+                       2.0,3.0,4.0,5.0])
     labels = np.array([1.1,1.5,2.0,3.0,4.0,5.0])
     
     fig, axes = plt.subplots(1,1, sharey=True)
@@ -217,9 +217,9 @@ if __name__ == '__main__':
     cbar.ax.set_ylabel(r'M')
     cbar.set_ticks(levels)
 #    cbar.set_ticklabels(levels)
-    plt.ylabel(r'ramp half-width [m]')
-    plt.xlabel(r'waist position [m]')
-    plt.title(r'beam matching for %s ramp'%shape_up)
+    plt.ylabel(r'$\sigma_{\rm hw}$ [m]')
+    plt.xlabel(r'$z_{\beta^{*}}$ [m]')
+#    plt.title(r'beam matching for %s ramp'%shape_up)
     
     
 #    # thin line contour map of K
