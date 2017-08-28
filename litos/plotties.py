@@ -237,7 +237,7 @@ alphaf = ebeam[i_flat_stop]["alpha"]
 # make plots
 
 
-# beta and rms_x evolution through plasma
+#%% beta and rms_x evolution through plasma
 
 figA, (ax1, ax3) = plt.subplots(2, sharex=True, sharey=False)
 
@@ -251,11 +251,12 @@ figA, (ax1, ax3) = plt.subplots(2, sharex=True, sharey=False)
 norm1 = min(v_beta)
 #ax1  = figA.add_subplot(111)
 #ax1.plot(s,plasma["npl"]*1.5*norm1/max(plasma["npl"]),color='g')
-ax1.plot(s,v_beta,color='b',linestyle='dashed')
+ax1.plot(s,v_beta/10,color='b',linestyle='dashed')
 ax1.plot(s,beta,color='b',linestyle='solid')
 #ax1.set_ylim([0,2.0*norm1])
-ax1.set_ylim([0,20])
-ax1.set_xlabel('z [m]')
+ax1.set_xlim([0.5,3.0])
+ax1.set_ylim([0,5])
+#ax1.set_xlabel('z [m]')
 ax1.set_ylabel(r'$\beta$ [cm]',color='b')
 ax1.tick_params('y',colors='b')
 
@@ -280,7 +281,6 @@ ax2.text(0.50, 0.80, r'$n_{p,0} = %2.1e$'%plasma["bulk"]["npl0"],
         color='green', fontsize=12)
 
 
-
 #norm2 = min(v_rms_x)
 #ax2  = ax1.twinx()
 #ax2.plot(s,v_rms_x,color='r',linestyle='dashed')
@@ -291,34 +291,45 @@ ax2.text(0.50, 0.80, r'$n_{p,0} = %2.1e$'%plasma["bulk"]["npl0"],
 #ax2.set_ylim([0,8])
 
 
-
-
-
 #ax3  = ax1.twinx()
 #ax3.spines["right"].set_position(("axes", 1.15))
 #make_patch_spines_invisible(ax3)
 #ax3.spines["right"].set_visible(True)
-ax3.plot(s,rms_x_eps,color='k',linestyle='solid')
+ax3.plot(s,rms_x_eps/rms_x_eps[0],color='k',linestyle='-')
 #ax3.plot(s,x_95_eps/x_95_eps[0],color='k',linestyle='dashed')
-ax3.set_ylabel(r'$\varepsilon_{\rm rms}$ [mm-mrad]',color='k')
+ax3.set_ylabel(r'$\varepsilon_n/\varepsilon_{n,0}$',color='k')
 ax3.tick_params('y',colors='k')
+ax3.set_xlim([0.5,3.0])
+ax3.set_xlabel('z [m]')
 #ax3.set_ylim([0.9*min(rms_x_eps),1.1*max(rms_x_eps)])
-ax3.set_ylim([0.0,11.0])
+ax3.set_ylim([0.975,1.225])
 
 
 ax4 = ax3.twinx()
 #ax4.spines["right"].set_position(("axes", 1.30))
 #make_patch_spines_invisible(ax4)
 #ax4.spines["right"].set_visible(True)
-ax4.plot(s,J_kurt,color='k',linestyle='dashed')
+ax4.plot(s,J_kurt-6,color='r',linestyle='--')
 #ax3.plot(s,x_95_eps/x_95_eps[0],color='k',linestyle='dashed')
-ax4.set_ylabel(r'residual kurtosis',color='k')
-ax4.tick_params('y',colors='k')
+ax4.set_ylabel(r'$K_{r}$',color='r')
+ax4.tick_params('y',colors='r')
 #ax3.set_ylim([0.9*min(rms_x_eps),1.1*max(rms_x_eps)])
-ax4.set_ylim([-2.5,22.5])
+ax4.set_ylim([-2.5,17.5])
 
 
+#ax5  = ax3.twinx()
+#ax5  = ax3.twiny()
+#ax5.plot(s,gbC/gbC[0],color='k',linestyle='-.')
+#ax5.tick_params('n')
+#make_patch_spines_invisible(ax5)
+#ax5.set_ylim([0.8,2.0])
 
+xlabel_locs = [0.5,1.0,1.5,2.0,2.5,3.0]
+xlabels = [0,0.5,1.0,1.5,2.0,2.5]
+plt.xticks(xlabel_locs, xlabels)
+
+ax1.set_xlim([0.5,3.0])
+ax3.set_xlim([0.5,3.0])
 
 #ax5  = ax1.twinx()
 
@@ -336,7 +347,7 @@ figA.tight_layout()
 #plt.subplots_adjust(right=0.775)
 
 figA.subplots_adjust(hspace=0)
-plt.setp([a.get_xticklabels() for a in figA.axes[:-1]], visible=False)
+#plt.setp([a.get_xticklabels() for a in figA.axes[:-1]], visible=False)
 
 plt.show()
 
@@ -345,7 +356,7 @@ plt.show()
 
 
 
-# initial and final beam distribution
+#%% initial and final beam distribution
 
 #edge = (int(np.max([np.abs(np.min(xf/(1e-6))),np.max(xf/(1e-6))])/10)+1)*10
 edge = 20

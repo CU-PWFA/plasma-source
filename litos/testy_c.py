@@ -104,7 +104,7 @@ if __name__ == '__main__':
     top_dn   = 0  # m
     
     # define beam parameters
-    gbC    = 20000 # relativistic lorentz factor
+    gbC    = 100000 # relativistic lorentz factor
     eps    = 5e-6  # m-rad, normalized emittance
     beta   = 0.10 # m
     alpha  = 0.00
@@ -137,12 +137,12 @@ if __name__ == '__main__':
     plasma0 = ps.make_plasma(bulk,up_ramp,dn_ramp)
     
     # specify waist scan values
-    nwaist = 101
-    waist  = np.linspace(-0.60,-0.30,nwaist) # m, waist location w.r.t. L_up
+    nwaist = 51
+    waist  = np.linspace(-0.35,-0.25,nwaist) # m, waist location w.r.t. L_up
 #    waist  = np.linspace(-0.35,-0.55,nwaist) # m, waist location w.r.t. L_up
     # specify ramp half-width scan values
-    nhw_up = 101
-    hw_up  = np.linspace(0.10,0.20,nhw_up) # m, HWHM of up-ramp
+    nhw_up = 51
+    hw_up  = np.linspace(0.12,0.14,nhw_up) # m, HWHM of up-ramp
 #    hw_up  = np.linspace(0.12,0.18,nhw_up) # m, HWHM of up-ramp
 
     # perform scan

@@ -18,7 +18,7 @@ import mike_math as mm
 if __name__ == '__main__':
     
     # define plasma bulk (flat-top) properties
-    npl0   = 1e17 # cm^-3
+    npl0   = 1e18 # cm^-3
     dEds0  = 10e9 # eV/m
     dgds0  = dEds0/nc.me
     L_ft   = 0.50 # m
@@ -26,7 +26,7 @@ if __name__ == '__main__':
     # define plasma up-ramp
     shape_up = 'gauss'
     hw_up    = 0.147 #0.05 # m
-    L_up     = 5*hw_up # m
+    L_up     = 1.50 # m
     top_up   = L_up # m
     
     # define plasma down-ramp
@@ -54,7 +54,7 @@ if __name__ == '__main__':
     gamma  = (1.0+alpha**2)/beta # 1/m
     dgb    = 0.01
     dz     = 0
-    npart  = 100
+    npart  = 10000
     dist   = 'gauss'
     
     # make beam
