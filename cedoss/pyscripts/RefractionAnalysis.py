@@ -34,13 +34,13 @@ z_window = 400
 
 #Locate the desired data by specifying the folder and directory within
 
-#folder = '/home/chris/Desktop/FourierPlots/CompactOptics_DoubleJet/'
+folder = '/home/chris/Desktop/FourierPlots/CompactOptics_DoubleJet/'
 #folder = '/home/chris/Desktop/FourierPlots/CompactOptics/'
 #folder = '/home/chris/Desktop/FourierPlots/real_FACET_Refraction/'
 #folder = '/home/chris/Desktop/FourierPlots/ApproximateSol/'
-folder = '/home/chris/Desktop/FourierPlots/CompactOptics_Source/'
+#folder = '/home/chris/Desktop/FourierPlots/CompactOptics_Source/'
 
-directory = 'propagation_1e17/'
+directory = 'propagation_1e18/'
 #directory = 'gasjet_den_propagation_1e17/'
 #directory = 'ETanhGauss1/'
 path = folder+directory

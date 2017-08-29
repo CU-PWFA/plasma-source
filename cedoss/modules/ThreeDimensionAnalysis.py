@@ -162,17 +162,36 @@ Data Fit Functions
 def DoubleTanh(p, x):
     return ((.5 + .5*np.tanh((x+p[0])/p[1])) * 
             (.5 - .5*np.tanh((x-p[0])/p[1]))) * p[2]
+    
+#Same as above, but a and b cannot be negative.  When a and b are negative
+# there is a chance the fit can be a strange, Gaussian-like peak
+def DoubleTanhAbs(p, x):
+    return ((.5 + .5*np.tanh((x+abs(p[0]))/abs(p[1]))) *
+            (.5 - .5*np.tanh((x-abs(p[0]))/abs(p[1])))) * p[2]
+    
 #Finds the effective distance for an ellipse, y^2 * (scl*z)^2
 #  y,z - array of distances in the elliptical plane
 #  scl - scaling factor between the narrow and wide waists
 def EllipDist(y, z, scl):
     return np.sqrt(np.square(y) + np.square(scl * z))
     
-#Generic function for gaussian
+#Generic function for Gaussian
 #  p - parameters: [n_0 (density at center), sigma (distribution), x_0 (offset)]
 #  x - array of distances
 def Gaussian(p, x):
     return  p[0]*np.exp(-.5*np.square(x-p[2])/np.square(p[1]))
+
+#Generic function for a Super Gaussian
+#  p - parameters: [n_0 (density at center), sigma (distribution), x_0 (offset), p (power)]
+#  x - array of distances
+def SuperGaussian(p, x):
+    return  p[0]*np.exp((-.5*np.square(x-p[2])/np.square(p[1])**p[3]))
+
+#Generic function for Lorentzian
+#  p - parameters: [n0p (density at center*pi*gam), gamma (distribution), x_0 (offset)]
+#  x - array of distances
+def Lorentz(p, x):
+    return  p[0]/np.pi/p[1]*((np.square(p[1]))/(np.square(x-p[2])+np.square(p[1])))
     
 #Attempts to fit a given 1D data set to a DoubleTanh Profile.
 #  data - 1D data set for which to fit
@@ -181,21 +200,79 @@ def Gaussian(p, x):
 #  datlabel - what to call inital data in the plot's legend
 #Returns the parameter array which fits the data
 def FitDataDoubleTanh(data, axis, guess = [0.,0.,0.], datlabel = 'Simulation'):
-    errfunc = lambda p, x, y: DoubleTanh(p, x) - y
+    p1 = FitDataSomething(data, axis, DoubleTanh, guess, datlabel)
+    print("a = " + str(p1[0]))
+    print("b = " + str(p1[1]))
+    print("n_0 = " + str(p1[2]))
+    print()
+    return p1
+
+def FitDataDoubleTanhAbs(data, axis, guess = [0.,0.,0.], datlabel = 'Simulation'):
+    p1 = FitDataSomething(data, axis, DoubleTanhAbs, guess, datlabel)
+    p1[0] = abs(p1[0])
+    p1[1] = abs(p1[1])
+    print("a = " + str(p1[0]))
+    print("b = " + str(p1[1]))
+    print("n_0 = " + str(p1[2]))
+    print()
+    return p1
+
+#Attempts to fit a given 1D data set to a Gaussian Profile.
+#  data - 1D data set for which to fit
+#  axis - the independent variable which corresponds to data (ie: distance)
+#  guess - inital guess of parameters [n_0, sigma, x_0]  (See Gaussian)
+#  datlabel - what to call inital data in the plot's legend
+#Returns the parameter array which fits the data
+def FitDataGaussian(data, axis, guess = [0.,0.,0.], datlabel = 'Simulation'):
+    p1 = FitDataSomething(data, axis, Gaussian, guess, datlabel)
+    print("n_0 = " + str(p1[0]))
+    print("sig = " + str(p1[1]))
+    print("x_0 = " + str(p1[2]))
+    print()
+    return p1
+
+#Attempts to fit a given 1D data set to a Super Gaussian Profile.
+#  data - 1D data set for which to fit
+#  axis - the independent variable which corresponds to data (ie: distance)
+#  guess - inital guess of parameters [n_0, sigma, x_0]  (See Gaussian)
+#  datlabel - what to call inital data in the plot's legend
+#Returns the parameter array which fits the data
+def FitDataSuperGaussian(data, axis, guess = [0.,0.,0.,1], datlabel = 'Simulation'):
+    p1 = FitDataSomething(data, axis, SuperGaussian, guess, datlabel)
+    print("n_0 = " + str(p1[0]))
+    print("sig = " + str(p1[1]))
+    print("x_0 = " + str(p1[2]))
+    print("pow = " + str(p1[3]))
+    print()
+    return p1
+
+#Attempts to fit a given 1D data set to a Lorentzian Profile.
+#  data - 1D data set for which to fit
+#  axis - the independent variable which corresponds to data (ie: distance)
+#  guess - inital guess of parameters [n_0, gamma, x_0]  (See Lorentz)
+#  datlabel - what to call inital data in the plot's legend
+#Returns the parameter array which fits the data
+def FitDataLorentz(data, axis, guess = [0.,0.,0.], datlabel = 'Simulation'):
+    p1 = FitDataSomething(data, axis, Lorentz, guess, datlabel)
+    print("n0p = " + str(p1[0]))
+    print("gam = " + str(p1[1]))
+    print("x_0 = " + str(p1[2]))
+    print()
+    return p1
+
+#Generic function to fit data to a function and plot results.  See above functions
+def FitDataSomething(data, axis, function, guess = [0.,0.,0.], datlabel = 'Simulation'):
+    errfunc = lambda p, x, y: function(p, x) - y
     p0 = guess
     p1, success = optimize.leastsq(errfunc,p0[:], args=(axis, data))
     plt.plot(axis, data, label=datlabel)
-    plt.plot(axis, DoubleTanh(p1,axis), label="Fitted tanh profile")
-    plt.title("Comparison of data with tanh profile")
+    plt.plot(axis, function(p1,axis), label="Fitted "+ function.__name__ +" profile")
+    plt.title("Comparison of data with "+ function.__name__ +" profile")
     plt.xlabel("Distance from axis (microns)")
     plt.ylabel("Density (10^17 cm^-3)")
     plt.legend()
     plt.grid()
     plt.show()
-    print("a = " + str(p1[0]))
-    print("b = " + str(p1[1]))
-    print("n_0 = " + str(p1[2]))
-    print()
     return p1
 
 #Plots 2D images of a 2D data from simulation and an analytical comparison given
@@ -264,30 +341,6 @@ def Plot2DimDataTanh(data, yrange, zrange, py, pz, units='',label='',label_units
     plt.tight_layout()
     plt.show()
     return difference
-
-#Attempts to fit a given 1D data set to a Gaussian Profile.
-#  data - 1D data set for which to fit
-#  axis - the independent variable which corresponds to data (ie: distance)
-#  guess - inital guess of parameters [n_0, sigma, x_0]  (See Gaussian)
-#  datlabel - what to call inital data in the plot's legend
-#Returns the parameter array which fits the data
-def FitDataGaussian(data, axis, guess = [0.,0.,0.], datlabel = 'Simulation'):
-    errfunc = lambda p, x, y: Gaussian(p, x) - y
-    p0 = guess
-    p1, success = optimize.leastsq(errfunc,p0[:], args=(axis, data))
-    plt.plot(axis, data, label=datlabel)
-    plt.plot(axis, Gaussian(p1,axis), label="Fitted Gaussian profile")
-    plt.title("Comparison of data with Gaussian profile")
-    plt.xlabel("Distance from axis (microns)")
-    plt.ylabel("Density (10^17 cm^-3)")
-    plt.legend()
-    plt.grid()
-    plt.show()
-    print("n_0 = " + str(p1[0]))
-    print("sig = " + str(p1[1]))
-    print("x_0 = " + str(p1[2]))
-    print()
-    return p1
 
 #Plots 2D images of a 2D data from simulation and an analytical comparison given
 # by the fits of n(y) and n(x).  Rather than fitting the full 2D profile, this 
