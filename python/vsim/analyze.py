@@ -64,7 +64,7 @@ def get_ptc_energy(data, mass):
 
     Returns
     -------
-    energy : double
+    energy : array-like
         The energy of each particle in the beam.
     """
     gamma = get_ptc_gamma(data)

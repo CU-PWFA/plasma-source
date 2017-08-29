@@ -10,6 +10,7 @@ from vsim import C
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
+from matplotlib.colors import Normalize
 import matplotlib.gridspec as gridspec
 from vsim import load
 from vsim import analyze
@@ -17,6 +18,7 @@ from scipy.ndimage.interpolation import zoom
 # This needs to be before animation is imported
 plt.rcParams['animation.ffmpeg_path'] = '/home/robert/anaconda3/envs/CU-PWFA/bin/ffmpeg'
 import matplotlib.animation as animation
+from scipy import constants
 
 
 def get_filename(path, simName, name, dump):
@@ -124,8 +126,9 @@ def drive_witness_density(params):
     plt.figure(figsize=(16, 9))
     gs = gridspec.GridSpec(2, 2, width_ratios=[24, 1])
     # Create the two colormaps
-    cmapD = plt.cm.bone
-    cmapW = alpha_colormap_cutoff(plt.cm.pink, params['alphaCutoff'], False)
+    cmapD = plt.cm.get_cmap('bone')
+    cmapW = alpha_colormap_cutoff(plt.cm.get_cmap('pink'),
+                                  params['alphaCutoff'], False)
 
     # Create the axis grid spaces
     colorAx1 = plt.subplot(gs[0, 1])
@@ -182,8 +185,9 @@ def drive_witness_animation(params):
     fig = plt.figure(figsize=(16, 9))
     gs = gridspec.GridSpec(2, 2, width_ratios=[24, 1])
     # Create the two colormaps
-    cmapD = plt.cm.bone
-    cmapW = alpha_colormap_cutoff(plt.cm.pink, params['alphaCutoff'], False)
+    cmapD = plt.cm.get_cmap('bone')
+    cmapW = alpha_colormap_cutoff(plt.cm.get_cmap('pink'),
+                                  params['alphaCutoff'], False)
 
     # Create the axis grid spaces
     colorAx1 = plt.subplot(gs[0, 1])
@@ -293,7 +297,7 @@ def phase_space(params):
     ptUx = ptUx[sort]
     # Create the plot
     plt.figure(figsize=(16, 9))
-    plt.scatter(ptX, ptUx, c=ptWeight, cmap=plt.cm.hot_r)
+    plt.scatter(ptX, ptUx, c=ptWeight, cmap=plt.cm.get_cmap('hot_r'))
     cb = plt.colorbar()
     cb.set_label('Particle weight')
     plt.xlabel(r'x ($\mu m$)')
@@ -370,7 +374,7 @@ def phase_space_animation(params):
 
     # Create the plot
     fig = plt.figure(figsize=(16, 9))
-    sct = plt.scatter(ptX, ptUx, c=ptWeight, cmap=plt.cm.hot_r)
+    sct = plt.scatter(ptX, ptUx, c=ptWeight, cmap=plt.cm.get_cmap('hot_r'))
     cb = plt.colorbar()
     cb.set_label('Particle weight')
     plt.xlabel(r'x ($\mu m$)')
@@ -395,6 +399,174 @@ def phase_space_animation(params):
 
     ani = animation.FuncAnimation(fig, updatefig, blit=True, frames=Nt)
     ani.save(params['path']+'PhaseSpaceEvolution_'+species+'.mp4',
+             fps=params['fps'])
+
+
+def phase_space_energy(params):
+    """ Plot the macroparticles of a beam in transverse phase space.
+
+    Plots the macro particles in a beam in transverse phase space, each
+    particle is color coded according to its energy with an alpha corresponding
+    to its weight, particles with weights below a certain cutoff are ignored.
+
+    Parameters
+    ----------
+    params : dictionary
+        Params should have the following items:
+            species : string
+                The species name for the beam of interest.
+            dumpInd : int
+                The dump index to plot the beam at.
+            path : string
+                The path to the VSim output folder.
+            simName : strign
+                The simulation name, the first part of every simulation file.
+            cutoff : float
+                The minimum weight cutoff. Note maximum weight seems to be ~1.
+    """
+    path = params['path']
+    simName = params['simName']
+    ind = params['dumpInd']
+    species = params['species']
+    # Load the particle data
+    pFile = get_filename(path, simName, species, ind)
+    pData = load.get_species_data(pFile, species)
+    pAttrs = load.get_species_attrs(pFile, species)
+    mass = 1e-6*pAttrs['mass']*constants.c**2 / constants.e # convert to MeV
+    # Filter out super light particles, convert units
+    if pAttrs['dim'] == 2:
+        ptWeight = pData[:, 6]
+        sel = ptWeight > params['cutoff']
+        ptWeight = ptWeight[sel]
+        ptX = pData[:, 1][sel] * 1e6
+        ptUx = (pData[:, 3] / pData[:, 2])[sel]*1e3
+        ptEnergy = analyze.get_ptc_energy(pData, mass)[sel]
+    else:
+        print('Only 2D simulations are currently supported.')
+
+    # Sort the arrays so heavier particles appear on top
+    sort = np.argsort(ptWeight)
+    ptWeight = ptWeight[sort]
+    ptX = ptX[sort]
+    ptUx = ptUx[sort]
+    ptEnergy = ptEnergy[sort]
+    # Create the colormap
+    norm = Normalize(vmin=np.amin(ptEnergy), vmax=np.amax(ptEnergy))
+    alpha = ptWeight / np.amax(ptWeight)
+    colors = plt.cm.gnuplot(norm(ptEnergy))
+    colors[:, 3] = alpha
+    # Create the plot
+    plt.figure(figsize=(16, 9))
+    plt.scatter(ptX, ptUx, c=colors)
+    #cb = plt.colorbar()
+    #cb.set_label('Particle weight')
+    plt.xlabel(r'x ($\mu m$)')
+    plt.ylabel(r"x' ($mrad$)")
+    plt.title(species+' transverse phase space distribution')
+    plt.grid(True)
+
+    # Save the figure and display it
+    plt.savefig(path+species+'PhaseSpaceEnergy_'+str(ind)+'.pdf', format='pdf')
+    plt.savefig(path+species+'PhaseSpaceEnergy_'+str(ind)+'.png', format='png')
+    plt.show()
+
+
+def phase_space_energy_animation(params):
+    """ Animate the macroparticles of a beam in transverse phase space.
+
+    Creates an animation showing the evolution of the beam in transverse phase
+    space. Each macroparticle above the cutoff is plotted as the beam evolves.
+
+    Parameters
+    ----------
+    params : dictionary
+        Params should have the following items:
+            species : string
+                The species name for the beam of interest.
+            dumpInd : int
+                The dump index to plot the beam at.
+            path : string
+                The path to the VSim output folder.
+            simName : strign
+                The simulation name, the first part of every simulation file.
+            cutoff : float
+                The minimum weight cutoff. Note maximum weight seems to be ~1.
+            Nt : int
+                The number of frames to render, set to the last dump number.
+            fps : int
+                The number of frames per second, determines animation length.
+            xlim : array-like
+                X plot limits, two element array [xmin, xmax].
+            ylim : array-like
+                Y plot limits, two element array [ymin, ymax].
+    """
+    Nt = params['Nt']
+    path = params['path']
+    simName = params['simName']
+    species = params['species']
+    ind = params['dumpInd']
+    
+    pFile = get_filename(path, simName, species, 0)
+    pAttrs = load.get_species_attrs(pFile, species)
+    
+    if pAttrs['dim'] != 2: 
+        print('Only 2D simulations are currently supported.')
+        return
+    
+    mass = 1e-6*pAttrs['mass']*constants.c**2 / constants.e # convert to MeV
+    # Grab the dump we are interested in
+    def get_data(ind):
+        pFile = get_filename(path, simName, species, ind)
+        pData = load.get_species_data(pFile, species)
+        ptWeight = pData[:, 6]
+        sel = ptWeight > params['cutoff']
+        ptWeight = ptWeight[sel]
+        ptX = pData[:, 1][sel] * 1e6
+        ptUx = (pData[:, 3] / pData[:, 2])[sel]*1e3
+        ptEnergy = analyze.get_ptc_energy(pData, mass)[sel]
+        # Sort the arrays so heavier particles appear on top
+        sort = np.argsort(ptWeight)
+        ptWeight = ptWeight[sort]
+        ptX = ptX[sort]
+        ptUx = ptUx[sort]
+        ptEnergy = ptEnergy[sort]
+        # Create the colormap
+        norm = Normalize(vmin=np.amin(ptEnergy), vmax=np.amax(ptEnergy))
+        alpha = ptWeight / np.amax(ptWeight)
+        colors = plt.cm.gnuplot(norm(ptEnergy))
+        colors[:, 3] = alpha
+        return ptWeight, ptX, ptUx, colors
+    
+    # Get the first piece of data
+    ptWeight, ptX, ptUx, colors = get_data(ind)
+
+    # Create the plot
+    fig = plt.figure(figsize=(16, 9))
+    sct = plt.scatter(ptX, ptUx, c=colors)
+    #cb = plt.colorbar()
+    #cb.set_label('Particle weight')
+    plt.xlabel(r'x ($\mu m$)')
+    plt.ylabel(r"x' ($mrad$)")
+    plt.title(species+' transverse phase space distribution')
+    plt.xlim(params['xlim'])
+    plt.ylim(params['ylim'])
+    plt.grid(True)
+
+    # Update the scatter plot data
+    i = ind+1;
+    def updatefig(*args):
+        nonlocal i
+        ptWeight, ptX, ptUx, colors = get_data(i)
+        sct.set_offsets(np.stack((ptX, ptUx), axis=-1))
+        sct.set_color(colors)
+        i += 1
+        # If we run over, loop
+        if i == Nt+1:
+            i = ind
+        return sct,
+
+    ani = animation.FuncAnimation(fig, updatefig, blit=True, frames=Nt)
+    ani.save(params['path']+'PhaseSpaceEvolutionEnergy_'+species+'.mp4',
              fps=params['fps'])
 
 
