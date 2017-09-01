@@ -49,7 +49,7 @@ def laser_prop(params, Efunc):
             path : string
                 File loaction for storing simulation results.
     Efunc : function
-        Function that returns the initial E field at z=0, Efunc(x,y).
+        Function that returns the initial E field at z=0, Efunc(x,y,params).
         Must be able to x as a  size (Nx, 1) numpy array and y as a
         size (1, Ny) numpy array and return the field in the form
         (x, y). The grid is centered on x = y = 0. Normally Efunc is
@@ -73,7 +73,8 @@ def laser_prop(params, Efunc):
     # Setup an array to store the simulation results
     Efile = np.zeros((Nz, Nx, Ny))
     # Calculate the initial electric field on the boundary
-    Ei = Efunc(np.reshape(x, (Nx, 1)), np.reshape(y, (1, Ny))) * params['E0']
+    Ei = Efunc(np.reshape(x, (Nx, 1)), np.reshape(y, (1, Ny)), params)
+    Ei *= params['E0']
     # Propogate the field
     Efile = laser.fourier_prop2(Ei, x, y, z, params['lam'], n=params['n'])
     # Save the data

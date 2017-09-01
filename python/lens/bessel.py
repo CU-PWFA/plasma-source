@@ -20,6 +20,29 @@ from ht import intht
 import os
 
 
+def Efunc(x, y, prop): # This is complicated because of the atan range
+    """ Electric field function that adds a phi dependednt phase
+    """
+    r = np.sqrt(x**2 + y**2)
+    Efield = prop['Efield']
+    phi = np.zeros(np.shape(r)) 
+    # Handle when x/y -> ininity
+    phi[int(prop['Nx']/2), int(prop['Ny']/2):] = np.pi/2
+    phi[int(prop['Nx']/2), :int(prop['Ny']/2)] = -np.pi/2
+    # Handle the positive x half plane
+    sel = np.array(x > 0)
+    xp = x[sel]
+    xp = np.reshape(xp, (np.size(xp), 1))
+    phi[int(prop['Nx']/2+1):, :] = np.arctan(y/xp)
+    # Handle the negative x half plane
+    sel = np.array(x < 0)
+    xn = x[sel]
+    xn = np.reshape(xn, (np.size(xn), 1))
+    phi[:int(prop['Nx']/2), :] = np.arctan(y/xn) + np.pi
+    E0 = Efield(r) * np.exp(1j*prop['order']*phi)
+    return E0
+
+
 def spectrum_from_axis(E, z):
     """ Returns the spatial spectrum in kz from the electric field on-axis.
 
@@ -196,27 +219,7 @@ def multimode_ionization(params, z, I):
     rmi = {}
     Efield = {} # Stores output electric fields
     frac = {}
-    # Define the Efunc for laser_prop with Fourier series phi components
-    def Efunc(x, y): # This is complicated because of the atan range
-        r = np.sqrt(x**2 + y**2)
-        Efield = prop['Efield']
-        phi = np.zeros(np.shape(r)) 
-        # Handle when x/y -> ininity
-        phi[int(prop['Nx']/2), int(prop['Ny']/2):] = np.pi/2
-        phi[int(prop['Nx']/2), :int(prop['Ny']/2)] = -np.pi/2
-        # Handle the positive x half plane
-        sel = np.array(x > 0)
-        xp = x[sel]
-        xp = np.reshape(xp, (np.size(xp), 1))
-        phi[int(prop['Nx']/2+1):, :] = np.arctan(y/xp)
-        # Handle the negative x half plane
-        sel = np.array(x < 0)
-        xn = x[sel]
-        xn = np.reshape(xn, (np.size(xn), 1))
-        phi[:int(prop['Nx']/2), :] = np.arctan(y/xn) + np.pi
-        E0 = Efield(r) * np.exp(1j*prop['order']*phi)
-        return E0
-
+    
     for i in range(0, L):
         # Find the boundary electric field necessary to create the Bessel mode
         besselParams['R'] = params['R'][i]
@@ -286,7 +289,7 @@ def multimode_refraction(params, Tfunc):
         os.makedirs(path+directory)
     
     # Define the initial electric field loader
-    def Efunc(x, y):
+    def EfuncLoad(x, y):
         E0 = np.load(modePar['Esource']+'inputField.npy')
         return E0
     
@@ -304,12 +307,12 @@ def multimode_refraction(params, Tfunc):
         if not os.path.exists(modePar['path']):
             os.makedirs(modePar['path'])
         # Run the refraction calculation
-        plasma.plasma_refraction(modePar, Efunc, Tfunc, n=n)
+        plasma.plasma_refraction(modePar, EfuncLoad, Tfunc, n=n)
         plasma.summary_plot(modePar['path'])
         n = np.load(modePar['path'] + 'finalDensity.npy')
 
 
-def multimode_lens_ionization(params, z, I):
+def multimode_lens_ionization(params, z, I, diffI=None):
     """ Calculates the ionization fraction from multiple Bessel modes.
 
     This function calculates the ionization fraction resulting from a primary
@@ -366,65 +369,38 @@ def multimode_lens_ionization(params, z, I):
         Array of on axis z values the intensity is specified at.
     I : array-like
         Desired Intensity profile along the optical axis.
+    diffI : bool, optional
+        Whether or not to use different intensity targets for different modes.
+        If set to True then I must be a 2D array with L vecotrs.
     """
     L = params['L']
     order = params['order']
     prop = params['prop']
     atom = params['atom']
-    Ez = ionization.field_from_intensity(I)
     besselParams = {'N': params['N'],
                     'M': params['M'],
                     'lam': params['lam']
                     }
-    k = 2*np.pi/params['lam']
     E = {} # Stores electric fields on the boundaries, input to laser_prop
     rmi = {}
     Efield = {} # Stores output electric fields
     frac = {}
-    # TODO figure out how to make this a standalone function so we don't have two copies of it
-    # Define the Efunc for laser_prop with Fourier series phi components
-    def Efunc(x, y): # This is complicated because of the atan range
-        r = np.sqrt(x**2 + y**2)
-        Efield = prop['Efield']
-        phi = np.zeros(np.shape(r)) 
-        # Handle when x/y -> ininity
-        phi[int(prop['Nx']/2), int(prop['Ny']/2):] = np.pi/2
-        phi[int(prop['Nx']/2), :int(prop['Ny']/2)] = -np.pi/2
-        # Handle the positive x half plane
-        sel = np.array(x > 0)
-        xp = x[sel]
-        xp = np.reshape(xp, (np.size(xp), 1))
-        phi[int(prop['Nx']/2+1):, :] = np.arctan(y/xp)
-        # Handle the negative x half plane
-        sel = np.array(x < 0)
-        xn = x[sel]
-        xn = np.reshape(xn, (np.size(xn), 1))
-        phi[:int(prop['Nx']/2), :] = np.arctan(y/xn) + np.pi
-        E0 = Efield(r) * np.exp(1j*prop['order']*phi)
-        return E0
-    
+      
     for i in range(0, L):
         # Find the boundary electric field necessary to create the Bessel mode
         multi = params['multi'][i]
         if i == 0:
             besselParams['R'] = params['R']
             besselParams['rmax'] = params['rmax'][i]
+            if diffI == True: Ez = ionization.field_from_intensity(I[i])
+            else: Ez = ionization.field_from_intensity(I)
             rmi[i], E[i] = uniform_bessel(besselParams, Ez, z, order[i])
-            E[i] = 8.15e6*E[i] # Normalization factor I still need to fix
-            E[i] *= multi
+            E[i] = 8.15e6*E[i] # TODO Normalization factor I still need to fix
         else:
-            rmax = params['rmax'][i-1]
-            rc = params['rc'][i-1]
-            r0 = params['r0'][i-1]
-            w = params['w'][i-1]
-            m = params['m'][i-1]
-            n = params['nGauss'][i-1]
-            # Create the super-Gaussian
-            rin = np.linspace(r0, rmax, 10000)
-            I0 = np.exp(-2*((rin-rc)/w)**n)
-            Iamp, rmi[i], phi = ray.arbitrary_phase(I0, rin, I, z, r0=r0, m=m)
-            E[i] = Iamp * multi * np.exp(-2*((rmi[i]-rc)/w)**n)
-            E[i] = ionization.field_from_intensity(E[i]) * np.exp(1j*k*phi)
+            if diffI == True: Iin = I[i]
+            else: Iin = I
+            E[i], rmi[i] = ray.super_gaussian_phase(params, Iin, z, ind=i-1)
+        E[i] *= multi
         # Propagate the modes to find the electric field
         prop['Efield'] = interp1d(rmi[i], E[i], bounds_error=False,
                                   fill_value=0.0)

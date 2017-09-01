@@ -111,7 +111,8 @@ def plasma_refraction(params, Efunc, Tfunc, n0=None, n=None):
     nfile = np.zeros((Nt, Nx, Nz))
     # Calculate the intial field and the pulse
     # TODO add in a valid_params function that tests the params object
-    Ei = Efunc(np.reshape(x, (Nx, 1)), np.reshape(y, (1, Ny))) * params['E0']
+    Ei = Efunc(np.reshape(x, (Nx, 1)), np.reshape(y, (1, Ny)), params)
+    Ei *= params['E0']
     Et = Tfunc(t)
     # Calculate constants for gas and plasma index of refraction
     # These are (index of refraction - 1) per 10^17 cm^-3 density

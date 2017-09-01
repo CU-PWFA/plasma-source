@@ -444,8 +444,11 @@ def phase_space_energy(params):
     else:
         print('Only 2D simulations are currently supported.')
 
-    # Sort the arrays so heavier particles appear on top
-    sort = np.argsort(ptWeight)
+    if 'cmap' in params: cmap = params['cmap']
+    else: cmap = 'gnuplot'
+    
+    # Sort the arrays so higher energy particles appear on top
+    sort = np.argsort(ptEnergy)
     ptWeight = ptWeight[sort]
     ptX = ptX[sort]
     ptUx = ptUx[sort]
@@ -453,7 +456,7 @@ def phase_space_energy(params):
     # Create the colormap
     norm = Normalize(vmin=np.amin(ptEnergy), vmax=np.amax(ptEnergy))
     alpha = ptWeight / np.amax(ptWeight)
-    colors = plt.cm.gnuplot(norm(ptEnergy))
+    colors = plt.cm.get_cmap(cmap)(norm(ptEnergy))
     colors[:, 3] = alpha
     # Create the plot
     plt.figure(figsize=(16, 9))
@@ -499,6 +502,8 @@ def phase_space_energy_animation(params):
                 X plot limits, two element array [xmin, xmax].
             ylim : array-like
                 Y plot limits, two element array [ymin, ymax].
+            cmap : string, optional
+                Colormap name to use for the energy.
     """
     Nt = params['Nt']
     path = params['path']
@@ -512,6 +517,8 @@ def phase_space_energy_animation(params):
     if pAttrs['dim'] != 2: 
         print('Only 2D simulations are currently supported.')
         return
+    if 'cmap' in params: cmap = params['cmap']
+    else: cmap = 'gnuplot'
     
     mass = 1e-6*pAttrs['mass']*constants.c**2 / constants.e # convert to MeV
     # Grab the dump we are interested in
@@ -525,7 +532,7 @@ def phase_space_energy_animation(params):
         ptUx = (pData[:, 3] / pData[:, 2])[sel]*1e3
         ptEnergy = analyze.get_ptc_energy(pData, mass)[sel]
         # Sort the arrays so heavier particles appear on top
-        sort = np.argsort(ptWeight)
+        sort = np.argsort(ptEnergy)
         ptWeight = ptWeight[sort]
         ptX = ptX[sort]
         ptUx = ptUx[sort]
@@ -533,7 +540,7 @@ def phase_space_energy_animation(params):
         # Create the colormap
         norm = Normalize(vmin=np.amin(ptEnergy), vmax=np.amax(ptEnergy))
         alpha = ptWeight / np.amax(ptWeight)
-        colors = plt.cm.gnuplot(norm(ptEnergy))
+        colors = plt.cm.get_cmap(cmap)(norm(ptEnergy))
         colors[:, 3] = alpha
         return ptWeight, ptX, ptUx, colors
     

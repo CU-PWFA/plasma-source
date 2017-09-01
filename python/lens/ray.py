@@ -9,6 +9,7 @@ Created on Wed Jun  7 15:44:21 2017
 import numpy as np
 from scipy import integrate
 from scipy.interpolate import interp1d
+from ionization import ionization
 
 
 def uniform_phase(I, z, R, r0=0):
@@ -109,6 +110,8 @@ def arbitrary_phase(I0, rin, I, z, r0=0, m=1.0):
     # Calculate the required input intensity
     Iamp = integrate.trapz(I, z) / integrate.trapz(2*np.pi*I0*rin, rin)
     I0 = I0*Iamp*m
+    I0 += np.amax(I0)*0.0001 # we need some value everywhere
+    I += np.amax(I)*0.0001
     I0 = interp1d(rin, I0, bounds_error=False, fill_value=0.0)
     # Calculate r and phi incrementally
     if r0 == 0:
@@ -125,6 +128,64 @@ def arbitrary_phase(I0, rin, I, z, r0=0, m=1.0):
         phi[i] = phi[i-1] - (sinnew + sinold)*dr/2
     # Return everything
     return Iamp, r, phi
+
+
+def super_gaussian_phase(params, I, z, ind=None):
+    """ Calculates the phase required to create an on-axis intensity profile.
+    
+    Calculates the phase required to focus a super Gaussian to a specified on-
+    axis intensity profile.
+    
+    Parameters
+    ----------
+    params : dictionary
+        Params should have the following items:
+            lam : double
+                Wavelength of the electromagnetic wave in vacuum.
+            rmax : array-like
+                Maximum radius to return the electric field at. Pass an array
+                of length L, one for each Bessel mode. Must be a factor of root
+                2 larger than the grid in prop.
+            rc : array-like
+                Array of center locations for the super Gaussians.
+            r0 : array-like
+                Beginning radius of the higher order Beams.
+            w : array-like
+                Array of widths for the super Gaussians.
+            nGauss : array-like
+                Order of the super Gaussians.
+            m : array-like
+                Multiplier for the arbitrary phase function, test before use.
+    z : array-like
+        Array of on axis z values the intensity is specified at.
+    I : array-like
+        Desired Intensity profile along the optical axis.
+    ind : int, optional
+        The index of the parameter arrays to use. Default is 0.
+        
+    Returns
+    -------
+    E : array-like
+        The electric field with phase after the lens.
+    r : array-like
+        The radiuses the electric field is returned at.
+    """
+    if ind is None:
+        ind = 0
+    rmax = params['rmax'][ind]
+    rc = params['rc'][ind]
+    r0 = params['r0'][ind]
+    w = params['w'][ind]
+    m = params['m'][ind]
+    n = params['nGauss'][ind]
+    k = 2*np.pi/params['lam']
+    # Create the super-Gaussian
+    rin = np.linspace(r0, rmax, 10000)
+    I0 = np.exp(-2*((rin-rc)/w)**n)
+    Iamp, r, phi = arbitrary_phase(I0, rin, I, z, r0=r0, m=m)
+    E = Iamp * np.exp(-2*((r-rc)/w)**n)
+    E = ionization.field_from_intensity(E) * np.exp(1j*k*phi)
+    return E, r
 
 
 def lens_design(I0, rin, I, rp, L):
