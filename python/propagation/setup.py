@@ -13,12 +13,15 @@ from distutils.core import setup
 from distutils.extension import Extension
 from Cython.Build import cythonize
 
+
 ext_modules=[
-    Extension('laserv2',
-              sources=['laserv2.pyx'],
-              libraries=["m"],
-              #extra_compile_args = ['-03', '-march=native', '-fopenmp'],
-              #extra_link_args=['-fopenmp']
+    Extension('propagation.laserv2',
+              sources=['propagation/laserv2.pyx'],
+              libraries=["m", "fftw3"],
+              extra_compile_args = ['-march=native', '-fopenmp',
+                                    '-I/home/robert/anaconda3/envs/CU-PWFA/include', 
+                                    '-lfftw3'],
+              extra_link_args=['-fopenmp']
     )
 ]
 
