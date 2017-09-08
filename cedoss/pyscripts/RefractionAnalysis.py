@@ -19,7 +19,8 @@ import numpy as np
 #'max_corrector' will shift the beam axis to the maximum density
 #  poor for most cases-only interesting at high densities ~10e19
 cuts=1
-max_corrector=0
+max_corrector=1
+enforce_xoff=-31
 
 #'getfit' will fit the y and z axes to tanh profiles
 #'fityx' uses getfit to add a Gaussian fit to the x axis
@@ -34,13 +35,14 @@ z_window = 400
 
 #Locate the desired data by specifying the folder and directory within
 
-folder = '/home/chris/Desktop/FourierPlots/CompactOptics_DoubleJet/'
+#folder = '/home/chris/Desktop/FourierPlots/CompactOptics_DoubleJet/'
 #folder = '/home/chris/Desktop/FourierPlots/CompactOptics/'
 #folder = '/home/chris/Desktop/FourierPlots/real_FACET_Refraction/'
 #folder = '/home/chris/Desktop/FourierPlots/ApproximateSol/'
 #folder = '/home/chris/Desktop/FourierPlots/CompactOptics_Source/'
+folder = '/home/chris/Desktop/FourierPlots/CompactOptics_JetsInGas/'
 
-directory = 'propagation_1e18/'
+directory = 'Exact_p2g8/'
 #directory = 'gasjet_den_propagation_1e17/'
 #directory = 'ETanhGauss1/'
 path = folder+directory
@@ -76,6 +78,8 @@ x_off=0; y_off=0; z_off=0
 if max_corrector == 1:
     maximum = ThrDim.GetMaximumOffset(den)
     x_off=maximum[0]; y_off=maximum[1]; z_off=maximum[2]
+    if (enforce_xoff != 0):
+        x_off = + enforce_xoff
     print('-Corrected beam position to maximum of '+str(maximum[3])+' e17cm^-3')
     print('-Corrected x plane at '+str(x[x_off + round(len(den[:,0,0])/2)])+' microns')
     print('-Corrected y plane at '+str(y[y_off + round(len(den[0,:,0])/2)])+' microns')
