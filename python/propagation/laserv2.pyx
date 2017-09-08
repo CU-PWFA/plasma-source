@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-#cython: boundscheck=False, wraparound=False, nonecheck=False
+#cython: boundscheck=False, wraparound=False, nonecheck=False, overflowcheck=False
+#cython: linetrace=False
 """
 Created on Fri Sep  1 14:07:46 2017
 
 @author: robert
 """
 
+import os
 import numpy as np
 from numpy.fft import fftfreq
 from cython.parallel import prange
+from libc.stdio cimport FILE, fwrite, fopen, fclose
 
 
 # Load necessary C functions
@@ -36,10 +39,27 @@ cdef extern from "fftw3.h":
                                unsigned)
     void fftw_execute(fftw_plan) nogil
     void fftw_destroy_plan(fftw_plan)
-    
 
 
 cdef double complex I = 1j
+
+
+cdef void write_data(double complex *data, char *filename, int N) nogil:
+    """ Creates a new binary file and writes the data to it.
+
+    Parameters
+    ----------
+    data : 
+        Pointer to the data to be written.
+    filename : string
+        The name of the file to be written.
+    N : int
+        The number of elements in the array to be written.
+    """
+    cdef FILE *file = fopen(filename, 'a')
+    fwrite(data, sizeof(double complex), N, file)
+    fclose(file)
+
 
 def fourier_prop2(double complex[:, :] E, double[:] x, double[:] y, 
                   double[:] z, double lam, path, double n=1):
@@ -78,25 +98,32 @@ def fourier_prop2(double complex[:, :] E, double[:] x, double[:] y,
     cdef int Nx = np.size(x)
     cdef int Ny = np.size(y)
     cdef int Nz = np.size(z)
+    cdef int N = Nx * Ny
     cdef double X = x[Nx-1] - x[0]
     cdef double Y = y[Ny-1] - y[0]
     cdef double dx = X / (Nx-1)
     cdef double dy = Y / (Ny-1)
+    filename_py = bytes(path + 'electricField.bin', 'ascii')
+    if os.path.isfile(filename_py):
+        os.remove(filename_py) # Otherwise we'll append to it
+    cdef char *filename = filename_py
     # Initialize fftw for the FFT
-    cdef double complex *e = <double complex*> fftw_malloc(sizeof(double complex) * Nx * Ny)
-    cdef fftw_plan pfft = fftw_plan_dft_2d(Nx, Ny, e, e, FFTW_FORWARD,
+    cdef double complex[:, :] e = <double complex[:Nx, :Ny]> fftw_malloc(sizeof(double complex) * N)
+    cdef fftw_plan pfft = fftw_plan_dft_2d(Nx, Ny, &(e[0, 0]), &(e[0, 0]), FFTW_FORWARD,
                                            FFTW_ESTIMATE)
-    cdef fftw_plan pifft = fftw_plan_dft_2d(Nx, Ny, e, e, FFTW_BACKWARD,
+    cdef fftw_plan pifft = fftw_plan_dft_2d(Nx, Ny, &(e[0, 0]), &(e[0, 0]), FFTW_BACKWARD,
                                            FFTW_ESTIMATE)
     # Fourier transform the electric field on the boundary
-    for i in range(Nx):
-        for j in range(Ny):
-            e[i+j] = E[i, j]
+    with nogil:
+        for i in prange(Nx):
+            for j in range(Ny):
+                e[i, j] = E[i, j]
     fftw_execute(pfft)
     cdef double complex[:, :] eb = np.zeros((Nx, Ny), dtype='complex128')
-    for i in range(Nx):
-        for j in range(Ny):
-            eb[i, j] = e[i+j]
+    with nogil:
+        for i in prange(Nx):
+            for j in range(Ny):
+                eb[i, j] = e[i, j]
     # Pre-calculate the spatial frequencies
     cdef double complex[:, :] fz = np.zeros((Nx, Ny), dtype='complex128')
     cdef double[:] fx2 = fftfreq(Nx, dx)**2
@@ -105,14 +132,23 @@ def fourier_prop2(double complex[:, :] E, double[:] x, double[:] y,
     cdef double fmax2 = (n/lam)**2
     with nogil:
         for i in prange(Nx):
-            for j in prange(Ny):
+            for j in range(Ny):
                 fz[i, j] = pre*csqrt(fmax2 - fx2[i] - fy2[j])
-        for i in prange(Nz):
-            for j in range(Nx):
+        for i in range(Nz):
+            for j in prange(Nx):
                 for k in range(Ny):
-                    e[j+k] = eb[j, k] * cexp(fz[j, k]*z[i])
+                    e[j, k] = eb[j, k] * cexp(fz[j, k]*z[i])
             fftw_execute(pifft)
-        #np.save(path+'electric_field_'+str(i)+'.npy', e)
+            write_data(&(e[0, 0]), filename, N)
     fftw_destroy_plan(pfft)
     fftw_destroy_plan(pifft)
-    fftw_free(e)
+    Eret = np.zeros((Nx, Ny), dtype='complex128')
+    ebret = np.zeros((Nx, Ny), dtype='complex128')
+    eRet = np.zeros((Nx, Ny), dtype='complex128')
+    for i in range(Nx):
+        for j in range(Ny):
+            Eret[i, j] = E[i, j]
+            ebret[i, j] = eb[i, j]
+            eRet[i, j] = e[i, j]
+    fftw_free(&(e[0, 0]))
+    return Eret, ebret, eRet
