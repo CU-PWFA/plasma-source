@@ -14,17 +14,10 @@ from modules import ThreeDimensionAnalysis as ThrDim
 from modules import ProfileAnalyzer as Prof
 
 #Tanh
-a = 391.484902775
-b = 121.168309664
-n_0 = 1.34929464489e+19
+a = 385.588869202
+b = 89.8895905719
+n_0 = 1.32664984545e+19
 p_tanh = [a,b,n_0]
-"""
-#Gauss
-n_0 = 1.46608792576e+19
-sig = 314.194613916
-x_0 = -14.4412644071
-p_gauss = [n_0,sig,x_0]
-"""
 """
 #Tanh Tester
 a = 9
