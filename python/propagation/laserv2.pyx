@@ -26,23 +26,6 @@ cdef extern from "complex.h" nogil:
 cdef double complex I = 1j
 
 
-cdef void write_data(double complex *data, char *filename, int N) nogil:
-    """ Creates a new binary file and writes the data to it.
-
-    Parameters
-    ----------
-    data : 
-        Pointer to the data to be written.
-    filename : string
-        The name of the file to be written.
-    N : int
-        The number of elements in the array to be written.
-    """
-    cdef FILE *file = fopen(filename, 'a')
-    fwrite(data, sizeof(double complex), N, file)
-    fclose(file)
-
-
 def fourier_prop2(double complex[:, :] E, double[:] x, double[:] y, 
                   double[:] z, double lam, path, double n=1):
     """ Propagates an electromagnetic wave from a 2D boundary.
