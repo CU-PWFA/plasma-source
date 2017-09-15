@@ -5,8 +5,8 @@ Created on Thu Sep 14 14:46:39 2017
 
 @author: robert
 
-Run from the beams folder with the command:
-    'python calc/setup.py build_ext --inplace'
+Run from the python folder with the command:
+    'python beam/calc/setup.py build_ext --inplace'
 """
 
 import numpy
@@ -18,8 +18,8 @@ from Cython.Build import cythonize
 
 
 ext_modules=[
-    Extension('calc',
-              sources=['calc/*'],
+    Extension('beam.calc.*',
+              sources=['beam/calc/*.pyx'],
               libraries=["m", "fftw3"],
               include_dirs=[numpy.get_include(), 
                             os.path.join(venv.sys.base_prefix, 'include')],

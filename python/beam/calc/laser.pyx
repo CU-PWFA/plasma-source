@@ -6,8 +6,10 @@ Created on Thu Sep 14 11:15:19 2017
 @author: robert
 """
 
-#import numpy as np
+import numpy as np
 cimport numpy as np
+from numpy.fft import fftfreq
+from scipy import integrate
 from cython.parallel import prange
 
 # Load necessary C functions
@@ -16,16 +18,14 @@ cdef extern from "complex.h" nogil:
     double complex csqrt(double complex)
 
 
-cdef double complex I = 1j
-
 
 def fourier_prop(double complex[:, :] E, double[:] x, double[:] y, double[:] z,
-                 double lam, double n, fft, ifft, path):
+                 double lam, double n, fft, ifft, save):
     """ Propagates an electromagnetic wave from a 2D boundary to an array of z.
 
     Uses the Rayleigh-Sommerfeld transfer function to propagate an
     electromagnetic wave from a 2D boundary. The calculation assumes a
-    homogeneous index of refraction in the region of propagation.
+    homogeneous index of refraction in the region of propagation. 
 
     Parameters
     ----------
@@ -48,15 +48,41 @@ def fourier_prop(double complex[:, :] E, double[:] x, double[:] y, double[:] z,
         The fft scheme, an object of the pyfftw.FFTW class.
     ifft : function
         The ifft scheme, an object of the pyfftw.FFTW class.
+    save : function
+        A function used to save the data, will be called with 
+        'save(e, z[i], i)'. Will be called for each element of z.
 
     Returns
     -------
     e : double complex[:, :]
         The electric field at position (Z, x, y).
     """
+    cdef int i, j, k
+    cdef int Nx = len(x)
+    cdef int Ny = len(y)
+    cdef int Nz = len(z)
+    cdef double dx = x[1] - x[0]
+    cdef double dy = y[1] - y[0]
+    # Store the Fourier transform of the electric field on the boundary
+    cdef double complex[:, :] e = np.zeros((Nx, Ny), dtype='complex128')
+    cdef double complex[:, :] eb = np.zeros((Nx, Ny), dtype='complex128')
+    eb = fft(E)
+    # Pre-calculate the spatial frequencies
+    cdef double[:] fx = fftfreq(Nx, dx)
+    cdef double[:] fy = fftfreq(Ny, dy)
+    cdef double complex[:, :] ikz = ikz_RS(fx, fy, lam, n)
+    # Fourier transform, multiply by the transfer function, inverse Fourier
+    for i in range(Nz):
+        with nogil:
+            for j in prange(Nx):
+                for k in range(Ny):
+                    e[j, k] = eb[j, k] * cexp(ikz[j, k]*z[i])
+        e = ifft(e)
+        save(e, z[i], i)
+    return e
 
 
-cdef double complex[:, :] fourier_step(double complex[:, :] E,
+cpdef double complex[:, :] fourier_step(double complex[:, :] E,
                    double complex[:, :] ikz, double dz, fft, ifft):
     """ Propagates a field across a single step of length dz.
     
@@ -81,9 +107,21 @@ cdef double complex[:, :] fourier_step(double complex[:, :] E,
     e : double complex[:, :]
         The electric field after propagating a distance dz.
     """
+    cdef int i, j
+    cdef int Nx = np.shape(E)[0]
+    cdef int Ny = np.shape(E)[1]
+    cdef double complex[:, :] e = np.zeros((Nx, Ny), dtype='complex128')
+    e = fft(E)
+    # Fourier transform, multiply by the transfer function, inverse Fourier
+    with nogil:
+        for i in prange(Nx):
+            for j in range(Ny):
+                e[i, j] *= cexp(ikz[i, j]*dz)
+    e = ifft(e)
+    return e
 
 
-cdef double complex[:, :] ikz_RS(double[:] fx, double[:] fy, double lam,
+cpdef double complex[:, :] ikz_RS(double[:] fx, double[:] fy, double lam,
                    double n):
     """ Calculates i*kz for the Rayleigh-Sommerfeld transfer function.
     
@@ -103,9 +141,26 @@ cdef double complex[:, :] ikz_RS(double[:] fx, double[:] fy, double lam,
     fz : double complex[:, :]
         The spatial frequency in the z direction.
     """
+    cdef int i, j
+    cdef int Nx = len(fx)
+    cdef int Ny = len(fy)
+    cdef double complex[:, :] ikz = np.zeros((Nx, Ny), dtype='complex128')
+    cdef double[:] fx2 = np.zeros(Nx)
+    cdef double[:] fy2 = np.zeros(Ny)
+    cdef double complex pre = 1j*2*np.pi
+    cdef double f2 = (n/lam)**2
+    with nogil:
+        for i in prange(Nx):
+            fx2[i] = fx[i] * fx[i]
+        for i in prange(Ny):
+            fy2[i] = fy[i] * fy[i]
+        for i in prange(Nx):
+            for j in range(Ny):
+                ikz[i, j] = pre * csqrt(f2 - fx2[i] - fy2[j])
+    return ikz
 
 
-cdef double complex[:] fresnel_axis(double complex[:], double[:] r,
+cpdef double complex[:] fresnel_axis(double complex[:] E, double[:] r,
                    double[:] z, double lam, double n):
     """ Returns the electric field along the optical axis in the Fresnel limit.
 
@@ -119,7 +174,7 @@ cdef double complex[:] fresnel_axis(double complex[:], double[:] r,
         Array of E field values at points r on the boundary, E(r).
     r : double[:]
         Array of radial locations in on the boundary. Doesn't need to be evenly
-        spaced.
+        spaced, but should be ordered in increasing r.
     z : double[:]
         Array of z distances from the boundary to calculate the field at. Does
         not need to be evenly spaced.
@@ -133,3 +188,24 @@ cdef double complex[:] fresnel_axis(double complex[:], double[:] r,
     e : double complex[:]
         The electric field at position (z).
     """
+    cdef int i
+    cdef int Nr = len(r)
+    cdef int Nz = len(z)
+    cdef double k = 2*np.pi*n/lam
+    cdef double complex pre
+    cdef double complex[:] e = np.zeros(Nz, dtype='complex128')
+    cdef double complex[:] arg = np.zeros(Nr, dtype='complex128')
+    # TODO make this parallel by writing/finding a cython integrator
+    for i in range(Nz):
+        if z[i] == 0.0:
+            if r[0] == 0.0: # The field would just be the input at the center
+                e[i] = E[0] 
+            else:
+                e[i] = 0.0 # Assume the field is zero outside the range of r
+        else:
+            pre = k * cexp(1j*k*z[i]) / (1j*z[i])
+            for j in range(Nr):
+                arg[j] = E[j] * cexp(1j*k*r[j]*r[j]/(2*z[i])) * r[j]
+            e[i] = pre * integrate.simps(arg, r)
+    return e
+            
