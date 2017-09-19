@@ -88,7 +88,9 @@ for i in range(0,nstep):
     un = np.sqrt(2*J*ebeam[i]["gbC"])*np.cos(phi)/np.sqrt(rms_x_eps[i])
     un_kurt[i] = stats.kurtosis(un,0,True)
     
-    J_kurt[i] = stats.kurtosis(2*J*ebeam[i]["gbC"]/rms_x_eps[i],0,True)
+    J_kurt[i] = stats.kurtosis(J,0,True)
+    
+#    J_kurt[i] = stats.kurtosis(2*J*ebeam[i]["gbC"]/rms_x_eps[i],0,True)
 #    rn = np.arctan2(v,u)
 #    rn_kurt[i] = stats.kurtosis(rn,0,True)
 #    lips[i] = ba.calc_frac_ellipse(u,v,frac=0.95,hires=False)
@@ -242,6 +244,21 @@ alphaf = ebeam[i_flat_stop]["alpha"]
 figA, (ax1, ax3) = plt.subplots(2, sharex=True, sharey=False)
 
 
+Tbeta   = ebeam[i_flat_start]["beta"]
+Talpha  = ebeam[i_flat_start]["alpha"]
+Tgamma  = ebeam[i_flat_start]["gamma"]
+TgbC    = ebeam[i_flat_start]["gbC"]
+#TgbC    = TgbC-0.734*plasma["bulk"]["dgds0"]*plasma["up_ramp"]["hw"]
+Twp0    = (5.64e4)*np.sqrt(plasma["bulk"]["npl0"]) # rad/s, plasma ang. freq.
+Tkp0    = Twp0/nc.c # m^-1, plasma wave number
+Tkb     = Tkp0/np.sqrt(2*TgbC)
+Tbeta_m = 1.0/Tkb
+TTbeam  = [Tbeta,Talpha,Tgamma]
+TTmatch = [Tbeta_m,0,1.0/Tbeta_m]
+
+BB      = ba.calc_Bmag(TTbeam,TTmatch)
+print(BB)
+
 
 #figA = plt.figure()
 #figA, ax1 = plt.subplots(figsize=(8,4))
@@ -255,7 +272,7 @@ ax1.plot(s,v_beta/10,color='b',linestyle='dashed')
 ax1.plot(s,beta,color='b',linestyle='solid')
 #ax1.set_ylim([0,2.0*norm1])
 ax1.set_xlim([0.5,3.0])
-ax1.set_ylim([0,5])
+ax1.set_ylim([0,2])
 #ax1.set_xlabel('z [m]')
 ax1.set_ylabel(r'$\beta$ [cm]',color='b')
 ax1.tick_params('y',colors='b')
@@ -283,8 +300,8 @@ ax2.text(0.50, 0.80, r'$n_{p,0} = %2.1e$'%plasma["bulk"]["npl0"],
 
 #norm2 = min(v_rms_x)
 #ax2  = ax1.twinx()
-#ax2.plot(s,v_rms_x,color='r',linestyle='dashed')
-#ax2.plot(s,rms_x,color='r',linestyle='solid')
+ax1.plot(s,v_rms_x/10,color='r',linestyle='dashed')
+ax1.plot(s,rms_x,color='r',linestyle='solid')
 #ax2.set_ylabel(r'$\sigma_{r,{\rm rms}}$ [$\mu$m]',color='r')
 #ax2.tick_params('y',colors='r')
 ##ax2.set_ylim([0,1.5*norm2])
@@ -302,19 +319,19 @@ ax3.tick_params('y',colors='k')
 ax3.set_xlim([0.5,3.0])
 ax3.set_xlabel('z [m]')
 #ax3.set_ylim([0.9*min(rms_x_eps),1.1*max(rms_x_eps)])
-ax3.set_ylim([0.975,1.225])
+ax3.set_ylim([0.975,1.1*BB])
 
 
 ax4 = ax3.twinx()
 #ax4.spines["right"].set_position(("axes", 1.30))
 #make_patch_spines_invisible(ax4)
 #ax4.spines["right"].set_visible(True)
-ax4.plot(s,J_kurt-6,color='r',linestyle='--')
+ax4.plot(s,J_kurt/J_kurt[0],color='r',linestyle='--')
 #ax3.plot(s,x_95_eps/x_95_eps[0],color='k',linestyle='dashed')
 ax4.set_ylabel(r'$K_{r}$',color='r')
 ax4.tick_params('y',colors='r')
 #ax3.set_ylim([0.9*min(rms_x_eps),1.1*max(rms_x_eps)])
-ax4.set_ylim([-2.5,17.5])
+ax4.set_ylim([0.975,1.1*BB])
 
 
 #ax5  = ax3.twinx()

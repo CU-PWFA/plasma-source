@@ -18,14 +18,14 @@ import mike_math as mm
 if __name__ == '__main__':
     
     # define plasma bulk (flat-top) properties
-    npl0   = 1e18 # cm^-3
-    dEds0  = 10e9 # eV/m
+    npl0   = 5e17 # cm^-3
+    dEds0  = np.sqrt(npl0/(1e17))*10e9 # eV/m
     dgds0  = dEds0/nc.me
     L_ft   = 0.50 # m
     
     # define plasma up-ramp
     shape_up = 'gauss'
-    hw_up    = 0.147 #0.05 # m
+    hw_up    = 0.119 #0.05 # m
     L_up     = 1.50 # m
     top_up   = L_up # m
     
@@ -54,7 +54,7 @@ if __name__ == '__main__':
     gamma  = (1.0+alpha**2)/beta # 1/m
     dgb    = 0.01
     dz     = 0
-    npart  = 10000
+    npart  = 1000
     dist   = 'gauss'
     
     # make beam
@@ -67,7 +67,7 @@ if __name__ == '__main__':
 #    ebeam0[0]["x"] += 10e-6 # m
     
     # set beam waist position
-    waist = -0.441 #-0.105 # m, waist location w.r.t L_up
+    waist = -0.272 #-0.105 # m, waist location w.r.t L_up
     s_w   = L_up + waist # m
     
     # define longitudinal steps
@@ -75,7 +75,7 @@ if __name__ == '__main__':
     kp0    = wp0/nc.c # m^-1, plasma wave number
     kb     = kp0/np.sqrt(2*gbC)
     
-    ds   = (np.pi/kb)*(1./10.) # m
+    ds   = (1.0/kb)*(1./10.) # m
     s_ft = np.linspace(0,L_ft,int(L_ft/ds+1))
     s_up = np.linspace(0,L_up,int(L_up/ds+1))
     s_dn = np.linspace(0,L_dn,int(L_dn/ds+1))
