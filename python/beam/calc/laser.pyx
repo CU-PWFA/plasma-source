@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+#cython: boundscheck=False, wraparound=False, nonecheck=False
+#cython: overflowcheck=False, cdivision=True
+#cython: linetrace=False, binding=False
 """
 Created on Thu Sep 14 11:15:19 2017
 
@@ -16,7 +19,6 @@ from cython.parallel import prange
 cdef extern from "complex.h" nogil:
     double complex cexp(double complex)
     double complex csqrt(double complex)
-
 
 
 def fourier_prop(double complex[:, :] E, double[:] x, double[:] y, double[:] z,
@@ -197,11 +199,9 @@ cpdef double complex[:] fresnel_axis(double complex[:] E, double[:] r,
     cdef double complex[:] arg = np.zeros(Nr, dtype='complex128')
     # TODO make this parallel by writing/finding a cython integrator
     for i in range(Nz):
-        if z[i] == 0.0:
-            if r[0] == 0.0: # The field would just be the input at the center
-                e[i] = E[0] 
-            else:
-                e[i] = 0.0 # Assume the field is zero outside the range of r
+        if z[i] == 0.0: # Throw an error, this isn't paraxial
+            raise ValueError('z must not equal 0, abs(z) should be several \
+                             times larger than the maximum value of r')
         else:
             pre = k * cexp(1j*k*z[i]) / (1j*z[i])
             for j in range(Nr):

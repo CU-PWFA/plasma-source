@@ -8,13 +8,12 @@ Created on Thu Sep 14 14:59:22 2017
 
 import sys
 # Add the python folder to the path
-#sys.path.insert(0, "../../python")
 sys.path.insert(0, "../python")
 import unittest
 import numpy as np
 from numpy.fft import fftfreq
 import pyfftw
-import beam.calc.laser as laser
+from beam.calc import laser
 
 #------------------------------------------------------------------------------
 # laser.pyx
@@ -191,8 +190,9 @@ class fresnel_axis_test_cases(unittest.TestCase):
         R = 100
         self.r = np.linspace(0, R, self.Nr)
         self.Nz = 2**8
+        z0 = 500
         Z = 100
-        self.z = np.linspace(0, Z, self.Nz)
+        self.z = np.linspace(z0, z0+Z, self.Nz)
     
     def test_gaussian_propagation(self):
         """ Check that the power of a Gaussian decreases correctly """
@@ -205,7 +205,13 @@ class fresnel_axis_test_cases(unittest.TestCase):
         for i in range(self.Nz):
             self.assertAlmostEqual(abs(Etest[i]), EE[i], delta=1e-3)
     
-    #def test_negative_r(self):
+    def test_zero_z(self):
+        """ Check that an exception is raised for z=0 """
+        z = np.linspace(0, 100, self.Nz)
+        w0 = 10
+        E = np.array(np.exp(- self.r**2 / w0**2), dtype='complex128')
+        self.assertRaises(ValueError, laser.fresnel_axis, E, self.r, z, 1.0,
+                          1.0)
 
 #------------------------------------------------------------------------------
 if __name__ == '__main__':
