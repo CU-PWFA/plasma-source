@@ -54,9 +54,14 @@ class Laser(beam.Beam):
         self.ifft = pyfftw.builders.ifft2(efft, overwrite_input=True, 
                                            avoid_copy=True, threads=threads)
         
-    def initialize_field(self):
+    def initialize_field(self, e=None):
         """ Create the array to store the electric field values in. """
-        self.e = np.zeros((self.Nx, self.Ny), dtype='complex128')
+        if e is None:
+            self.e = np.zeros((self.Nx, self.Ny), dtype='complex128')
+        else:
+            self.e = e
+        self.saveInd = 0
+        self.save_field()
         
     def set_field(self, e):
         """ Set the value of the electric field. """
@@ -68,7 +73,6 @@ class Laser(beam.Beam):
         np.save(filePre + '_params.npy', self.params)
         np.save(filePre + '_x.npy', self.x)
         np.save(filePre + '_y.npy', self.y)
-        self.saveInd = 0 # The index for naming files
     
     def save_field(self, e, z, i):
         """ Save the current electric field to file and adavnce z. """
