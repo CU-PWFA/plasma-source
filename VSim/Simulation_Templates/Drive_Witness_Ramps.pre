@@ -75,7 +75,7 @@ $ BEAM_POSITION = 100.
   description = "Distance from the front of the window to the beam center, in um"
 </XVar>
 
-$ BEAM_WAIST = 1.
+$ BEAM_WAIST = -25
 <XVar BEAM_WAIST>
   description = "Vacuum waist relative to the start of the flattop plasma, in cm"
 </XVar>
@@ -226,10 +226,11 @@ $ BETA_MATCHED = 1. / K_BETA
 #------------------------------------------------------------------------------
 # Calculate relativistic factors and the velocity (ux=gamma*vx)
 $ BEAM_BETA = math.sqrt(1.-1./BEAM_GAMMA**2)
+$ BEAM_BETA_STAR = 1.e-6*BEAM_GAMMA * BEAM_SIGMAR**2 / BEAM_EMITTANCE
 $ BEAM_VX = BEAM_BETA * LIGHTSPEED
 $ BEAM_UX = BEAM_GAMMA * BEAM_VX
 $ BEAM_SIGMAUX = BEAM_DRMS * BEAM_UX / 100.
-$ BEAM_SIGMAUY = BEAM_UX*BEAM_EMITTANCE / (BEAM_SIGMAR*BEAM_GAMMA)
+$ BEAM_SIGMAUY = sqrt(1.e-6*BEAM_BETA_STAR*BEAM_EMITTANCE/BEAM_GAMMA)
 # Calculate the peak beam density (weight is essentially a multiplier on this)
 $ BEAM_RHO_PEAK = 1.e9*BEAM_CHARGE / (TWOPI**1.5 * BEAM_LRMS * BEAM_SIGMAR**2)
 $ BEAM_DENSITY = BEAM_RHO_PEAK / ELEMCHARGE
@@ -257,10 +258,11 @@ $ BEAM_LOAD_ZEND = BEAM_HALF_WIDTH
 # Calculate relativistic factors and the velocity (ux=gamma*vx)
 $ WITNESS_GAMMA = (WITNESS_ENERGY/0.511e-3) + 1.0
 $ WITNESS_BETA = math.sqrt(1.-1./WITNESS_GAMMA**2)
+$ WITNESS_BETA_STAR = 1.e-6*WITNESS_GAMMA * WITNESS_SIGMAR**2 / WITNESS_EMITTANCE
 $ WITNESS_VX = WITNESS_BETA * LIGHTSPEED
 $ WITNESS_UX = WITNESS_GAMMA * WITNESS_VX
 $ WITNESS_SIGMAUX = WITNESS_DRMS * WITNESS_UX / 100.
-$ WITNESS_SIGMAUY = WITNESS_UX*WITNESS_EMITTANCE / (WITNESS_SIGMAR*WITNESS_GAMMA)
+$ WITNESS_SIGMAUY = sqrt(1.e-6*WITNESS_BETA_STAR*WITNESS_EMITTANCE/WITNESS_GAMMA)
 # Calculate the peak beam density (weight is essentially a multiplier on this)
 $ WITNESS_RHO_PEAK = 1.e9*WITNESS_CHARGE / (TWOPI**1.5 * WITNESS_LRMS * WITNESS_SIGMAR**2)
 $ WITNESS_DENSITY = WITNESS_RHO_PEAK / ELEMCHARGE
@@ -774,7 +776,7 @@ $ endif
       # Transverse momentum -y
       <STFunc component1>
         kind = expression
-        expression = gauss(BEAM_SIGMAUY, 0.)
+        expression = gauss(BEAM_UX*BEAM_SIGMAUY/sqrt(BEAM_BETA_STAR**2 + (x-BEAM_WAIST*1.e-2)**2), BEAM_UX*y*(x-BEAM_WAIST*1.e-2)/(BEAM_BETA_STAR**2+(x-BEAM_WAIST*1.e-2)**2))
       </STFunc>
       # Transverse momentum -z
       <STFunc component2>
@@ -787,7 +789,7 @@ $ endif
       <STFunc component4>
         kind = expression
         expression = exp(-(x-BEAM_CENTER)**2/(2.*(BEAM_LRMS*1.e-6)**2)) \
-                         *exp(-(y**2 + z**2)/(2.*(BEAM_SIGMAR*1.e-6)**2))
+                         *exp(-(y**2 + z**2)*(1-(x-BEAM_WAIST*1.e-2)**2/(BEAM_BETA_STAR**2+(x-BEAM_WAIST*1.e-2)**2))/(2.*(BEAM_SIGMAR*1.e-6)**2))
       </STFunc>
     </VelocityGenerator>
   </ParticleSource>
@@ -838,7 +840,7 @@ $ endif
       # Transverse momentum -y
       <STFunc component1>
         kind = expression
-        expression = gauss(WITNESS_SIGMAUY, 0.)
+        expression = gauss(WITNESS_UX*WITNESS_SIGMAUY/sqrt(WITNESS_BETA_STAR**2 + (x-WITNESS_WAIST*1.e-2)**2), WITNESS_UX*y*(x-WITNESS_WAIST*1.e-2)/(WITNESS_BETA_STAR**2+(x-WITNESS_WAIST*1.e-2)**2))
       </STFunc>
       # Transverse momentum -z
       <STFunc component2>
@@ -851,7 +853,7 @@ $ endif
       <STFunc component4>
         kind = expression
         expression = exp(-(x-WITNESS_CENTER)**2/(2.*(WITNESS_LRMS*1.e-6)**2)) \
-                         *exp(-(y**2 + z**2)/(2.*(WITNESS_SIGMAR*1.e-6)**2))
+                         *exp(-(y**2 + z**2)*(1-(x-WITNESS_WAIST*1.e-2)**2/(WITNESS_BETA_STAR**2+(x-WITNESS_WAIST*1.e-2)**2))/(2.*(BEAM_WITNESS*1.e-6)**2))
       </STFunc>
     </VelocityGenerator>
   </ParticleSource>
