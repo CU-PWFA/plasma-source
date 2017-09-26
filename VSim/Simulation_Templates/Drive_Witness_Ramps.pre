@@ -900,7 +900,7 @@ $ endif
       # specify the weight, other components are 0 by default.
       <STFunc component3>  # specify weight of the variably-weighted particles
         kind = expression
-				expression = H(-x)*exp(-x**2/(2*SIGMA_IN**2)) + H(x)*H(END_FLAT-x) + H(x-END_FLAT)*exp(-(x-END_FLAT)**2/(2*SIGMA_OUT**2))
+				expression = H(-x)*exp(-x**2/(2*(SIGMA_IN*1.e-2)**2)) + H(x)*H(END_FLAT-x) + H(x-END_FLAT)*exp(-(x-END_FLAT)**2/(2*(SIGMA_OUT*1.e-2)**2))
       </STFunc>
    </VelocityGenerator>
 
