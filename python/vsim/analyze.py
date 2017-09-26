@@ -6,7 +6,7 @@ Created on Tue Aug  8 16:05:19 2017
 @author: robert
 """
 
-from vsim import C
+import scipy.constants as const
 import numpy as np
 
 
@@ -26,7 +26,8 @@ def get_ptc_gamma(data):
     """
     ux = get_ux(data)
     uy = get_uy(data)
-    gamma = np.sqrt(1 + (ux**2 + uy**2)/C**2)
+    u2 = ux**2 + uy**2
+    gamma = 1/np.sqrt(1 - u2/(const.c**2 + u2))
     return gamma
 
 
@@ -122,7 +123,6 @@ def get_emittance(data):
     # Calculate the emittance
     e = np.sqrt(sigmay2*sigmayp2 - sigmayyp**2)*1e6
     return e
-    
 
 
 def get_normemittance(data):
@@ -144,6 +144,59 @@ def get_normemittance(data):
     return e * gamma
 
 
+def get_density_temp(data, mass, attrs, mesh):
+    """ Calculate the electron # density and temperature in each grid cell.
+    
+    Parameters
+    ----------
+    data : HDF5 dataset
+        The data set for the particle species of interest, electrons generally.
+        Use load.get_species_data to load the dataset object from a file.
+    mass : double
+        The mass of the particle in eV. 
+    attrs : dictionary
+        The attributes for the particle species, output of 
+        load.get_species_attrs.
+    mesh : dictionary
+        The data about the mesh to deposit the temperature onto. 
+        See load.get_mesh for the details of what should be in the dictionary.
+    
+    Returns
+    -------
+    den : array-like
+        An array of particle number density on the grid.
+    temp : array-like
+        An array of the temperature on the grid.
+    """
+    Ndim = mesh['numCells'].shape[0]
+    if Ndim == 2:
+        Nx = mesh['numCells'][0]
+        Ny = mesh['numCells'][1]
+        XStart = attrs['lowerBounds'][0]
+        YStart = attrs['lowerBounds'][1]
+        dx = mesh['cellSize'][0]
+        dy = mesh['cellSize'][1]
+        x = get_x(data)
+        y = get_y(data)
+        weights = get_weights(data)
+        energy = get_ptc_energy(data, mass) - mass
+    temp = np.zeros(mesh['numCells'], dtype='double')
+    const = 2 / (3*8.6173303e-5)
+    den = np.zeros(mesh['numCells'], dtype='double')
+    for i in range(Nx):
+        xlo = XStart + i*dx
+        xhi = xlo + dx
+        xmask = np.ma.masked_outside(x, xlo, xhi)
+        for j in range(Ny):
+            ylo = YStart + i*dy
+            yhi = ylo + dy
+            ymask = np.ma.masked_outside(y, ylo, yhi)
+            mask = np.logical_and(xmask.mask, ymask.mask)
+            temp[i, j] = const*np.average(energy[mask], weights=weights[mask])
+            den[i, j] = np.sum(weights[mask]) * attrs['ptsInMacro'] / dx / dy
+    return den ,temp
+
+
 def get_x(data):
     """ Get the array of x positions from the data object.
     """
@@ -155,17 +208,20 @@ def get_y(data):
     """
     return data[:, 1]
 
+
 def get_ux(data):
     """ Get the array of x velocities from the data object.
     """
     return data[:, 2]
+
 
 def get_uy(data):
     """ Get the array of y velocities from the data object.
     """
     return data[:, 3]
 
+
 def get_weights(data):
     """ Get the array of particle weights from the data object.
     """
-    return data[:, 6]
+    return data[:, -1]

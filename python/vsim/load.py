@@ -48,7 +48,7 @@ def get_field_attrs(fileName, fieldName):
 
     Returns
     -------
-    attrs : array-like
+    attrs : dictionary
         Attribute dictionary containing useful information.
     """
     attrs = {}
@@ -144,12 +144,13 @@ def get_species_attrs(fileName, speciesName):
 
     Returns
     -------
-    attrs : array-like
+    attrs : dictionary
         Attribute dictionary containing useful information.
     """
     attrs = {}
     f = h5py.File(fileName, 'r') # r for read only, don't modify the data
     pts = f[speciesName].attrs
+    grid = f['globalGridGlobalLimits'].attrs
     # Get particle data
     attrs['charge'] = pts['charge']
     attrs['mass'] = pts['mass']
@@ -158,6 +159,8 @@ def get_species_attrs(fileName, speciesName):
     attrs['dim'] = pts['numSpatialDims']
     # Get the data column headings
     attrs['columns'] = pts['vsLabels'].split(b',')
+    attrs['lowerBounds'] = grid['vsLowerBounds']
+    attrs['upperBounds'] = grid['vsUpperBounds']
     return attrs
 
 
@@ -201,3 +204,33 @@ def load_species(path, simName, speciesName):
     else:
         print('No files found matching the passed names.')
     return data, attrs
+
+
+def get_mesh(path, simName):
+    """ Get the mesh data from the output files.
+    
+    Parameters
+    ----------
+    path : string
+        Path to the simulation folder.
+    simName : string
+        The simulation name, all the output files start with this string. It is
+        also the name of the in file.
+    
+    Returns
+    -------
+    mesh : dictionary
+        Dictionary containing information about the grid.
+    """
+    fileName = path + simName + '_universe_0.h5'
+    attrs = {}
+    f = h5py.File(fileName, 'r') # r for read only, don't modify the data
+    grid = f['globalGridGlobal'].attrs
+    # Get particle data
+    attrs['numCells'] = grid['vsNumCells']
+    attrs['lowerBounds'] = grid['vsLowerBounds']
+    attrs['upperBounds'] = grid['vsUpperBounds']
+    attrs['cellSize'] = ((grid['vsUpperBounds'] - grid['vsLowerBounds'])
+                         / grid['vsNumCells'])
+    return attrs
+    

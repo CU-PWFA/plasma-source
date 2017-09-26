@@ -594,6 +594,13 @@ def emittance_energy(params):
                 The number of dumps to use, set to the last dump number.
             mass : double
                 The mass of the particle in GeV.
+                
+    Returns
+    -------
+    d : array-like
+        The array of locations for the beam energy.
+    energy : array-like
+        The energy at each dump.
     """
     Nt = params['Nt']
     path = params['path']
@@ -629,6 +636,7 @@ def emittance_energy(params):
     plt.savefig(path+species+'emittanceEnergy.pdf', format='pdf')
     plt.savefig(path+species+'emittanceEnergy.png', format='png')
     plt.show()
+    return d, energy
 
 
 def energy_distribution(params):
