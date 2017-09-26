@@ -77,10 +77,9 @@ class fourier_prop_test_cases(unittest.TestCase):
         E = np.zeros((self.Nx, self.Ny), dtype='complex128')
         z = np.array(1.5, ndmin=1)
         called = False
-        def save(e, z, i): 
+        def save(e, z): 
             nonlocal called
             self.assertEqual(z, 1.5)
-            self.assertEqual(i, 0)
             called = True
         laser.fourier_prop(E, self.x, self.y, z, 1.0, 1.0, self.pfft,
                            self.pifft, save)

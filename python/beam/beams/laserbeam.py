@@ -26,6 +26,7 @@ class Laser(beam.Beam):
     
     def __init__(self, params):
         super().__init__(params)
+        self.k = 2*np.pi / self.params['lam']
         self.create_grid()
         self.create_fft()
         self.initialize_field()
@@ -42,7 +43,7 @@ class Laser(beam.Beam):
         Y = self.Y
         self.x = np.linspace(-X/2, X/2, self.Nx, False, dtype='double')
         self.y = np.linspace(-Y/2, Y/2, self.Ny, False, dtype='double')
-        self.z = [0.0] # TODO think about if we can track z better
+        self.z = []
     
     def create_fft(self):
         """ Create the fftw plans. """
@@ -61,7 +62,7 @@ class Laser(beam.Beam):
         else:
             self.e = e
         self.saveInd = 0
-        self.save_field()
+        self.save_field(self.e, z=0.0)
         
     def set_field(self, e):
         """ Set the value of the electric field. """
@@ -74,10 +75,11 @@ class Laser(beam.Beam):
         np.save(filePre + '_x.npy', self.x)
         np.save(filePre + '_y.npy', self.y)
     
-    def save_field(self, e, z, i):
+    def save_field(self, e, z):
         """ Save the current electric field to file and adavnce z. """
         np.save(self.filePre + '_field_' + str(self.saveInd) + '.npy', e)
         self.saveInd += 1
+        self.z.append(z)
         
     def propagate(self, z, n):
         """ Propagate the field to an array of z distances.
@@ -93,4 +95,44 @@ class Laser(beam.Beam):
         z = np.array(z, ndmin=1, dtype='double')
         self.e = laser.fourier_prop(self.e, self.x, self.y, z, self.lam, n, 
                                     self.fft, self.ifft, self.save_field)
-        self.z = self.z.extend(z + self.z[len(z)-1])
+
+
+class GaussianLaser(Laser):
+    """ A laser beam class that stores the field on a two dimensional grid. """
+    keys = ['Nx',
+            'Ny',
+            'X',
+            'Y',
+            'lam',
+            'path',
+            'name',
+            'threads',
+            'E0',
+            'waist',
+            'z']
+    
+    def __init__(self, params):
+        super().__init__(params)
+    
+    def initialize_field(self):
+        """ Create the array to store the electric field values in. 
+        
+        Fills the field array with the field of a Gaussian pulse.
+        """
+        k = self.k
+        w0 = self.params['waist']
+        z = self.params['z']
+        E0 = self.params['E0']
+        x2 = np.reshape(self.x, (self.params['Nx'], 1))**2
+        y2 = np.reshape(self.y, (1, self.params['Ny']))**2
+        # Calculate all the parameters for the Gaussian beam
+        r2 = x2 + y2
+        zr = np.pi*w0**2 / self.params['lam']
+        wz = w0 * np.sqrt(1+(z/zr)**2)
+        Rz = z * (1 + (zr/z)**2)
+        psi = np.arctan(z/zr)
+        # Create the Gaussian field
+        self.e = E0 * w0 / wz * np.exp(-r2/wz**2) \
+                 * np.exp(-1j*(k*z + k*r2/(2*Rz) - psi))
+        self.saveInd = 0
+        self.save_field()
