@@ -80,7 +80,7 @@ def fourier_prop(double complex[:, :] E, double[:] x, double[:] y, double[:] z,
                 for k in range(Ny):
                     e[j, k] = eb[j, k] * cexp(ikz[j, k]*z[i])
         e = ifft(e)
-        save(e, z[i], i)
+        save(e, z[i])
     return e
 
 
