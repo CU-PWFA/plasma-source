@@ -27,14 +27,16 @@ class Laser(beam.Beam):
     def __init__(self, params):
         super().__init__(params)
         self.k = 2*np.pi / self.params['lam']
-        self.create_grid()
-        self.create_fft()
-        self.initialize_field()
         # Create a folder to store the beam data in
         self.dirName = dirName = self.path + 'beams/beam_' + self.name + '/'
         self.filePre = dirName + self.name
         if not os.path.exists(dirName):
             os.makedirs(dirName)
+        self.clear_dir()
+        # Create internal variables
+        self.create_grid()
+        self.create_fft()
+        self.initialize_field()
         self.save_initial()        
     
     def create_grid(self):
@@ -62,11 +64,13 @@ class Laser(beam.Beam):
         else:
             self.e = e
         self.saveInd = 0
-        self.save_field(self.e, z=0.0)
+        self.z = []
+        self.save_field(self.e, 0.0)
         
     def set_field(self, e):
         """ Set the value of the electric field. """
         self.e = np.array(e, dtype='complex128')
+        self.save_field(self.e, self.z[-1])
         
     def save_initial(self):
         """ Save the initial params object and the grid. """
@@ -80,6 +84,11 @@ class Laser(beam.Beam):
         np.save(self.filePre + '_field_' + str(self.saveInd) + '.npy', e)
         self.saveInd += 1
         self.z.append(z)
+        np.save(self.filePre + '_z.npy', self.z)
+    
+    def clear_dir(self):
+        """ Clear all files from the beam directory. """ 
+        # TODO implemet this function
         
     def propagate(self, z, n):
         """ Propagate the field to an array of z distances.
@@ -132,7 +141,6 @@ class GaussianLaser(Laser):
         Rz = z * (1 + (zr/z)**2)
         psi = np.arctan(z/zr)
         # Create the Gaussian field
-        self.e = E0 * w0 / wz * np.exp(-r2/wz**2) \
+        e = E0 * w0 / wz * np.exp(-r2/wz**2) \
                  * np.exp(-1j*(k*z + k*r2/(2*Rz) - psi))
-        self.saveInd = 0
-        self.save_field()
+        super().initialize_field(e)
