@@ -107,20 +107,13 @@ class Laser(beam.Beam):
 
 
 class GaussianLaser(Laser):
-    """ A laser beam class that stores the field on a two dimensional grid. """
-    keys = ['Nx',
-            'Ny',
-            'X',
-            'Y',
-            'lam',
-            'path',
-            'name',
-            'threads',
-            'E0',
-            'waist',
-            'z']
+    """ A laser beam class that creates a Gaussian electric field. """
     
     def __init__(self, params):
+        self.keys.extend(
+                ['E0',
+                 'waist',
+                 'z'])
         super().__init__(params)
     
     def initialize_field(self):
@@ -143,4 +136,31 @@ class GaussianLaser(Laser):
         # Create the Gaussian field
         e = E0 * w0 / wz * np.exp(-r2/wz**2) \
                  * np.exp(-1j*(k*z + k*r2/(2*Rz) - psi))
+        super().initialize_field(e)
+
+
+class SuperGaussianLaser(Laser):
+    # TODO create a super Gaussian beam
+    """ A laser beam class that creates a super-Gaussian electric field. """
+    
+    def __init__(self, params):
+        self.keys.extend(
+                ['E0',
+                 'waist',
+                 'order'])
+        super().__init__(params)
+    
+    def initialize_field(self):
+        """ Create the array to store the electric field values in. 
+        
+        Fills the field array with the field of a Gaussian pulse.
+        """
+        w0 = self.params['waist']
+        E0 = self.params['E0']
+        n = self.params['order']
+        x2 = np.reshape(self.x, (self.params['Nx'], 1))**2
+        y2 = np.reshape(self.y, (1, self.params['Ny']))**2
+        # Calculate all the parameters for the Gaussian beam
+        r = np.sqrt(x2 + y2)
+        e = E0 * np.exp(-(r/w0)**n)
         super().initialize_field(e)
