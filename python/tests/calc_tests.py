@@ -40,7 +40,7 @@ class fourier_prop_test_cases(unittest.TestCase):
         self.pifft = pyfftw.builders.ifft2(e, overwrite_input=True, 
                                            avoid_copy=True, threads=4)
         # Create a meaningless save function
-        def save(e, z, i): return None
+        def save(e, z): return None
         self.save = save
     
     def test_gaussian_diffraction(self):

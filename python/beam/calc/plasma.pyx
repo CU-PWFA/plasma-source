@@ -43,6 +43,7 @@ def plasma_refraction(double complex[:, :, :] E, double[:] x, double[:] y,
     cdef int Nx = len(x)
     cdef int Ny = len(y)
     cdef int Nz = len(z)
+    cdef int Nt = len(t)
     cdef double dx = x[1] - x[0]
     cdef double dy = y[1] - y[0]
     cdef double dt = t[1] - t[0]
@@ -56,11 +57,13 @@ def plasma_refraction(double complex[:, :, :] E, double[:] x, double[:] y,
     cdef double[:, :] nih = np.zeros((Nx, Ny), dtype='double')
     cdef double ngas = alpha * 5.0e-8
     cdef double nplasma = plasma_index(1.0, lam) - 1.0
-    cdef double nh = 1.0 + ngas*n0 # TODO load from file each step
+    cdef double nh = 1.0 + ngas*n0
     # Pre-calculate the spatial frequencies
     cdef double[:] fx = fftfreq(Nx, dx)
     cdef double[:] fy = fftfreq(Ny, dy)
-    cdef double complex[:, :] ikz = ikz_RS(fx, fy, lam, nh)
+    cdef double complex[:, :] ikz = laser.ikz_RS(fx, fy, lam, nh)
+    cdef double arg
+    cdef double rate
     for i in range(1, Nz):
         dz = z[i] - z[i-1]
         arg = 1j*2*np.pi*dz / lam
@@ -72,16 +75,19 @@ def plasma_refraction(double complex[:, :, :] E, double[:] x, double[:] y,
                     for l in range(Ny):
                         E[j, k, l] *= cexp(arg*nih[k, l])
                         # Ionize the gas
-                        rate = ionization.adk_rate_statis(EI, abs(E[j, k, l]),
-                                                          Z, ll, m)
-                        n[k, l] = n0 - (n0 - n[k, l])*exp(-rate[k, l] * dt)
+                        # I think probably pre-calculate this and look it up
+                        #rate = ionization.adk_rate_static(EI, abs(E[j, k, l]),
+                        #                                  Z, ll, m)
+                        rate = 0.0
+                        n[k, l] = n0 - (n0 - n[k, l])*exp(-rate * dt)
                         nih[k, l] = n[k, l]*(nplasma - ngas) + n0*ngas
-                        # Reset the plasma desnity and index
+                        # Reset the plasma density and index
                         if j==Nt-1:
                             n[k, l] = 0.0
                             nih[k, l] = 0.0
     return E
 
+# TODO, add a plasma refraction function for plasmas with variable density
 
 # TODO, move this to a helper function file
 cpdef double plasma_index(double n, double lam):

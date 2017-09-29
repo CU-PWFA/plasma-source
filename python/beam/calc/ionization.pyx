@@ -22,7 +22,7 @@ cdef extern from "math.h" nogil:
     double sqrt(double)
 
 
-cpdef adk_rate_static(double EI, double E, int Z, int l, int m):
+cpdef double adk_rate_static(double EI, double E, int Z, int l, int m) nogil:
     """ Calculates the ionization rate of a gas using the ADK model.
 
     Calculates the tunneling ionization rate of a gas in a constant electric
