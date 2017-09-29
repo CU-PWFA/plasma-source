@@ -20,7 +20,7 @@ import numpy as np
 #  poor for most cases-only interesting at high densities ~10e19
 cuts=1
 max_corrector=1
-enforce_xoff=-31
+enforce_xoff=-31#-31#for p2g8
 
 #'getfit' will fit the y and z axes to tanh profiles
 #'fityx' uses getfit to add a Gaussian fit to the x axis

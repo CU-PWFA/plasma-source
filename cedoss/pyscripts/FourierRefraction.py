@@ -14,9 +14,7 @@ import numpy as np
 from propagation import propagation
 from propagation import plasma
 import os
-#import matplotlib.pyplot as plt
-#import matplotlib.gridspec as gridspec
-sys.path.insert(0, "../cedoss")
+sys.path.insert(0, "../")
 from modules import ThreeDimensionAnalysis as ThrDim
 
 #Script Selection
@@ -28,7 +26,7 @@ reducer = 0
 #This is the directory for saving
 #path = '/home/chris/Desktop/FourierPlots/CompactOptics_DoubleJet/'
 path = '/home/chris/Desktop/FourierPlots/CompactOptics_JetsInGas/'
-directory = 'Exact_p2g8'
+directory = 'Tanh_p2g8_div4'
 #directory = 'testdir'
 
 #Density, converted to e17cm^-3  With a gas jet this is density at nozzle
@@ -66,13 +64,13 @@ sig = 2099.27300216
 #Tanh Parameters (in microns)
 a = 362.080596888
 b = 55.9371159276
-n_0 = 1.31332220886e+18 * 1e-17
+n_0 = 1.31332220886e+18 * 1e-17 / 4.
 p_tanh=[a,b,n_0]
 #Gauss Parameters, though all we need is sigma
 sig = 2066.08516439
 
 #Our Electric field is a function of the stuff above
-def Efunc(x,y):
+def Efunc(x,y,params):
     r2 = x**2 + y**2
     E = np.zeros(np.shape(r2))
     t1 = np.exp(-(x**2)/(wx**2) - (y**2)/(wy**2))
@@ -112,11 +110,13 @@ def Tanh_Jet(x,y,z):
     return n_0*nr*ny
 
 #Assuming everything in params matches the density array we are loading
+#Loads output from CSVInterpolater from the same directory this script
+# outputs to
 def LoadDensity():
     return np.load(path+directory+'/initDensity.npy')
 
 #False for uniform density, otherwise pick your poison
-distribution = LoadDensity
+distribution = Tanh_Jet
 
 # Setup the parameters, just like in Robert's code
 params = {'Nx' : 2**(9-reducer),

@@ -75,7 +75,7 @@ $ BEAM_POSITION = 100.
   description = "Distance from the front of the window to the beam center, in um"
 </XVar>
 
-$ BEAM_WAIST = -25
+$ BEAM_WAIST = -38.
 <XVar BEAM_WAIST>
   description = "Vacuum waist relative to the start of the flattop plasma, in cm"
 </XVar>
@@ -87,7 +87,7 @@ $ WITNESS_ENERGY = 10.
   description = "Witness beam energy in GeV"
 </XVar>
 
-$ WITNESS_LRMS = 36
+$ WITNESS_LRMS = 36.
 <XVar WITNESS_LRMS>
   description = "Witness beam bunch length (RMS), in um"
 </XVar>
@@ -112,66 +112,66 @@ $ WITNESS_CHARGE = 0.5
   description = "Witness beam total charge, in nC"
 </XVar>
 
-$ WITNESS_DELAY = 250
+$ WITNESS_DELAY = 250.
 <XVar WITNESS_DELAY>
   description = "Distance between the drive beam and witness beam, in um"
 </XVar>
 
-$ WITNESS_WAIST = 1.
+$ WITNESS_WAIST = -38.
 <XVar WITNESS_WAIST>
   description = "Vacuum waist relative to the start of the flattop plasma, in cm"
 </XVar>
 
 # Plasma
 #------------------------------------------------------------------------------
-$ PLASMA_START = 2
+$ PLASMA_START = 48.
 <XVar PLASMA_START>
   description = "Distance before the flatop to start the simulation at, in cm"
 </XVar>
 
-$ PLASMA_DENS = 1
+$ PLASMA_DENS = 0.5
 <XVar PLASMA_DENS>
   description = "Plasma number density, in 10^17 cm^3"
 </XVar>
 
-$ FLAT_LEN = 1
+$ FLAT_LEN = 50.
 <XVar FLAT_LEN>
   description = "The length of the flattop plasma, in cm."
 </XVar>
 
-$ SIGMA_IN = 0.5
+$ SIGMA_IN = 12.
 <XVar SIGMA_IN>
   description = "The length of the entrance ramp, in cm."
 </XVar>
 
-$ SIGMA_OUT = 0.5
+$ SIGMA_OUT = 12.
 <XVar SIGMA_OUT>
   description = "The length of the exit ramp, in cm."
 </XVar>
 
 # Grid parameters
 #------------------------------------------------------------------------------
-$ NMAL = 24
+$ NMAL = 48
 <XVar NMAL>
   description = "Depth of the matched absorbing layers, in number of cells"
 </XVar>
 
-$ NLONG = 256
+$ NLONG = 1024
 <XVar NLONG>
   description = "Number of longitudinal cells"
 </XVar>
 
-$ NTRAN = 512
+$ NTRAN = 2048
 <XVar NTRAN>
   description = "Number of transverse cells"
 </XVar>
 
-$ LONGITUDINAL_EXTENT = 1000
+$ LONGITUDINAL_EXTENT = 650.
 <XVar LONGITUDINAL_EXTENT>
   description = "Longitudinal size of the simulation grid/mesh, in um"
 </XVar>
 
-$ TRANSVERSE_EXTENT = 1000.
+$ TRANSVERSE_EXTENT = 1300.
 <XVar TRANSVERSE_EXTENT>
   description = "Transverse size of the simulation grid/mesh, in um"
 </XVar>
@@ -853,7 +853,7 @@ $ endif
       <STFunc component4>
         kind = expression
         expression = exp(-(x-WITNESS_CENTER)**2/(2.*(WITNESS_LRMS*1.e-6)**2)) \
-                         *exp(-(y**2 + z**2)*(1-(x-WITNESS_WAIST*1.e-2)**2/(WITNESS_BETA_STAR**2+(x-WITNESS_WAIST*1.e-2)**2))/(2.*(BEAM_WITNESS*1.e-6)**2))
+                         *exp(-(y**2 + z**2)*(1-(x-WITNESS_WAIST*1.e-2)**2/(WITNESS_BETA_STAR**2+(x-WITNESS_WAIST*1.e-2)**2))/(2.*(WITNESS_SIGMAR*1.e-6)**2))
       </STFunc>
     </VelocityGenerator>
   </ParticleSource>
