@@ -11,10 +11,38 @@ import pyfftw
 import numpy as np
 from beam.beams import beam
 from beam.calc import laser
+import matplotlib.pyplot as plt
 
 
 class Laser(beam.Beam):
-    """ A laser beam class that stores the field on a two dimensional grid. """
+    """ A laser beam class that stores the field on a two dimensional grid. 
+    
+    This class stores a two dimensional grid upon which a complex scalar field
+    is stored. The grid has a point at exactly 0, (Nx/2, Ny/2). The grid is
+    meant for use with the discrete fourier transform. A note on units, any
+    unit of length may be used as long as it is consistent for all variables.
+    Generally, units of microns are appropriate.
+    
+    Parameters
+    ----------
+    Nx : int
+        Number of grid points in the x direction, a power of 2 is recommended.
+    Ny : int
+        Number of grid points in the y direction, a power of 2 is recommended.
+    X : double
+        Width of the grid in the x direction, the grid goes from [-X/2, X/2).
+    Y : double
+        Width of the grid in the y direction, the grid goes from [-Y/2, Y/2).
+    lam : double
+        The vacuum wavelength of the laser radiation.
+    path : string
+        The path for the calculation. This class will create a folder inside
+        the path to store all output data in.
+    name : string
+        The name of the beam, used for naming files and folders.
+    threads : int
+        The number of processors to parallelize the fft over.
+    """
     keys = ['Nx',
             'Ny',
             'X',
@@ -23,6 +51,9 @@ class Laser(beam.Beam):
             'path',
             'name',
             'threads']
+    
+    # Initialization functions
+    #--------------------------------------------------------------------------
     
     def __init__(self, params):
         super().__init__(params)
@@ -58,7 +89,13 @@ class Laser(beam.Beam):
                                            avoid_copy=True, threads=threads)
         
     def initialize_field(self, e=None):
-        """ Create the array to store the electric field values in. """
+        """ Create the array to store the electric field values in. 
+        
+        Parameters
+        ----------
+        e : array-like, optional
+            The array of field values to initialize the field to.
+        """
         if e is None:
             self.e = np.zeros((self.Nx, self.Ny), dtype='complex128')
         else:
@@ -67,10 +104,16 @@ class Laser(beam.Beam):
         self.z = []
         self.save_field(self.e, 0.0)
         
+    # Getters and setters
+    #--------------------------------------------------------------------------
+        
     def set_field(self, e):
         """ Set the value of the electric field. """
         self.e = np.array(e, dtype='complex128')
         self.save_field(self.e, self.z[-1])
+        
+    # File managment
+    #--------------------------------------------------------------------------
         
     def save_initial(self):
         """ Save the initial params object and the grid. """
@@ -85,10 +128,33 @@ class Laser(beam.Beam):
         self.saveInd += 1
         self.z.append(z)
         np.save(self.filePre + '_z.npy', self.z)
+        
+    def load_field(self, ind):
+        """ load the electric field at the specified index. 
+        
+        Parameters
+        ----------
+        ind : int
+            The save index to load the field at.
+        
+        Returns
+        -------
+        e : array-like
+            The electric field at the specified index.
+        z : double
+            The z coordinate of the field.
+        """
+        e = np.load(self.filePre + '_field_' + str(ind) + '.npy')
+        z = self.z[ind]
+        return e, z
+        
     
     def clear_dir(self):
         """ Clear all files from the beam directory. """ 
         # TODO implemet this function
+        
+    # Physics functions
+    #--------------------------------------------------------------------------
         
     def propagate(self, z, n):
         """ Propagate the field to an array of z distances.
@@ -104,10 +170,68 @@ class Laser(beam.Beam):
         z = np.array(z, ndmin=1, dtype='double')
         self.e = laser.fourier_prop(self.e, self.x, self.y, z, self.lam, n, 
                                     self.fft, self.ifft, self.save_field)
+        self.e = np.array(self.e, dtype='complex128')
+        
+    def intensity_from_field(self, e):
+        """ Calculates the time averaged intensity from the complex field. """
+        # TODO implement this function
+        return abs(e)**2
+    
+    # Visualization functions
+    #--------------------------------------------------------------------------
+    
+    def prep_data(self, data):
+        """ Restructures data so that imshow displays it properly. """
+        return np.flipud(np.transpose(data))
+    
+    def plot_current_intensity(self):
+        """ Plots the current intensity of the beam. """
+        im = self.plot_intensity(self.e, self.z[-1])
+        plt.show(im)
+        
+    def plot_intensity_at(self, ind):
+        """ Plots the intensity at a particular z distance.
+        
+        Parameters
+        ----------
+        ind : int
+            The save index to plot the field at, see the _z file to find z.
+        """
+        e, z = self.load_field(ind)
+        im = self.plot_intensity(e, z)
+        im.show()
+    
+    def plot_intensity(self, e, z):
+        """ Create an intensity plot. """
+        X = self.X
+        Y = self.Y
+        
+        I = self.intensity_from_field(e)
+        I = self.prep_data(I)
+        im = plt.imshow(I, aspect='auto', extent=[-X/2, X/2, -Y/2, Y/2])
+        cb = plt.colorbar()
+        cb.set_label(r'Intensity')
+        plt.set_cmap('viridis')
+        plt.xlabel(r'x')
+        plt.ylabel(r'y')
+        plt.title('Transverse intensity at z='+str(z))
+        return im
+        
 
 
 class GaussianLaser(Laser):
-    """ A laser beam class that creates a Gaussian electric field. """
+    """ A laser beam class that creates a Gaussian electric field. 
+    
+    Parameters
+    ----------
+    E0 : double
+        The peak value of the electric field at the Gaussian waist. 
+    waist : double
+        The spot size of the Gaussian waist.
+    z : double
+        The position relative to the waist to start the beam at. +z is after
+        the waist, -z is before the waist.
+    """
     
     def __init__(self, params):
         self.keys.extend(
@@ -135,13 +259,22 @@ class GaussianLaser(Laser):
         psi = np.arctan(z/zr)
         # Create the Gaussian field
         e = E0 * w0 / wz * np.exp(-r2/wz**2) \
-                 * np.exp(-1j*(k*z + k*r2/(2*Rz) - psi))
+                 * np.exp(1j*(k*z + k*r2/(2*Rz) - psi))
         super().initialize_field(e)
 
 
 class SuperGaussianLaser(Laser):
-    # TODO create a super Gaussian beam
-    """ A laser beam class that creates a super-Gaussian electric field. """
+    """ A laser beam class that creates a super-Gaussian electric field. 
+    
+    Parameters
+    ----------
+    E0 : double
+        The peak value of the electric fieldon the flattop. 
+    waist : double
+        The spot size of the flattop region.
+    order : int
+        The order of the super Gaussian.
+    """
     
     def __init__(self, params):
         self.keys.extend(

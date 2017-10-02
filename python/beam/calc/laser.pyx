@@ -129,9 +129,9 @@ cpdef double complex[:, :] ikz_RS(double[:] fx, double[:] fy, double lam,
     
     Parameters
     ----------
-    fx : double[:, :]
+    fx : double[:]
         The spatial frequencies in the x direction.
-    fy : double[:, :]
+    fy : double[:]
         The spatial frequencies in the y direction.
     lam : double
         Wavelength of the electromagnetic wave in vacuum.

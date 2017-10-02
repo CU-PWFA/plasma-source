@@ -15,7 +15,7 @@ from numpy.fft import fftfreq
 from scipy import integrate
 from cython.parallel import prange
 from beam.calc import laser
-from beam.calc import ionization
+from beam.calc.ionization cimport adk_rate_static
 
 # Load necessary C functions
 cdef extern from "complex.h" nogil:
@@ -75,10 +75,7 @@ def plasma_refraction(double complex[:, :, :] E, double[:] x, double[:] y,
                     for l in range(Ny):
                         E[j, k, l] *= cexp(arg*nih[k, l])
                         # Ionize the gas
-                        # I think probably pre-calculate this and look it up
-                        #rate = ionization.adk_rate_static(EI, abs(E[j, k, l]),
-                        #                                  Z, ll, m)
-                        rate = 0.0
+                        rate = adk_rate_static(EI, abs(E[j, k, l]), Z, ll, m)
                         n[k, l] = n0 - (n0 - n[k, l])*exp(-rate * dt)
                         nih[k, l] = n[k, l]*(nplasma - ngas) + n0*ngas
                         # Reset the plasma density and index

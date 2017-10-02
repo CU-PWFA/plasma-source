@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+#cython: boundscheck=False, wraparound=False, nonecheck=False
+#cython: overflowcheck=False, cdivision=True
+#cython: linetrace=False, binding=False
 """
 Created on Mon Sep 25 16:45:42 2017
 
@@ -8,8 +11,6 @@ Created on Mon Sep 25 16:45:42 2017
 
 import numpy as np
 cimport numpy as np
-from scipy.special import factorial
-from scipy.special import gamma
 from cython.parallel import prange
 
 # Load necessary C functions
@@ -20,9 +21,10 @@ cdef extern from "complex.h" nogil:
 cdef extern from "math.h" nogil:
     double exp(double)
     double sqrt(double)
+    double tgamma(double)    
 
 
-cpdef double adk_rate_static(double EI, double E, int Z, int l, int m) nogil:
+cdef double adk_rate_static(double EI, double E, int Z, int l, int m) nogil:
     """ Calculates the ionization rate of a gas using the ADK model.
 
     Calculates the tunneling ionization rate of a gas in a constant electric
@@ -49,10 +51,19 @@ cpdef double adk_rate_static(double EI, double E, int Z, int l, int m) nogil:
     cdef double n = 3.68859*Z / sqrt(EI)
     cdef double E0 = EI**(3/2)
     # TODO replace the scipy gamma and factorial with a C version
-    cdef double Cn2 = 4**n / (n*gamma(2*n))
+    cdef double Cn2 = 4**n / (n*tgamma(2*n))
     cdef double N = 1.51927 * (2*l+1) * factorial(l+abs(m)) \
         / (2**abs(m) * factorial(abs(m)) * factorial(l-abs(m)))
     cdef double w = 0.0
     if E > 0:
         w = N * Cn2 * EI * (20.4927*E0/E)**(2*n-abs(m)-1) * exp(-6.83089*E0/E)
     return w
+
+
+cdef int factorial(int n) nogil:
+    """ Calculate the factorial of an integer """
+    cdef int i
+    cdef int ret = 1
+    for i in range(n):
+        ret *= i + 1
+    return ret
