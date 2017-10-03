@@ -21,6 +21,7 @@ from beam.calc.ionization cimport adk_rate_static
 cdef extern from "complex.h" nogil:
     double complex cexp(double complex)
     double complex csqrt(double complex)
+    double cabs(double complex)
 
 cdef extern from "math.h" nogil:
     double exp(double)
@@ -75,7 +76,7 @@ def plasma_refraction(double complex[:, :, :] E, double[:] x, double[:] y,
                     for l in range(Ny):
                         E[j, k, l] *= cexp(arg*nih[k, l])
                         # Ionize the gas
-                        rate = adk_rate_static(EI, abs(E[j, k, l]), Z, ll, m)
+                        rate = adk_rate_static(EI, cabs(E[j, k, l]), Z, ll, m)
                         n[k, l] = n0 - (n0 - n[k, l])*exp(-rate * dt)
                         nih[k, l] = n[k, l]*(nplasma - ngas) + n0*ngas
                         # Reset the plasma density and index
