@@ -22,7 +22,7 @@ cdef extern from "complex.h" nogil:
 
 
 def fourier_prop(double complex[:, :] E, double[:] x, double[:] y, double[:] z,
-                 double lam, double n, fft, ifft, save):
+                 double lam, double n, double z0, fft, ifft, save):
     """ Propagates an electromagnetic wave from a 2D boundary to an array of z.
 
     Uses the Rayleigh-Sommerfeld transfer function to propagate an
@@ -46,6 +46,8 @@ def fourier_prop(double complex[:, :] E, double[:] x, double[:] y, double[:] z,
         Wavelength of the electromagnetic wave in vacuum.
     n : double, optional
         Index of refraction of the medium the wave is propagating through.
+    z0 : double
+        Position of the beam at the start of the function.
     fft : function
         The fft scheme, an object of the pyfftw.FFTW class.
     ifft : function
@@ -57,7 +59,7 @@ def fourier_prop(double complex[:, :] E, double[:] x, double[:] y, double[:] z,
     Returns
     -------
     e : double complex[:, :]
-        The electric field at position (Z, x, y).
+        The electric field at position (z, x, y).
     """
     cdef int i, j, k
     cdef int Nx = len(x)
@@ -80,7 +82,7 @@ def fourier_prop(double complex[:, :] E, double[:] x, double[:] y, double[:] z,
                 for k in range(Ny):
                     e[j, k] = eb[j, k] * cexp(ikz[j, k]*z[i])
         e = ifft(e)
-        save(e, z[i])
+        save(e, z[i]+z0)
     return e
 
 
