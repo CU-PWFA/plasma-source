@@ -34,18 +34,18 @@ cdef double adk_rate_static(double EI, double E, int Z, int l, int m) nogil:
     ----------
     EI : double
         Ionization energy of the electron in eV.
-    E : array_like
+    E : double
         Electric field strength in GV/m.
     Z : int
         Atomic residue i.e. which electron is being ionizaed (1st, 2nd...).
-    l : int, optional
-        Orbital quantum number of the electron being ionized. Defaults to 0.
-    m : int, optional
-        Magnetic quantum number of the electron being ionized. Defaults to 0.
+    l : int
+        Orbital quantum number of the electron being ionized.
+    m : int
+        Magnetic quantum number of the electron being ionized.
 
     Returns
     -------
-    w : array_like
+    w : double
         Ionization rate in 1/fs.
     """
     cdef double n = 3.68859*Z / sqrt(EI)
@@ -60,8 +60,38 @@ cdef double adk_rate_static(double EI, double E, int Z, int l, int m) nogil:
     return w
 
 
+cdef double adk_rate_linear(double EI, double E, int Z, int l, int m) nogil:
+    """ Calculates the ionization rate of a gas using the ADK model.
+
+    Calculates the average tunneling ionization rate of a gas in a linearly
+    polarized electric field. Use this function in conjunction with the
+    envelope of the pulse to find the ionization fraction.
+
+    Parameters
+    ----------
+    EI : double
+        Ionization energy of the electron in eV.
+    E : double
+        Electric field strength in GV/m.
+    Z : int
+        Atomic residue i.e. which electron is being ionizaed (1st, 2nd...).
+    l : int
+        Orbital quantum number of the electron being ionized.
+    m : int
+        Magnetic quantum number of the electron being ionized.
+
+    Returns
+    -------
+    w : double
+        Ionization rate in 1/fs.
+    """
+    cdef double w = adk_rate_static(EI, E, Z, l, m)
+    w *= 0.305282*sqrt(E/EI**1.5)
+    return w
+
+
 cdef int factorial(int n) nogil:
-    """ Calculate the factorial of an integer """
+    """ Calculate the factorial of an integer. """
     cdef int i
     cdef int ret = 1
     for i in range(n):
