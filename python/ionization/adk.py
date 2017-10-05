@@ -119,7 +119,7 @@ def rate_linear(EI, E, Z, l=0, m=0):
     Returns
     -------
     w : array_like
-        Ionization rate in 1/fs
+        Ionization rate in 1/fs.
     """
     w = 0.305282 * np.sqrt(E/np.power(EI, 3/2)) * rate_static(EI, E, Z, l, m)
     return w

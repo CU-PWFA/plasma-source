@@ -136,7 +136,7 @@ def gaussian_envelope(I, t, tau, chirp=0):
     Returns
     -------
     E : array-like
-        Array of electric field vlues at times given by array t.
+        Array of electric field values at times given by array t.
     """
     a = np.pi / (2*tau**2)
     Gamma = a + chirp*1j
