@@ -29,8 +29,8 @@ cdef extern from "math.h" nogil:
 
 
 def plasma_refraction(double complex[:, :, :] E, double[:] x, double[:] y,
-                      double[:] z, double[:] t, double lam, double alpha,
-                      double n0, fft, ifft, atom):
+                      double[:] z, double[:] t, double lam, double n0, fft,
+                      ifft, saveE, saven, atom):
     """ Propagate a laser pulse through a plasma accounting for refraction.
 
     Propogates a laser pulse through a region of partially ionized gas. This
@@ -56,7 +56,7 @@ def plasma_refraction(double complex[:, :, :] E, double[:] x, double[:] y,
     # Plasma density and index of refraction arrays
     cdef double[:, :] n = np.zeros((Nx, Ny), dtype='double')
     cdef double[:, :] nih = np.zeros((Nx, Ny), dtype='double')
-    cdef double ngas = alpha * 5.0e-8
+    cdef double ngas = atom['alpha'] * 5.0e-8
     cdef double nplasma = plasma_index(1.0, lam) - 1.0
     cdef double nh = 1.0 + ngas*n0
     # Pre-calculate the spatial frequencies
@@ -79,10 +79,14 @@ def plasma_refraction(double complex[:, :, :] E, double[:] x, double[:] y,
                         rate = adk_rate_static(EI, cabs(E[j, k, l]), Z, ll, m)
                         n[k, l] = n0 - (n0 - n[k, l])*exp(-rate * dt)
                         nih[k, l] = n[k, l]*(nplasma - ngas) + n0*ngas
-                        # Reset the plasma density and index
-                        if j==Nt-1:
-                            n[k, l] = 0.0
-                            nih[k, l] = 0.0
+        saveE(E)
+        saven(n)
+        # Reset the plasma density for the next slice
+        with nogil:
+            for k in prange(Nx):
+                for l in range(Ny):
+                    n[k, l] = 0.0
+                    nih[k, l] = 0.0                           
     return E
 
 # TODO, add a plasma refraction function for plasmas with variable density

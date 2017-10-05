@@ -13,6 +13,7 @@ import unittest
 import numpy as np
 from beam.beams import beam
 from beam.beams import laserbeam
+from beam.beams import laserpulse
 
 #------------------------------------------------------------------------------
 # beam.py
@@ -21,7 +22,8 @@ class beam_class_test_cases(unittest.TestCase):
     """ Test cases for the beam class in beam/beams/beam.py """
     
     def setUp(self):
-        params = {}
+        params = {'name' : 'testBeam',
+                  'path' : 'tests/'}
         self.beam = beam.Beam(params)
     
     def test_missing_check_params(self):
@@ -33,14 +35,18 @@ class beam_class_test_cases(unittest.TestCase):
     
     def test_additional_check_params(self):
         """ Ensure check_params allows additional keys in params """
-        params = {'test' : 15}
+        params = {'name' : 'testBeam',
+                  'path' : 'tests/',
+                  'test' : 15}
         testBeam = beam.Beam(params)
         self.assertEqual(testBeam.test, params['test'])
     
     def test_params_to_attrs(self):
         """ Test if the parameter attributes are added as attributes """
         testBeam = self.beam
-        params = {'test1' : 12,
+        params = {'name' : 'testBeam',
+                  'path' : 'tests/',
+                  'test1' : 12,
                   'test2' : 'string'}
         testBeam.params_to_attrs(params)
         self.assertEqual(testBeam.test1, params['test1'])
@@ -60,7 +66,8 @@ class laser_class_test_cases(unittest.TestCase):
                   'lam' : 1.0,
                   'path' : 'tests/',
                   'name' : 'testBeam',
-                  'threads' : 4
+                  'threads' : 4,
+                  'cyl' : False
                   }
         self.beam = laserbeam.Laser(self.params)
         
@@ -130,7 +137,36 @@ class laser_class_test_cases(unittest.TestCase):
             for j in range(self.params['Ny']):
                 self.assertEqual(self.beam.e[i, j], 0.0)
                 
+#------------------------------------------------------------------------------
+# laserpulse.py
+#------------------------------------------------------------------------------
+class pulse_class_test_cases(unittest.TestCase):
+    """ Test cases for the laser class in beam/beams/laserbeam.py """
     
+    def setUp(self):
+        self.params = {'Nx' : 2**8,
+                  'Ny' : 2**7,
+                  'Nt' : 2**6,
+                  'X' : 200,
+                  'Y' : 100,
+                  'T' : 100,
+                  'lam' : 1.0,
+                  'path' : 'tests/',
+                  'name' : 'testBeam',
+                  'threads' : 4,
+                  'cyl' : False
+                  }
+        self.pulse = laserpulse.Pulse(self.params)  
+        
+    def test_create_grid(self):
+        """ Test if the grid was created correctly """
+        testPulse = self.pulse
+        self.assertEqual(testPulse.t[0], -self.params['T']/2)
+        self.assertEqual(testPulse.x[0], -self.params['X']/2)
+        self.assertEqual(testPulse.y[0], -self.params['Y']/2)
+        self.assertEqual(testPulse.t[int(self.params['Nt']/2)], 0.0)
+        self.assertEqual(testPulse.x[int(self.params['Nx']/2)], 0.0)
+        self.assertEqual(testPulse.y[int(self.params['Ny']/2)], 0.0)
 
 #------------------------------------------------------------------------------
 if __name__ == '__main__':
