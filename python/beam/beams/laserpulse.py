@@ -139,6 +139,9 @@ class Pulse(beam.Beam):
         np.save(self.filePre + '_field_' + str(self.saveInd) + '.npy', e)
         self.saveInd += 1
         self.z.append(z)
+        
+    def save_z(self):
+        """ Save the z array. """
         np.save(self.filePre + '_z.npy', self.z)
         
     def load_field(self, ind):
@@ -180,12 +183,12 @@ class Pulse(beam.Beam):
     # Visualization functions
     #--------------------------------------------------------------------------
     
-    def plot_current_intensity(self):
+    def plot_current_tran_intensity(self):
         """ Plots the current intensity at the center of the pulse. """
-        im = self.plot_intensity(self.e[int(self.Nt/2), :, :], self.z[-1])
+        im = self.plot_tran_intensity(self.e[int(self.Nt/2), :, :], self.z[-1])
         plt.show(im)
         
-    def plot_intensity_at(self, ind):
+    def plot_tran_intensity_at(self, ind):
         """ Plots the intensity at a particular z distance.
         
         Parameters
@@ -195,12 +198,12 @@ class Pulse(beam.Beam):
         """
         e, z = self.load_field(ind)
         if not self.cyl:
-            im = self.plot_intensity(e[int(self.Nt/2), :, :], z)
+            im = self.plot_tran_intensity(e[int(self.Nt/2), :, :], z)
             plt.show(im)
         # TODO add in plots for cyl beams
     
-    def plot_intensity(self, e, z):
-        """ Create an intensity plot. """
+    def plot_tran_intensity(self, e, z):
+        """ Create a transverse intensity plot. """
         X = self.X
         Y = self.Y
         
@@ -208,11 +211,98 @@ class Pulse(beam.Beam):
         I = self.prep_data(I)
         im = plt.imshow(I, aspect='auto', extent=[-X/2, X/2, -Y/2, Y/2])
         cb = plt.colorbar()
-        cb.set_label(r'Intensity')
+        cb.set_label(r'Intensity ($\mathrm{10^{14}W/cm^2}$)')
         plt.set_cmap('viridis')
         plt.xlabel(r'x')
         plt.ylabel(r'y')
-        plt.title('Transverse intensity at z='+str(z)+' at pulse center')
+        plt.title('Transverse intensity at z='+str(z))
         return im
     
+    def plot_current_long_intensity(self):
+        """ Plots the current intensity at the in the x-t plane. """
+        im = self.plot_long_intensity(self.e[:, :, int(self.Ny/2)], self.z[-1])
+        plt.show(im)
+        
+    def plot_long_intensity_at(self, ind):
+        """ Plots the intensity in x-t at a particular z distance.
+        
+        Parameters
+        ----------
+        ind : int
+            The save index to plot the field at, see the _z file to find z.
+        """
+        e, z = self.load_field(ind)
+        if not self.cyl:
+            im = self.plot_long_intensity(e[:, :, int(self.Ny/2)], z)
+            plt.show(im)
+        # TODO add in plots for cyl beams
+    
+    def plot_long_intensity(self, e, z):
+        """ Create an longitudinal intensity plot. """
+        T = self.T
+        X = self.X
+        
+        I = self.intensity_from_field(e)
+        I = self.prep_data(I)
+        im = plt.imshow(I, aspect='auto', extent=[-T/2, T/2, -X/2, X/2])
+        cb = plt.colorbar()
+        cb.set_label(r'Intensity ($\mathrm{10^{14}W/cm^2}$)')
+        plt.set_cmap('viridis')
+        plt.xlabel(r't')
+        plt.ylabel(r'y')
+        plt.title('Longitudinal intensity at z='+str(z))
+        return im
+
+
+class GaussianPulse(Pulse):
+    """ A laser pulse class that creates a Gaussian electric field. 
+    
+    The pulse is Gaussian in both space and time.
+    
+    Parameters
+    ----------
+    E0 : double
+        The peak value of the electric field at the Gaussian waist in GV/m. 
+    waist : double
+        The spot size of the Gaussian waist.
+    z : double
+        The position relative to the waist to start the beam at. +z is after
+        the waist, -z is before the waist.
+    tau : double
+        The RMS duration of the pulse.
+    """
+    
+    def __init__(self, params):
+        self.keys.extend(
+                ['E0',
+                 'waist',
+                 'z0',
+                 'tau'])
+        super().__init__(params)
+    
+    def initialize_field(self):
+        """ Create the array to store the electric field values in. 
+        
+        Fills the field array with the field of a Gaussian pulse.
+        """
+        k = self.k
+        w0 = self.waist
+        z0 = self.z0
+        E0 = self.E0
+        t2 = np.reshape(self.t, (self.Nt, 1, 1))**2
+        x2 = np.reshape(self.x, (1, self.Nx, 1))**2
+        y2 = np.reshape(self.y, (1, 1, self.Ny))**2
+        # Calculate all the parameters for the Gaussian beam
+        r2 = x2 + y2
+        zr = np.pi*w0**2 / self.lam
+        if z0 != 0:
+            wz = w0 * np.sqrt(1+(z0/zr)**2)
+            psi = np.arctan(z0/zr)
+            Rz = z0 * (1 + (zr/z0)**2)
+            # Create the Gaussian field
+            e = E0 * w0 / wz * np.exp(-r2/wz**2-t2*np.pi/(2*self.tau**2)) \
+                 * np.exp(1j*(k*z0 + k*r2/(2*Rz) - psi))
+        else:
+            e = E0 * np.exp(-r2/w0**2-t2*np.pi/(2*self.tau**2))
+        super().initialize_field(e)
         
