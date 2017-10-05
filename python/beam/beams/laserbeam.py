@@ -165,7 +165,8 @@ class Laser(beam.Beam):
         """
         z = np.array(z, ndmin=1, dtype='double')
         self.e = laser.fourier_prop(self.e, self.x, self.y, z, self.lam, n, 
-                                    self.fft, self.ifft, self.save_field)
+                                    self.z[-1], self.fft, self.ifft,
+                                    self.save_field)
         self.e = np.array(self.e, dtype='complex128')
     
     # Visualization functions
@@ -207,14 +208,13 @@ class Laser(beam.Beam):
         return im
         
 
-
 class GaussianLaser(Laser):
     """ A laser beam class that creates a Gaussian electric field. 
     
     Parameters
     ----------
     E0 : double
-        The peak value of the electric field at the Gaussian waist. 
+        The peak value of the electric field at the Gaussian waist in GV/m. 
     waist : double
         The spot size of the Gaussian waist.
     z : double
@@ -226,7 +226,7 @@ class GaussianLaser(Laser):
         self.keys.extend(
                 ['E0',
                  'waist',
-                 'z'])
+                 'z0'])
         super().__init__(params)
     
     def initialize_field(self):
@@ -235,20 +235,23 @@ class GaussianLaser(Laser):
         Fills the field array with the field of a Gaussian pulse.
         """
         k = self.k
-        w0 = self.params['waist']
-        z = self.params['z']
-        E0 = self.params['E0']
-        x2 = np.reshape(self.x, (self.params['Nx'], 1))**2
-        y2 = np.reshape(self.y, (1, self.params['Ny']))**2
+        w0 = self.waist
+        z0 = self.z0
+        E0 = self.E0
+        x2 = np.reshape(self.x, (self.Nx, 1))**2
+        y2 = np.reshape(self.y, (1, self.Ny))**2
         # Calculate all the parameters for the Gaussian beam
         r2 = x2 + y2
-        zr = np.pi*w0**2 / self.params['lam']
-        wz = w0 * np.sqrt(1+(z/zr)**2)
-        Rz = z * (1 + (zr/z)**2)
-        psi = np.arctan(z/zr)
-        # Create the Gaussian field
-        e = E0 * w0 / wz * np.exp(-r2/wz**2) \
-                 * np.exp(1j*(k*z + k*r2/(2*Rz) - psi))
+        zr = np.pi*w0**2 / self.lam
+        if z0 != 0:
+            wz = w0 * np.sqrt(1+(z0/zr)**2)
+            Rz = z0 * (1 + (zr/z0)**2)
+            psi = np.arctan(z0/zr)
+            # Create the Gaussian field
+            e = E0 * w0 / wz * np.exp(-r2/wz**2) \
+                 * np.exp(1j*(k*z0 + k*r2/(2*Rz) - psi))
+        else:
+            e = E0 * np.exp(-r2/w0**2)
         super().initialize_field(e)
 
 
@@ -258,7 +261,7 @@ class SuperGaussianLaser(Laser):
     Parameters
     ----------
     E0 : double
-        The peak value of the electric fieldon the flattop. 
+        The peak value of the electric field on the flattop in GV/m. 
     waist : double
         The spot size of the flattop region.
     order : int
@@ -277,11 +280,11 @@ class SuperGaussianLaser(Laser):
         
         Fills the field array with the field of a Gaussian pulse.
         """
-        w0 = self.params['waist']
-        E0 = self.params['E0']
-        n = self.params['order']
-        x2 = np.reshape(self.x, (self.params['Nx'], 1))**2
-        y2 = np.reshape(self.y, (1, self.params['Ny']))**2
+        w0 = self.waist
+        E0 = self.E0
+        n = self.order
+        x2 = np.reshape(self.x, (self.Nx, 1))**2
+        y2 = np.reshape(self.y, (1, self.Ny))**2
         # Calculate all the parameters for the Gaussian beam
         r = np.sqrt(x2 + y2)
         e = E0 * np.exp(-(r/w0)**n)
