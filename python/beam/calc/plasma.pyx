@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #cython: boundscheck=False, wraparound=False, nonecheck=False
 #cython: overflowcheck=False, cdivision=True
-#cython: linetrace=False, binding=False
+#cython: linetrace=True, binding=True
 """
 Created on Mon Sep 18 16:59:45 2017
 
@@ -15,7 +15,7 @@ from numpy.fft import fftfreq
 from scipy import integrate
 from cython.parallel import prange
 from beam.calc import laser
-from beam.calc.ionization cimport adk_rate_static
+from beam.calc.ionization cimport adk_rate_linear
 
 # Load necessary C functions
 cdef extern from "complex.h" nogil:
@@ -29,8 +29,8 @@ cdef extern from "math.h" nogil:
 
 
 def plasma_refraction(double complex[:, :, :] E, double[:] x, double[:] y,
-                      double[:] z, double[:] t, double lam, double n0, fft,
-                      ifft, saveE, saven, atom):
+                      double[:] z, double[:] t, double lam, double n0, 
+                      double z0, fft, ifft, saveE, saven, atom):
     """ Propagate a laser pulse through a plasma accounting for refraction.
 
     Propogates a laser pulse through a region of partially ionized gas. This
@@ -63,24 +63,27 @@ def plasma_refraction(double complex[:, :, :] E, double[:] x, double[:] y,
     cdef double[:] fx = fftfreq(Nx, dx)
     cdef double[:] fy = fftfreq(Ny, dy)
     cdef double complex[:, :] ikz = laser.ikz_RS(fx, fy, lam, nh)
-    cdef double arg
+    cdef double complex arg
     cdef double rate
     for i in range(1, Nz):
         dz = z[i] - z[i-1]
         arg = 1j*2*np.pi*dz / lam
         for j in range(Nt):
             # Propagate the beam through
-            E[j, :, :] = laser.fourier_step(E[j, :, :], ikz, dz, fft, ifft)
+            Etemp = laser.fourier_step(E[j, :, :], ikz, dz, fft, ifft)
+            for k in range(Nx):
+                for l in range(Ny):
+                    E[j, k, l] = Etemp[k, l]
             with nogil:
                 for k in prange(Nx):
                     for l in range(Ny):
                         E[j, k, l] *= cexp(arg*nih[k, l])
                         # Ionize the gas
-                        rate = adk_rate_static(EI, cabs(E[j, k, l]), Z, ll, m)
+                        rate = adk_rate_linear(EI, cabs(E[j, k, l]), Z, ll, m)
                         n[k, l] = n0 - (n0 - n[k, l])*exp(-rate * dt)
                         nih[k, l] = n[k, l]*(nplasma - ngas) + n0*ngas
-        saveE(E)
-        saven(n)
+        saveE(E, z[i]+z0)
+        saven(n, i)
         # Reset the plasma density for the next slice
         with nogil:
             for k in prange(Nx):
