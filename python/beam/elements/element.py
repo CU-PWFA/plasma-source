@@ -6,6 +6,11 @@ Created on Thu Sep 28 09:08:32 2017
 @author: robert
 """
 
+import os
+import glob
+import numpy as np
+
+
 class Element:
     """ The base class for elements.
     
@@ -17,6 +22,13 @@ class Element:
         self.params = params
         self.check_params(params)
         self.params_to_attrs(params)
+        # Create a folder to store the beam data in
+        self.dirName = dirName = self.path + 'elements/element_' + self.name \
+                                 + '/'
+        self.filePre = dirName + self.name
+        if not os.path.exists(dirName):
+            os.makedirs(dirName)
+        self.clear_dir()
     
     def check_params(self, params):
         """ Check to ensure all required keys are in the params dictionary. """
@@ -28,4 +40,32 @@ class Element:
         """ Add all params as attributes of the class. """
         for key in params:
             setattr(self, key, params[key])
+            
+    # File managment
+    #--------------------------------------------------------------------------
+    
+    def save_initial(self):
+        """ Save the initial params object. """
+        np.save(self.filePre + '_params.npy', self.params)    
+    
+    def clear_dir(self):
+        """ Clear all .npy files from the beam directory. """ 
+        filelist = glob.glob(self.dirName + '*.npy')
+        for f in filelist:
+            os.remove(f)
+            
+    # Visualization functions
+    #--------------------------------------------------------------------------
+    
+    def prep_data(self, data):
+        """ Restructures data so that imshow displays it properly. 
+        
+        If data starts in (x, y) format, this will display it on the correct 
+        axis.
+        """
+        return np.flipud(np.transpose(data))
+    
+    def reconstruct_from_cyl(self, data):
+        """ Create a 2D field from a radial slice of a cylindircal field. """
+        # TODO implemet this function
     
