@@ -10,6 +10,7 @@ import os
 import glob
 import numpy as np
 
+
 class Beam:
     """ The base class for beams.
     
@@ -59,10 +60,12 @@ class Beam:
     # Physics functions
     #--------------------------------------------------------------------------
     
-    def intensity_from_field(self, e):
-        """ Calculates the time averaged intensity from the complex field. """
-        # TODO implement this function
-        return abs(e)**2
+    def intensity_from_field(self, e, n=1):
+        """ Calculates the time averaged intensity from the complex field. 
+        
+        This function goes from GV/m -> 10^14W/cm^2
+        """
+        return 1.32721e-3 * n * abs(e)**2
     
     # Visualization functions
     #--------------------------------------------------------------------------
