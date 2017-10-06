@@ -65,23 +65,22 @@ def plasma_refraction(double complex[:, :, :] E, double[:] x, double[:] y,
     cdef double complex[:, :] ikz = laser.ikz_RS(fx, fy, lam, nh)
     cdef double complex arg
     cdef double rate
+    cdef double complex[:, :] e = np.zeros((Nx, Ny), dtype='complex128')
     for i in range(1, Nz):
         dz = z[i] - z[i-1]
         arg = 1j*2*np.pi*dz / lam
         for j in range(Nt):
             # Propagate the beam through
-            Etemp = laser.fourier_step(E[j, :, :], ikz, dz, fft, ifft)
+            e = laser.fourier_step(E[j, :, :], ikz, dz, fft, ifft)
+            E[j, :, :] = e
+            #with nogil:
             for k in range(Nx):
                 for l in range(Ny):
-                    E[j, k, l] = Etemp[k, l]
-            with nogil:
-                for k in prange(Nx):
-                    for l in range(Ny):
-                        E[j, k, l] *= cexp(arg*nih[k, l])
-                        # Ionize the gas
-                        rate = adk_rate_linear(EI, cabs(E[j, k, l]), Z, ll, m)
-                        n[k, l] = n0 - (n0 - n[k, l])*exp(-rate * dt)
-                        nih[k, l] = n[k, l]*(nplasma - ngas) + n0*ngas
+                    E[j, k, l] *= cexp(arg*nih[k, l])
+                    # Ionize the gas
+                    rate = adk_rate_linear(EI, cabs(E[j, k, l]), Z, ll, m)
+                    n[k, l] = n0 - (n0 - n[k, l])*exp(-rate * dt)
+                    nih[k, l] = n[k, l]*(nplasma - ngas) + n0*ngas
         saveE(E, z[i]+z0)
         saven(n, i)
         # Reset the plasma density for the next slice

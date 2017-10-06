@@ -19,8 +19,9 @@ from Cython.Build import cythonize
 
 ext_modules=[
     Extension('beam.calc.*',
-              # sources=['beam/calc/*.pyx'], #Compile entire module
-              sources=['beam/calc/plasma.pyx'], #Compile specific files
+              sources=['beam/calc/*.pyx'], #Compile entire module
+              #sources=['beam/calc/ionization.pyx'],
+              #sources=['beam/calc/laser.pyx'], #Compile specific files
               libraries=["m", "fftw3"],
               include_dirs=[numpy.get_include(), 
                             os.path.join(venv.sys.base_prefix, 'include')],
