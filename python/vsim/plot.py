@@ -339,6 +339,8 @@ def phase_space_animation(params):
                 X plot limits, two element array [xmin, xmax].
             ylim : array-like
                 Y plot limits, two element array [ymin, ymax].
+            size : double, optional
+                The size of the particles in the plot.
     """
     Nt = params['Nt']
     path = params['path']
@@ -348,6 +350,11 @@ def phase_space_animation(params):
     
     pFile = get_filename(path, simName, species, 0)
     pAttrs = load.get_species_attrs(pFile, species)
+    
+    if 'size' in params:
+        size = params['size']
+    else:
+        size = 1.0
     
     if pAttrs['dim'] != 2: 
         print('Only 2D simulations are currently supported.')
@@ -374,7 +381,8 @@ def phase_space_animation(params):
 
     # Create the plot
     fig = plt.figure(figsize=(16, 9))
-    sct = plt.scatter(ptX, ptUx, c=ptWeight, cmap=plt.cm.get_cmap('hot_r'))
+    sct = plt.scatter(ptX, ptUx, c=ptWeight, cmap=plt.cm.get_cmap('hot_r'), 
+                      s=size)
     cb = plt.colorbar()
     cb.set_label('Particle weight')
     plt.xlabel(r'x ($\mu m$)')
@@ -397,7 +405,7 @@ def phase_space_animation(params):
             i = ind
         return sct,
 
-    ani = animation.FuncAnimation(fig, updatefig, blit=True, frames=Nt)
+    ani = animation.FuncAnimation(fig, updatefig, blit=True, frames=Nt-ind-2)
     ani.save(params['path']+'PhaseSpaceEvolution_'+species+'.mp4',
              fps=params['fps'])
 
