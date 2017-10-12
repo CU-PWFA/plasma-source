@@ -187,9 +187,13 @@ class Laser(beam.Beam):
         """
         e, z = self.load_field(ind)
         if not self.cyl:
-            im = self.plot_intensity(e, z)
-            plt.show(im)
-        # TODO add in plots for cyl beams
+            data = e
+        else:
+            x = self.x
+            y = self.y
+            data = self.reconstruct_from_cyl(x, e, x, y)
+        im = self.plot_intensity(data, z)
+        plt.show(im)
     
     def plot_intensity(self, e, z):
         """ Create an intensity plot. """

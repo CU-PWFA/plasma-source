@@ -145,7 +145,7 @@ class Pulse(beam.Beam):
         np.save(self.filePre + '_z.npy', self.z)
         
     def load_field(self, ind):
-        """ load the electric field at the specified index. 
+        """ Load the electric field at the specified index. 
         
         Parameters
         ----------
@@ -198,9 +198,13 @@ class Pulse(beam.Beam):
         """
         e, z = self.load_field(ind)
         if not self.cyl:
-            im = self.plot_tran_intensity(e[int(self.Nt/2), :, :], z)
-            plt.show(im)
-        # TODO add in plots for cyl beams
+            data = e[int(self.Nt/2), :, :]
+        else:
+            x = self.x
+            y = self.y
+            data = self.reconstruct_from_cyl(x, e[int(self.Nt/2), :], x, y)
+        im = self.plot_tran_intensity(data, z)
+        plt.show(im)
     
     def plot_tran_intensity(self, e, z):
         """ Create a transverse intensity plot. """
@@ -233,9 +237,9 @@ class Pulse(beam.Beam):
         """
         e, z = self.load_field(ind)
         if not self.cyl:
-            im = self.plot_long_intensity(e[:, :, int(self.Ny/2)], z)
-            plt.show(im)
-        # TODO add in plots for cyl beams
+            e = e[:, :, int(self.Ny/2)]
+        im = self.plot_long_intensity(e, z)
+        plt.show(im)
     
     def plot_long_intensity(self, e, z):
         """ Create an longitudinal intensity plot. """
@@ -249,7 +253,7 @@ class Pulse(beam.Beam):
         cb.set_label(r'Intensity ($\mathrm{10^{14}W/cm^2}$)')
         plt.set_cmap('viridis')
         plt.xlabel(r't')
-        plt.ylabel(r'y')
+        plt.ylabel(r'x')
         plt.title('Longitudinal intensity at z='+str(z))
         return im
 
