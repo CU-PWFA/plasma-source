@@ -30,7 +30,7 @@ cdef extern from "math.h" nogil:
 
 def plasma_refraction(double complex[:, :, :] E, double[:] x, double[:] y,
                       double[:] z, double[:] t, double lam, double n0, 
-                      double z0, fft, ifft, saveE, saven, atom):
+                      double z0, fft, ifft, saveE, saven, atom, loadn):
     """ Propagate a laser pulse through a plasma accounting for refraction.
 
     Propogates a laser pulse through a region of partially ionized gas. This
@@ -54,44 +54,43 @@ def plasma_refraction(double complex[:, :, :] E, double[:] x, double[:] y,
     cdef int ll = atom['l']
     cdef int m = atom['m']
     # Plasma density and index of refraction arrays
+    # n is total number density, ng + ne
     cdef double[:, :] n = np.zeros((Nx, Ny), dtype='double')
-    cdef double[:, :] nih = np.zeros((Nx, Ny), dtype='double')
+    cdef double[:, :] ne = np.zeros((Nx, Ny), dtype='double')
     cdef double ngas = atom['alpha'] * 5.0e-8
     cdef double nplasma = plasma_index(1.0, lam) - 1.0
     cdef double nh = 1.0 + ngas*n0
+    cdef double dn = nplasma - ngas
     # Pre-calculate the spatial frequencies
     cdef double[:] fx = fftfreq(Nx, dx)
     cdef double[:] fy = fftfreq(Ny, dy)
     cdef double complex[:, :] ikz = laser.ikz_RS(fx, fy, lam, nh)
     cdef double complex arg
     cdef double rate
+    cdef double Eavg
     cdef double complex[:, :] e = np.zeros((Nx, Ny), dtype='complex128')
     for i in range(1, Nz):
         dz = z[i] - z[i-1]
-        arg = 1j*2*np.pi*dz / lam
+        arg = 1j*2*np.pi*dz*dn / lam
         for j in range(Nt):
             # Propagate the beam through
             e = laser.fourier_step(E[j, :, :], ikz, dz, fft, ifft)
+            with nogil:
+                for k in prange(Nx):
+                    for l in range(Ny):
+                        e[k, l] *= cexp(arg*ne[k, l])
+                        # Ionize the gas
+                        Eavg = 0.5*(cabs(E[j, k, l]) + cabs(e[k, l]))
+                        rate = adk_rate_linear(EI, Eavg, Z, ll, m)
+                        ne[k, l] = n[k, l]-(n[k, l]-ne[k, l])*exp(-rate*dt)
             E[j, :, :] = e
-            #with nogil:
-            for k in range(Nx):
-                for l in range(Ny):
-                    E[j, k, l] *= cexp(arg*nih[k, l])
-                    # Ionize the gas
-                    rate = adk_rate_linear(EI, cabs(E[j, k, l]), Z, ll, m)
-                    n[k, l] = n0 - (n0 - n[k, l])*exp(-rate * dt)
-                    nih[k, l] = n[k, l]*(nplasma - ngas) + n0*ngas
         saveE(E, z[i]+z0)
-        saven(n, i)
-        # Reset the plasma density for the next slice
-        with nogil:
-            for k in prange(Nx):
-                for l in range(Ny):
-                    n[k, l] = 0.0
-                    nih[k, l] = 0.0                           
+        saven(ne, i)
+        n = loadn(i)
+        for k in range(Nx):
+            for l in range(Ny):
+                  ne[k, l] = 0.0                           
     return E
-
-# TODO, add a plasma refraction function for plasmas with variable density
 
 # TODO, move this to a helper function file
 cpdef double plasma_index(double n, double lam):
