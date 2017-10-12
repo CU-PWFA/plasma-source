@@ -35,7 +35,7 @@ class Plasma(element.Element):
     Z : int
         Length of the grid in the z direction, the grid goes from[0, Z].
     n0 : double
-        Gas number density for a uniform plasma in 10^17 cm^-3.
+        Nominal gas number density in 10^17 cm^-3.
     atom : dictionary
         EI : double
             Ionization energy in eV.
@@ -95,13 +95,69 @@ class Plasma(element.Element):
         np.save(self.filePre + '_y.npy', self.y)
         np.save(self.filePre + '_z.npy', self.z)
     
-    def save_density(self, n, ind):
+    def save_plasma_density(self, ne, ind):
         """ Save the plasma density to file at the given z ind. """
         if self.cyl:
-            n = n[:, int(self.Ny/2)]
-        np.save(self.filePre + '_plasmaDensity_' + str(ind) + '.npy', n)
-    
+            ne = ne[:, int(self.Ny/2)]
+        np.save(self.filePre + '_plasmaDensity_' + str(ind) + '.npy', ne)
+        
+    def load_plasma_density(self, ind):
+        """ Load the plasma density at the specified index. 
+        
+        Parameters
+        ----------
+        ind : int
+            The save index to load the field at.
+        
+        Returns
+        -------
+        ne : array-like
+            The plasma density at the specified index.
+        z : double
+            The z coordinate of the density.
+        """
+        ne = np.load(self.filePre + '_plasmaDensity_' + str(ind) + '.npy')
+        z = self.z[ind]
+        return ne, z
+        
     # Visualization functions
     #--------------------------------------------------------------------------
     
+    def plot_long_density_center(self):
+        """ Plots the plasma density in an x-z plane at y=0. """
+        Nz = self.Nz
+        en = np.zeros((Nz, self.Nx))
+        if not self.cyl:
+            for i in range(1, Nz):
+                en[i, :], z = self.load_plasma_density(i)[:, int(self.Ny/2)]
+        else:
+            for i in range(1, Nz):
+                en[i, :], z = self.load_plasma_density(i)
+        im = self.plot_long_density(en)
+        plt.show(im)
     
+    def plot_long_density(self, ne):
+        """ Create a longitudinal plasma density plot. """
+        Z = self.Z
+        X = self.X
+        
+        ne = self.prep_data(ne)
+        im = plt.imshow(ne, aspect='auto', extent=[0, Z, -X/2, X/2])
+        cb = plt.colorbar()
+        cb.set_label(r'Plasma density ($\mathrm{10^{17}cm^{-3}}$)')
+        plt.set_cmap('plasma')
+        plt.xlabel(r'z')
+        plt.ylabel(r'x')
+        plt.title('Longitudinal plasma density')
+        return im
+
+
+class UniformPlasma(Plasma):
+    """ A uniform density gas that can be ionized into a plasma. """
+    
+    def __init__(self, params):
+        super().__init__(params)
+    
+    def load_density(self, i):
+        """ Returns a 2D array of the number density, always constant. """
+        return np.full((self.Nx, self.Ny), self.n0, dtype='double')

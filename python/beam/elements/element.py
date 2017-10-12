@@ -65,7 +65,8 @@ class Element:
         """
         return np.flipud(np.transpose(data))
     
-    def reconstruct_from_cyl(self, data):
+    def reconstruct_from_cyl(self, r, data, x, y):
         """ Create a 2D field from a radial slice of a cylindircal field. """
-        # TODO implemet this function
+        dataOfR = interp1d(r, data, bounds_error=False, fill_value=0.0)
+        return dataOfR(np.sqrt(x[:, None]**2 + y[None, :]**2))
     
