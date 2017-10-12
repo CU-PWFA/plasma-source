@@ -580,7 +580,7 @@ def phase_space_energy_animation(params):
             i = ind
         return sct,
 
-    ani = animation.FuncAnimation(fig, updatefig, blit=True, frames=Nt)
+    ani = animation.FuncAnimation(fig, updatefig, blit=True, frames=Nt-ind-2)
     ani.save(params['path']+'PhaseSpaceEvolutionEnergy_'+species+'.mp4',
              fps=params['fps'])
 

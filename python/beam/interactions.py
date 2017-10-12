@@ -12,7 +12,7 @@ import beam.elements as elements
 import beam.calc.plasma as pcalc
 
 
-def pulse_uniform_gas(pulse, plasma):
+def pulse_plasma(pulse, plasma):
     """ Propagates a pulse through a gas, ionizing and refracting as it goes.
     
     Parameters
@@ -20,11 +20,24 @@ def pulse_uniform_gas(pulse, plasma):
     pulse : Pulse class
         The laser pulse to propagate through the plasma.
     plasma : Plasma class
-        The gas to propagate the laser pulse through, must be uniform.
+        The gas to propagate the laser pulse through.
     """
-    
     pulse.e = pcalc.plasma_refraction(pulse.e, pulse.x, pulse.y,
                       plasma.z, pulse.t, pulse.lam, plasma.n0, pulse.z[-1],
                       pulse.fft, pulse.ifft, pulse.save_field, 
-                      plasma.save_density, plasma.atom)
+                      plasma.save_plasma_density, plasma.atom, 
+                      plasma.load_density)
+
+
+def beam_phase(beam, phase):
+    """ Applies a phase mask to a optical beam, either a pulse or laser.
+    
+    Parameters
+    ----------
+    beam : Pulse or Laser class
+        The optical beam the apply the phase mask to.
+    phase : Phase class
+        The phase mask to apply to the beam.
+    """
+    beam.set_field(beam.e * np.exp(1j*phase.phi))
     
