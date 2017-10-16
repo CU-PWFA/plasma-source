@@ -96,7 +96,7 @@ class Laser(beam.Beam):
         if e is None:
             self.e = np.zeros((self.Nx, self.Ny), dtype='complex128')
         else:
-            self.e = e
+            self.e = np.array(e, dtype='complex128')
         self.saveInd = 0
         self.z = []
         self.save_field(self.e, 0.0)

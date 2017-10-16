@@ -37,7 +37,7 @@ def plasma_refraction(double complex[:, :, :] E, double[:] x, double[:] y,
     function accounts for refraction from the plasma. It determines the plasma
     density by calculating the ionization that has resulted from each temporal
     piece of the pulse. The results are stored in a file, only the central x-z
-    plane is recorded.
+    plane is recorded. Note that z=0 
     """
     cdef int i, j, k, l
     # TODO abstract this into its own function
@@ -68,8 +68,10 @@ def plasma_refraction(double complex[:, :, :] E, double[:] x, double[:] y,
     cdef double complex arg
     cdef double rate
     cdef double Eavg
+    cdef double dz
     cdef double complex[:, :] e = np.zeros((Nx, Ny), dtype='complex128')
     for i in range(1, Nz):
+        n = loadn(i-1)
         dz = z[i] - z[i-1]
         arg = 1j*2*np.pi*dz*dn / lam
         for j in range(Nt):
@@ -86,7 +88,6 @@ def plasma_refraction(double complex[:, :, :] E, double[:] x, double[:] y,
             E[j, :, :] = e
         saveE(E, z[i]+z0)
         saven(ne, i)
-        n = loadn(i)
         for k in range(Nx):
             for l in range(Ny):
                   ne[k, l] = 0.0                           

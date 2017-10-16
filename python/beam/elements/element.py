@@ -9,6 +9,7 @@ Created on Thu Sep 28 09:08:32 2017
 import os
 import glob
 import numpy as np
+from scipy.interpolate import interp1d
 
 
 class Element:

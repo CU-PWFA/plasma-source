@@ -86,6 +86,40 @@ def fourier_prop(double complex[:, :] E, double[:] x, double[:] y, double[:] z,
     return e
 
 
+def beam_prop(double complex[:, :] E, double[:] x, double[:] y, double[:] z,
+              double lam, double nh, double z0, fft, ifft, save, loadn):
+    """ Propagates a em wave through a region with a non-uniform index. 
+    
+    Propagates an electromagnetic wave through a region with a non-uniform
+    index of refraction. The index of refraction is expressed as a constant
+    plus a perturbation (homogenous plus inhomogenous). 
+    """
+    cdef int i, j, k
+    cdef int Nx = len(x)
+    cdef int Ny = len(y)
+    cdef int Nz = len(z)
+    cdef double dx = x[1] - x[0]
+    cdef double dy = y[1] - y[0]
+    cdef double[:, :] nih = np.zeros((Nx, Ny), dtype='double')
+    # Pre-calculate the spatial frequencies
+    cdef double[:] fx = fftfreq(Nx, dx)
+    cdef double[:] fy = fftfreq(Ny, dy)
+    cdef double complex[:, :] ikz = ikz_RS(fx, fy, lam, nh)
+    cdef double complex arg
+    cdef double dz
+    for i in range(1, Nz):
+        nih = loadn(i-1);
+        arg = 1j*2*np.pi*dz / lam
+        E = fourier_step(E, ikz, dz, fft, ifft)
+        with nogil:
+            for j in prange(Nx):
+                for k in range(Ny):
+                    E[j, k] *= cexp(arg*nih[j, k])
+        save(E, z[i]+z0)
+        dz = z[i+1] - z[i]
+    return E
+
+
 cpdef double complex[:, :] fourier_step(double complex[:, :] E,
                    double complex[:, :] ikz, double dz, fft, ifft):
     """ Propagates a field across a single step of length dz.

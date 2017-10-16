@@ -16,8 +16,11 @@ from propagation import propagation
 from propagation import plasma
 from lens import ray
 from scipy.interpolate import interp1d
+from scipy.special import jn
+from scipy.integrate import simps
 from ht import intht
 import os
+import warnings
 
 
 def Efunc(x, y, prop): # This is complicated because of the atan range
@@ -101,6 +104,71 @@ def kr_from_kz(kz, lam, S=None):
         return kr
 
 
+def bessel_expansion(params, z, I, n=0):
+    """ Calculate the required electric field to create the passed intensity.
+    
+    Calculates the transverse electric field profile necessary to create the
+    passed intensity distribution along the optical axis. This function
+    assigns a linear phase to the on axis electric field creating an intensity 
+    distribution with a constant width. 
+    
+    Parameters
+    ----------
+    params : dictionary
+        Params should have the following items:
+            Nr : int
+                Number of r values to calculate, each requires an integral.
+            R : double
+                Maximum radius to return the electric field at.
+            w : double
+                Radius to the first zero of the Bessel function.
+            lam : double
+                Wavelength of the electromagnetic wave in vacuum.
+            de : double, optional
+                Cutoff below which Fourier modes are ignored
+    z : array-like
+        Array of z coordinates along the optical axis. Must be evenly spcaed
+        for the FFT.
+    I : array-like
+        Desired on axis intensity in 10^14 W/cm^2.
+    n : int, optional
+        Order of the Bessel function, defaults to order zero.
+
+    Returns
+    -------
+    r : array-like
+        Array of radius coordinates the electric field is given at.
+    E : array-like
+        Electric field as a function of r on the boundary.
+    """
+    if 'de' in params: de = params['de']
+    else: de = 1e-8
+    Nz = len(z)
+    Nr = params['Nr']
+    lam = params['lam']
+    r = np.linspace(0, params['R'], Nr)
+    E = np.zeros(Nr, dtype='complex128')
+    Ez = ionization.field_from_intensity(I)
+    k = 2*np.pi/lam
+    dz = z[1] - z[0]
+    # Shift frequencies
+    kr0 = 2.4048 / params['w']
+    kz0 = np.sqrt(k**2 - kr0**2)
+    kz = 2*np.pi * fftshift(fftfreq(Nz, dz)) + kz0
+    e = fftshift(fft(Ez)) / Nz
+    # Remove inaginary and very small terms
+    sel = np.logical_and(abs(e) > de, kz < k)
+    kz = kz[sel]
+    e = e[sel] * Nz * dz / np.sqrt(2*np.pi)
+    # Calculate the spatial spectrum in Bessel space
+    kr = np.sqrt(k**2 - kz**2)
+    S = e / kz
+    E = simps(S[:, None] * jn(n, kr[:, None]*r[None, :]) * kr[:, None], kr,
+              axis=0) / np.sqrt(2*np.pi)
+    return r, E
+    
+
+
 def uniform_bessel(params, Ez, z, n=0):
     """ Calculate the required electric field to create the passed intensity.
 
@@ -139,7 +207,8 @@ def uniform_bessel(params, Ez, z, n=0):
     E : array-like
         Electric field as a function of r on the boundary.
     """
-    #TODO figure out if the normalization is just not enough steps or an error
+    warnings.warn('This function is deprecated, use bessel_expansion',
+                  DeprecationWarning)
     lam = params['lam']
     k = 2*np.pi/lam
     kz, S = spectrum_from_axis(Ez, z)

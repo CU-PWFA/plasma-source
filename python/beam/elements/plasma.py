@@ -16,7 +16,9 @@ class Plasma(element.Element):
     
     This class stores the gas and plasma density for a region where a laser
     pulse can pass through. It contains information about the gas density and
-    the state of ionization.
+    the state of ionization. Note that z denotes the start position of each
+    cell, not the center. The plasma is only defined for cells [0:Nz-2], a
+    total of Nz-1 cells.
     
     Parameters
     ----------
@@ -126,14 +128,15 @@ class Plasma(element.Element):
     def plot_long_density_center(self):
         """ Plots the plasma density in an x-z plane at y=0. """
         Nz = self.Nz
-        en = np.zeros((Nz, self.Nx))
+        ne = np.zeros((Nz, self.Nx))
         if not self.cyl:
             for i in range(1, Nz):
-                en[i, :], z = self.load_plasma_density(i)[:, int(self.Ny/2)]
+                ne[i, :], z = self.load_plasma_density(i)[:, int(self.Ny/2)]
         else:
             for i in range(1, Nz):
-                en[i, :], z = self.load_plasma_density(i)
-        im = self.plot_long_density(en)
+                ne[i, :], z = self.load_plasma_density(i)
+        plt.figure(figsize=(10, 6))
+        im = self.plot_long_density(ne)
         plt.show(im)
     
     def plot_long_density(self, ne):
