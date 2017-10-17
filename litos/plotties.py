@@ -75,20 +75,23 @@ for i in range(0,nstep):
     beta[i]  = ebeam[i]["beta"]/(1e-2) # m
     alpha[i] = ebeam[i]["alpha"]
     gamma[i] = ebeam[i]["gamma"] # 1/m
-    ebeam_rms = pb.calc_ebeam_rms(ebeam,i,frac)
+    ebeam_rms = ba.calc_ebeam_rms(ebeam,i,frac)
     rms_x[i]     = ebeam_rms["x"]/(1e-6)
     rms_x_eps[i] = ebeam_rms["x_eps"]/(1e-6)
-    ebeam_kurt = pb.calc_ebeam_kurt(ebeam,plasma,ebeam_rms,i,frac)
+#    ebeam_kurt = ba.calc_ebeam_kurt(ebeam,plasma,ebeam_rms,i,frac)
 #    rn_kurt[i] = ebeam_kurt["rn"]
 #    x_kurt[i]    = stats.kurtosis(ebeam[i]["x"],0,True)
     [u,v] = ba.real2norm_coords(ebeam[i]["x"],ebeam[i]["xp"],\
-                                ebeam[i]["beta"],ebeam[i]["alpha"])
+                                ebeam_rms["x_beta"],ebeam_rms["x_alpha"])
+    
+    beta[i] = ebeam_rms["x_beta"]/(1e-2)
+    
     J = (u**2+v**2)/2
     phi = np.arctan2(v,u)
     un = np.sqrt(2*J*ebeam[i]["gbC"])*np.cos(phi)/np.sqrt(rms_x_eps[i])
     un_kurt[i] = stats.kurtosis(un,0,True)
     
-    J_kurt[i] = stats.kurtosis(J,0,True)
+    J_kurt[i] = stats.kurtosis(J,0,False,True)
     
 #    J_kurt[i] = stats.kurtosis(2*J*ebeam[i]["gbC"]/rms_x_eps[i],0,True)
 #    rn = np.arctan2(v,u)
@@ -257,7 +260,7 @@ TTbeam  = [Tbeta,Talpha,Tgamma]
 TTmatch = [Tbeta_m,0,1.0/Tbeta_m]
 
 BB      = ba.calc_Bmag(TTbeam,TTmatch)
-print(BB)
+print('Bmag: ',BB)
 
 
 #figA = plt.figure()
@@ -272,7 +275,9 @@ ax1.plot(s,v_beta/10,color='b',linestyle='dashed')
 ax1.plot(s,beta,color='b',linestyle='solid')
 #ax1.set_ylim([0,2.0*norm1])
 ax1.set_xlim([0.5,3.0])
-ax1.set_ylim([0,2])
+#ax1.set_ylim([0,2])
+ax1.set_ylim([0,4.0])
+
 #ax1.set_xlabel('z [m]')
 ax1.set_ylabel(r'$\beta$ [cm]',color='b')
 ax1.tick_params('y',colors='b')
@@ -300,8 +305,8 @@ ax2.text(0.50, 0.80, r'$n_{p,0} = %2.1e$'%plasma["bulk"]["npl0"],
 
 #norm2 = min(v_rms_x)
 #ax2  = ax1.twinx()
-ax1.plot(s,v_rms_x/10,color='r',linestyle='dashed')
-ax1.plot(s,rms_x,color='r',linestyle='solid')
+#ax1.plot(s,v_rms_x/10,color='r',linestyle='dashed')
+#ax1.plot(s,rms_x,color='r',linestyle='solid')
 #ax2.set_ylabel(r'$\sigma_{r,{\rm rms}}$ [$\mu$m]',color='r')
 #ax2.tick_params('y',colors='r')
 ##ax2.set_ylim([0,1.5*norm2])
@@ -313,13 +318,14 @@ ax1.plot(s,rms_x,color='r',linestyle='solid')
 #make_patch_spines_invisible(ax3)
 #ax3.spines["right"].set_visible(True)
 ax3.plot(s,rms_x_eps/rms_x_eps[0],color='k',linestyle='-')
+ax3.plot(s,BB*np.ones(len(s)),color='k',linestyle='-.')
 #ax3.plot(s,x_95_eps/x_95_eps[0],color='k',linestyle='dashed')
 ax3.set_ylabel(r'$\varepsilon_n/\varepsilon_{n,0}$',color='k')
 ax3.tick_params('y',colors='k')
 ax3.set_xlim([0.5,3.0])
 ax3.set_xlabel('z [m]')
 #ax3.set_ylim([0.9*min(rms_x_eps),1.1*max(rms_x_eps)])
-ax3.set_ylim([0.975,1.1*BB])
+ax3.set_ylim([0.975,1.075])
 
 
 ax4 = ax3.twinx()
@@ -328,10 +334,10 @@ ax4 = ax3.twinx()
 #ax4.spines["right"].set_visible(True)
 ax4.plot(s,J_kurt/J_kurt[0],color='r',linestyle='--')
 #ax3.plot(s,x_95_eps/x_95_eps[0],color='k',linestyle='dashed')
-ax4.set_ylabel(r'$K_{r}$',color='r')
+ax4.set_ylabel(r'$K_J/K_{J,0}$',color='r')
 ax4.tick_params('y',colors='r')
 #ax3.set_ylim([0.9*min(rms_x_eps),1.1*max(rms_x_eps)])
-ax4.set_ylim([0.975,1.1*BB])
+ax4.set_ylim([0.975,1.075])
 
 
 #ax5  = ax3.twinx()
@@ -345,8 +351,8 @@ xlabel_locs = [0.5,1.0,1.5,2.0,2.5,3.0]
 xlabels = [0,0.5,1.0,1.5,2.0,2.5]
 plt.xticks(xlabel_locs, xlabels)
 
-ax1.set_xlim([0.5,3.0])
-ax3.set_xlim([0.5,3.0])
+ax1.set_xlim([1.0,2.5])
+ax3.set_xlim([1.0,2.5])
 
 #ax5  = ax1.twinx()
 

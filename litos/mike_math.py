@@ -27,5 +27,6 @@ def calc_rms(x,frac=1.0):
         dx.sort()
         ndx = round(frac*len(dx))
         dx = dx[:ndx]
-    rms = np.sqrt(np.sum(dx**2)/(len(dx)-1))
+#    rms = np.sqrt((np.sum(dx**2-mu**2))/(len(dx)-1))
+    rms = np.sqrt((np.sum(dx**2))/(len(dx)-1))
     return rms

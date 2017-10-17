@@ -18,15 +18,15 @@ import mike_math as mm
 if __name__ == '__main__':
     
     # define plasma bulk (flat-top) properties
-    npl0   = 5e17 # cm^-3
+    npl0   = 1e16 # cm^-3
     dEds0  = np.sqrt(npl0/(1e17))*10e9 # eV/m
     dgds0  = dEds0/nc.me
     L_ft   = 0.50 # m
     
     # define plasma up-ramp
     shape_up = 'gauss'
-    hw_up    = 0.119 #0.05 # m
-    L_up     = 1.50 # m
+    hw_up    = 0.1205 #0.05 # m
+    L_up     = 1.5 # m
     top_up   = L_up # m
     
     # define plasma down-ramp
@@ -45,10 +45,12 @@ if __name__ == '__main__':
 #    kp0    = wp0/nc.c # m^-1, plasma wave number
 #    kb     = kp0/np.sqrt(2*gbC)
 #    beta   = 1.0/kb
-#
+
+
 #    beta   = 100*beta
-#
+
 #    eps    = 1.0/(4*kb*gbC)
+
 
     alpha  = 0.00
     gamma  = (1.0+alpha**2)/beta # 1/m
@@ -63,11 +65,11 @@ if __name__ == '__main__':
     parts = pb.make_parts(twiss[0],npart,dist)
     ebeam = pb.make_ebeam(s0,twiss[0],parts[0])
 
-#    # add offset to bunch
-#    ebeam0[0]["x"] += 10e-6 # m
+    # add offset to bunch at vac. waist
+    ebeam[0]["xp"] += 10e-6 # m
     
     # set beam waist position
-    waist = -0.272 #-0.105 # m, waist location w.r.t L_up
+    waist = -0.28 #-0.105 # m, waist location w.r.t L_up
     s_w   = L_up + waist # m
     
     # define longitudinal steps
