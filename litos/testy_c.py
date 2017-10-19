@@ -139,11 +139,11 @@ if __name__ == '__main__':
     
     # specify waist scan values
     nwaist = 101
-    waist  = np.linspace(-1.00,0.20,nwaist) # m, waist location w.r.t. L_up
+    waist  = np.linspace(-0.50,-0.10,nwaist) # m, waist location w.r.t. L_up
 #    waist  = np.linspace(-0.35,-0.55,nwaist) # m, waist location w.r.t. L_up
     # specify ramp half-width scan values
     nhw_up = 101
-    hw_up  = np.linspace(0.00,0.50,nhw_up) # m, HWHM of up-ramp
+    hw_up  = np.linspace(0.05,0.20,nhw_up) # m, HWHM of up-ramp
 #    hw_up  = np.linspace(0.12,0.18,nhw_up) # m, HWHM of up-ramp
 
     # perform scan
@@ -189,7 +189,7 @@ if __name__ == '__main__':
                 cmap=cm.Vega20c,\
                 linewidth=2.0)
     cbar = plt.colorbar()
-    plt.scatter(Mmin_x,Mmin_y,color='k')
+    plt.scatter(Bmin_x,Bmin_y,color='k')
     cbar.ax.set_ylabel(r'$log_{10}(B_m)$')
     plt.ylabel(r'$\sigma_{\rm hw}$ [m]')
     plt.xlabel(r'$z_{\beta^{*}}$ [m]')
