@@ -49,7 +49,7 @@ cdef double adk_rate_static(double EI, double E, int Z, int l, int m) nogil:
         Ionization rate in 1/fs.
     """
     cdef double n = 3.68859*Z / sqrt(EI)
-    cdef double E0 = EI**(3/2)
+    cdef double E0 = EI**1.5
     # TODO replace the scipy gamma and factorial with a C version
     cdef double Cn2 = 4**n / (n*tgamma(2*n))
     cdef double N = 1.51927 * (2*l+1) * factorial(l+abs(m)) \

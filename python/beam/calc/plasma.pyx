@@ -30,7 +30,7 @@ cdef extern from "math.h" nogil:
 
 def plasma_refraction(double complex[:, :, :] E, double[:] x, double[:] y,
                       double[:] z, double[:] t, double lam, double n0, 
-                      double z0, fft, ifft, saveE, saven, atom, loadn):
+                      double z0, fft, ifft, saveE, saven, atom, loadn, loadne):
     """ Propagate a laser pulse through a plasma accounting for refraction.
 
     Propogates a laser pulse through a region of partially ionized gas. This
@@ -72,6 +72,7 @@ def plasma_refraction(double complex[:, :, :] E, double[:] x, double[:] y,
     cdef double complex[:, :] e = np.zeros((Nx, Ny), dtype='complex128')
     for i in range(1, Nz):
         n = loadn(i-1)
+        ne = loadne(i-1)
         dz = z[i] - z[i-1]
         arg = 1j*2*np.pi*dz*dn / lam
         for j in range(Nt):
@@ -87,7 +88,7 @@ def plasma_refraction(double complex[:, :, :] E, double[:] x, double[:] y,
                         ne[k, l] = n[k, l]-(n[k, l]-ne[k, l])*exp(-rate*dt)
             E[j, :, :] = e
         saveE(E, z[i]+z0)
-        saven(ne, i)
+        saven(ne, i-1)
         for k in range(Nx):
             for l in range(Ny):
                   ne[k, l] = 0.0                           
