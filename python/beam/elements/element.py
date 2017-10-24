@@ -17,7 +17,9 @@ class Element:
     
     Implements base methods to check class construction.
     """
-    keys = []
+    keys = ['name',
+            'path',
+            'load']
     
     def __init__(self, params):
         self.params = params
@@ -27,9 +29,13 @@ class Element:
         self.dirName = dirName = self.path + 'elements/element_' + self.name \
                                  + '/'
         self.filePre = dirName + self.name
-        if not os.path.exists(dirName):
-            os.makedirs(dirName)
-        self.clear_dir()
+        if self.load is True:
+            self.load_params()
+            self.load_element()
+        elif self.load is False:
+            if not os.path.exists(dirName):
+                os.makedirs(dirName)
+            self.clear_dir()
     
     def check_params(self, params):
         """ Check to ensure all required keys are in the params dictionary. """
@@ -41,6 +47,9 @@ class Element:
         """ Add all params as attributes of the class. """
         for key in params:
             setattr(self, key, params[key])
+    
+    def load_element(self):
+        """ Prototype for child specific loading setup. """
             
     # File managment
     #--------------------------------------------------------------------------
@@ -54,6 +63,12 @@ class Element:
         filelist = glob.glob(self.dirName + '*.npy')
         for f in filelist:
             os.remove(f)
+            
+    def load_params(self):
+        """ Load the params from a saved file"""
+        self.params = np.load(self.filePre + '_params.npy').item()
+        self.check_params(self.params)
+        self.params_to_attrs(self.params)
             
     # Visualization functions
     #--------------------------------------------------------------------------

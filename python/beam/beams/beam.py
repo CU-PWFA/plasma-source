@@ -10,6 +10,7 @@ import os
 import glob
 import numpy as np
 from scipy.interpolate import interp1d
+from scipy.integrate import simps
 
 
 class Beam:
@@ -18,7 +19,8 @@ class Beam:
     Implements base methods to check class construction.
     """
     keys = ['name',
-            'path']
+            'path',
+            'load']
     
     # Initialization functions
     #--------------------------------------------------------------------------
@@ -30,9 +32,13 @@ class Beam:
         # Create a folder to store the beam data in
         self.dirName = dirName = self.path + 'beams/beam_' + self.name + '/'
         self.filePre = dirName + self.name
-        if not os.path.exists(dirName):
-            os.makedirs(dirName)
-        self.clear_dir()
+        if self.load is True:
+            self.load_params()
+            self.load_beam()
+        elif self.load is False:
+            if not os.path.exists(dirName):
+                os.makedirs(dirName)
+            self.clear_dir()
     
     def check_params(self, params):
         """ Check to ensure all required keys are in the params dictionary. """
@@ -44,6 +50,9 @@ class Beam:
         """ Add all params as attributes of the class. """
         for key in params:
             setattr(self, key, params[key])
+    
+    def load_beam(self):
+        """ Prototype for child specific loading setup. """
     
     # File managment
     #--------------------------------------------------------------------------
@@ -57,6 +66,12 @@ class Beam:
         filelist = glob.glob(self.dirName + '*.npy')
         for f in filelist:
             os.remove(f)
+            
+    def load_params(self):
+        """ Load the params from a saved file"""
+        self.params = np.load(self.filePre + '_params.npy').item()
+        self.check_params(self.params)
+        self.params_to_attrs(self.params)
     
     # Physics functions
     #--------------------------------------------------------------------------
@@ -67,6 +82,15 @@ class Beam:
         This function goes from GV/m -> 10^14W/cm^2
         """
         return 1.32721e-3 * n * abs(e)**2
+    
+    def total_cyl_power(self, r, I):
+        """ Calculates the total power in the beam.
+        
+        The functions takes an array of intensity values in 10^14W/cm^2 and an
+        array of radii in um and returns power in TW.
+        """
+        r = r*1e-4 # Convert to cm
+        return 2*np.pi*simps(r*I, r)*100
     
     # Visualization functions
     #--------------------------------------------------------------------------

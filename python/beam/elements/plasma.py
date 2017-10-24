@@ -54,6 +54,8 @@ class Plasma(element.Element):
         the path to store all output data in.
     name : string
         The name of the beam, used for naming files and folders.
+    load : bool
+        Boolean specifying if we are loading an existing object.
     cyl : bool
         Whether the plasma is cylindrically symmetric or not. Controls whether
         the entire transverse density is saved or only a 1D slice.
@@ -68,6 +70,7 @@ class Plasma(element.Element):
             'atom',
             'path',
             'name',
+            'load',
             'cyl']
     
     # Initialization functions
@@ -76,7 +79,8 @@ class Plasma(element.Element):
     def __init__(self, params):
         super().__init__(params)
         self.create_grid()
-        self.save_initial()
+        if self.load is False:
+            self.save_initial()
         
     def create_grid(self):
         """ Create an x-y rectangular grid. """
@@ -125,7 +129,7 @@ class Plasma(element.Element):
     # Visualization functions
     #--------------------------------------------------------------------------
     
-    def plot_long_density_center(self):
+    def plot_long_density_center(self, lim=None):
         """ Plots the plasma density in an x-z plane at y=0. """
         Nz = self.Nz
         ne = np.zeros((Nz, self.Nx))
@@ -136,10 +140,10 @@ class Plasma(element.Element):
             for i in range(1, Nz):
                 ne[i, :], z = self.load_plasma_density(i)
         plt.figure(figsize=(10, 6))
-        im = self.plot_long_density(ne)
+        im = self.plot_long_density(ne, lim)
         plt.show(im)
     
-    def plot_long_density(self, ne):
+    def plot_long_density(self, ne, lim=None):
         """ Create a longitudinal plasma density plot. """
         Z = self.Z
         X = self.X
@@ -151,6 +155,8 @@ class Plasma(element.Element):
         plt.set_cmap('plasma')
         plt.xlabel(r'z')
         plt.ylabel(r'x')
+        if lim is not None:
+            plt.ylim(lim)
         plt.title('Longitudinal plasma density')
         return im
 
@@ -161,6 +167,40 @@ class UniformPlasma(Plasma):
     def __init__(self, params):
         super().__init__(params)
     
-    def load_density(self, i):
+    def load_num_den(self, i):
         """ Returns a 2D array of the number density, always constant. """
         return np.full((self.Nx, self.Ny), self.n0, dtype='double')
+    
+    def load_plasma_den(self, i):
+        """ Returns a 2D array of plasma density, always 0. """
+        return np.zeros((self.Nx, self.Ny), dtype='double')
+
+
+class ExistingPlasma(Plasma):
+    """ A uniform gas that is already partially ionized. 
+    
+    This class is meant to be used after a plasma has already been created and
+    you would like to send an additional ionizing pulse through it.
+    """
+    
+    def __init__(self, params):
+        self.keys.extend(
+                ['sourcePath',
+                 'sourceName'])
+        super().__init__(params)
+        self.sourceDir = self.sourcePath + 'elements/element_' \
+                         + self.sourceName + '/'
+        self.sourcePre = self.sourceDir + self.sourceName
+        
+    def load_num_den(self, i):
+        """ Returns a 2D array of the number density, always constant. """
+        return np.full((self.Nx, self.Ny), self.n0, dtype='double')
+    
+    def load_plasma_den(self, i):
+        """ Returns a 2D array of plasma density, always 0. """
+        ne = np.load(self.sourcePre + '_plasmaDensity_' + str(i) + '.npy')
+        if self.cyl is True:
+            x = self.x
+            y = self.y
+            ne = self.reconstruct_from_cyl(x, ne, x, y)
+        return ne

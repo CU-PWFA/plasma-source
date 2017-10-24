@@ -39,6 +39,8 @@ class Laser(beam.Beam):
         the path to store all output data in.
     name : string
         The name of the beam, used for naming files and folders.
+    load : bool
+        Boolean specifying if we are loading an existing object.
     threads : int
         The number of processors to parallelize the fft over.
     cyl : bool
@@ -52,6 +54,7 @@ class Laser(beam.Beam):
             'lam',
             'path',
             'name',
+            'load',
             'threads',
             'cyl']
     
@@ -64,8 +67,9 @@ class Laser(beam.Beam):
         # Create internal variables
         self.create_grid()
         self.create_fft()
-        self.initialize_field()
-        self.save_initial()        
+        if self.load is False:
+            self.initialize_field()
+            self.save_initial()        
     
     def create_grid(self):
         """ Create an x-y rectangular grid. """
@@ -100,6 +104,18 @@ class Laser(beam.Beam):
         self.saveInd = 0
         self.z = []
         self.save_field(self.e, 0.0)
+    
+    def load_beam(self):
+        """ Load the beam, specifically load the z grid and saveInd. """
+        self.z = np.load(self.filePre + '_z.npy')
+        self.saveInd = len(self.z)
+        e = self.load_field(self.saveInd - 1)
+        if not self.cyl:
+            self.e = e
+        else:
+            x = self.x
+            y = self.y
+            self.e = self.reconstruct_from_cyl(x, e, x, y)
         
     # Getters and setters
     #--------------------------------------------------------------------------
@@ -125,6 +141,7 @@ class Laser(beam.Beam):
         np.save(self.filePre + '_field_' + str(self.saveInd) + '.npy', e)
         self.saveInd += 1
         self.z.append(z)
+        self.save_z()
         
     def save_z(self):
         """ Save the z array. """
@@ -172,12 +189,12 @@ class Laser(beam.Beam):
     # Visualization functions
     #--------------------------------------------------------------------------
     
-    def plot_current_intensity(self):
+    def plot_current_intensity(self, lim=None):
         """ Plots the current intensity of the beam. """
-        im = self.plot_intensity(self.e, self.z[-1])
+        im = self.plot_intensity(self.e, self.z[-1], lim)
         plt.show(im)
         
-    def plot_intensity_at(self, ind):
+    def plot_intensity_at(self, ind, lim=None):
         """ Plots the intensity at a particular z distance.
         
         Parameters
@@ -192,10 +209,10 @@ class Laser(beam.Beam):
             x = self.x
             y = self.y
             data = self.reconstruct_from_cyl(x, e, x, y)
-        im = self.plot_intensity(data, z)
+        im = self.plot_intensity(data, z, lim)
         plt.show(im)
     
-    def plot_intensity(self, e, z):
+    def plot_intensity(self, e, z, lim=None):
         """ Create an intensity plot. """
         X = self.X
         Y = self.Y
@@ -208,6 +225,9 @@ class Laser(beam.Beam):
         plt.set_cmap('viridis')
         plt.xlabel(r'x')
         plt.ylabel(r'y')
+        if lim is not None:
+            plt.xlim(lim)
+            plt.ylim(lim)
         plt.title('Transverse intensity at z='+str(z))
         return im
         

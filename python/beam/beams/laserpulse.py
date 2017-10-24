@@ -43,6 +43,8 @@ class Pulse(beam.Beam):
         the path to store all output data in.
     name : string
         The name of the beam, used for naming files and folders.
+    load : bool
+        Boolean specifying if we are loading an existing object.
     threads : int
         The number of processors to parallelize the fft over.
     cyl : bool
@@ -58,6 +60,7 @@ class Pulse(beam.Beam):
             'lam',
             'path',
             'name',
+            'load',
             'threads',
             'cyl']
     
@@ -70,8 +73,9 @@ class Pulse(beam.Beam):
         # Create internal variables
         self.create_grid()
         self.create_fft()
-        self.initialize_field()
-        self.save_initial()
+        if self.load is False:
+            self.initialize_field()
+            self.save_initial()
     
     def create_grid(self):
         """ Create an x-y rectangular grid and temporal grid. """
@@ -110,10 +114,24 @@ class Pulse(beam.Beam):
         if e is None:
             self.e = np.zeros((self.Nt, self.Nx, self.Ny,), dtype='complex128')
         else:
-            self.e = e
+            self.e = np.array(e, dtype='complex128')
         self.saveInd = 0
         self.z = []
         self.save_field(self.e, 0.0)
+        
+    def load_beam(self):
+        """ Load the beam, specifically load the z grid and saveInd. """
+        self.z = np.load(self.filePre + '_z.npy')
+        self.saveInd = len(self.z)
+        e = self.load_field(self.saveInd - 1)
+        if not self.cyl:
+            self.e = e
+        else:
+            self.e = np.zeros((self.Nt, self.Nx, self.Ny,), dtype='complex128')
+            x = self.x
+            y = self.y
+            for i in range(self.Nt):
+                self.e[i, :, :] = self.reconstruct_from_cyl(x, e[i, :], x, y)
         
     # Getters and setters
     #--------------------------------------------------------------------------
@@ -139,6 +157,7 @@ class Pulse(beam.Beam):
         np.save(self.filePre + '_field_' + str(self.saveInd) + '.npy', e)
         self.saveInd += 1
         self.z.append(z)
+        self.save_z()
         
     def save_z(self):
         """ Save the z array. """
