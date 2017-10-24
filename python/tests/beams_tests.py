@@ -22,9 +22,10 @@ class beam_class_test_cases(unittest.TestCase):
     """ Test cases for the beam class in beam/beams/beam.py """
     
     def setUp(self):
-        params = {'name' : 'testBeam',
-                  'path' : 'tests/'}
-        self.beam = beam.Beam(params)
+        self.params = {'name' : 'testBeam',
+                  'path' : 'tests/',
+                  'load' : False}
+        self.beam = beam.Beam(self.params)
     
     def test_missing_check_params(self):
         """ Test if check_params catches a missing parameter """
@@ -35,18 +36,14 @@ class beam_class_test_cases(unittest.TestCase):
     
     def test_additional_check_params(self):
         """ Ensure check_params allows additional keys in params """
-        params = {'name' : 'testBeam',
-                  'path' : 'tests/',
-                  'test' : 15}
-        testBeam = beam.Beam(params)
-        self.assertEqual(testBeam.test, params['test'])
+        self.params['test'] = 15
+        testBeam = beam.Beam(self.params)
+        self.assertEqual(testBeam.test, self.params['test'])
     
     def test_params_to_attrs(self):
         """ Test if the parameter attributes are added as attributes """
         testBeam = self.beam
-        params = {'name' : 'testBeam',
-                  'path' : 'tests/',
-                  'test1' : 12,
+        params = {'test1' : 12,
                   'test2' : 'string'}
         testBeam.params_to_attrs(params)
         self.assertEqual(testBeam.test1, params['test1'])
@@ -67,7 +64,8 @@ class laser_class_test_cases(unittest.TestCase):
                   'path' : 'tests/',
                   'name' : 'testBeam',
                   'threads' : 4,
-                  'cyl' : False
+                  'cyl' : False,
+                  'load' : False
                   }
         self.beam = laserbeam.Laser(self.params)
         
@@ -154,7 +152,8 @@ class pulse_class_test_cases(unittest.TestCase):
                   'path' : 'tests/',
                   'name' : 'testBeam',
                   'threads' : 4,
-                  'cyl' : False
+                  'cyl' : False,
+                  'load' : False
                   }
         self.pulse = laserpulse.Pulse(self.params)  
         

@@ -20,8 +20,10 @@ class element_class_test_cases(unittest.TestCase):
     """ Test cases for the beam class in beam/elements/element.py """
     
     def setUp(self):
-        params = {}
-        self.elem = element.Element(params)
+        self.params = {'name' : 'testElement',
+                  'path' : 'tests/',
+                  'load' : False}
+        self.elem = element.Element(self.params)
     
     def test_missing_check_params(self):
         """ Test if check_params catches a missing parameter """
@@ -32,9 +34,9 @@ class element_class_test_cases(unittest.TestCase):
     
     def test_additional_check_params(self):
         """ Ensure check_params allows additional keys in params """
-        params = {'test' : 15}
-        testElem = element.Element(params)
-        self.assertEqual(testElem.test, params['test'])
+        self.params['test'] = 15
+        testElem = element.Element(self.params)
+        self.assertEqual(testElem.test, self.params['test'])
     
     def test_params_to_attrs(self):
         """ Test if the parameter attributes are added as attributes """
