@@ -10,6 +10,7 @@ import numpy as np
 import beam.beams as beams
 import beam.elements as elements
 import beam.calc.plasma as pcalc
+import beam.calc.laser as lcalc
 
 
 def pulse_plasma(pulse, plasma):
@@ -40,4 +41,25 @@ def beam_phase(beam, phase):
         The phase mask to apply to the beam.
     """
     beam.set_field(beam.e * np.exp(1j*phase.phi))
+
+
+def beam_plasma(beam, plasma):
+    """ Propagates a weak beam through a plasma without an ionization.
     
+    Parameters
+    ----------
+    beam : Laser class
+        The optical beam to propagate through the plasma.
+    plasma : Plasma class
+        The plasma to propagate the laser pulse through.
+    """
+    nh = 1.0 + plasma.n0*plasma.atom['alpha']*5.0e-8
+    def loadn(ind):
+        ne = plasma.load_plasma_den(ind)
+        nplasma = -beam.lam**2 * 4.47869e-5
+        ngas = plasma.atom['alpha']*5.0e-8
+        dn = nplasma - ngas
+        return dn * ne
+    beam.e = lcalc.beam_prop(beam.e, beam.x, beam.y, plasma.z, beam.lam, nh,
+                             beam.z[-1], beam.fft, beam.ifft, beam.save_field,
+                             loadn)

@@ -10,8 +10,8 @@ import numpy as np
 from ionization import ionization
 
 
-def intensity_gaussian_ramps(z0, dz, sigmaIn, sigmaOut, ion, N, zf=0):
-    """ Creates an intensity profile for a uniform plasma with Gaussian ends.
+def plasma_gaussian_ramps(z0, dz, sigmaIn, sigmaOut, N, zf=0):
+    """ Creates a plasma density with Gaussian ends.
 
     Returns the on-axis intensity profile necessary to create a fully ionized
     on-axis plasma with Gaussian entrance and exit density ramps. The
@@ -36,6 +36,8 @@ def intensity_gaussian_ramps(z0, dz, sigmaIn, sigmaOut, ion, N, zf=0):
             The type of pulse, i.e. gaussian, flatend, etc.
     N : int
         Number of grid points in z.
+    zf : double, optional
+        The end of the grid in z.
 
     Returns
     -------
@@ -64,6 +66,46 @@ def intensity_gaussian_ramps(z0, dz, sigmaIn, sigmaOut, ion, N, zf=0):
     frac[sel] = peak
     sel = z >= d3
     frac[sel] = peak*np.exp(-(z[sel]-d3)**2/(2*sigmaOut**2))
+    return z, frac
+
+
+def intensity_gaussian_ramps(z0, dz, sigmaIn, sigmaOut, ion, N, zf=0):
+    """ Creates an intensity profile for a uniform plasma with Gaussian ends.
+
+    Returns the on-axis intensity profile necessary to create a fully ionized
+    on-axis plasma with Gaussian entrance and exit density ramps. The
+    calculation assumes a 
+
+    Parameters
+    ----------
+    z0 : double
+        The distance at which the uniform fully ionized plasma starts.
+    dz : double
+        The length of the fully ionized plasma.
+    sigmaIn : double
+        The length of the input ramp, sigma for the Gaussian.
+    sigmaOut : double
+        The length of the output ramp, sigma for the Gaussian.
+    ion : dictionary
+        atom : dictionary
+            See the description in ionization.ionization for details.
+        tau : double
+            Temporal length of the pulse in fs.
+        type : string
+            The type of pulse, i.e. gaussian, flatend, etc.
+    N : int
+        Number of grid points in z.
+    zf : double, optional
+        The end of the grid in z.
+
+    Returns
+    -------
+    z : array-like
+        Array of distances along the optical axis the intensity is returned at.
+    I : array-like
+        Intensity profile given at each point in z.
+    """
+    z, frac = plasma_gaussian_ramps(z0, dz, sigmaIn, sigmaOut, N, zf)
     # Get the required intensity
     I = ionization.intensity_from_density(ion, frac)
     return z, I

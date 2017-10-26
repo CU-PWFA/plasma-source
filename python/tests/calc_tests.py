@@ -55,7 +55,7 @@ class fourier_prop_test_cases(unittest.TestCase):
         # The paraxial answer
         EE = (w0 / wZ) * np.exp(-r2 / wZ**2)
         # Run the fourier propagator
-        Etest = laser.fourier_prop(E, self.x, self.y, self.z, 1.0, 1.0,
+        Etest = laser.fourier_prop(E, self.x, self.y, self.z, 1.0, 1.0, 0.0,
                                    self.pfft, self.pifft, self.save)
         for i in range(self.Nx):
             for j in range(self.Ny):
@@ -66,7 +66,7 @@ class fourier_prop_test_cases(unittest.TestCase):
         E = np.zeros((self.Nx, self.Ny), dtype='complex128')
         z = np.array(1.0, ndmin=1)
         # Run the fourier propagator
-        Etest = laser.fourier_prop(E, self.x, self.y, z, 1.0, 1.0,
+        Etest = laser.fourier_prop(E, self.x, self.y, z, 1.0, 1.0, 0.0,
                                    self.pfft, self.pifft, self.save)
         for i in range(self.Nx):
             for j in range(self.Ny):
@@ -81,7 +81,7 @@ class fourier_prop_test_cases(unittest.TestCase):
             nonlocal called
             self.assertEqual(z, 1.5)
             called = True
-        laser.fourier_prop(E, self.x, self.y, z, 1.0, 1.0, self.pfft,
+        laser.fourier_prop(E, self.x, self.y, z, 1.0, 1.0, 0.0, self.pfft,
                            self.pifft, save)
         self.assertTrue(called)
 
