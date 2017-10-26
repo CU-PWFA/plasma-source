@@ -65,9 +65,9 @@ class Laser(beam.Beam):
         super().__init__(params)
         self.k = 2*np.pi / self.params['lam']
         # Create internal variables
-        self.create_grid()
         self.create_fft()
         if self.load is False:
+            self.create_grid()
             self.initialize_field()
             self.save_initial()        
     
@@ -107,9 +107,10 @@ class Laser(beam.Beam):
     
     def load_beam(self):
         """ Load the beam, specifically load the z grid and saveInd. """
+        self.create_grid()
         self.z = np.load(self.filePre + '_z.npy')
         self.saveInd = len(self.z)
-        e = self.load_field(self.saveInd - 1)
+        e, z = self.load_field(self.saveInd - 1)
         if not self.cyl:
             self.e = e
         else:
@@ -276,6 +277,64 @@ class GaussianLaser(Laser):
                  * np.exp(1j*(k*z0 + k*r2/(2*Rz) - psi))
         else:
             e = E0 * np.exp(-r2/w0**2)
+        super().initialize_field(e)
+        
+        
+class GeneralGaussianLaser(Laser):
+    """ A laser beam class that creates a Gaussian electric field. 
+    
+    The Gaussian beam can be displaced and propagating at an angle.
+    
+    Parameters
+    ----------
+    E0 : double
+        The peak value of the electric field at the Gaussian waist in GV/m. 
+    waist : double
+        The spot size of the Gaussian waist.
+    z : double
+        The position relative to the waist to start the beam at. +z is after
+        the waist, -z is before the waist.
+    theta : double
+        The angle of propagation in degrees, positive is angled upward.
+    dx : double
+        The displacement of the beam from the center of the grid.
+    """
+    
+    def __init__(self, params):
+        self.keys.extend(
+                ['E0',
+                 'waist',
+                 'z0',
+                 'theta',
+                 'dx'])
+        super().__init__(params)
+    
+    def initialize_field(self):
+        """ Create the array to store the electric field values in. 
+        
+        Fills the field array with the field of a Gaussian pulse.
+        """
+        k = self.k
+        w0 = self.waist
+        z0 = self.z0
+        E0 = self.E0
+        theta = np.radians(self.theta)
+        dx = self.dx
+        x = self.x[:, None]
+        y = self.y[None, :]
+        r2 = (x-dx)**2 + y**2
+        # Calculate all the parameters for the Gaussian beam
+        zr = np.pi*w0**2 / self.lam
+        if z0 != 0:
+            wz = w0 * np.sqrt(1+(z0/zr)**2)
+            Rz = z0 * (1 + (zr/z0)**2)
+            psi = np.arctan(z0/zr)
+            # Create the Gaussian field
+            e = E0 * w0 / wz * np.exp(-r2/wz**2) \
+                 * np.exp(1j*(k*z0 + k*r2/(2*Rz) - psi))
+        else:
+            e = np.array(E0 * np.exp(-r2/w0**2), dtype='complex128')
+        e *= np.exp(1j*k*theta*x)
         super().initialize_field(e)
 
 

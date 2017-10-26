@@ -90,6 +90,12 @@ class Plasma(element.Element):
         self.x = np.linspace(-X/2, X/2, self.Nx, False, dtype='double')
         self.y = np.linspace(-Y/2, Y/2, self.Ny, False, dtype='double')
         self.z = np.linspace(0.0, Z, self.Nz, dtype='double')
+        
+    def initialize_plasma(self, n, ne):
+        """ Save plasma and number densities, passed as an array, to file. """
+        for i in range(self.Nz):
+            self.save_num_density(n[:, :, i], i)
+            self.save_plasma_density(ne[:, :, i], i)
     
     #File managment
     #--------------------------------------------------------------------------
@@ -106,6 +112,12 @@ class Plasma(element.Element):
         if self.cyl:
             ne = ne[:, int(self.Ny/2)]
         np.save(self.filePre + '_plasmaDensity_' + str(ind) + '.npy', ne)
+    
+    def save_num_density(self, n, ind):
+        """ Save the total number density to file at the given z ind. """
+        if self.cyl:
+            n = n[:, int(self.Ny/2)]
+        np.save(self.filePre + '_numberDensity_' + str(ind) + '.npy', n)
         
     def load_plasma_density(self, ind):
         """ Load the plasma density at the specified index. 
@@ -125,6 +137,24 @@ class Plasma(element.Element):
         ne = np.load(self.filePre + '_plasmaDensity_' + str(ind) + '.npy')
         z = self.z[ind]
         return ne, z
+    
+    def load_num_den(self, i):
+        """ Returns a 2D array of the number density. """
+        n = np.load(self.filePre + '_numberDensity_' + str(i) + '.npy')
+        if self.cyl is True:
+            x = self.x
+            y = self.y
+            n = self.reconstruct_from_cyl(x, n, x, y)
+        return n
+    
+    def load_plasma_den(self, i):
+        """ Returns a 2D array of plasma density. """
+        ne = np.load(self.filePre + '_plasmaDensity_' + str(i) + '.npy')
+        if self.cyl is True:
+            x = self.x
+            y = self.y
+            ne = self.reconstruct_from_cyl(x, ne, x, y)
+        return ne
         
     # Visualization functions
     #--------------------------------------------------------------------------
@@ -134,10 +164,10 @@ class Plasma(element.Element):
         Nz = self.Nz
         ne = np.zeros((Nz, self.Nx))
         if not self.cyl:
-            for i in range(1, Nz):
+            for i in range(0, Nz-1):
                 ne[i, :], z = self.load_plasma_density(i)[:, int(self.Ny/2)]
         else:
-            for i in range(1, Nz):
+            for i in range(0, Nz-1):
                 ne[i, :], z = self.load_plasma_density(i)
         plt.figure(figsize=(10, 6))
         im = self.plot_long_density(ne, lim)
@@ -180,7 +210,8 @@ class ExistingPlasma(Plasma):
     """ A uniform gas that is already partially ionized. 
     
     This class is meant to be used after a plasma has already been created and
-    you would like to send an additional ionizing pulse through it.
+    you would like to send an additional ionizing pulse through it. It loads
+    the plasma density from the save files of a source plasma.
     """
     
     def __init__(self, params):
@@ -197,7 +228,7 @@ class ExistingPlasma(Plasma):
         return np.full((self.Nx, self.Ny), self.n0, dtype='double')
     
     def load_plasma_den(self, i):
-        """ Returns a 2D array of plasma density, always 0. """
+        """ Returns a 2D array of plasma density. """
         ne = np.load(self.sourcePre + '_plasmaDensity_' + str(i) + '.npy')
         if self.cyl is True:
             x = self.x

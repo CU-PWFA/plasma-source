@@ -71,9 +71,9 @@ class Pulse(beam.Beam):
         super().__init__(params)
         self.k = 2*np.pi / self.params['lam']
         # Create internal variables
-        self.create_grid()
         self.create_fft()
         if self.load is False:
+            self.create_grid()
             self.initialize_field()
             self.save_initial()
     
@@ -121,9 +121,10 @@ class Pulse(beam.Beam):
         
     def load_beam(self):
         """ Load the beam, specifically load the z grid and saveInd. """
+        self.create_grid()
         self.z = np.load(self.filePre + '_z.npy')
         self.saveInd = len(self.z)
-        e = self.load_field(self.saveInd - 1)
+        e, temp = self.load_field(self.saveInd - 1)
         if not self.cyl:
             self.e = e
         else:
