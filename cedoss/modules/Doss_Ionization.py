@@ -57,7 +57,8 @@ def TotalProb(e_fields,delt_t,chi,z):
 def Intensity(E_field):
     return np.power(m_cm,2)*.5*c*eps_0*np.power(E_field*GV_V,2)
 def Elefield(Intensity):
-    return 1/GV_V/m_cm*np.sqrt(Intensity*2/c/eps_0)
+    return 1e9 * 27.4492*np.sqrt(Intensity/1e14)
+    #return 1/GV_V/m_cm*np.sqrt(Intensity*2/c/eps_0)
 
 #Prints out information on intensities needed for various values
 # of ionization fractions, and information about how ionization

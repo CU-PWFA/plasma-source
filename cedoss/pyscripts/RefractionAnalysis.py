@@ -30,6 +30,7 @@ fityx = 0
 infinite_approx = 0
 
 #size of window in micrometers
+resize=1
 y_window = 100
 z_window = 400
 
@@ -40,11 +41,14 @@ z_window = 400
 #folder = '/home/chris/Desktop/FourierPlots/real_FACET_Refraction/'
 #folder = '/home/chris/Desktop/FourierPlots/ApproximateSol/'
 #folder = '/home/chris/Desktop/FourierPlots/CompactOptics_Source/'
-folder = '/home/chris/Desktop/FourierPlots/CompactOptics_JetsInGas/'
+#folder = '/home/chris/Desktop/FourierPlots/CompactOptics_JetsInGas/'
+folder = '/home/chris/Desktop/FourierPlots/ArJets/'
 
-directory = 'Exact_p2g8/'
+#directory = 'Exact_p2g8_Ar/'
 #directory = 'gasjet_den_propagation_1e17/'
 #directory = 'ETanhGauss1/'
+directory = 'Ar1_Small/'
+
 path = folder+directory
 
 #Load densities and parameters, and morph Robert's output [beam, jet, laser]
@@ -61,17 +65,18 @@ y = np.linspace(-X/2, X/2, Nx, False)
 z = np.linspace(-Y/2, Y/2, Ny, False)
 x = np.linspace(-Z/2, Z/2, Nz, False)
 
-ywidth=int(round(len(y)/(y[0]/(-.5*y_window))))
-yi=int(round((len(y)-ywidth)/2))
-yf=yi+ywidth
-
-zwidth=int(round(len(z)/(z[0]/(-.5*z_window))))
-zi=int(round((len(z)-zwidth)/2))
-zf=zi+zwidth
-
-den=den[:,yi:yf,zi:zf]
-y=y[yi:yf]
-z=z[zi:zf]
+if resize == 1:
+    ywidth=int(round(len(y)/(y[0]/(-.5*y_window))))
+    yi=int(round((len(y)-ywidth)/2))
+    yf=yi+ywidth
+    
+    zwidth=int(round(len(z)/(z[0]/(-.5*z_window))))
+    zi=int(round((len(z)-zwidth)/2))
+    zf=zi+zwidth
+    
+    den=den[:,yi:yf,zi:zf]
+    y=y[yi:yf]
+    z=z[zi:zf]
 
 #No offset, unless we run max_corrector
 x_off=0; y_off=0; z_off=0

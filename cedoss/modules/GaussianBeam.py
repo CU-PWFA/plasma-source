@@ -253,7 +253,7 @@ def Prop_SpotList(q,lmba):
 #  q_z - q parameter list containing wide waist
 #  offset - distance from waist of q_y to E field plane (array indices)
 #  lmba - laser wavelength
-#  I0 - initial laser intensity
+#  E0 - initial laser electric field strength (GV/m)
 #  w0 - initial waist size
 def Prop_EPhase(q_y, q_z, offset, lmba, E0, w0):
     wy=Prop_SpotList(q_y,lmba)
@@ -278,13 +278,19 @@ def Prop_EPhase(q_y, q_z, offset, lmba, E0, w0):
     
     phase=2*np.pi/lmba*(2*xi-xoy-xoz)
     
-    print("E0 =",str(E0*w0/np.sqrt(wy[waist-offset]*wz[waist-offset])))
-    print("wx =",str(wy[plane]))
-    print("wy =",str(wz[plane]))
-    print("Px =",str(-lmba*Ry[plane]/np.pi))
-    print("Py =",str(-lmba*Rz[plane]/np.pi))
-    print("phi =",str((.5*(guoyy+guoyz-phase))%(2*np.pi)))
-    print("zi =",str(xrange[waist]-xi))
+    vals = [E0*w0/np.sqrt(wy[waist-offset]*wz[waist-offset]),wy[plane],
+            wz[plane],-lmba*Ry[plane]/np.pi,-lmba*Rz[plane]/np.pi,
+            (.5*(guoyy+guoyz-phase))%(2*np.pi),xrange[waist]-xi]
+    
+    print("E0 =",str(vals[0]))
+    print("wx =",str(vals[1]))
+    print("wy =",str(vals[2]))
+    print("Px =",str(vals[3]))
+    print("Py =",str(vals[4]))
+    print("phi =",str(vals[5]))
+    print("zi =",str(vals[6]))
+    
+    return vals
 
 #Takes list of q parameters and prints out the minimum spot size and
 # the location of the spot size along laser propagation

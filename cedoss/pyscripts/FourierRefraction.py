@@ -18,7 +18,7 @@ sys.path.insert(0, "../")
 from modules import ThreeDimensionAnalysis as ThrDim
 
 #Script Selection
-test_density = 0
+test_density = 1
 free_space = 0
 #Set to some integer to lower grid resolution by a power
 reducer = 0
@@ -26,7 +26,7 @@ reducer = 0
 #This is the directory for saving
 #path = '/home/chris/Desktop/FourierPlots/CompactOptics_DoubleJet/'
 path = '/home/chris/Desktop/FourierPlots/CompactOptics_JetsInGas/'
-directory = 'Tanh_p2g8_div4'
+directory = 'Exact_p2g8_Ar'
 #directory = 'testdir'
 
 #Density, converted to e17cm^-3  With a gas jet this is density at nozzle
@@ -116,9 +116,9 @@ def LoadDensity():
     return np.load(path+directory+'/initDensity.npy')
 
 #False for uniform density, otherwise pick your poison
-distribution = Tanh_Jet
+distribution = LoadDensity
 
-# Setup the parameters, just like in Robert's code
+# Setup the parameters, just like in Robert's code for Ar
 params = {'Nx' : 2**(9-reducer),
           'Ny' : 2**(9-reducer),
           'Nz' : 2**(8-reducer),
@@ -128,8 +128,8 @@ params = {'Nx' : 2**(9-reducer),
           'Z' : 1e4,
           'T' : 150,
           'n0' : 0.1,
-          'alpha' : 0.787,
-          'EI' : 15.426,
+          'alpha' : 1.63,
+          'EI' : 15.8,
           'E0' : E0,
           'lam' : 0.7853,
           'n' : 1.0,

@@ -10,7 +10,6 @@ read a numpy file and export a csv
 import sys
 sys.path.insert(0, "../")
 from modules import ThreeDimensionAnalysis as ThrDim
-import csv
 import numpy as np
 
 directory = '/home/chris/Desktop/figtester/'
@@ -28,6 +27,8 @@ arr = ThrDim.RobertRoll(arr)
 y = np.linspace(-X/2, X/2, Nx, False)
 z = np.linspace(-Y/2, Y/2, Ny, False)
 x = np.linspace(-Z/2, Z/2, Nz, False)
+
+#MAKE SURE TO CHANGE THE X LOOP TO TRUNCATE WHAT IS NEEDED
 
 with open(directory+csvfilename,'w') as wrt:#csvfile:
     #wrt = csv.writer(csvfile)
