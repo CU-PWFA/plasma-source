@@ -3,6 +3,13 @@
 """
 Created on Wed Sep  6 11:19:02 2017
 
+play around with Paraview clip scaling to get the correct dimensions,
+and you want a little more in each direction so that your cartesian
+grid is fully enclosed by the Paraview clip
+
+Most recently, .6 .1 .03 seems to work pretty well to get a center region
+the same size as the refraction code
+
 @author: chris
 """
 
@@ -16,14 +23,15 @@ from modules import ThreeDimensionAnalysis as ThrDim
 
 directory = '/home/chris/Desktop/CSVFiles/'
 #filename = '3DLES_Wide_Axial.csv'
-filename = 'p2g8_box0.csv'
+#filename = 'p2g8_box0.csv'
+filename = 'ArBox_Big0.csv'
 path = directory + filename
 
 save_data = 1
 
-rx=10.5e2/4
-ry=10.5e2
-rz=1e4
+rx=3e2
+ry=15e2
+rz=1.5e4
 
 min_x = -rx/2; min_y = -ry/2; min_z = -rz/2
 max_x =  rx/2; max_y =  ry/2; max_z =  rz/2
@@ -62,8 +70,8 @@ values = arr
 grid_z = griddata(points, values, (grid_x, grid_y, grid_z), method='linear', fill_value = bgr)
 
 if save_data == 1:
-    sfolder = '/home/chris/Desktop/FourierPlots/CompactOptics_JetsInGas/'
-    sdirectory = 'Exact_p2g8/'
+    sfolder = '/home/chris/Desktop/FourierPlots/ArJets/'
+    sdirectory = 'Ar1_Big/'
     spath = sfolder + sdirectory
     if not os.path.exists(spath):
         os.makedirs(spath)
@@ -73,4 +81,4 @@ h = ThrDim.RobertRoll(grid_z)
 y = np.linspace(-rx/2, rx/2, nx, False)
 z = np.linspace(-ry/2, ry/2, ny, False)
 x = np.linspace(-rz/2, rz/2, nz, False)
-ThrDim.ImageCut(h,x,y,z,0,0,0,1e-3,'(mm)','Plasma Density','e17(cm^-3)',1)
+ThrDim.ImageCut(h,x,y,z,0,0,0,1e-3,'(mm)','Gas Density','e17(cm^-3)',1)

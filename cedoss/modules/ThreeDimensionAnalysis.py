@@ -410,6 +410,18 @@ def Plot2DimTanhxGaussian(data, yrange, xrange, py, px, units='',label='',label_
     plt.show()
     return difference
 
+#Plots 2D contour of inital intensity before a refraction propagation
+def PlotInitialIntensity(Ii,x,y):
+    plt.figure(figsize=(5,5))
+    plt.set_cmap('viridis')
+    plt.imshow(np.abs(Ii),extent=[y[0],y[-1],x[0],x[-1]],aspect=y[-1]/x[-1])
+    CB=plt.colorbar()
+    CB.set_label('Intensity (10^14 W/cm^2)')
+    plt.xlabel('Wide Axis: y (um)')
+    plt.ylabel('Narrow Axis : x (um)')
+    plt.title('Initial Intensity at edge')
+    plt.show()
+
 #I wanted this to work, but it just isnt at the moment...
 #Currently bypassing optimization by assuming scl = p1[3] = a_y / a_z
 # This works pretty well, so I am reluctant to fix 2D optimization
