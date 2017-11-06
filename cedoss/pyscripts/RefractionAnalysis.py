@@ -20,7 +20,7 @@ import numpy as np
 #  poor for most cases-only interesting at high densities ~10e19
 cuts=1
 max_corrector=1
-enforce_xoff=-31#-31#for p2g8
+enforce_xoff=0#-31#for p2g8
 
 #'getfit' will fit the y and z axes to tanh profiles
 #'fityx' uses getfit to add a Gaussian fit to the x axis
@@ -32,7 +32,7 @@ infinite_approx = 0
 #size of window in micrometers
 resize=1
 y_window = 100
-z_window = 400
+z_window = 800
 
 #Locate the desired data by specifying the folder and directory within
 
@@ -42,12 +42,12 @@ z_window = 400
 #folder = '/home/chris/Desktop/FourierPlots/ApproximateSol/'
 #folder = '/home/chris/Desktop/FourierPlots/CompactOptics_Source/'
 #folder = '/home/chris/Desktop/FourierPlots/CompactOptics_JetsInGas/'
-folder = '/home/chris/Desktop/FourierPlots/ArJets/'
+folder = '/home/chris/Desktop/FourierPlots/ArBackground/'
 
 #directory = 'Exact_p2g8_Ar/'
 #directory = 'gasjet_den_propagation_1e17/'
 #directory = 'ETanhGauss1/'
-directory = 'Ar1_Small/'
+directory = 'case_0.1/'
 
 path = folder+directory
 
