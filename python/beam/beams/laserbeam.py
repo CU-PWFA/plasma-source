@@ -415,3 +415,58 @@ class GeneralSuperGaussianLaser(Laser):
         e = np.array(E0 * np.exp(-(r2/w02)**n), dtype='complex128')
         e *= np.exp(-1j*k*theta*x)
         super().initialize_field(e)
+
+
+class RadialLaser(Laser):
+    """ A laser beam with a radially dependent field and periodic phi phase.
+    
+    The beam has a radially dependent intensity and phase. It can have a
+    periodic phase in phi of order n.
+    
+    Parameters
+    ----------
+    order : int
+        The number of periods of the phase in phi.
+    r : array-like
+        An array of radial coordinates the electric field is specified at.
+    E : array-like
+        The radial electric field specified at each element in r.
+    """
+    
+    def __init__(self, params):
+        self.keys.extend(
+                ['order',
+                 'r',
+                 'E'])
+        super().__init__(params)
+    
+    def initialize_field(self):
+        """ Create the array to store the electric field values in. 
+        
+        Fills the field array with the field of a Gaussian pulse.
+        """
+        order = self.order
+        x = self.x
+        y = self.y
+        Nx = self.Nx
+        Ny = self.Ny
+        
+        e = self.reconstruct_from_cyl(self.r, self.E, x, y)
+        # Add the phi dependent phase
+        phi = np.zeros((Nx, Ny), dtype='complex128') 
+        # Handle when x/y -> ininity
+        phi[int(Nx/2), int(Ny/2):] = np.pi/2
+        phi[int(Nx/2), :int(Ny/2)] = -np.pi/2
+        # Handle the positive x half plane
+        sel = np.array(x > 0)
+        xp = x[sel]
+        xp = np.reshape(xp, (np.size(xp), 1))
+        phi[int(Nx/2+1):, :] = np.arctan(y/xp)
+        # Handle the negative x half plane
+        sel = np.array(x < 0)
+        xn = x[sel]
+        xn = np.reshape(xn, (np.size(xn), 1))
+        phi[:int(Nx/2), :] = np.arctan(y/xn) + np.pi
+        e = e * np.exp(1j*phi*order)
+        super().initialize_field(e)
+
