@@ -229,7 +229,7 @@ class Laser(beam.Beam):
         if lim is not None:
             plt.xlim(lim)
             plt.ylim(lim)
-        plt.title('Transverse intensity at z='+str(z))
+        plt.title('Transverse intensity at z=%.2f' % z)
         return im
         
 
@@ -450,7 +450,6 @@ class RadialLaser(Laser):
         y = self.y
         Nx = self.Nx
         Ny = self.Ny
-        
         e = self.reconstruct_from_cyl(self.r, self.E, x, y)
         # Add the phi dependent phase
         phi = np.zeros((Nx, Ny), dtype='complex128') 
