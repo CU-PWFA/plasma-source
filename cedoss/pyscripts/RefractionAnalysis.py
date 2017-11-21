@@ -13,14 +13,16 @@ Gaussian fits the the yz plane and x axis, respectively.
 import sys
 sys.path.insert(0, "../")
 from modules import ThreeDimensionAnalysis as ThrDim
+from modules import TPLFocalLength as Foc
 import numpy as np
 
 #'cuts' will plot density along axis and small variations
 #'max_corrector' will shift the beam axis to the maximum density
 #  poor for most cases-only interesting at high densities ~10e19
 cuts=1
-max_corrector=1
+max_corrector=0
 enforce_xoff=0#-31#for p2g8
+calc_focal = 1
 
 #'getfit' will fit the y and z axes to tanh profiles
 #'fityx' uses getfit to add a Gaussian fit to the x axis
@@ -36,18 +38,11 @@ z_window = 800
 
 #Locate the desired data by specifying the folder and directory within
 
-#folder = '/home/chris/Desktop/FourierPlots/CompactOptics_DoubleJet/'
-#folder = '/home/chris/Desktop/FourierPlots/CompactOptics/'
-#folder = '/home/chris/Desktop/FourierPlots/real_FACET_Refraction/'
-#folder = '/home/chris/Desktop/FourierPlots/ApproximateSol/'
-#folder = '/home/chris/Desktop/FourierPlots/CompactOptics_Source/'
-#folder = '/home/chris/Desktop/FourierPlots/CompactOptics_JetsInGas/'
-folder = '/home/chris/Desktop/FourierPlots/ArBackground/'
+#folder = '/home/chris/Desktop/FourierPlots/ArBackground/'
+folder = '/home/chris/Desktop/FourierPlots/ArJets_DivideDensity/'
 
-#directory = 'Exact_p2g8_Ar/'
-#directory = 'gasjet_den_propagation_1e17/'
-#directory = 'ETanhGauss1/'
-directory = 'case_0.1/'
+directory = 'case_15/'
+#directory = 'Ar1_Big/'
 
 path = folder+directory
 
@@ -55,6 +50,13 @@ path = folder+directory
 # into the size and orientation I use [laser, beam, jet]
 nplot = np.load(path+'finalDensity.npy')
 params = np.load(path+'params.npy').item()
+
+"""If you want to compare two runs
+folder2 = '/home/chris/Desktop/FourierPlots/ArBackground/'
+directory2 = 'case_0.0001/'
+nplot2 = np.load(folder2+directory2+'finalDensity.npy')
+nplot = nplot - nplot2 * 1e4
+"""
 
 X = params['X']; Nx = params['Nx']
 Y = params['Y']; Ny = params['Ny']
@@ -138,6 +140,12 @@ if cuts == 1:
 #Fit the data to tanh in y, an elliptical tanh in yz, and Gaussian in x
 if getfit == 1:
     den_vs_y=den[round(len(x)/2)+x_off,:,round(len(z)/2)]
+    
+    if calc_focal == 1:
+        Foc.Calc_Focus(den_vs_y,y)
+        #den_ex = np.full((50),0.1)
+        #y_ex = np.linspace(0,25,50)
+        #Foc.Calc_Focus(den_ex,y_ex)
     
     #Calculate our guess by roughly estimating the length of the narrow waist
     dd = list(den_vs_y)
