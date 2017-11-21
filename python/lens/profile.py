@@ -111,7 +111,8 @@ def intensity_gaussian_ramps(z0, dz, sigmaIn, sigmaOut, ion, N, zf=0):
     return z, I
 
 
-def smoothed_gaussian_ramps(z0, dz, sigmaIn, sigmaOut, ion, N, zf=0):
+def smoothed_gaussian_ramps(z0, dz, sigmaIn, sigmaOut, ion, N, order, alpha, 
+                            zf=0):
     """ This function smooths out the hard corners of the Gaussian ramps.
     
     First, this function corrects for the DC baseline due to the slow asymptote
@@ -137,6 +138,10 @@ def smoothed_gaussian_ramps(z0, dz, sigmaIn, sigmaOut, ion, N, zf=0):
             The type of pulse, i.e. gaussian, flatend, etc.
     N : int
         Number of grid points in z.
+    order : int
+        The order of the super Gaussian flattop.
+    alpha : double
+        The perctentage higher the super-Gaussian is than the flattop.
 
     Returns
     -------
@@ -174,7 +179,10 @@ def smoothed_gaussian_ramps(z0, dz, sigmaIn, sigmaOut, ion, N, zf=0):
     sel = z[end:] > endB
     endPar[sel] = 0.0
     # Create a smoothing curve for the center.
-    # TODO make this work with circles
+    sel = I > 0.999*Imax
+    zc = 0.5*(z[sel][-1] + z[sel][0])
+    w = (z[sel][0] - zc)**(2*order)/0.693
+    I[sel] += alpha*Imax*(np.exp(-(z[sel] - zc)**(2*order)/w)-0.5)
     # Update the intensity with the new curves
     I[:beg] = begPar
     I[end:] = endPar

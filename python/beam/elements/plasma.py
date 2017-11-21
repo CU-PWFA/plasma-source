@@ -9,6 +9,7 @@ Created on Thu Oct  5 15:08:43 2017
 import numpy as np
 from beam.elements import element
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 
 
 class Plasma(element.Element):
@@ -189,6 +190,75 @@ class Plasma(element.Element):
             plt.ylim(lim)
         plt.title('Longitudinal plasma density')
         return im
+    
+    def plot_profiles(self, H, dr, xlim=None, zlim=None):
+        """ Plot longitudinal and transverse plasma density profiles. 
+        
+        Note, currently plots transverse lineouts in the middle third in Z. 
+        
+        Parameters
+        ----------
+        H : int
+            The number of lineouts to draw.
+        dr : double, optional
+            Spacing between radial lineouts.
+        """
+        Nx = self.Nx
+        Ny = self.Ny
+        Nz = self.Nz
+        X = self.X
+        
+        plt.figure(figsize=(16, 4.5))
+        gs = gridspec.GridSpec(1, 2, width_ratios=[1, 1])
+        
+        # Transverse density profiles
+        ax1 = plt.subplot(gs[0, 0])
+        sliceInd = np.linspace(Nz/3, 2*Nz/3, H, dtype=np.int)
+        dz = self.Z/(Nz-1)
+        slicePosition = (sliceInd-1)*dz/1e6
+        slicePosition = ['%.2f' % num for num in slicePosition]
+        ax1.set_prop_cycle('color',
+                      [plt.cm.gist_rainbow(i) for i in np.linspace(0, 1, H)])
+        for i in range(0, H):
+            if not self.cyl:
+                ne, z = self.load_plasma_density(sliceInd[i])[:, int(Ny/2)]
+            else:
+                ne, z = self.load_plasma_density(sliceInd[i])
+            plt.plot(self.x, ne)
+        plt.title('Transverse intensity profile at different distances')
+        plt.xlabel('x ($\mu m$)')
+        plt.ylabel('Plasma density')
+        plt.legend(slicePosition, title='z in m')
+        if xlim is not None:
+            plt.xlim(xlim)
+        plt.grid(True)
+        
+        # Longitudinal density profiles
+        ax2 = plt.subplot(gs[0, 1])
+        dx = X/(Nx-2)
+        sliceInd = np.linspace(Nx/2, Nx/2+dr*H/dx, H, dtype=np.int)
+        slicePosition = (sliceInd-1)*dx - X/2
+        slicePosition = ['%.2f' % num for num in slicePosition]
+        ax2.set_prop_cycle('color',
+                      [plt.cm.winter(i) for i in np.linspace(0, 1, H)])
+        for i in range(0, H):
+            ne = np.zeros(Nz)
+            if not self.cyl:
+                for j in range(0, Nz-1):
+                    ne[j] = self.load_plasma_density(j)[0][sliceInd[i], int(Ny/2)]
+            else:
+                for j in range(0, Nz-1):
+                    ne[j] = self.load_plasma_density(j)[0][sliceInd[i]]
+            plt.plot(self.z, ne)
+        plt.title('Longitudinal intensity profiles for different radiuses')
+        plt.xlabel('z (m)')
+        plt.ylabel('Plasma density')
+        plt.legend(slicePosition, title='Radius in  $\mu m$')
+        if zlim is not None:
+            plt.xlim(zlim)
+        plt.grid(True)
+        plt.tight_layout()
+        plt.show()
 
 
 class UniformPlasma(Plasma):

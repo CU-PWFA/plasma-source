@@ -329,4 +329,64 @@ class GaussianPulse(Pulse):
         else:
             e = E0 * np.exp(-r2/w0**2-t2*np.pi/(2*self.tau**2))
         super().initialize_field(e)
+
+
+class RadialPulse(Pulse):
+    """ A laser pulse with a radially dependent field and periodic phi phase.
+    
+    The pulse is Gaussian in time and has a radially dependent intensity and
+    phase. It can have a periodic phase in phi of order n.
+    
+    Parameters
+    ----------
+    tau : double
+        The RMS duration of the pulse.
+    order : int
+        The number of periods of the phase in phi.
+    r : array-like
+        An array of radial coordinates the electric field is specified at.
+    E : array-like
+        The radial electric field specified at each element in r.
+    """
+    
+    def __init__(self, params):
+        self.keys.extend(
+                ['tau',
+                 'order',
+                 'r',
+                 'E'])
+        super().__init__(params)
+    
+    def initialize_field(self):
+        """ Create the array to store the electric field values in. 
+        
+        Fills the field array with the field of a Gaussian pulse.
+        """
+        order = self.order
+        tau = self.tau
+        x = self.x
+        y = self.y
+        t = self.t
+        Nx = self.Nx
+        Ny = self.Ny
+        
+        e = self.reconstruct_from_cyl(self.r, self.E, x, y)
+        e = e[None, :, :] * np.exp(-t[:, None, None]**2 * np.pi/(2*tau**2))
+        # Add the phi dependent phase
+        phi = np.zeros((Nx, Ny), dtype='complex128') 
+        # Handle when x/y -> ininity
+        phi[int(Nx/2), int(Ny/2):] = np.pi/2
+        phi[int(Nx/2), :int(Ny/2)] = -np.pi/2
+        # Handle the positive x half plane
+        sel = np.array(x > 0)
+        xp = x[sel]
+        xp = np.reshape(xp, (np.size(xp), 1))
+        phi[int(Nx/2+1):, :] = np.arctan(y/xp)
+        # Handle the negative x half plane
+        sel = np.array(x < 0)
+        xn = x[sel]
+        xn = np.reshape(xn, (np.size(xn), 1))
+        phi[:int(Nx/2), :] = np.arctan(y/xn) + np.pi
+        e = e * np.exp(1j*phi*order)
+        super().initialize_field(e)
         

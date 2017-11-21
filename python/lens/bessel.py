@@ -229,6 +229,43 @@ def uniform_bessel(params, Ez, z, n=0):
     return r, E
 
 
+def multimode_transverse_estimate(r, ion, coef, order, R):
+    """ Estimates the transverse profile of a plasma from two Bessel modes.
+    
+    Uses the ADK ionization model to estimate the plasma profile that will be
+    ionized by two different Bessel modes. This function is meant to be used to
+    figure out the width, order, and multiplier to use for each mode.
+    
+    Parameters
+    ----------
+    x : array-like
+        The radial locations to calculate the ionization fraction at.
+    ion : dictionary
+        See the ionization.intensity_from_density.
+    coef : array-like
+        Array of multipliers for the Bessel functions, 0 fo no multiplier.
+    order : array-like
+        Order of each Bessel function.
+    R : array-like
+        Size of the each Bessel function (radius to first zero for order=0).
+    """
+    atom = ion['atom']
+    tau = ion['tau']
+    E0 = ionization.field_from_intensity(
+            ionization.intensity_from_density(ion, 0.999))
+    N = len(coef)
+    k = 2.4048/np.array(R, dtype='double')
+    j = np.zeros((N, len(r)), dtype='double')
+    nj = np.zeros((N, len(r)), dtype='double')
+    ne = np.zeros(len(r), dtype='double')
+    for i in range(N):
+        j[i, :] = abs(E0*(1+coef[i])*jn(order[i], k[i]*r[:]))
+        nj[i, :] = adk.gaussian_frac(atom['EI'], j[i, :], tau, atom['Z'], atom['l'],
+                               atom['m'])
+        ne += (1-ne)*nj[i, :]
+    return ne, nj
+
+
 def multimode_ionization(params, z, I):
     """ Calculates the ionization fraction from multiple Bessel modes.
 
