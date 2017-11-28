@@ -56,7 +56,7 @@ if __name__ == '__main__':
     gamma  = (1.0+alpha**2)/beta # 1/m
     dgb    = 0.01
     dz     = 0
-    npart  = 1000
+    npart  = 10000
     dist   = 'gauss'
     
     # make beam
@@ -66,7 +66,7 @@ if __name__ == '__main__':
     ebeam = pb.make_ebeam(s0,twiss[0],parts[0])
 
     # add offset to bunch at vac. waist
-    ebeam[0]["xp"] += 10e-6 # m
+    ebeam[0]["x"] += 10e-6 # m
     
     # set beam waist position
     waist = -0.28 #-0.105 # m, waist location w.r.t L_up

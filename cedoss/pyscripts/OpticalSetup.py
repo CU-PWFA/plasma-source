@@ -31,7 +31,7 @@ I0 = 2*P/np.pi/np.power(w0,2)
 Ei = np.sqrt(2*I0/c/n/epsilon0)*1e-9
 
 l_step = 5e-5
-zi = 10e-3
+zi = 7.5e-3
 window = zi
 zoom=int(round(window/l_step))
 
