@@ -16,7 +16,7 @@ if __name__ == '__main__':
     
     # define plasma bulk (flat-top) properties
     npl0   = 5e16                      # cm^-3, plasma density
-    dEds0  = np.sqrt(npl0/(1e17))*100e9 # eV/m, energy gain rate
+    dEds0  = np.sqrt(npl0/(1e17))*10e9 # eV/m, energy gain rate
     dgds0  = dEds0/nc.me               # 1/m, energy gain rate for rel. gamma
     L_ft   = 0.50                      # m, length of flat-top
     
@@ -66,7 +66,7 @@ if __name__ == '__main__':
     s_w   = L_up + waist # m, absolute wasit location
     
     # define longitudinal steps
-    ds   = (1.0/kb)*(1./10.)        # m, step size
+    ds   = (1.0/kb)*(1./10.)                  # m, step size
     s_ft = np.linspace(0,L_ft,int(L_ft/ds+1)) # m, steps for flat-top
     s_up = np.linspace(0,L_up,int(L_up/ds+1)) # m, steps for up-ramp
     s_dn = np.linspace(0,L_dn,int(L_dn/ds+1)) # m, steps for down-ramp

@@ -10,7 +10,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from joblib import Parallel, delayed
 import multiprocessing
-from matplotlib import cm
 import nat_consts as nc
 import particle_beam as pb
 import plasma_source as ps
@@ -71,7 +70,7 @@ if __name__ == '__main__':
     
     # define plasma bulk (flat-top) properties
     npl0   = 5e16                      # cm^-3, plasma density
-    dEds0  = np.sqrt(npl0/(1e17))*100e9 # eV/m, energy gain rate
+    dEds0  = np.sqrt(npl0/(1e17))*10e9 # eV/m, energy gain rate
     dgds0  = dEds0/nc.me               # 1/m, energy gain rate for rel. gamma
     L_ft   = 0.00                      # m, length of flat-top
     
@@ -110,7 +109,7 @@ if __name__ == '__main__':
     ebeam0 = pb.make_ebeam(s0,twiss[0],parts[0])
     
     # define longitudinal steps
-    ds   = (1.0/kb)*(1./10.)        # m, step size
+    ds   = (1.0/kb)*(1./10.)                  # m, step size
     s_ft = np.linspace(0,L_ft,int(L_ft/ds+1)) # m, steps for flat-top
     s_up = np.linspace(0,L_up,int(L_up/ds+1)) # m, steps for up-ramp
     s_dn = np.linspace(0,L_dn,int(L_dn/ds+1)) # m, steps for down-ramp
