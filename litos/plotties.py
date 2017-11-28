@@ -43,6 +43,8 @@ alpha = np.zeros(nstep)
 gamma = np.zeros(nstep)
 rms_x = np.zeros(nstep)
 rms_x_eps = np.zeros(nstep)
+cent_x  = np.zeros(nstep)
+cent_xp = np.zeros(nstep)
 x_kurt  = np.zeros(nstep)
 xp_kurt = np.zeros(nstep)
 rn_kurt = np.zeros(nstep)
@@ -76,6 +78,9 @@ for i in range(0,nstep):
     alpha[i] = ebeam[i]["alpha"]
     gamma[i] = ebeam[i]["gamma"] # 1/m
     ebeam_rms = ba.calc_ebeam_rms(ebeam,i,frac)
+    ebeam_cent = ba.calc_ebeam_cent(ebeam,i,frac)
+    cent_x[i]  = ebeam_cent["x"]/(1e-6)
+    cent_xp[i] = ebeam_cent["xp"]/(1e-6)
     rms_x[i]     = ebeam_rms["x"]/(1e-6)
     rms_x_eps[i] = ebeam_rms["x_eps"]/(1e-6)
 #    ebeam_kurt = ba.calc_ebeam_kurt(ebeam,plasma,ebeam_rms,i,frac)
@@ -271,15 +276,22 @@ print('Bmag: ',BB)
 norm1 = min(v_beta)
 #ax1  = figA.add_subplot(111)
 #ax1.plot(s,plasma["npl"]*1.5*norm1/max(plasma["npl"]),color='g')
+
 ax1.plot(s,v_beta/10,color='b',linestyle='dashed')
 ax1.plot(s,beta,color='b',linestyle='solid')
-#ax1.set_ylim([0,2.0*norm1])
+
+#ax1.plot(s,cent_xp,color='b',linestyle='dashed')
+
 ax1.set_xlim([0.5,3.0])
-#ax1.set_ylim([0,2])
+
 ax1.set_ylim([0,4.0])
 
 #ax1.set_xlabel('z [m]')
 ax1.set_ylabel(r'$\beta$ [cm]',color='b')
+
+#ax1.set_ylabel(r'<x> [$\mu m$]',color='b')
+#ax1.set_ylabel(r'<$x^\prime$> [$\mu$rad]',color='b')
+
 ax1.tick_params('y',colors='b')
 
 npl = plasma["npl"]/plasma["bulk"]["npl0"]
