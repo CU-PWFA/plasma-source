@@ -20,7 +20,7 @@ def calc_dgds(dgds0,npl0,npl,model=0):
         dgds = dgds0
     return dgds
 
-def make_ramp(s,updn,shape,hw,top_loc,npl0,dgds0):
+def make_ramp(s,updn,shape,hw,top_loc,npl0,dgds0,gbC=20000):
     """create dictionary object describing plasma density ramp"""
     ramp = defaultdict(dict)
     npl  = np.zeros(len(s))
@@ -45,8 +45,13 @@ def make_ramp(s,updn,shape,hw,top_loc,npl0,dgds0):
     
     # non-zero-length ramps
     else:
+        
+        # flat-top
+        if shape.lower() == 'flat':
+            npl = npl0*np.ones(len(s))
+        
         # normal gauss. func.
-        if shape.lower() == 'gauss':
+        elif shape.lower() == 'gauss':
             # define gauss. sigma
             sig = hw/(np.sqrt(2*np.log(2)))            
             # up-ramp
@@ -137,6 +142,18 @@ def make_ramp(s,updn,shape,hw,top_loc,npl0,dgds0):
                 npl = npl0*((s>top_loc)*(1/((1-(top_loc-s)/(2*sig))**4)) +\
                        (s<=top_loc)*1)
 
+        # adiabatic ramp shape
+        elif shape.lower() == 'adiabatic':
+            if len(s)>1:
+                ds = abs(s[1]-s[0])
+                # down-ramp
+                npl[0] = npl0
+                for i in range(1,len(s)):
+#                    npl[i] = npl[i-1]*(1-(2.12e-7)*np.sqrt(npl[i-1]/gbC)*ds)
+                    npl[i] = npl[i-1]*(1-(2.12e-6)*np.sqrt(npl[i-1]/gbC)*ds)
+                # up-ramp
+                if updn.lower() == 'up':
+                    npl = np.fliplr([npl])[0]
 
     ramp["s"]    = s
     ramp["npl"]  = npl
