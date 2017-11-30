@@ -125,6 +125,7 @@ dependencies:
   - cffi==1.11.2
   - hankel==0.3.1
   - ipython-genutils==0.1.0
+  - joblib==0.11
   - jupyter-client==5.0.0
   - jupyter-console==5.1.0
   - jupyter-core==4.3.0
@@ -135,5 +136,5 @@ dependencies:
   - pycparser==2.18
   - rope-py3k==0.9.4.post1
   - unwrap==0.1.1
-prefix: /home/robert/anaconda3/envs/CU-PWFA
+prefix: /home/chris/anaconda3/envs/CU-PWFA
 
