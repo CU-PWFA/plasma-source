@@ -203,9 +203,10 @@ class Pulse(beam.Beam):
     # Visualization functions
     #--------------------------------------------------------------------------
     
-    def plot_current_tran_intensity(self):
+    def plot_current_tran_intensity(self, lim=None):
         """ Plots the current intensity at the center of the pulse. """
-        im = self.plot_tran_intensity(self.e[int(self.Nt/2), :, :], self.z[-1])
+        im = self.plot_tran_intensity(self.e[int(self.Nt/2), :, :], self.z[-1],
+                                     lim)
         plt.show(im)
         
     def plot_tran_intensity_at(self, ind):
@@ -226,7 +227,7 @@ class Pulse(beam.Beam):
         im = self.plot_tran_intensity(data, z)
         plt.show(im)
     
-    def plot_tran_intensity(self, e, z):
+    def plot_tran_intensity(self, e, z, lim=None):
         """ Create a transverse intensity plot. """
         X = self.X
         Y = self.Y
@@ -239,6 +240,9 @@ class Pulse(beam.Beam):
         plt.set_cmap('viridis')
         plt.xlabel(r'x')
         plt.ylabel(r'y')
+        if lim is not None:
+            plt.xlim(lim)
+            plt.ylim(lim)
         plt.title('Transverse intensity at z='+str(z))
         return im
     
