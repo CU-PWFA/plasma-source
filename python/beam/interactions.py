@@ -11,6 +11,7 @@ import beam.beams as beams
 import beam.elements as elements
 import beam.calc.plasma as pcalc
 import beam.calc.laser as lcalc
+import beam.calc.electron as ecalc
 
 
 def pulse_plasma(pulse, plasma):
@@ -63,3 +64,11 @@ def beam_plasma(beam, plasma):
     beam.e = lcalc.beam_prop(beam.e, beam.x, beam.y, plasma.z, beam.lam, nh,
                              beam.z[-1], beam.fft, beam.ifft, beam.save_field,
                              loadn)
+
+
+def electron_plasma(electron, plasma):
+    """ Propagate an electron beam through an ion column. """
+    # TODO add in energy gain/loss in the plasma
+    electron.ptcls = ecalc.electron_propagation_plasma(electron.ptcls,
+                            plasma.z, 0.0, plasma.ne,
+                            electron.save_ptcls, plasma.dgammadz)
