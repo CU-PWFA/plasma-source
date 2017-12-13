@@ -66,9 +66,20 @@ def beam_plasma(beam, plasma):
                              loadn)
 
 
-def electron_plasma(electron, plasma):
-    """ Propagate an electron beam through an ion column. """
-    # TODO add in energy gain/loss in the plasma
+def electron_plasma(electron, plasma, z, dumpPeriod):
+    """ Propagate an electron beam through an ion column. 
+    
+    Parameters
+    ----------
+    electron : ElectronBeam class
+        The electron beam to propagate through the plasma.
+    plasma : Plasma class
+        The plasma that the electron beam will be propagating through.
+    z : array-like
+        The spatial grid used to set the step size for the electron beam.
+    dumpPeriod : int
+        How frequently to save the electron beam to disk.
+    """
     electron.ptcls = ecalc.electron_propagation_plasma(electron.ptcls,
-                            plasma.z, 0.0, plasma.ne,
+                            z, 0.0, plasma.get_ne(z), dumpPeriod,
                             electron.save_ptcls, plasma.dgammadz)

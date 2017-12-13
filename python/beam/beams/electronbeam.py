@@ -116,12 +116,12 @@ class ElectronBeam(beam.Beam):
     # Visualization functions
     #--------------------------------------------------------------------------
     
-    def plot_current_ptcls(self):
+    def plot_current_phase(self):
         """ Plots a scatterplot of the particles in the current beam. """
-        self.plot_ptcls(self.ptcls, self.z[-1])
+        self.plot_phase(self.ptcls, self.z[-1])
         plt.show()
     
-    def plt_ptcls_at(self, ind):
+    def plt_phase_at(self, ind):
         """ Plots the particles at a particular z distance.
         
         Parameters
@@ -130,11 +130,25 @@ class ElectronBeam(beam.Beam):
             The save index to plot the particles at, see the _z file to find z.
         """
         ptcls, z = self.load_field(ind)
-        self.plot_ptcls(ptcls, z)
+        self.plot_phase(ptcls, z)
         plt.show()
     
-    def plot_ptcls(self, ptcls, z):
-        """ Create an x-y plot of the particles. """
+    def plot_phase(self, ptcls, z):
+        """ Create an x-y plot of the particles. """        
+        fig = plt.figure(figsize=(10, 4))
+        plt.subplot(121)
+        plt.scatter(ptcls[:, 0]*1e6, ptcls[:, 1]*1e3, 1)
+        plt.title('x phase space')
+        plt.xlabel('x (um)')
+        plt.ylabel("x' (mrad)")
+        plt.subplot(122)
+        plt.scatter(ptcls[:, 2]*1e6, ptcls[:, 3]*1e3, 1)
+        plt.title('y phase space')
+        plt.xlabel('y (um)')
+        plt.ylabel("y' (mrad)")
+
+        plt.tight_layout()
+        return fig
 
 
 class GaussianElectronBeam(ElectronBeam):
@@ -142,6 +156,22 @@ class GaussianElectronBeam(ElectronBeam):
     
     Parameters
     ----------
+    gamma : double
+        The relativistic factor of the beam.
+    emittance : double
+        The normalized emittance of the beam in m*rad.
+    betax : double
+        The beta function in the x-direction at z=0, in m.
+    betay : double
+        The beta function in the y direction at z=0, in m.
+    alphax : double
+        The alpha parameter of the beam in the x-direction at z=0.
+    alphay : double
+        The alpha parameter of the beam in the y-direction at z=0.
+    sigmaz : double
+        The RMS size of the beam in z in m.
+    dE : double
+        The energy spread of the beam as a fraction, 0.01 = +-1% energy spread.
     """
     
     def __init__(self, params):

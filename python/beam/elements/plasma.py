@@ -10,7 +10,7 @@ import numpy as np
 from beam.elements import element
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
-
+from scipy import interpolate
 
 class Plasma(element.Element):
     """ A class that represents a gas/plasma that a laser can ionize. 
@@ -97,6 +97,31 @@ class Plasma(element.Element):
         for i in range(self.Nz):
             self.save_num_density(n[:, :, i], i)
             self.save_plasma_density(ne[:, :, i], i)
+
+    # Getters and setters
+    #--------------------------------------------------------------------------
+    
+    def get_ne(self, z):
+        """ Use interpolation to get the on axis plasma density on the grid z.
+        
+        Parameters
+        ----------
+        z : array-like
+            Z grid to return the plasma density on.
+        """
+        Nz = self.Nz
+        nePlasma = np.zeros(Nz, dtype='double')
+        for i in range(Nz):
+            if self.cyl is True:
+                nePlasma[i] = self.load_plasma_den(i)[int(self.Nx/2)]
+            else:
+                nePlasma[i] = self.load_plasma_den(i)[int(self.Nx/2), int(self.Ny/2)]
+        if z == self.z:
+            ne = nePlasma
+        else: # We have to interpolate the plasma density
+            tck = interpolate.splrep(self.z, nePlasma)
+            ne = interpolate.splev(z, tck, ext=1) # Return 0 if out of range
+        return ne
     
     #File managment
     #--------------------------------------------------------------------------
