@@ -81,5 +81,5 @@ def electron_plasma(electron, plasma, z, dumpPeriod):
         How frequently to save the electron beam to disk.
     """
     electron.ptcls = ecalc.electron_propagation_plasma(electron.ptcls,
-                            z, 0.0, plasma.get_ne(z), dumpPeriod,
+                            z*1e-6, 0.0, plasma.get_ne(z), dumpPeriod,
                             electron.save_ptcls, plasma.dgammadz)

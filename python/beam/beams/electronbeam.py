@@ -87,7 +87,7 @@ class ElectronBeam(beam.Beam):
         """ Save the z array. """
         np.save(self.filePre + '_z.npy', self.z)
     
-    def load_field(self, ind):
+    def load_ptcls(self, ind):
         """ Load the particle distribution at the specified index. 
         
         Parameters
@@ -102,9 +102,9 @@ class ElectronBeam(beam.Beam):
         z : double
             The z coordinate of the field.
         """
-        e = np.load(self.filePre + '_ptcls_' + str(ind) + '.npy')
+        ptcls = np.load(self.filePre + '_ptcls_' + str(ind) + '.npy')
         z = self.z[ind]
-        return e, z
+        return ptcls, z
     
     # Physics functions
     #--------------------------------------------------------------------------
@@ -112,6 +112,39 @@ class ElectronBeam(beam.Beam):
     def propagate(self, z, n):
         """ Propagate the field to an array of z distances. """
         #TODO implement this function
+    
+    def get_emittance(self, ind, ptcls=None):
+        """ Calculate the emittance from a particular save file. """
+        ptcls = self.load_ptcls(ind)[0]
+        x = self.get_x(ptcls)
+        xp = self.get_xp(ptcls)
+        y = self.get_y(ptcls)
+        yp = self.get_yp(ptcls)
+        # Calculate the differences from the average
+        dx = x - np.average(x)
+        dxp = xp - np.average(xp)
+        dy = y - np.average(y)
+        dyp = yp - np.average(yp)
+        # Calculate the RMS sizes and the correlation
+        sigmax2 = np.average(dx**2)
+        sigmaxp2 = np.average(dxp**2)
+        sigmaxxp = np.average(dx*dxp)
+        sigmay2 = np.average(dy**2)
+        sigmayp2 = np.average(dyp**2)
+        sigmayyp = np.average(dy*dyp)
+        # Calculate the emittance
+        ex = np.sqrt(sigmax2*sigmaxp2 - sigmaxxp**2)
+        ey = np.sqrt(sigmay2*sigmayp2 - sigmayyp**2)
+        return ex, ey
+    
+    def get_emittance_n(self, ind):
+        """ Calculate the emittance from a particular save file. """
+        ptcls = self.load_ptcls(ind)[0]
+        ex, ey = self.get_emittance(ind)
+        gamma = np.average(self.get_gamma(ptcls))
+        ex = ex*gamma
+        ey = ey*gamma
+        return ex, ey
         
     # Visualization functions
     #--------------------------------------------------------------------------
@@ -129,7 +162,7 @@ class ElectronBeam(beam.Beam):
         ind : int
             The save index to plot the particles at, see the _z file to find z.
         """
-        ptcls, z = self.load_field(ind)
+        ptcls, z = self.load_ptcls(ind)
         self.plot_phase(ptcls, z)
         plt.show()
     
@@ -137,18 +170,18 @@ class ElectronBeam(beam.Beam):
         """ Create an x-y plot of the particles. """        
         fig = plt.figure(figsize=(10, 4))
         plt.subplot(121)
-        plt.scatter(ptcls[:, 0]*1e6, ptcls[:, 1]*1e3, 1)
+        sctx = plt.scatter(ptcls[:, 0]*1e6, ptcls[:, 1]*1e3, 1)
         plt.title('x phase space')
         plt.xlabel('x (um)')
         plt.ylabel("x' (mrad)")
         plt.subplot(122)
-        plt.scatter(ptcls[:, 2]*1e6, ptcls[:, 3]*1e3, 1)
+        scty = plt.scatter(ptcls[:, 2]*1e6, ptcls[:, 3]*1e3, 1)
         plt.title('y phase space')
         plt.xlabel('y (um)')
         plt.ylabel("y' (mrad)")
 
         plt.tight_layout()
-        return fig
+        return fig, sctx, scty
 
 
 class GaussianElectronBeam(ElectronBeam):

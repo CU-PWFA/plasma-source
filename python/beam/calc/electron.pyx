@@ -31,30 +31,30 @@ def electron_propagation_plasma(double[:, :] ptcls, double[:] z, double z0,
     cdef int i, j
     cdef int N = np.shape(ptcls)[0]
     cdef int Nz = len(z)
-    cdef double[:] dz = np.zeros(Nz-1, dtype='double')
-    cdef double[:] kp = np.zeros(Nz-1, dtype='double')
-    cdef double[:] dgamma = np.zeros(Nz-1, dtype='double')
-    cdef double kb
+    cdef double dgamma
+    cdef double kp, kb, dz
     cdef double coskb, sinkb, angle
     cdef double R11, R12, R21, R22
     # Calculate parameters for each z-slice
     for i in range(Nz-1):
-        kp[i] = 5.95074e4 * sqrt(ne[i])
+        kp = 5.95074e4 * sqrt(ne[i])
         # Pre-calculate the energy gain per slice
-        dz[i] = z[i+1] - z[i]
-        dgamma[i] = dgammadz(ne[i]) * dz[i]
+        dz = z[i+1] - z[i]
+        dgamma = dgammadz(ne[i]) * dz
         with nogil:
             for j in prange(N):
-                ptcls[j, 5] += 0.5*dgamma[i]
-                kb = kp[i]/sqrt(2*ptcls[j, 5])
-                coskb = cos(kb*dz[i])
-                sinkb = sin(kb*dz[i])
-                angle = 1 - dgamma[i] / ptcls[j, 5]
+        #if True:
+        #    for j in range(N):
+                ptcls[j, 5] += 0.5*dgamma
+                kb = kp/sqrt(2*ptcls[j, 5])
+                coskb = cos(kb*dz)
+                sinkb = sin(kb*dz)
+                angle = 1 - dgamma / ptcls[j, 5]
                 # Calculate the components of the transfer matrix
                 if ne[i] == 0.0:
                     R11 = 1.0
-                    R12 = dz[i]
-                    R12 = 0.0
+                    R12 = dz
+                    R21 = 0.0
                     R22 = 1.0
                 else:
                     R11 = coskb
@@ -65,7 +65,7 @@ def electron_propagation_plasma(double[:, :] ptcls, double[:] z, double z0,
                 ptcls[j, 1] = R21 * ptcls[j, 0] + R22 * ptcls[j, 1]
                 ptcls[j, 2] = R11 * ptcls[j, 2] + R12 * ptcls[j, 3]
                 ptcls[j, 3] = R21 * ptcls[j, 2] + R22 * ptcls[j, 3]
-                ptcls[j, 5] += 0.5*dgamma[i]
+                ptcls[j, 5] += 0.5*dgamma
         if (i % dumpPeriod) == 0:
             saveP(ptcls, z[i]+z0)
-    return ptcls
+    return np.array(ptcls)

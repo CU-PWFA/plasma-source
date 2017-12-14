@@ -111,12 +111,13 @@ class Plasma(element.Element):
         """
         Nz = self.Nz
         nePlasma = np.zeros(Nz, dtype='double')
-        for i in range(Nz):
+        for i in range(Nz-1):
             if self.cyl is True:
-                nePlasma[i] = self.load_plasma_den(i)[int(self.Nx/2)]
+                nePlasma[i] = self.load_plasma_density(i)[0][int(self.Nx/2)]
             else:
-                nePlasma[i] = self.load_plasma_den(i)[int(self.Nx/2), int(self.Ny/2)]
-        if z == self.z:
+                nePlasma[i] = self.load_plasma_density(i)[0][int(self.Nx/2),
+                        int(self.Ny/2)]
+        if np.all(z == self.z):
             ne = nePlasma
         else: # We have to interpolate the plasma density
             tck = interpolate.splrep(self.z, nePlasma)
@@ -191,10 +192,10 @@ class Plasma(element.Element):
         ne = np.zeros((Nz, self.Nx))
         if not self.cyl:
             for i in range(0, Nz-1):
-                ne[i, :], z = self.load_plasma_density(i)[:, int(self.Ny/2)]
+                ne[i, :]= self.load_plasma_density(i)[0][:, int(self.Ny/2)]
         else:
             for i in range(0, Nz-1):
-                ne[i, :], z = self.load_plasma_density(i)
+                ne[i, :] = self.load_plasma_density(i)[0]
         plt.figure(figsize=(10, 6))
         im = self.plot_long_density(ne, lim)
         plt.show(im)
