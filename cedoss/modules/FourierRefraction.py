@@ -21,6 +21,25 @@ import os
 sys.path.insert(0, "../")
 from modules import ThreeDimensionAnalysis as ThrDim
 
+def GetDefaultParams(reducer = 0, double_x = 0):
+    def_params = {'Nx' : 2**(9-reducer)  * (1+double_x),
+               'Ny' : 2**(9-reducer),
+               'Nz' : 2**(8-reducer),
+               'Nt' : 2**7,#7
+               'X' : 3e2 * (1+double_x),
+               'Y' : 15e2,
+               'Z' : 1.5e4,
+               'T' : 160,
+               'n0' : 0.1,
+               'alpha' : 1.63,
+               'EI' : 15.8,
+               'E0' : 1,
+               'lam' : 0.7853,
+               'n' : 1.0,
+               'nFinal' : True,
+              }
+    return def_params
+
 def RunRefraction(density,params):
     #Sanity check so that we are using correct pulse
     diff = params['d_zi'] - params['Z']/2
@@ -95,4 +114,3 @@ def TestDensity(density,params):
         z = np.linspace(-Y/2, Y/2, Ny, False)
         x = np.linspace(-Z/2, Z/2, Nz, False)
         ThrDim.ImageCut(density,x,y,z,0,0,0,1e-3,'(mm)','Plasma Density','e17(cm^-3)',1)
-    

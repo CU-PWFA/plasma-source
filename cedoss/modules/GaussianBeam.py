@@ -298,9 +298,9 @@ def Prop_EPhase(q_y, q_z, offset, lmba, E0, w0):
 #  lmba - wavelength
 #  label1 - label for minimum spot size
 #  label2 - label for location of minimum spot size
-def Prop_SpotInfo(q,lmba,label1='',label2=''):
+def Prop_SpotInfo(q,lmba,label1='',label2='',scl=1e6):
     w=Prop_SpotList(q,lmba)
-    print(label1+' '+str(min(w)))
+    print(label1+' '+str(min(w)*1e6))
     x=Prop_GetRange(q)
     print(label2+' '+str(x[w.index(min(w))]))
 

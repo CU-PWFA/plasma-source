@@ -39,9 +39,9 @@ z_window = 800
 #Locate the desired data by specifying the folder and directory within
 
 #folder = '/home/chris/Desktop/FourierPlots/ArBackground/'
-folder = '/home/chris/Desktop/FourierPlots/ArJets_DivideDensity/'
+folder = '/home/chris/Desktop/FourierPlots/ArVarySpot_Calc/'
 
-directory = 'case_15/'
+directory = 'case_1/'
 #directory = 'Ar1_Big/'
 
 path = folder+directory

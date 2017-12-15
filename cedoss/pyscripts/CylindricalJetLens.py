@@ -24,8 +24,8 @@ distribution = 1
 only_w = 0
 cut_plots_H = 1
 contour_plots = 1
-den_plot = 1
-cut_plots_den = 1
+den_plot = 0
+cut_plots_den = 0
 
 c=2.998e8
 P=60e9
