@@ -15,23 +15,23 @@ sys.path.insert(0, "../")
 from modules import FourierRefraction as frefract
 
 #Script Selection
-test_density = 1
+test_density = 0
 free_space = 0
 double_x = 1
 
 #Set to some integer to lower grid resolution by a power
 reducer = 0
 
-load_density = 1
+load_density = 0
 constant_density = .1
 
 #DONT FORGET TO CHECK THE DIRECTORY AND ITS STUFF!
 # initDensity only knows its shape, not dimensions
 denfile = '/home/chris/Desktop/DataLoads/DensityFilesNp/initDensity_Ar_6x15x150.npy'
-pulsefile = '/home/chris/Desktop/DataLoads/PulseFilesNp/pulseParams_s4_center.npy'
+pulsefile = '/home/chris/Desktop/DataLoads/PulseFilesNp/pulseParams_narrow25.npy'
 
-path = '/home/chris/Desktop/FourierPlots/ArJets_DivideDensity/'
-
+path = '/home/chris/Desktop/FourierPlots/ArVarySpot/'
+"""
 params_orig = {'Nx' : 2**(9-reducer)  * (1+double_x),
                'Ny' : 2**(9-reducer),
                'Nz' : 2**(8-reducer),
@@ -48,6 +48,8 @@ params_orig = {'Nx' : 2**(9-reducer)  * (1+double_x),
                'n' : 1.0,
                'nFinal' : True,
               }
+"""
+params_orig = frefract.GetDefaultParams(reducer,double_x)
 
 var_loop = [1]#, 2, 3, 5, 8, 10, 15, 20]
 for case in var_loop:
@@ -67,9 +69,10 @@ for case in var_loop:
     density=None
     if load_density == 1:
         density = np.load(denfile)
+        density=density/division
     elif constant_density != 0:
-        params['n0'] = constant_density
-    density=density/division
+        params['n0'] = constant_density/division
+    
     
     if test_density == 1:
         frefract.TestDensity(density,params)
