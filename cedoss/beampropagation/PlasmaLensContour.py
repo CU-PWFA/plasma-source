@@ -3,6 +3,8 @@
 """
 Created on Wed Dec  6 12:02:41 2017
 
+Loops over TPL thickness and TPL location
+
 @author: chris
 """
 
@@ -12,7 +14,17 @@ import PlasmaPropagation as PProp
 debug = 1
 
 #Make beam and bulk plasma just as in single_pass
-params = PProp.ReturnDefaultParams(beta_change = 0.15)#, hwup_change=0.10)
+#For B_M=1.10
+#params = PProp.ReturnDefaultParams(beta_change = 0.15)
+#For B_M=1.68
+#params = PProp.ReturnDefaultParams(beta_change = 0.15, hwup_change=0.10)
+
+#For B_M=2.00 and a longer ramp
+#params = PProp.ReturnDefaultParams(hwup_change=0.18)
+params = PProp.ReturnDefaultParams(hwup_change=0.18, waist_change = 0.10)
+#For B_M=2.00 and a shorter ramp
+#params = PProp.ReturnDefaultParams(hwup_change=0.094)
+
 params['npart'] = 100 #Want 10,000 to 100,000 for a final figure
 
 twiss = PProp.CallMakeTwiss(params)
@@ -26,6 +38,9 @@ plasma0 = PProp.MakeBulkPlasma(params)
 #num should be much higher, but 10 can give a good rough estimation
 offset_arr = np.linspace(-0.60, -0.20, num = 10)
 length_arr = np.linspace(0.0, 300e-6, num = 10)
+
+#offset_arr = np.linspace(-0.50, -0.20, num = 20)
+#length_arr = np.linspace(0e-6, 300e-6, num = 20)
 
 bmag_image = np.zeros((len(offset_arr),len(length_arr)))
 tpl_n      = 5e16 #raise in discrete simulation sets

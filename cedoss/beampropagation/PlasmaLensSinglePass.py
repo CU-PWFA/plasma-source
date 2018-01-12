@@ -9,7 +9,10 @@ Created on Wed Dec 13 12:02:41 2017
 import PlasmaPropagation as PProp
 
 #Make beam and bulk plasma just as in single_pass
-params = PProp.ReturnDefaultParams(beta_change = 0.15)#, hwup_change=0.10)
+"""params = PProp.ReturnDefaultParams(beta_change = 0.15)#, hwup_change=0.10)"""
+#params = PProp.ReturnDefaultParams()
+params = PProp.ReturnDefaultParams(hwup_change = 0.18)#, hwup_change=0.10)
+
 params['npart'] = 1000
 
 twiss = PProp.CallMakeTwiss(params)
@@ -26,12 +29,13 @@ Bmag_init = PProp.CalcBmag(ebeam_init, plasma_init)
 print('initial Bmag: ',Bmag_init)
 
 vbeam0 = ebeam0.copy()
-
+#"""
 tpl_n      = 5e16
-tpl_offset = -0.48775510204081629
-tpl_l = 3.9795918367346933e-05
+tpl_offset = -0.447#-0.48775510204081629
+tpl_l = 852.6e-6#3.9795918367346933e-05
 
 plasma0 = PProp.InsertPlasmaLens(tpl_n, tpl_l, tpl_offset, plasma0)
+#"""
 ebeam0 = PProp.PropagatePlasma(ebeam0, plasma0)
 vbeam0 = PProp.PropagateVirtual(vbeam0, plasma0)
 PProp.PlotPropagation(ebeam0, vbeam0, plasma0)

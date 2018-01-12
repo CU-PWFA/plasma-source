@@ -3,27 +3,50 @@
 """
 Created on Wed Dec  13 12:02:41 2017
 
+Loops over TPL location and vacuum betafunction waist position
+
 @author: chris
 """
 
 import numpy as np
 import PlasmaPropagation as PProp
 
-debug = 0
+debug = 1
 
-waist_arr = np.linspace(-0.14, 0.14, num = 100) - 0.36
-offset_arr = np.linspace(-0.60, -0.20, num = 100)
+#waist_arr = np.linspace(-0.14, 0.14, num = 20) - 0.36
+waist_arr = np.linspace(-0.5, 0.5, num = 100)
+offset_arr = np.linspace(-0.60, -0.20, num = 40)
 bmag_image = np.zeros((len(offset_arr),len(waist_arr)))
-
+"""
 #Optimized for a TPL fixing Bmag 1.10 and position -0.48
 tpl_n = 5e16
 tpl_l = 3.9795918367346933e-05
+"""
+"""
+#Optimized for a TPL fixing Bmag 1.68 and position -0.33
+tpl_n = 5e16
+tpl_l = 0.000175555555556
+"""
+
+#Optimized for a TPL fixing Bmag 2.0 w/ hw_up 0.18 and position -0.447
+tpl_n = 5e16
+tpl_l = 0.0008526
+
+"""
+#Optimized for a TPL fixing Bmag 2.0 w/ hw_up 0.094 and position -0.310
+tpl_n = 5e16
+tpl_l = 0.0002526
+"""
+
+#Overrides!!
+tpl_l = 0.000100
 
 for j in range(len(waist_arr)):
     waist = waist_arr[j]
     #Make beam and bulk plasma just as in single_pass
-    params = PProp.ReturnDefaultParams(beta_change = 0.15, waist_change = waist)#, hwup_change=0.10)
-    params['npart'] = 1000 #Want 10,000 to 100,000 for a final figure
+    #See PlasmaLensContour for param setups
+    params = PProp.ReturnDefaultParams(waist_change = waist, hwup_change=0.094)
+    params['npart'] = 100 #Want 10,000 to 100,000 for a final figure
     
     twiss = PProp.CallMakeTwiss(params)
     parts = PProp.CallMakeParts(twiss, params)
