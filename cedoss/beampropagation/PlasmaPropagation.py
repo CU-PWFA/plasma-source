@@ -3,6 +3,8 @@
 """
 Created on Fri Dec  1 13:30:12 2017
 
+Functions for beam propagation using Mike's code
+
 @author: chris
 """
 
@@ -22,16 +24,20 @@ import beam_ana as ba
 def_beta = 0.10
 def_hwup = 0.1325
 def_waist = -0.36
+def_ramp = 'gauss'
+def_npl0 = 5e16
+def_gbC = 20000
 
-def ReturnDefaultParams(beta_change=def_beta, hwup_change=def_hwup, waist_change=def_waist):
-    npl0   = 5e16                      # cm^-3, plasma density
+def ReturnDefaultParams(beta_change=def_beta, hwup_change=def_hwup, waist_change=def_waist, 
+                        ramp_change=def_ramp, npl0_change=def_npl0, gbC_change = def_gbC):
+    npl0   = npl0_change                      # cm^-3, plasma density
     dEds0  = np.sqrt(npl0/(1e17))*10e9 # eV/m, energy gain rate
-    shape_up = 'gauss' # shape of ramp
+    shape_up = ramp_change # shape of ramp
     hw_up    = hwup_change  # m, half-width of ramp
-    L_up     = 1.5     # m, full length of ramp
+    L_up     = 1.5     # m, full length of ramp, 1.5 for the Gaussian ramps
     alpha  = 0.00    # Twiss at vac. waist
     beta   = beta_change    # m, Twiss at vac. waist
-    gbC    = 20000   # centroid relativistic lorentz factor
+    gbC    = gbC_change   # centroid relativistic lorentz factor
     wp0    = (5.64e4)*np.sqrt(npl0) # rad/s, plasma ang. freq. (flat-top)
     kp0    = wp0/nc.c               # 1/m, plasma wave number (flat-top)
     waist  = waist_change        # m, waist location w.r.t L_up
@@ -217,20 +223,61 @@ def PlotPropagation(ebeam, vbeam, plasma):
     ax4.set_ylabel(r'$K_J/K_{J,0}$',color='r')
     ax4.tick_params('y',colors='r')
     ax4.set_ylim([0.975,1.075])
-    
+    """
     #These act goofy
     xlabel_locs = [0.5,1.0,1.5,2.0,2.5,3.0]
     xlabels = [0,0.5,1.0,1.5,2.0,2.5]
     plt.xticks(xlabel_locs, xlabels)
     
-    ax1.set_xlim([1.0,2.5])
-    ax3.set_xlim([1.0,2.5])
+    ax1.set_xlim([0.5,3.0])
+    ax3.set_xlim([0.5,3.0])
     #end goofs
-    
+    """
     figA.tight_layout()
     figA.subplots_adjust(hspace=0)
     
     plt.show()
+
+def Calc2DTolerance(arr, x, y, thresh):
+    minlocx = np.argmin(np.min(arr,1))
+    minlocy = np.argmin(np.min(arr,0))
+    dx = x[1]-x[0]
+    xarr = arr[:,minlocy]
+    print(" in +/- x:",str(Calc1DTolerance(xarr, dx, minlocx, thresh)/2))
+    
+    dy = y[1]-y[0]
+    yarr = arr[minlocx,:]
+    print(" in +/- y:",str(Calc1DTolerance(yarr, dy, minlocy, thresh)/2))
+
+def Calc1DTolerance(arr, dx, minloc, thresh):
+    i = minloc
+    flag = 2
+    top = i; bot = i
+    
+    while i < (len(arr) - 1):
+        top = i
+        if arr[i] < thresh:
+            i = i + 1
+        else:
+            flag = flag - 1
+            break
+    
+    i = minloc
+    while i > 0:
+        bot = i
+        if arr[i] < thresh:
+            i = i - 1
+        else:
+            flag = flag - 1
+            break
+    
+    top = top - (thresh-arr[top-1])/(arr[top]-arr[top-1])
+    bot = bot + (thresh-arr[bot+1])/(arr[bot]-arr[bot+1])
+    
+    tol_range = (top-bot)*dx
+    if flag > 0:
+        print("Warning: domain edge reached for " + str(thresh))
+    return tol_range
     
 def PlotContour(contour, x_arr, y_arr, x_label, y_label):
         # find location of min(B)
@@ -270,6 +317,7 @@ def PlotContour(contour, x_arr, y_arr, x_label, y_label):
     cbar.set_ticks(levels)
     plt.ylabel(y_label)
     plt.xlabel(x_label)
+    plt.show()
 #    plt.title(r'beam matching for %s ramp'%shape_up)
 
     return [Bmin_x,Bmin_y]
