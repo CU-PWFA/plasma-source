@@ -3,6 +3,9 @@
 """
 Created on Wed Jan 10 11:23:56 2018
 
+Single pass through plasma with optional TPL using Robert's code
+
+
 @author: chris
 """
 

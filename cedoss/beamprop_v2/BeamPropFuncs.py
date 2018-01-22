@@ -3,6 +3,8 @@
 """
 Created on Wed Jan 10 11:24:57 2018
 
+Functions for beam propagation using Robert's code
+
 @author: chris
 """
 
@@ -53,6 +55,15 @@ def GaussianBeam(electronParams, debug = 0):
     return beam
 
 def dgammadz(ne):
+    npl0 = 0.5; npl = ne
+    dgds0 = np.sqrt(0.5) * 1.96e-2
+    if (npl > 4/9*npl0):
+        dgds = dgds0*np.sqrt(npl/npl0)*(3*np.sqrt(npl/npl0)-2)
+    else:
+        dgds = (-dgds0)*(2/np.pi)*np.sqrt(npl/npl0)*np.sin((3*np.pi/2)*np.sqrt(npl/npl0))
+    return dgds
+
+def dgammadz_wrong(ne):
     return np.sqrt(ne) * 1.96e-2
 
 def dgammadz_basic(ne):
@@ -69,8 +80,8 @@ def ReturnDefaultPlasmaParams(path):
         'Nx' : Nx,
         'Ny' : Ny,
         'Nz' : Nz,
-        'X' : 100,
-        'Y' : 100,
+        'X' : 3,
+        'Y' : 3,
         'Z' : Z,
         'n0' : 0.5,
         'z0' : plasma_start_loc * 1e6,
