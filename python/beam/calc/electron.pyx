@@ -21,7 +21,8 @@ cdef extern from "math.h" nogil:
     double sqrt(double)
 
 def electron_propagation_plasma(double[:, :] ptcls, double[:] z, double z0, 
-                                double[:] ne, int dumpPeriod, saveP, dgammadz, int n):
+                                double[:] ne, int dumpPeriod, saveP, dgammadz,
+                                int n):
     """ Propagate an electron beam through an ion column.
     
     Propagates a collection of macro particles through a full blowout plasma

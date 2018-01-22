@@ -79,6 +79,8 @@ def electron_plasma(electron, plasma, z, dumpPeriod, n):
         The spatial grid used to set the step size for the electron beam.
     dumpPeriod : int
         How frequently to save the electron beam to disk.
+    n : int
+        Number of threads to run on.
     """
     electron.ptcls = ecalc.electron_propagation_plasma(electron.ptcls,
                             z*1e-6, 0.0, plasma.get_ne(z), dumpPeriod,

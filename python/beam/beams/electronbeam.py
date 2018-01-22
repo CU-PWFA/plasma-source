@@ -138,7 +138,7 @@ class ElectronBeam(beam.Beam):
         return ex, ey
     
     def get_emittance_n(self, ind):
-        """ Calculate the emittance from a particular save file. """
+        """ Calculate the normalized emittance from a particular save file. """
         ptcls = self.load_ptcls(ind)[0]
         ex, ey = self.get_emittance(ind)
         gamma = np.average(self.get_gamma(ptcls))
@@ -154,7 +154,7 @@ class ElectronBeam(beam.Beam):
         self.plot_phase(self.ptcls, self.z[-1], xlim, ylim)
         plt.show()
     
-    def plt_phase_at(self, ind):
+    def plot_phase_at(self, ind):
         """ Plots the particles at a particular z distance.
         
         Parameters
