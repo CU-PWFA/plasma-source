@@ -66,7 +66,7 @@ def beam_plasma(beam, plasma):
                              loadn)
 
 
-def electron_plasma(electron, plasma, z, dumpPeriod):
+def electron_plasma(electron, plasma, z, dumpPeriod, n):
     """ Propagate an electron beam through an ion column. 
     
     Parameters
@@ -79,7 +79,9 @@ def electron_plasma(electron, plasma, z, dumpPeriod):
         The spatial grid used to set the step size for the electron beam.
     dumpPeriod : int
         How frequently to save the electron beam to disk.
+    n : int
+        Number of threads to run on.
     """
     electron.ptcls = ecalc.electron_propagation_plasma(electron.ptcls,
                             z*1e-6, 0.0, plasma.get_ne(z), dumpPeriod,
-                            electron.save_ptcls, plasma.dgammadz)
+                            electron.save_ptcls, plasma.dgammadz, n)

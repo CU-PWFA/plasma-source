@@ -19,19 +19,19 @@ if __name__ == '__main__':
     # define plasma bulk (flat-top) properties
     npl0   = 5e16                      # cm^-3, plasma density
     dEds0  = np.sqrt(npl0/(1e17))*10e9 # eV/m, energy gain rate
-    dgds0  = 0 #dEds0/nc.me               # 1/m, energy gain rate for rel. gamma
-    L_ft   = 1.0                      # m, length of flat-top
+    dgds0  = dEds0/nc.me               # 1/m, energy gain rate for rel. gamma
+    L_ft   = 0.00                      # m, length of flat-top
     
     # define plasma up-ramp
-    shape_up = 'flat' # shape of ramp
-    hw_up    = 10.0  # m, half-width of ramp
-    L_up     = 0.0     # m, full length of ramp
+    shape_up = 'adiabatic' # shape of ramp
+    hw_up    = 0.00  # m, half-width of ramp
+    L_up     = 0.00     # m, full length of ramp
     top_up   = L_up    # m, relative location of ramp top
     
     # define plasma down-ramp
     shape_dn = 'adiabatic' # shape of ramp
-    hw_dn    = 10.0    # m, half-width of ramp
-    L_dn     = 10.00     # m, full length of ramp
+    hw_dn    = 0.786    # m, half-width of ramp
+    L_dn     = 50.00    # m, full length of ramp
     top_dn   = 0        # m, relative location of ramp top
     
     # define beam parameters
@@ -98,21 +98,33 @@ if __name__ == '__main__':
     pbp.prop_ebeam_plasma(ebeam,plasma) # output: ebeam dict.
 
     # propagate beam through vacuum
-    pbp.prop_ebeam_drift(vbeam,plasma["s"]) # output: vbeam dict.
+#    pbp.prop_ebeam_drift(vbeam,plasma["s"]) # output: vbeam dict.
     
     #%%
-    s_plot = np.zeros(np.floor(len(ebeam)/100))
-    beta_plot = np.zeros(np.floor(len(ebeam)/100))
-    n_plot = 0
-    for i in range(0,int(np.floor(len(ebeam)/100))):
-        j = int(i*100)
-        s_plot[n_plot] = ebeam[j]["s"]
-        beta_plot[n_plot] = ebeam[j]["beta"]
-        n_plot += 1
+    plot_s = np.zeros(len(ebeam)-6)
+    plot_g = np.zeros(len(ebeam)-6)
+    for i in range(0,len(ebeam)-6):
+        plot_s[i] = ebeam[i]["s"]
+        plot_g[i] = ebeam[i]["gbC"]*nc.me*1e-9
     
     fig, axes = plt.subplots(1,1, sharey=True)
-    plt.plot(s_plot,beta_plot)
+    plt.plot(plot_s,plot_g)
     plt.xlabel('z (m)')
-    plt.ylabel(r'$\beta$ (m)')
+    plt.ylabel(r'$\gamma$')
+
+    #%%
+#    s_plot = np.zeros(np.floor(len(ebeam)/100))
+#    beta_plot = np.zeros(np.floor(len(ebeam)/100))
+#    n_plot = 0
+#    for i in range(0,int(np.floor(len(ebeam)/100))):
+#        j = int(i*100)
+#        s_plot[n_plot] = ebeam[j]["s"]
+#        beta_plot[n_plot] = ebeam[j]["beta"]
+#        n_plot += 1
+#    
+#    fig, axes = plt.subplots(1,1, sharey=True)
+#    plt.plot(s_plot,beta_plot)
+#    plt.xlabel('z (m)')
+#    plt.ylabel(r'$\beta$ (m)')
 
 #    

@@ -9,13 +9,18 @@ Created on Wed Jun 28 15:18:15 2017
 import numpy as np
 from collections import defaultdict
 
-def calc_dgds(dgds0,npl0,npl,model=0):
+def calc_dgds(dgds0,npl0,npl,model=1):
     """calculate energy gain rate for each point in the plasma"""
     dgds = np.zeros(len(npl))
 #    if (dgds0!=0) & (npl0!=0):
     if model==0:
         # wake strength ~sqrt(np), phase ~sqrt(np)
         dgds = dgds0*np.sqrt(npl/npl0)*(2*np.sqrt(npl/npl0)-1)
+    elif model==1:
+        dgds = (npl>(4/9)*npl0)*dgds0*np.sqrt(npl/npl0)*\
+        (3*np.sqrt(npl/npl0)-2) +\
+        (npl<=(4/9)*npl0)*(-dgds0)*(2/np.pi)*np.sqrt(npl/npl0)*\
+        np.sin((3*np.pi/2)*np.sqrt(npl/npl0))
     else:
         dgds = dgds0
     return dgds
@@ -150,7 +155,8 @@ def make_ramp(s,updn,shape,hw,top_loc,npl0,dgds0,gbC=20000):
                 npl[0] = npl0
                 for i in range(1,len(s)):
 #                    npl[i] = npl[i-1]*(1-(2.12e-7)*np.sqrt(npl[i-1]/gbC)*ds)
-                    npl[i] = npl[i-1]*(1-(2.12e-6)*np.sqrt(npl[i-1]/gbC)*ds)
+                    npl[i] = npl[i-1]-(6.66e-9)*\
+                       (npl[i-1]**(3/2))*(gbC**(-1/2))*(ds*100)
                 # up-ramp
                 if updn.lower() == 'up':
                     npl = np.fliplr([npl])[0]

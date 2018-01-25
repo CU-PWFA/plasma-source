@@ -138,7 +138,7 @@ class ElectronBeam(beam.Beam):
         return ex, ey
     
     def get_emittance_n(self, ind):
-        """ Calculate the emittance from a particular save file. """
+        """ Calculate the normalized emittance from a particular save file. """
         ptcls = self.load_ptcls(ind)[0]
         ex, ey = self.get_emittance(ind)
         gamma = np.average(self.get_gamma(ptcls))
@@ -149,12 +149,12 @@ class ElectronBeam(beam.Beam):
     # Visualization functions
     #--------------------------------------------------------------------------
     
-    def plot_current_phase(self):
+    def plot_current_phase(self, xlim=None, ylim=None):
         """ Plots a scatterplot of the particles in the current beam. """
-        self.plot_phase(self.ptcls, self.z[-1])
+        self.plot_phase(self.ptcls, self.z[-1], xlim, ylim)
         plt.show()
     
-    def plt_phase_at(self, ind):
+    def plot_phase_at(self, ind):
         """ Plots the particles at a particular z distance.
         
         Parameters
@@ -166,19 +166,27 @@ class ElectronBeam(beam.Beam):
         self.plot_phase(ptcls, z)
         plt.show()
     
-    def plot_phase(self, ptcls, z):
+    def plot_phase(self, ptcls, z, xlim=None, ylim=None):
         """ Create an x-y plot of the particles. """        
-        fig = plt.figure(figsize=(10, 4))
+        fig = plt.figure(figsize=(10, 4), dpi=150)
         plt.subplot(121)
         sctx = plt.scatter(ptcls[:, 0]*1e6, ptcls[:, 1]*1e3, 1)
         plt.title('x phase space')
         plt.xlabel('x (um)')
         plt.ylabel("x' (mrad)")
+        if xlim is not None:
+            plt.xlim(xlim)
+        if ylim is not None:
+            plt.ylim(ylim)
         plt.subplot(122)
         scty = plt.scatter(ptcls[:, 2]*1e6, ptcls[:, 3]*1e3, 1)
         plt.title('y phase space')
         plt.xlabel('y (um)')
         plt.ylabel("y' (mrad)")
+        if xlim is not None:
+            plt.xlim(xlim)
+        if ylim is not None:
+            plt.ylim(ylim)
 
         plt.tight_layout()
         return fig, sctx, scty

@@ -103,12 +103,12 @@ class SphericalLens(Phase):
         super().__init__(params)
     
     def initialize_field(self):
-        phi = -self.k * (self.x[:, None]**2+self.y[None, :]**2) / 2*self.f
+        phi = -self.k * (self.x[:, None]**2+self.y[None, :]**2) / (2*self.f)
         super().initialize_phase(phi)
         
 
 class AxiconLens(Phase):
-    """ A phase mask that simulates a thin spherical lens.
+    """ A phase mask that simulates a thin axicon lens.
     
     Parameters
     ----------
@@ -124,4 +124,32 @@ class AxiconLens(Phase):
     def initialize_phase(self):
         r = np.sqrt(self.x[:, None]**2+self.y[None, :]**2)
         phi = -self.k * np.radians(self.beta) * r
+        super().initialize_phase(phi)
+
+class Axilens(Phase):
+    """ A phase mask that simulates a thin axilens.
+    
+    Parameters
+    ----------
+    R : double
+        The radius of the input flattop.
+    f0 : double
+        The distance from the lens to the start of the focus.
+    dz :
+        The length of the focus.
+    """
+    
+    def __init__(self, params):
+        self.keys.extend(
+                ['R',
+                 'f0',
+                 'dz'])
+        super().__init__(params)
+    
+    def initialize_phase(self):
+        r = np.sqrt(self.x[:, None]**2+self.y[None, :]**2)
+        R = self.R
+        f0 = self.f0
+        dz = self.dz
+        phi = -self.k*R**2 * np.log(f0+dz*r**2/R**2) / (2*dz)
         super().initialize_phase(phi)

@@ -21,7 +21,8 @@ cdef extern from "math.h" nogil:
     double sqrt(double)
 
 def electron_propagation_plasma(double[:, :] ptcls, double[:] z, double z0, 
-                                double[:] ne, int dumpPeriod, saveP, dgammadz):
+                                double[:] ne, int dumpPeriod, saveP, dgammadz,
+                                int n):
     """ Propagate an electron beam through an ion column.
     
     Propagates a collection of macro particles through a full blowout plasma
@@ -35,6 +36,7 @@ def electron_propagation_plasma(double[:, :] ptcls, double[:] z, double z0,
     cdef double kp, kb, dz
     cdef double coskb, sinkb, angle
     cdef double R11, R12, R21, R22
+    cdef double x, y
     # Calculate parameters for each z-slice
     for i in range(Nz-1):
         kp = 5.95074e4 * sqrt(ne[i])
@@ -42,7 +44,7 @@ def electron_propagation_plasma(double[:, :] ptcls, double[:] z, double z0,
         dz = z[i+1] - z[i]
         dgamma = dgammadz(ne[i]) * dz
         with nogil:
-            for j in prange(N):
+            for j in prange(N, num_threads=n):
         #if True:
         #    for j in range(N):
                 ptcls[j, 5] += 0.5*dgamma
@@ -61,10 +63,12 @@ def electron_propagation_plasma(double[:, :] ptcls, double[:] z, double z0,
                     R12 = sinkb / kb
                     R21 = -angle * kb * sinkb
                     R22 = angle * coskb
-                ptcls[j, 0] = R11 * ptcls[j, 0] + R12 * ptcls[j, 1]
-                ptcls[j, 1] = R21 * ptcls[j, 0] + R22 * ptcls[j, 1]
-                ptcls[j, 2] = R11 * ptcls[j, 2] + R12 * ptcls[j, 3]
-                ptcls[j, 3] = R21 * ptcls[j, 2] + R22 * ptcls[j, 3]
+                x = ptcls[j, 0]
+                y = ptcls[j, 2]
+                ptcls[j, 0] = R11 * x + R12 * ptcls[j, 1]
+                ptcls[j, 1] = R21 * x + R22 * ptcls[j, 1]
+                ptcls[j, 2] = R11 * y + R12 * ptcls[j, 3]
+                ptcls[j, 3] = R21 * y + R22 * ptcls[j, 3]
                 ptcls[j, 5] += 0.5*dgamma
         if (i % dumpPeriod) == 0:
             saveP(ptcls, z[i]+z0)
