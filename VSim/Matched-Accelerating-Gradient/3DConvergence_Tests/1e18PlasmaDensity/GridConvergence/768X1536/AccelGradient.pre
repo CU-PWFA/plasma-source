@@ -1,0 +1,885 @@
+###############################################################################
+#
+# @file    FACETIITest.pre
+#
+# @version $Rev: 5200 $ $Date: 2017-04-10 17:37:45 -0600 (Mon, 10 Apr 2017) $
+#
+# Copyright &copy; 2013-2017, Tech-X Corporation, Boulder, CO.
+# Freely distributable.
+#
+###############################################################################
+
+# Import the mathematical and physical quanties
+$ import mathphys
+$ import matrix
+$ import esSolveOpenBdry
+$ import initBeam
+$ import absorbingBox
+$ import mal
+$ import verbosity
+verbosity=VP_NOTICE
+
+# Basic parameters
+#------------------------------------------------------------------------------
+<XSim driveWitnessPWFABase>
+  shortDescription = "PWFA with a drive and witness beam (Text-based setup)"
+  description = "This example models the wakefield and beam evolution of a PWFA driven by an electron drive beam and accelerating an electron witness beam."
+  longDescription = "The base simulation models a pair of longitudinally spaced beams propagating through a plasma. It calculates the wakefileds generated as a result of the beam passage and the beam evolution resulting from interaction with the wakefields..<p> <b>Note</b>: For a 3D Simulation, this run requires the use of a supercomputer (~1000 processors). To run on fewer processors one can reduce the number of grid points and number of particles per cell, however physical results may not be accurate, the 2D version will run on a desktop workstation."
+  image= "FACETIITest.png"
+  thumbnail = "FACETIITestTn.png"
+  analyzers = []
+</XSim>
+
+# Dimensions
+$ NDIM = 2
+<XVar NDIM>
+  description = "Number of dimensions in which to run the problem"
+  min = 2
+  max = 3
+</XVar>
+
+# Drive beam
+#------------------------------------------------------------------------------
+$ BEAM_ENERGY = 10.
+<XVar BEAM_ENERGY>
+  description = "Drive beam energy in GeV"
+</XVar>
+
+$ BEAM_LRMS = 5.2
+<XVar BEAM_LRMS>
+  description = "Drive beam bunch length (RMS), in um"
+</XVar>
+
+$ BEAM_DRMS = 1.
+<XVar BEAM_DRMS>
+  description = "Drive beam momentum spread sigma_delta (RMS), in %"
+</XVar>
+
+$ BEAM_EMITTANCE = 5.3
+<XVar BEAM_EMITTANCE>
+  description = "Drive beam normalized transverse emittance, in mm*mrad"
+</XVar>
+
+$ BEAM_CHARGE = 1.5
+<XVar BEAM_CHARGE>
+  description = "Drive beam total charge, in nC"
+</XVar>
+
+$ BEAM_POSITION = 100
+<XVar BEAM_POSITION>
+  description = "Distance from the front of the window to the beam center, in um"
+</XVar>
+
+# Witness beam
+#------------------------------------------------------------------------------
+$ WITNESS_ENERGY = 10.
+<XVar WITNESS_ENERGY>
+  description = "Witness beam energy in GeV"
+</XVar>
+
+$ WITNESS_LRMS = 36
+<XVar WITNESS_LRMS>
+  description = "Witness beam bunch length (RMS), in um"
+</XVar>
+
+$ WITNESS_DRMS = 1.
+<XVar WITNESS_DRMS>
+  description = "Witness beam momentum spread sigma_delta (RMS), in %"
+</XVar>
+
+$ WITNESS_EMITTANCE = 7.
+<XVar WITNESS_EMITTANCE>
+  description = "Witness beam normalized transverse emittance, in mm*mrad"
+</XVar>
+
+$ WITNESS_CHARGE = 0.5
+<XVar WITNESS_CHARGE>
+  description = "Witness beam total charge, in nC"
+</XVar>
+
+$ WITNESS_DELAY = 250
+<XVar WITNESS_DELAY>
+  description = "Distance between the drive beam and witness beam, in um"
+</XVar>
+
+# Plasma
+#------------------------------------------------------------------------------
+$ PLASMA_DENS = 10
+<XVar PLASMA_DENS>
+  description = "Plasma number density, in 10^17 cm^3"
+</XVar>
+
+$ FLAT_LEN = 0.1
+<XVar FLAT_LEN>
+  description = "The length of the flattop plasma, in cm."
+</XVar>
+
+$ SIGMA_IN = 0
+<XVar SIGMA_IN>
+  description = "The length of the entrance ramp, in cm."
+</XVar>
+
+$ SIGMA_OUT = 0.
+<XVar SIGMA_OUT>
+  description = "The length of the exit ramp, in cm."
+</XVar>
+
+# Grid parameters
+#------------------------------------------------------------------------------
+$ NMAL = 24
+<XVar NMAL>
+  description = "Depth of the matched absorbing layers, in number of cells"
+</XVar>
+
+$ NLONG = 768
+<XVar NLONG>
+  description = "Number of longitudinal cells"
+</XVar>
+
+$ NTRAN = 1536
+<XVar NTRAN>
+  description = "Number of transverse cells"
+</XVar>
+
+$ LONGITUDINAL_EXTENT = 500
+<XVar LONGITUDINAL_EXTENT>
+  description = "Longitudinal size of the simulation grid/mesh, in um"
+</XVar>
+
+$ TRANSVERSE_EXTENT = 600
+<XVar TRANSVERSE_EXTENT>
+  description = "Transverse size of the simulation grid/mesh, in um"
+</XVar>
+
+###############################################################################
+# Calculate simulation setup parameters
+###############################################################################
+
+# Grid calculation
+#------------------------------------------------------------------------------
+$ NX = NLONG
+$ NY = NTRAN + 2*NMAL
+$ NZ = NY
+$ LX = LONGITUDINAL_EXTENT*1.e-6
+$ LY = TRANSVERSE_EXTENT*1.e-6
+$ LZ = LY
+$ XBGN = -0.5*LX
+$ YBGN = -0.5*LY
+$ ZBGN = -0.5*LZ
+
+# Matched absorbing layer (MAL) calculation
+#------------------------------------------------------------------------------
+# The grid spacing is also used by the initBeam macro and the Courant condition
+$ DX = LX / NX
+$ DY = LY / NY
+$ DZ = LZ / NZ
+$ NYmMAL = NY-NMAL
+$ NZmMAL = NZ-NMAL
+
+# Timestep calculation
+#------------------------------------------------------------------------------
+# Use the Courant condition to calculate dt
+$ DXI = 1./DX
+$ DYI = 1./DY
+$ DZI = 1./DZ
+$ CDTFAC = 0.99999
+$ DL = 1. / math.sqrt(DXI*DXI + (NDIM > 1)*DYI*DYI + (NDIM > 2)*DZI*DZI)
+$ DELTA_T = CDTFAC * DL / LIGHTSPEED
+
+# Calculate important parameters for beam matching
+#------------------------------------------------------------------------------
+$ OMEGA_PLASMA = math.sqrt(PLASMA_DENS*3.182e26)
+$ K_PLASMA = OMEGA_PLASMA / LIGHTSPEED
+$ BEAM_GAMMA = (BEAM_ENERGY/0.511e-3) + 1.0
+$ K_BETA = K_PLASMA / math.sqrt(2*BEAM_GAMMA)
+$ BETA_MATCHED = 1. / K_BETA
+$ WITNESS_SIGMAR = math.sqrt(BETA_MATCHED * WITNESS_EMITTANCE * 1e6 / WITNESS_GAMMA) #In microns
+$ BEAM_SIGMAR = math.sqrt(BETA_MATCHED * BEAM_EMITTANCE * 1e6 / BEAM_GAMMA)
+
+# Drive beam parameters
+#------------------------------------------------------------------------------
+# Calculate relativistic factors and the velocity (ux=gamma*vx)
+$ BEAM_BETA = math.sqrt(1.-1./BEAM_GAMMA**2)
+$ BEAM_VX = BEAM_BETA * LIGHTSPEED
+$ BEAM_UX = BEAM_GAMMA * BEAM_VX
+$ BEAM_SIGMAUX = BEAM_DRMS * BEAM_UX / 100.
+$ BEAM_SIGMAUY = BEAM_UX*BEAM_EMITTANCE / (BEAM_SIGMAR*BEAM_GAMMA)
+# Calculate the peak beam density (weight is essentially a multiplier on this)
+$ BEAM_RHO_PEAK = 1.e9*BEAM_CHARGE / (TWOPI**1.5 * BEAM_LRMS * BEAM_SIGMAR**2)
+$ BEAM_DENSITY = BEAM_RHO_PEAK / ELEMCHARGE
+# Change these to change the particles per cell
+$ PPCX_B = 2
+$ PPCY_B = 4
+$ PPCZ_B = 1
+$ if NDIM <= 2
+$ PPCZ_B = 1
+$ endif
+$ BEAM_PPC = 1.*PPCX_B*PPCY_B*PPCZ_B
+# Calculate the bounds of the volume where the beam particles are loaded in
+$ BEAM_CENTER = LX/2. - BEAM_POSITION*1.e-6
+$ BEAM_HALF_WIDTH = 5 * BEAM_SIGMAR*1.e-6
+$ BEAM_HALF_LENGTH = 5 * BEAM_LRMS*1.e-6
+$ BEAM_LOAD_XSTART = BEAM_CENTER - BEAM_HALF_LENGTH
+$ BEAM_LOAD_XEND = BEAM_CENTER + BEAM_HALF_LENGTH
+$ BEAM_LOAD_YSTART = -BEAM_HALF_WIDTH
+$ BEAM_LOAD_YEND = BEAM_HALF_WIDTH
+$ BEAM_LOAD_ZSTART = -BEAM_HALF_WIDTH
+$ BEAM_LOAD_ZEND = BEAM_HALF_WIDTH
+
+# Witness WITNESS parameters
+#------------------------------------------------------------------------------
+# Calculate relativistic factors and the velocity (ux=gamma*vx)
+$ WITNESS_GAMMA = (WITNESS_ENERGY/0.511e-3) + 1.0
+$ WITNESS_BETA = math.sqrt(1.-1./WITNESS_GAMMA**2)
+$ WITNESS_VX = WITNESS_BETA * LIGHTSPEED
+$ WITNESS_UX = WITNESS_GAMMA * WITNESS_VX
+$ WITNESS_SIGMAUX = WITNESS_DRMS * WITNESS_UX / 100.
+$ WITNESS_SIGMAUY = WITNESS_UX*WITNESS_EMITTANCE / (WITNESS_SIGMAR*WITNESS_GAMMA)
+# Calculate the peak beam density (weight is essentially a multiplier on this)
+$ WITNESS_RHO_PEAK = 1.e9*WITNESS_CHARGE / (TWOPI**1.5 * WITNESS_LRMS * WITNESS_SIGMAR**2)
+$ WITNESS_DENSITY = WITNESS_RHO_PEAK / ELEMCHARGE
+# Change these to change the particles per cell
+$ PPCX_W = 2
+$ PPCY_W = 4
+$ PPCZ_W = 1
+$ if NDIM <= 2
+$ PPCZ_W = 1
+$ endif
+$ WITNESS_PPC = 1.*PPCX_W*PPCY_W*PPCZ_W
+# Calculate the bounds of the volume where the beam particles are loaded in
+$ WITNESS_CENTER = BEAM_CENTER - WITNESS_DELAY*1.e-6
+$ WITNESS_HALF_WIDTH = 5 * WITNESS_SIGMAR*1.e-6
+$ WITNESS_HALF_LENGTH = 5 * WITNESS_LRMS*1.e-6
+$ WITNESS_LOAD_XSTART = WITNESS_CENTER - WITNESS_HALF_LENGTH
+$ WITNESS_LOAD_XEND = WITNESS_CENTER + WITNESS_HALF_LENGTH
+$ WITNESS_LOAD_YSTART = -WITNESS_HALF_WIDTH
+$ WITNESS_LOAD_YEND = WITNESS_HALF_WIDTH
+$ WITNESS_LOAD_ZSTART = -WITNESS_HALF_WIDTH
+$ WITNESS_LOAD_ZEND = WITNESS_HALF_WIDTH
+
+
+# Plasma parameters
+#------------------------------------------------------------------------------
+$ PLASMA_DENS_M = PLASMA_DENS*1.e23
+# We need to know where the sides of the grid are to creae the plasma
+$ XEND = 0.5*LX
+$ YEND = 0.5*LY
+$ ZEND = 0.5*LZ
+$ LY_MAL = NMAL*DY
+$ LZ_MAL = NMAL*DZ
+# Define where important ramp features are
+$ START_RAMP = XEND
+$ RAMP_LEN_IN = 3*SIGMA_IN*1.e-2
+$ RAMP_LEN_OUT = 3*SIGMA_OUT*1.e-2
+$ START_FLAT = START_RAMP + RAMP_LEN_IN
+$ END_FLAT = START_FLAT + FLAT_LEN*1.e-2
+$ END_PLASMA = END_FLAT + RAMP_LEN_OUT
+# Change these to change the particles per cell
+$ PPX = 1
+$ PPY = 1
+$ PPZ = 1
+$ PPC = 1.*PPX*PPY*PPZ
+# Define the surface to load the plasma from
+$ YSTART_LOAD = YBGN + 1.25*LY_MAL
+$ YEND_LOAD = YEND - 1.25*LY_MAL
+$ ZSTART_LOAD = ZBGN + 1.25*LZ_MAL
+$ ZEND_LOAD = ZEND - 1.25*LZ_MAL
+
+# Run parameters
+#------------------------------------------------------------------------------
+$ SIMLEN = LX + END_PLASMA
+$ SIMTIME = SIMLEN / LIGHTSPEED
+$ NDUMPS = 10
+$ DUMPPERIOD = int(SIMTIME/DELTA_T/NDUMPS)
+$ NSTEPS = NDUMPS * DUMPPERIOD
+
+# End of pre-parser parameters
+
+###############################################################################
+# Set globals
+###############################################################################
+
+dimension = NDIM
+floattype = double
+# Dumping every 250-500 makes for nice animations
+dt              = DELTA_T
+nsteps          = NSTEPS
+dumpPeriodicity = DUMPPERIOD
+
+# Moving window parameters
+#------------------------------------------------------------------------------
+downShiftDir = 0 # The direction of the moving window (x)
+# The simulation starts moving when the drive beam is dz from the end of the grid
+downShiftPos = 0. 
+
+#------------------------------------------------------------------------------
+# Suppress *_comms_*.txt files
+noComms = 1
+
+###############################################################################
+# Create the grid
+###############################################################################
+
+<Grid globalGrid>
+  numCells       = [ NX     NY     NZ    ]
+  lengths        = [ LX     LY     LZ    ]
+  startPositions = [ XBGN  YBGN  ZBGN ]
+  maxIntDepHalfWidth = 2
+</Grid>
+
+# The decomposition - Vorpal will handle the parameters automatically
+<Decomp decomp>
+</Decomp>
+
+<MultiField emField>
+
+  #-----------------------------------------------------------------------
+  # Fields for electrostatic solve
+  #-----------------------------------------------------------------------
+
+  # charge density deposited by the particle beam
+  <Field rhoBeam>
+    numComponents = 1
+    overlap = [2 3]
+    offset = none
+#    kind = depField
+		interpolation = esirk2ndOrder
+  </Field>
+
+  # current deposited by the particle beam
+  <Field JBeam>
+#    kind = depField
+		interpolation = esirk2ndOrder
+    overlap = [2 3]
+    numComponents = 3
+    offset = edge
+    dumpPeriod = 0
+  </Field>
+
+	# charge density deposited by the particle beam
+  <Field rhoDrive>
+    numComponents = 1
+    overlap = [2 3]
+    offset = none
+    kind = depField
+  </Field>
+
+  # current deposited by the particle beam
+  <Field JDrive>
+    kind = depField
+    overlap = [2 3]
+    numComponents = 3
+    offset = edge
+    dumpPeriod = 0
+  </Field>
+
+	# charge density deposited by the particle beam
+  <Field rhoWitness>
+    numComponents = 1
+    overlap = [2 3]
+    offset = none
+    kind = depField
+  </Field>
+
+  # current deposited by the particle beam
+  <Field JWitness>
+    kind = depField
+    overlap = [2 3]
+    numComponents = 3
+    offset = edge
+    dumpPeriod = 0
+  </Field>
+
+  # Electric field for the beam
+  <Field ElecFieldBeam>
+    numComponents = 3
+    overlap = [2 3]
+    offset = edge
+    interpolation = esirk2ndOrder
+  </Field>
+
+        # Magnetic field for the beam
+  <Field MagFieldBeam>
+    numComponents = 3
+    overlap = [2 3]
+    offset = face
+    interpolation = esirk2ndOrder
+    dumpPeriod = 0
+  </Field>
+
+  # charge density deposited by the plasma
+  <Field rhoPlasma>
+    numComponents = 1
+    overlap = [2 3]
+    offset = none
+    kind = depField
+  </Field>
+
+  # current deposited by the plasma
+  <Field JPlasma>
+    kind = depField
+    overlap = [2 3]
+    numComponents = 3
+    offset = edge
+    dumpPeriod = 0
+  </Field>
+
+  # Electric field for the beam
+  <Field ElecFieldPlasma>
+    numComponents = 3
+    overlap = [2 3]
+    offset = edge
+    interpolation = esirk2ndOrder
+  </Field>
+
+        # Magnetic field for the beam
+  <Field MagFieldPlasma>
+    numComponents = 3
+    overlap = [2 3]
+    offset = face
+    interpolation = esirk2ndOrder
+    dumpPeriod = 0
+  </Field>
+
+  # Electric field on edges
+  <Field edgeE>
+    numComponents = 3
+    overlap = [2 3]
+    offset = edge
+    interpolation = esirk2ndOrder
+  </Field>
+
+        # Magnetic field on faces
+  <Field faceB>
+    numComponents = 3
+    overlap = [2 3]
+    offset = face
+    interpolation = esirk2ndOrder
+  </Field>
+
+#-----------------------------------------------------------------------
+# Updaters for electrostatic solve
+#-----------------------------------------------------------------------
+
+  # Ampere update
+  <FieldMultiUpdater yeeAmpereBeam>
+    kind        = yeeAmpereUpdater
+    lowerBounds = [ 0    0     0  ]
+    upperBounds = [NX    NY    NZ ]
+    readFields  = [MagFieldBeam JBeam]
+    readFieldCompShifts = [0 0]
+    writeFields = [ElecFieldBeam]
+    components  = [0 1  2]
+    contractFromBottomInNonComponentDir = 1
+  </FieldMultiUpdater>
+
+  # Faraday update
+  <FieldMultiUpdater yeeFaradayBeam>
+    expandToTopInComponentDir = 1
+    kind        = yeeFaradayUpdater
+    components  = [ 0  1  2]
+    readFields  = [ElecFieldBeam]
+    writeFields = [MagFieldBeam]
+    lowerBounds = [ 0   0   0  ]
+    upperBounds = [NX   NY  NZ  ]
+  </FieldMultiUpdater>
+
+  # # Ampere update
+  <FieldMultiUpdater yeeAmperePlasma>
+    kind        = yeeAmpereUpdater
+    lowerBounds = [ 0    0     0  ]
+    upperBounds = [NX    NY    NZ ]
+    readFields  = [MagFieldPlasma JPlasma]
+    readFieldCompShifts = [0 0]
+    writeFields = [ElecFieldPlasma]
+    components  = [0 1  2]
+    contractFromBottomInNonComponentDir = 1
+  </FieldMultiUpdater>
+
+  # Faraday update
+  <FieldMultiUpdater yeeFaradayPlasma>
+    expandToTopInComponentDir = 1
+    kind        = yeeFaradayUpdater
+    components  = [ 0  1  2]
+    readFields  = [ElecFieldPlasma]
+    writeFields = [MagFieldPlasma]
+    lowerBounds = [ 0   0   0  ]
+    upperBounds = [NX   NY  NZ  ]
+  </FieldMultiUpdater>
+
+	<FieldUpdater sumRho>
+     kind = fieldBinOpUpdater
+     lowerBounds = [ 0     0     0    ]
+     upperBounds = [ NX    NY    NZ  ]
+     binOp = add
+     aCoeff = 1.0
+     bCoeff = 1.0
+     readFields = [rhoDrive rhoWitness]
+     writeFields = [rhoBeam]
+   </FieldUpdater>
+
+	<FieldUpdater sumJ>
+     kind = fieldBinOpUpdater
+     lowerBounds = [ 0     0     0    ]
+     upperBounds = [ NX    NY    NZ  ]
+     binOp = add
+     aCoeff = 1.0
+     bCoeff = 1.0
+     readFields = [JDrive JWitness]
+     writeFields = [JBeam]
+   </FieldUpdater>
+
+  <FieldUpdater sumE>
+     kind = fieldBinOpUpdater
+     lowerBounds = [ 0     0     0    ]
+     upperBounds = [ NX    NY    NZ  ]
+     binOp = add
+     aCoeff = 1.0
+     bCoeff = 1.0
+     readFields = [ElecFieldBeam ElecFieldPlasma]
+     writeFields = [edgeE]
+   </FieldUpdater>
+
+   <FieldUpdater sumB>
+     kind = fieldBinOpUpdater
+     lowerBounds = [ 0     0     0    ]
+     upperBounds = [ NX    NY    NZ   ]
+     binOp = add
+     aCoeff = 1.0
+     bCoeff = 1.0
+     readFields = [MagFieldBeam MagFieldPlasma]
+     writeFields = [faceB]
+   </FieldUpdater>
+
+	<InitialUpdateStep step1>
+    toDtFrac = 0.0
+    messageFields = [rhoBeam]
+    updaters = [sumRho]
+  </InitialUpdateStep>
+
+  <InitialUpdateStep step2>
+    toDtFrac = 1.0
+    messageFields = [JBeam]
+    updaters = [sumJ]
+  </InitialUpdateStep>
+
+  # fields, updater and update steps for the beam field initialization
+  initBeam(rhoBeam, ElecFieldBeam, MagFieldBeam, BEAM_GAMMA, 0, 0, 0, NX, NY, NZ, DX, DY, DZ, NDIM, 0)
+
+  <InitialUpdateStep step9.8>
+    toDtFrac = 0.0
+    messageFields = [edgeE]
+    updaters = [sumE]
+  </InitialUpdateStep>
+
+  <InitialUpdateStep step9.9>
+    toDtFrac = 1.0
+    messageFields = [faceB]
+    updaters = [sumB]
+  </InitialUpdateStep>
+
+#
+# Update steps
+#
+
+$ if NDIM >=2
+  MALdampB_beforeFaraday(MagFieldPlasma,malb1yL, 0, 0     , 0, NX, NMAL, NZ, 1, -1, YBGN, DY, 0.5, 3.0)
+  MALdampB_beforeFaraday(MagFieldPlasma,malb1yR, 0, NYmMAL, 0, NX, NY,    NZ, 1,  1, YBGN, DY, 0.5, 3.0)
+$ endif
+$ if NDIM >=3
+  MALdampB_beforeFaraday(MagFieldPlasma,malb1zL, 0, NMAL, 0,      NX, NYmMAL, NMAL, 2, -1, ZBGN, DZ, 0.5, 3.0)
+  MALdampB_beforeFaraday(MagFieldPlasma,malb1zR, 0, NMAL, NZmMAL, NX, NYmMAL,    NZ, 2,  1, ZBGN, DZ, 0.5, 3.0)
+$ endif
+
+  <UpdateStep step10>
+     toDtFrac      = 0.5
+     messageFields = [MagFieldPlasma]
+     updaters      = [yeeFaradayPlasma]
+   </UpdateStep>
+   <UpdateStep step11>
+      toDtFrac      = 0.5
+      messageFields = [MagFieldBeam]
+      updaters      = [yeeFaradayBeam]
+    </UpdateStep>
+
+$ if NDIM >=2
+  MALdampE_beforeAmpere(ElecFieldPlasma, male1yL, 0, 0     , 0, NX, NMAL, NZ, 1, -1, YBGN, DY, 0.5, 3.0)
+  MALdampE_beforeAmpere(ElecFieldPlasma, male1yR, 0, NYmMAL, 0, NX, NY,    NZ, 1,  1, YBGN, DY, 0.5, 3.0)
+$ endif
+$ if NDIM >=3
+  MALdampE_beforeAmpere(ElecFieldPlasma, male1zL, 0, NMAL, 0,      NX, NYmMAL, NMAL, 2, -1, ZBGN, DZ, 0.5, 3.0)
+  MALdampE_beforeAmpere(ElecFieldPlasma, male1zR, 0, NMAL, NZmMAL, NX, NYmMAL,    NZ, 2,  1, ZBGN, DZ, 0.5, 3.0)
+$ endif
+
+  <UpdateStep step13>
+    toDtFrac      = 1.0
+    messageFields = [ElecFieldPlasma]
+    updaters      = [ yeeAmperePlasma]
+  </UpdateStep>
+  <UpdateStep step14>
+    toDtFrac      = 1.0
+    messageFields = [ElecFieldBeam]
+    updaters      = [yeeAmpereBeam]
+  </UpdateStep>
+
+$ if NDIM >= 2
+  MALdampE_afterAmpere(ElecFieldPlasma, male2yL, 0, 0     , 0, NX, NMAL, NZ, 1, -1, YBGN, DY, 0.5, 3.0)
+  MALdampE_afterAmpere(ElecFieldPlasma, male2yR, 0, NYmMAL, 0, NX, NY,    NZ, 1,  1, YBGN, DY, 0.5, 3.0)
+$ endif
+$ if NDIM >= 3
+  MALdampE_afterAmpere(ElecFieldPlasma, male2zL, 0, NMAL, 0,      NX, NYmMAL, NMAL, 2, -1, ZBGN, DZ, 0.5, 3.0)
+  MALdampE_afterAmpere(ElecFieldPlasma, male2zR, 0, NMAL, NZmMAL, NX, NYmMAL,    NZ, 2,  1, ZBGN, DZ, 0.5, 3.0)
+$ endif
+
+  <UpdateStep step15>
+     toDtFrac      = 1.0
+     messageFields = [MagFieldPlasma]
+     updaters      = [yeeFaradayPlasma]
+  </UpdateStep>
+  <UpdateStep step16>
+     toDtFrac      = 1.0
+     messageFields = [MagFieldBeam]
+     updaters      = [yeeFaradayBeam]
+  </UpdateStep>
+
+$ if NDIM >= 2
+  MALdampB_afterFaraday(MagFieldPlasma,malb2yL, 0, 0     , 0, NX, NMAL, NZ, 1, -1, YBGN, DY, 0.5, 3.0)
+  MALdampB_afterFaraday(MagFieldPlasma,malb2yR, 0, NYmMAL, 0, NX, NY,    NZ, 1,  1, YBGN, DY, 0.5, 3.0)
+$ endif
+$ if NDIM >= 3
+  MALdampB_afterFaraday(MagFieldPlasma,malb2zL, 0, NMAL, 0,      NX, NYmMAL, NMAL, 2, -1, ZBGN, DZ, 0.5, 3.0)
+  MALdampB_afterFaraday(MagFieldPlasma,malb2zR, 0, NMAL, NZmMAL, NX, NYmMAL,    NZ, 2,  1, ZBGN, DZ, 0.5, 3.0)
+$ endif
+
+	<UpdateStep step17>
+    toDtFrac = 1.0
+    messageFields = [rhoBeam]
+    updaters = [sumRho]
+  </UpdateStep>
+
+  <UpdateStep step18>
+    toDtFrac = 1.0
+    messageFields = [JBeam]
+    updaters = [sumJ]
+  </UpdateStep>
+
+  <UpdateStep step19>
+    toDtFrac = 1.0
+    messageFields = [edgeE]
+    updaters = [sumE]
+  </UpdateStep>
+
+  <UpdateStep step20>
+    toDtFrac = 1.0
+    messageFields = [faceB]
+    updaters = [sumB]
+  </UpdateStep>
+
+</MultiField>
+
+<VectorDepositor JDep>
+  kind = esirk2ndOrder
+  depField = emField.JDrive
+</VectorDepositor>
+
+<ScalarDepositor rhoDep>
+  kind = esirk2ndOrder
+  depField = emField.rhoDrive
+</ScalarDepositor>
+
+<VectorDepositor JDepWitness>
+  kind = esirk2ndOrder
+  depField = emField.JWitness
+</VectorDepositor>
+
+<ScalarDepositor rhoDepWitness>
+  kind = esirk2ndOrder
+  depField = emField.rhoWitness
+</ScalarDepositor>
+
+<VectorDepositor JDepPlasma>
+  kind = esirk2ndOrder
+  depField = emField.JPlasma
+</VectorDepositor>
+
+<ScalarDepositor rhoDepPlasma>
+  kind = esirk2ndOrder
+  depField = emField.rhoPlasma
+</ScalarDepositor>
+
+# Create the drive beam
+#------------------------------------------------------------------------------
+<Species ElectronBeam>
+  kind = relBorisVWTagged
+  useSegmentedMove = 0
+
+  charge = ELECCHARGE
+  mass = ELECMASS
+  fields = [emField.edgeE emField.faceB]
+  nominalDensity = BEAM_DENSITY
+  nomPtclsPerCell = BEAM_PPC
+
+  currDeps = [JDep]
+  chargeDeps = [rhoDep]
+	# Load particles into the simulation
+  <ParticleSource electronSrc>
+    kind = xvLoaderEmitter
+		# The beam moves with the window and doesn't gain particles
+    loadOnShift = false
+    loadAfterInit = false
+		# Setup initial particle positions
+    <PositionGenerator gridSlab>
+      kind = gridPosGen
+			# Physical volume to load particles into
+      <Slab loadSlab>
+        lowerBounds = [BEAM_LOAD_XSTART  BEAM_LOAD_YSTART  BEAM_LOAD_ZSTART]
+        upperBounds = [BEAM_LOAD_XEND    BEAM_LOAD_YEND    BEAM_LOAD_ZEND  ]
+      </Slab>
+      emitSign = 1 # XXX I don't think this matters since we are not emitting from a surface
+      sweepRate = BEAM_VX # XXX Same comment as above
+      macroPerDir = [PPCX_B PPCY_B PPCZ_B]
+    </PositionGenerator>
+		# Setup initial particle velocities
+    <VelocityGenerator beamVelGen>
+      kind = funcVelGen
+      # Give the particles a drift velocity
+      <STFunc component0>
+        kind = expression
+        expression = gauss(BEAM_SIGMAUX, BEAM_UX)
+      </STFunc>
+      # Transverse momentum -y
+      <STFunc component1>
+        kind = expression
+        expression = gauss(BEAM_SIGMAUY, 0.)
+      </STFunc>
+      # Transverse momentum -z
+      <STFunc component2>
+        kind = expression
+        expression = 0.0
+      </STFunc>
+      <STFunc component3>
+         kind = tagGen
+      </STFunc>
+      <STFunc component4>
+        kind = expression
+        expression = exp(-(x-BEAM_CENTER)**2/(2.*(BEAM_LRMS*1.e-6)**2)) \
+                         *exp(-(y**2 + z**2)/(2.*(BEAM_SIGMAR*1.e-6)**2))
+      </STFunc>
+    </VelocityGenerator>
+  </ParticleSource>
+	# Absorb particles that enter the outer cells of the simulation
+  absorbingBox(NX, NY,NZ)
+
+</Species>
+
+<Species WitnessBeam>
+  kind = relBorisVWTagged
+  useSegmentedMove = 0
+
+  charge = ELECCHARGE
+  mass = ELECMASS
+  fields = [emField.edgeE emField.faceB]
+  nominalDensity = WITNESS_DENSITY
+  nomPtclsPerCell = WITNESS_PPC
+
+#	currDeps = [JDep]
+#  chargeDeps = [rhoDep]  
+
+	currDeps = [JDepWitness]
+  chargeDeps = [rhoDepWitness]
+
+  <ParticleSource electronSrc>
+    kind = xvLoaderEmitter
+    loadOnShift = false
+    loadAfterInit = false
+
+    <PositionGenerator gridSlab>
+      kind = gridPosGen
+      <Slab loadSlab>
+        lowerBounds = [WITNESS_LOAD_XSTART  WITNESS_LOAD_YSTART  WITNESS_LOAD_ZSTART]
+        upperBounds = [WITNESS_LOAD_XEND    WITNESS_LOAD_YEND    WITNESS_LOAD_ZEND  ]
+      </Slab>
+      emitSign = 1 # XXX probably not necessary see above
+      sweepRate = WITNESS_VX # XXX see above comment
+      macroPerDir = [PPCX_W PPCY_W PPCZ_W]
+    </PositionGenerator>
+
+    <VelocityGenerator beamVelGen>
+      kind = funcVelGen
+      # Give the particles a drift velocity
+      <STFunc component0>
+        kind = expression
+        expression = gauss(WITNESS_SIGMAUX, WITNESS_UX)
+      </STFunc>
+      # Transverse momentum -y
+      <STFunc component1>
+        kind = expression
+        expression = gauss(WITNESS_SIGMAUY, 0.)
+      </STFunc>
+      # Transverse momentum -z
+      <STFunc component2>
+        kind = expression
+        expression = 0.0
+      </STFunc>
+      <STFunc component3>
+         kind = tagGen
+      </STFunc>
+      <STFunc component4>
+        kind = expression
+        expression = exp(-(x-WITNESS_CENTER)**2/(2.*(WITNESS_LRMS*1.e-6)**2)) \
+                         *exp(-(y**2 + z**2)/(2.*(WITNESS_SIGMAR*1.e-6)**2))
+      </STFunc>
+    </VelocityGenerator>
+  </ParticleSource>
+
+  absorbingBox(NX, NY,NZ)
+
+</Species>
+
+<Species electrons>
+  kind = relBorisVW
+  useSegmentedMove = 0
+
+  charge = ELECCHARGE
+  mass = ELECMASS
+  fields = [emField.edgeE emField.faceB]
+  currDeps = [JDepPlasma]
+  chargeDeps = [rhoDepPlasma]
+
+  # Nominal density and particles per cell at that density
+  nominalDensity = PLASMA_DENS_M
+  nomPtclsPerCell = PPC
+
+  # Particle source
+  <ParticleSource eSrc>
+
+    kind = xvLoaderEmitter
+    loadOnShift = true
+    loadAfterInit = false
+    applytimes = [0. 1.]
+
+    <PositionGenerator gridSlab>
+      kind = gridPosGen
+      <Slab loadSlab>
+        lowerBounds = [XEND  YSTART_LOAD  ZSTART_LOAD]
+        upperBounds = [END_PLASMA  YEND_LOAD    ZEND_LOAD]
+      </Slab>
+      emitSign = 1
+      macroPerDir = [PPX PPY PPZ]
+    </PositionGenerator>
+
+    <VelocityGenerator rampVelGen>
+      kind = funcVelGen
+
+      # specify the weight, other components are 0 by default.
+      <STFunc component3>  # specify weight of the variably-weighted particles
+        kind = expression
+				expression = H(START_FLAT-x)*exp(-(x-START_FLAT)**2/(2*SIGMA_IN**2)) + H(x-START_FLAT)*H(END_FLAT-x) + H(x-END_FLAT)*exp(-(x-END_FLAT)**2/(2*SIGMA_OUT**2))
+      </STFunc>
+   </VelocityGenerator>
+
+  </ParticleSource>
+
+  absorbingBox(NX, NY, NZ)
+
+</Species>
