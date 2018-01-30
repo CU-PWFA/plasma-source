@@ -27,14 +27,16 @@ def_waist = -0.36
 def_ramp = 'gauss'
 def_npl0 = 5e16
 def_gbC = 20000
+def_L_up = 1.5
 
 def ReturnDefaultParams(beta_change=def_beta, hwup_change=def_hwup, waist_change=def_waist, 
-                        ramp_change=def_ramp, npl0_change=def_npl0, gbC_change = def_gbC):
+                        ramp_change=def_ramp, npl0_change=def_npl0, gbC_change = def_gbC,
+                        L_up_change=def_L_up):
     npl0   = npl0_change                      # cm^-3, plasma density
     dEds0  = np.sqrt(npl0/(1e17))*10e9 # eV/m, energy gain rate
     shape_up = ramp_change # shape of ramp
     hw_up    = hwup_change  # m, half-width of ramp
-    L_up     = 1.5     # m, full length of ramp, 1.5 for the Gaussian ramps
+    L_up     = L_up_change     # m, full length of ramp, 1.5 for the Gaussian ramps
     alpha  = 0.00    # Twiss at vac. waist
     beta   = beta_change    # m, Twiss at vac. waist
     gbC    = gbC_change   # centroid relativistic lorentz factor
@@ -249,7 +251,7 @@ def Calc2DTolerance(arr, x, y, thresh):
     yarr = arr[minlocx,:]
     print(" in +/- y:",str(Calc1DTolerance(yarr, dy, minlocy, thresh)/2))
 
-def Calc1DTolerance(arr, dx, minloc, thresh):
+def Calc1DToleranceRange(arr, dx, minloc, thresh):
     i = minloc
     flag = 2
     top = i; bot = i
@@ -271,15 +273,19 @@ def Calc1DTolerance(arr, dx, minloc, thresh):
             flag = flag - 1
             break
     
-    top = top - (thresh-arr[top-1])/(arr[top]-arr[top-1])
-    bot = bot + (thresh-arr[bot+1])/(arr[bot]-arr[bot+1])
+    top = top - 1 + (thresh-arr[top-1])/(arr[top]-arr[top-1])
+    bot = bot + 1 - (thresh-arr[bot+1])/(arr[bot]-arr[bot+1])
     
     tol_range = (top-bot)*dx
     if flag > 0:
         print("Warning: domain edge reached for " + str(thresh))
-    return tol_range
+    return [tol_range,bot,top]
     
-def PlotContour(contour, x_arr, y_arr, x_label, y_label):
+def Calc1DTolerance(arr, dx, minloc, thresh):
+    result = Calc1DToleranceRange(arr, dx, minloc, thresh)
+    return result[0]
+    
+def PlotContour(contour, x_arr, y_arr, x_label, y_label, log = 0):
         # find location of min(B)
     i_Bmin_x = np.argmin(np.min(contour,1))
     i_Bmin_y = np.argmin(np.min(contour,0))
@@ -303,11 +309,14 @@ def PlotContour(contour, x_arr, y_arr, x_label, y_label):
     cbar.ax.set_ylabel(r'$log_{10}(B_m)$')
     plt.ylabel(y_label)
     plt.xlabel(x_label)
+    if log == 1:
+        plt.yscale('log'); plt.xscale('log')
 #    plt.title(r'beam matching for %s ramp'%shape_up)
 
     # thin line contour map of B
     levels = np.array([1.01,1.05,1.1,1.2,1.5,2.0,3.0,4.0,5.0])
     labels = np.array([1.01,1.05,1.1,1.2,1.5,2.0,3.0,4.0,5.0])
+    
     fig, axes = plt.subplots(1,1, sharey=True)
     CS = plt.contour(X,Y,contour,levels,cmap=plt.get_cmap('Vega20b'))
     plt.clabel(CS,labels,fontsize=9,inline=1,fmt='%1.2f')
@@ -317,6 +326,8 @@ def PlotContour(contour, x_arr, y_arr, x_label, y_label):
     cbar.set_ticks(levels)
     plt.ylabel(y_label)
     plt.xlabel(x_label)
+    if log == 1:
+        plt.yscale('log'); plt.xscale('log')
     plt.show()
 #    plt.title(r'beam matching for %s ramp'%shape_up)
 
