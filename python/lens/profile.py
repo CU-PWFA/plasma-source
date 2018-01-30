@@ -13,9 +13,7 @@ from ionization import ionization
 def plasma_gaussian_ramps(z0, dz, sigmaIn, sigmaOut, N, zf=0):
     """ Creates a plasma density with Gaussian ends.
 
-    Returns the on-axis intensity profile necessary to create a fully ionized
-    on-axis plasma with Gaussian entrance and exit density ramps. The
-    calculation assumes a 
+    Returns a plasma profile with a flattop and Gaussian ramps on either side.
 
     Parameters
     ----------

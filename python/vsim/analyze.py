@@ -144,6 +144,27 @@ def get_normemittance(data):
     return e * gamma
 
 
+def get_shape(data):
+    """ Returns the grid size of a field data object
+    
+    Parameters
+    ----------
+    data : HDF5 dataset
+        The data set for the beam of interest, use load.get_field_data or 
+        load_field to load the dataset object from a file.
+    
+    Returns
+    -------
+    Nx, Ny, Nz : int
+        The size of the grid, returns only Nx and Ny if 2D.
+    """
+    shape = data.shape
+    if len(shape) == 4: #3D
+        return shape[0], shape[1], shape[1]
+    if len(shape) == 3: #2D
+        return shape[0], shape[1]
+
+
 def get_density_temp(data, mass, attrs, mesh):
     """ Calculate the electron # density and temperature in each grid cell.
     
