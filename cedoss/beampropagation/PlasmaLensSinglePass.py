@@ -16,10 +16,9 @@ import particle_beam as pb
 #Make beam and bulk plasma just as in single_pass
 """params = PProp.ReturnDefaultParams(beta_change = 0.15)#, hwup_change=0.10)"""
 #params = PProp.ReturnDefaultParams()
-params = PProp.ReturnDefaultParams(npl0_change = 1e17, gbC_change = 45000)
-#params = PProp.ReturnDefaultParams(hwup_change = 0.00010, ramp_change='xu4', waist_change = 0.3)#, hwup_change=0.10)
-
-params['npart'] = 1000
+params = PProp.ReturnDefaultParams(npl0_change = 5.79e18, gbC_change = 2.34e6, 
+                                   waist_change = -0.4513, hwup_change = 0.16)
+params['npart'] = 10000
 
 twiss = PProp.CallMakeTwiss(params)
 parts = PProp.CallMakeParts(twiss, params)
