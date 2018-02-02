@@ -145,6 +145,19 @@ class ElectronBeam(beam.Beam):
         ex = ex*gamma
         ey = ey*gamma
         return ex, ey
+    
+    def get_sigmar(self, ind):
+        """ Caclulate the transverse beam size from a particular save file. """
+        ptcls = self.load_ptcls(ind)[0]
+        x = self.get_x(ptcls)
+        y = self.get_y(ptcls)
+        # Calculate the differences from the average
+        dx = x - np.average(x)
+        dy = y - np.average(y)
+        # Calculate the RMS sizes and the correlation
+        sigmax = np.sqrt(np.average(dx**2))
+        sigmay = np.sqrt(np.average(dy**2))
+        return sigmax, sigmay
         
     # Visualization functions
     #--------------------------------------------------------------------------
