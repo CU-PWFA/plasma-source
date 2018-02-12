@@ -16,16 +16,22 @@ def calc_dgds(dgds0,npl0,npl,model=1):
     if model==0:
         # wake strength ~sqrt(np), phase ~sqrt(np)
         dgds = dgds0*np.sqrt(npl/npl0)*(2*np.sqrt(npl/npl0)-1)
-    elif model==1:
-        dgds = (npl>(1/4)*npl0)*dgds0*np.sqrt(npl/npl0)*\
-        (2*np.sqrt(npl/npl0)-1) +\
-        (npl<=(1/4)*npl0)*(-dgds0)*np.sqrt(npl/npl0)*\
-        np.sin(2*np.sqrt(npl/npl0)+np.pi/2-1)
+        
+    elif model==1:  #Robert's new model without small density term
+        dgds = dgds0*np.sqrt(npl/npl0)*(2*np.sqrt(npl/npl0)-1)
+        
     elif model==2: #OLD MODEL; Before Robert's correction
         dgds = (npl>(4/9)*npl0)*dgds0*np.sqrt(npl/npl0)*\
         (3*np.sqrt(npl/npl0)-2) +\
         (npl<=(4/9)*npl0)*(-dgds0)*(2/np.pi)*np.sqrt(npl/npl0)*\
         np.sin((3*np.pi/2)*np.sqrt(npl/npl0))
+    
+    elif model==3: #Robert's new model with small density term
+        dgds = (npl>(1/4)*npl0)*dgds0*np.sqrt(npl/npl0)*\
+        (2*np.sqrt(npl/npl0)-1) +\
+        (npl<=(1/4)*npl0)*(-dgds0)*np.sqrt(npl/npl0)*\
+        np.sin(2*np.sqrt(npl/npl0)+np.pi/2-1)    
+    
     else:
         dgds = dgds0
     return dgds
