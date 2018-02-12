@@ -24,6 +24,7 @@ plt.rcParams['animation.ffmpeg_path'] = '/home/chris/anaconda3/envs/CU-PWFA/bin/
 import matplotlib.animation as animation
 
 plasma_start_loc = 0.75
+n_set = 0.5
 
 def ReturnDefaultElectronParams(path):
     beta_star = 0.10
@@ -55,8 +56,8 @@ def GaussianBeam(electronParams, debug = 0):
     return beam
 
 def dgammadz(ne):
-    npl0 = 0.5; npl = ne
-    dgds0 = np.sqrt(0.5) * 1.96e-2
+    npl0 = n_set; npl = ne
+    dgds0 = np.sqrt(npl0) * 1.96e-2
     if (npl > 1/4*npl0):
         dgds = dgds0*np.sqrt(npl/npl0)*(2*np.sqrt(npl/npl0)-1)
     else:
@@ -94,7 +95,7 @@ def ReturnDefaultPlasmaParams(path):
         'X' : 3,
         'Y' : 3,
         'Z' : Z,
-        'n0' : 0.5,
+        'n0' : n_set,
         'z0' : plasma_start_loc * 1e6,
         'l_flattop' : 0.5e6,
         'sigma_in' : sigma,
