@@ -56,6 +56,7 @@ np.save('/home/chris/Desktop/testarr2.npy',bmag_image)
 np.save('/home/chris/Desktop/testx2.npy',npl0_arr)
 np.save('/home/chris/Desktop/testy2.npy',gamma_arr)
 """
+
 np.save('/home/chris/Desktop/testarr3.npy',bmag_image)
 np.save('/home/chris/Desktop/testx3.npy',npl0_arr)
 np.save('/home/chris/Desktop/testy3.npy',gamma_arr)

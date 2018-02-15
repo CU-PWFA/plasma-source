@@ -39,9 +39,14 @@ y_label = r'$ \gamma $'
 
 minloc = PProp.PlotContour(bmag_image, npl0_arr, gamma_arr, x_label, y_label)
 
+print("*Printing possible bad data points:")
 for i in range(len(npl0_arr)):
     minlocy = np.argmin(bmag_image[i,:])
     gamma_mat[i] = gamma_arr[minlocy]
+    if i > 0:
+        if(gamma_mat[i]-gamma_mat[i-1]) < 0:
+            print(i)
+            gamma_mat[i]=gamma_mat[i-1]
 
 X = np.tile(npl0_arr.reshape(-1,1),(1,len(gamma_arr)))
 Y = np.tile(gamma_arr.T,(len(npl0_arr),1))
@@ -102,7 +107,7 @@ plt.grid(); plt.legend(); plt.show()
 
 #lfit = [2.29e12, -5.89e14]
 #rfit = [7.47e14, -5.96e16]
-lfit = [2.22e12, 0]
+lfit = [2.2e12, 0]
 llabel = '{0:.2e}'.format(lfit[0]) + r'$\gamma$'
 llabel = llabel + " + " + '{0:.2e}'.format(lfit[1])
 #rlabel = '{0:.2e}'.format(rfit[0]) + r'$\sqrt{\gamma}$'
