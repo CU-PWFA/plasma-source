@@ -15,13 +15,14 @@ python can't import modules in a cell mid-script.  What?
 import numpy as np
 import PlasmaPropagation as PProp
 
+
 bmag_image = np.load('/home/chris/Desktop/testarr3.npy')
 npl0_arr = np.load('/home/chris/Desktop/testx3.npy')
 gamma_arr = np.load('/home/chris/Desktop/testy3.npy')
 
 for i in range(len(npl0_arr)):
     for j in range(len(gamma_arr)):
-        if bmag_image[i][j] < 1:
+        if bmag_image[i][j] < 1.0:
             bmag_image[i][j] = np.inf
         if bmag_image[i][j] > 1e3:
             bmag_image[i][j] = np.inf

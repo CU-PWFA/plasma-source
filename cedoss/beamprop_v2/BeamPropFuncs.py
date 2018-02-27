@@ -24,6 +24,7 @@ plt.rcParams['animation.ffmpeg_path'] = '/home/chris/anaconda3/envs/CU-PWFA/bin/
 import matplotlib.animation as animation
 
 plasma_start_loc = 0.75
+n_set = 0.5
 
 def ReturnDefaultElectronParams(path):
     beta_star = 0.10
@@ -55,6 +56,15 @@ def GaussianBeam(electronParams, debug = 0):
     return beam
 
 def dgammadz(ne):
+    npl0 = n_set; npl = ne
+    dgds0 = np.sqrt(npl0) * 1.96e-2
+    if (npl > 1/4*npl0):
+        dgds = dgds0*np.sqrt(npl/npl0)*(2*np.sqrt(npl/npl0)-1)
+    else:
+        dgds = (-dgds0)*np.sqrt(npl/npl0)*np.sin(2*np.sqrt(npl/npl0)+np.pi/2-1)
+    return dgds
+
+def dgammadz_preRobert(ne):
     npl0 = 0.5; npl = ne
     dgds0 = np.sqrt(0.5) * 1.96e-2
     if (npl > 4/9*npl0):
@@ -73,6 +83,8 @@ def ReturnDefaultPlasmaParams(path):
     Nx = 1;  Ny = 1
     Z = 2e6
     Nz = int((Z/10)+1)
+    sigma_hw = 13.25e4
+    sigma = sigma_hw/(np.sqrt(2*np.log(2)))
     plasmaParams ={
         'name' : 'TestPlasma',
         'path' : path,
@@ -83,11 +95,11 @@ def ReturnDefaultPlasmaParams(path):
         'X' : 3,
         'Y' : 3,
         'Z' : Z,
-        'n0' : 0.5,
+        'n0' : n_set,
         'z0' : plasma_start_loc * 1e6,
         'l_flattop' : 0.5e6,
-        'sigma_in' : 13.25e4,
-        'sigma_out' : 13.25e4,
+        'sigma_in' : sigma,
+        'sigma_out' : sigma,
         'atom' : ionization.Ar,
         'cyl' : False,
         'dgammadz' : dgammadz

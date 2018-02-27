@@ -25,13 +25,6 @@ def plasma_gaussian_ramps(z0, dz, sigmaIn, sigmaOut, N, zf=0):
         The length of the input ramp, sigma for the Gaussian.
     sigmaOut : double
         The length of the output ramp, sigma for the Gaussian.
-    ion : dictionary
-        atom : dictionary
-            See the description in ionization.ionization for details.
-        tau : double
-            Temporal length of the pulse in fs.
-        type : string
-            The type of pulse, i.e. gaussian, flatend, etc.
     N : int
         Number of grid points in z.
     zf : double, optional
