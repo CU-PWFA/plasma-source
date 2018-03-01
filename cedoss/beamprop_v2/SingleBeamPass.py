@@ -28,7 +28,6 @@ cores = 4
 
 #Make beam and bulk plasma just as in single_pass
 beam_params = PProp.ReturnDefaultElectronParams(path)
-beam_params['emittance'] = 7e-6
 beam = PProp.GaussianBeam(beam_params, debug)
 
 argon_params = PProp.ReturnDefaultPlasmaParams(path)
@@ -42,6 +41,6 @@ PProp.PropBeamPlasma(beam, argon, z_fine, dump, cores, debug)
 print("prop time: ",str(timeit.default_timer()-start))
 
 m = int(len(z_fine)/dump)
-PProp.PlotEmittance(beam,m)
+PProp.PlotEmittance(beam,z_fine,m)
 
 print("Bmag: ",PProp.GetBmag(beam,m))

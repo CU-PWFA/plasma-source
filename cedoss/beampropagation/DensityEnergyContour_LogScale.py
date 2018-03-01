@@ -47,16 +47,16 @@ for i in range(len(npl0_arr)):
             Bmag = np.inf
         bmag_image[i][j] = Bmag
 """
-np.save('/home/chris/Desktop/testarr.npy',bmag_image)
-np.save('/home/chris/Desktop/testx.npy',npl0_arr)
-np.save('/home/chris/Desktop/testy.npy',gamma_arr)
+np.save('/home/chris/Desktop/DataLoads/ContourDensityGamma/testarr.npy',bmag_image)
+np.save('/home/chris/Desktop/DataLoads/ContourDensityGamma/testx.npy',npl0_arr)
+np.save('/home/chris/Desktop/DataLoads/ContourDensityGamma/testy.npy',gamma_arr)
 """
 """
-np.save('/home/chris/Desktop/testarr2.npy',bmag_image)
-np.save('/home/chris/Desktop/testx2.npy',npl0_arr)
-np.save('/home/chris/Desktop/testy2.npy',gamma_arr)
+np.save('/home/chris/Desktop/DataLoads/ContourDensityGamma/testarr2.npy',bmag_image)
+np.save('/home/chris/Desktop/DataLoads/ContourDensityGamma/testx2.npy',npl0_arr)
+np.save('/home/chris/Desktop/DataLoads/ContourDensityGamma/testy2.npy',gamma_arr)
 """
 
-np.save('/home/chris/Desktop/testarr3.npy',bmag_image)
-np.save('/home/chris/Desktop/testx3.npy',npl0_arr)
-np.save('/home/chris/Desktop/testy3.npy',gamma_arr)
+np.save('/home/chris/Desktop/DataLoads/ContourDensityGamma/testarr3.npy',bmag_image)
+np.save('/home/chris/Desktop/DataLoads/ContourDensityGamma/testx3.npy',npl0_arr)
+np.save('/home/chris/Desktop/DataLoads/ContourDensityGamma/testy3.npy',gamma_arr)
