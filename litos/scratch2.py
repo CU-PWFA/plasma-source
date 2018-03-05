@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 if __name__ == '__main__':
     
     # define plasma bulk (flat-top) properties
-    npl0   = 10*5e16                      # cm^-3, plasma density
+    npl0   = 5e16                      # cm^-3, plasma density
     dEds0  = np.sqrt(npl0/(5e16))*16.67e9 # eV/m, energy gain rate
     dgds0  = dEds0/nc.me               # 1/m, energy gain rate for rel. gamma
     L_ft   = 0.00                      # m, length of flat-top
@@ -37,7 +37,7 @@ if __name__ == '__main__':
     # define beam parameters
     npart  = 0    # number of macro particles
     dist   = 'gauss' # distribution shape in trace space
-    gbC    = (100e9)/nc.me # centroid relativistic lorentz factor
+    gbC    = (10e9)/nc.me # centroid relativistic lorentz factor
     dgb    = 0.001    # relative energy spread (HWHM)
     dz     = 0       # spread in z (HWHM)
     eps    = 5.0e-6  # m-rad, normalized emittance
@@ -103,18 +103,25 @@ if __name__ == '__main__':
     plot_s = np.zeros(len(ebeam)-chop)
     plot_g = np.zeros(len(ebeam)-chop)
     plot_b = np.zeros(len(ebeam)-chop)
+    plot_a = np.zeros(len(ebeam)-chop)
     plot_n = np.zeros(len(ebeam)-chop)
     for i in range(0,len(ebeam)-chop):
         
         plot_s[i] = ebeam[i]["s"]
         plot_g[i] = ebeam[i]["gbC"]*nc.me*1e-9
         plot_b[i] = ebeam[i]["beta"]
+        plot_a[i] = ebeam[i]["alpha"]
         plot_n[i] = plasma["npl"][i]
     
     fig, axes = plt.subplots(1,1, sharey=True)
     plt.plot(plot_s,plot_b)
     plt.xlabel('z (m)')
     plt.ylabel(r'$\beta$')
+    
+    fig, axes = plt.subplots(1,1, sharey=True)
+    plt.plot(plot_s,plot_a)
+    plt.xlabel('z (m)')
+    plt.ylabel(r'$\alpha$')
     
     fig, axes = plt.subplots(1,1, sharey=True)
     plt.plot(plot_s,plot_g)

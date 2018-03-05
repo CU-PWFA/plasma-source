@@ -77,7 +77,7 @@ if __name__ == '__main__':
     # define plasma up-ramp
     shape_up = 'gauss' # shape of ramp
     hw_up    = 0.132  # m, half-width of ramp
-    L_up     = 5*hw_up     # m, full length of ramp
+    L_up     = 1.50    # m, full length of ramp
     top_up   = L_up    # m, relative location of ramp top
     
     # define plasma down-ramp
@@ -93,7 +93,7 @@ if __name__ == '__main__':
     dgb    = 0.01    # relative energy spread (HWHM)
     dz     = 0       # spread in z (HWHM)
     eps    = 5.0e-6  # m-rad, normalized emittance
-    beta   = 0.20    # m, Twiss at vac. waist
+    beta   = 0.10    # m, Twiss at vac. waist
     alpha  = 0.00    # Twiss at vac. waist
     gamma  = (1.0+alpha**2)/beta # 1/m, Twiss at vac. waist
     
@@ -109,7 +109,7 @@ if __name__ == '__main__':
     ebeam0 = pb.make_ebeam(s0,twiss[0],parts[0])
     
     # define longitudinal steps
-    ds   = (1.0/kb)*(1./40.)                  # m, step size
+    ds   = (1.0/kb)*(1./10.)                  # m, step size
     s_ft = np.linspace(0,L_ft,int(L_ft/ds+1)) # m, steps for flat-top
     s_up = np.linspace(0,L_up,int(L_up/ds+1)) # m, steps for up-ramp
     s_dn = np.linspace(0,L_dn,int(L_dn/ds+1)) # m, steps for down-ramp
@@ -121,11 +121,11 @@ if __name__ == '__main__':
     plasma0 = ps.make_plasma(bulk,up_ramp,dn_ramp) # output: plasma dict.
     
     # specify waist scan values
-    nwaist = 200 # number of values
+    nwaist = 100 # number of values
     waist  = np.linspace(-0.70,-0.20,nwaist) # m, waist location w.r.t. L_up
 
     # specify ramp half-width scan values
-    nhw_up = 200 # number of values
+    nhw_up = 100 # number of values
     hw_up  = np.linspace(0.08,0.24,nhw_up) # m, HWHM of up-ramp
 
     # perform scan
@@ -190,7 +190,7 @@ if __name__ == '__main__':
     levels = np.array([1.01,1.05,1.1,1.5,2.0,3.0,4.0,5.0])
     labels = np.array([1.01,1.05,1.1,1.5,2.0,3.0,4.0,5.0])
     fig, axes = plt.subplots(1,1, sharey=True)
-    CS = plt.contour(Y,X,B,levels,cmap=plt.get_cmap('Vega20b'))
+    CS = plt.contour(Y,X,B,levels,cmap=plt.get_cmap('tab20b'))
     plt.clabel(CS,labels,fontsize=9,inline=1,fmt='%1.2f')
 #    cbar = plt.colorbar()
     plt.scatter(Bmin_y,Bmin_x,color='k')
