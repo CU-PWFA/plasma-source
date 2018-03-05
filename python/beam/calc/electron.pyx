@@ -10,6 +10,7 @@ Created on Mon Dec 11 10:58:22 2017
 """
 
 import numpy as np
+import warnings
 cimport numpy as np
 from numpy.fft import fftfreq
 from scipy import integrate
@@ -40,6 +41,8 @@ def electron_propagation_plasma(double[:, :] ptcls, double[:] z, double z0,
     # Calculate parameters for each z-slice
     for i in range(Nz-1):
         kp = 5.95074e4 * sqrt(ne[i])
+        if ne[i] < -1e-18:
+            warnings.warn('Plasma density less than zero, treating as zero.')
         # Pre-calculate the energy gain per slice
         dz = z[i+1] - z[i]
         dgamma = dgammadz(ne[i]) * dz
@@ -49,11 +52,12 @@ def electron_propagation_plasma(double[:, :] ptcls, double[:] z, double z0,
         #    for j in range(N):
                 ptcls[j, 5] += 0.5*dgamma
                 kb = kp/sqrt(2*ptcls[j, 5])
+                #print('z: %0.2f, kb: %0.2f, kp: %0.2E, ne: %0.2E' %(z[i], kb, kp, ne[i]))
                 coskb = cos(kb*dz)
                 sinkb = sin(kb*dz)
                 angle = 1 - dgamma / ptcls[j, 5]
                 # Calculate the components of the transfer matrix
-                if ne[i] == 0.0:
+                if ne[i] < 1.0e-18:
                     R11 = 1.0
                     R12 = dz
                     R21 = 0.0
