@@ -17,9 +17,9 @@ import sys
 sys.path.insert(0, "../")
 from beampropagation import PlasmaPropagation as PProp
 
-bmag_image = np.load('/home/chris/Desktop/testarr3.npy')
-npl0_arr = np.load('/home/chris/Desktop/testx3.npy')
-gamma_arr = np.load('/home/chris/Desktop/testy3.npy')
+bmag_image = np.load('/home/chris/Desktop/DataLoads/ContourDensityGamma/testarr3.npy')
+npl0_arr = np.load('/home/chris/Desktop/DataLoads/ContourDensityGamma/testx3.npy')
+gamma_arr = np.load('/home/chris/Desktop/DataLoads/ContourDensityGamma/testy3.npy')
 for i in range(len(npl0_arr)):
     for j in range(len(gamma_arr)):
         if bmag_image[i][j] < 1:
