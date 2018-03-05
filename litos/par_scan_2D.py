@@ -93,7 +93,7 @@ if __name__ == '__main__':
     dgb    = 0.01    # relative energy spread (HWHM)
     dz     = 0       # spread in z (HWHM)
     eps    = 5.0e-6  # m-rad, normalized emittance
-    beta   = 0.10    # m, Twiss at vac. waist
+    beta   = 0.20    # m, Twiss at vac. waist
     alpha  = 0.00    # Twiss at vac. waist
     gamma  = (1.0+alpha**2)/beta # 1/m, Twiss at vac. waist
     

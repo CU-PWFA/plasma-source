@@ -16,30 +16,30 @@ if __name__ == '__main__':
     
     # define plasma bulk (flat-top) properties
     npl0   = 5e16                      # cm^-3, plasma density
-    dEds0  = np.sqrt(npl0/(1e17))*10e9 # eV/m, energy gain rate
+    dEds0  = 0.0 #np.sqrt(npl0/(1e17))*10e9 # eV/m, energy gain rate
     dgds0  = dEds0/nc.me               # 1/m, energy gain rate for rel. gamma
-    L_ft   = 0.50                      # m, length of flat-top
+    L_ft   = 0.0                      # m, length of flat-top
     
     # define plasma up-ramp
     shape_up = 'gauss' # shape of ramp
-    hw_up    = 0.1325  # m, half-width of ramp
-    L_up     = 1.5     # m, full length of ramp
+    hw_up    = 0.305 #0.1325 #0.0620  # m, half-width of ramp
+    L_up     = 5.00     # m, full length of ramp
     top_up   = L_up    # m, relative location of ramp top
     
     # define plasma down-ramp
     shape_dn = shape_up # shape of ramp
     hw_dn    = hw_up    # m, half-width of ramp
-    L_dn     = L_up     # m, full length of ramp
+    L_dn     = 0.0 #L_up     # m, full length of ramp
     top_dn   = 0        # m, relative location of ramp top
     
     # define beam parameters
-    npart  = 1000    # number of macro particles
+    npart  = 0    # number of macro particles
     dist   = 'gauss' # distribution shape in trace space
-    gbC    = 20000   # centroid relativistic lorentz factor
+    gbC    = (10e9)/nc.me   # centroid relativistic lorentz factor
     dgb    = 0.01    # relative energy spread (HWHM)
     dz     = 0       # spread in z (HWHM)
     eps    = 5.0e-6  # m-rad, normalized emittance
-    beta   = 0.10    # m, Twiss at vac. waist
+    beta   = 0.20    # m, Twiss at vac. waist
     alpha  = 0.00    # Twiss at vac. waist
     gamma  = (1.0+alpha**2)/beta # 1/m, Twiss at vac. waist
     auto_match = False # auto-match beam to plasma flat-top
@@ -62,7 +62,7 @@ if __name__ == '__main__':
     ebeam  = pb.make_ebeam(s0,twiss[0],parts[0])
     
     # set beam waist position
-    waist = -0.36        # m, waist location w.r.t L_up
+    waist = -0.9425 #-0.36 #-0.1475        # m, waist location w.r.t L_up
     s_w   = L_up + waist # m, absolute wasit location
     
     # define longitudinal steps
