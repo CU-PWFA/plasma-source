@@ -105,21 +105,26 @@ ax3.plot(s,rms_x_eps/rms_x_eps[0],color='k',linestyle='-')
 ax3.plot(s,BB*np.ones(len(s)),color='k',linestyle='-.')
 ax3.set_ylabel(r'$\varepsilon_n/\varepsilon_{n,0}$',color='k',fontsize=16)
 ax3.tick_params('y',colors='k')
-ax3.set_ylim([0.975,1.075])
+#ax3.set_ylim([0.975,1.075]) # matched limits
+ax3.set_ylim([0.90,2.10]) # mismatched limits
 
 ax4 = ax3.twinx()
 ax4.plot(s,J_kurt/J_kurt[0],color='r',linestyle='--')
 ax4.set_ylabel(r'$\kappa/\kappa_{0}$',color='r',fontsize=16)
 ax4.tick_params('y',colors='r')
-ax4.set_ylim([0.975,1.075])
+#ax4.set_ylim([0.975,1.075]) # matched limits
+ax4.set_ylim([0.90,2.10]) # mismatched limits
 
+ax1.set_xlim([0.5,2.0])
+ax3.set_xlim([0.5,2.0])
+
+ax3.set_xlabel('z [m]',fontsize=16)
 xlabel_locs = [0.5,0.75,1.0,1.25,1.5,1.75,2.0,2.25,2.5,2.75,3.0]
 xlabels = [0,0.25,0.5,0.75,1.0,1.25,1.5,1.75,2.0,2.25,2.5]
 plt.xticks(xlabel_locs, xlabels)
 
-ax1.set_xlim([0.5,2.0])
-ax3.set_xlim([0.5,2.0])
-ax3.set_xlabel('z [m]',fontsize=16)
+ax3.set_xlabel('',fontsize=16) # remove x-axis label
+ax3.get_xaxis().set_ticks([]) # remove x-axis ticks
 
 figA.tight_layout()
 

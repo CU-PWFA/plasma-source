@@ -15,7 +15,7 @@ import particle_beam_propagation as pbp
 if __name__ == '__main__':
     
     # define plasma bulk (flat-top) properties
-    npl0   = 5e16                      # cm^-3, plasma density
+    npl0   = 1e18                      # cm^-3, plasma density
     dEds0  = np.sqrt(npl0/(5e16))*16.67e9  # eV/m, energy gain rate
     dgds0  = dEds0/nc.me               # 1/m, energy gain rate for rel. gamma
     L_ft   = 0.50                      # m, length of flat-top
