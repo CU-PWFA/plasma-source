@@ -33,7 +33,7 @@ if __name__ == '__main__':
     top_dn   = 0        # m, relative location of ramp top
     
     # define beam parameters
-    npart  = 100    # number of macro particles
+    npart  = 1000   # number of macro particles
     dist   = 'gauss' # distribution shape in trace space
     gbC    = (10e9)/nc.me   # centroid relativistic lorentz factor
     dgb    = 0.01    # relative energy spread (HWHM)
