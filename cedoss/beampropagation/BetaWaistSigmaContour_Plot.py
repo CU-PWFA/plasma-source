@@ -11,9 +11,9 @@ plots the contour over beta and sigma
 import numpy as np
 import PlasmaPropagation as PProp
 
-betalabel = 30
+betalabel = 10
 
-path = '/home/chris/Desktop/DataLoads/ContourBetaWaistSigma/'+str(betalabel)+'cm/'
+path = '/home/chris/Desktop/DataLoads/ContourBetaWaistSigma_10GeV_HighRes_PostFix/'+str(betalabel)+'cm/'
 print(path)
 bmag_image = np.load(path+'bmagarr.npy')
 sigma_arr = np.load(path+'sig.npy')

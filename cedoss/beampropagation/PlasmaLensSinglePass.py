@@ -19,18 +19,18 @@ params = PProp.ReturnDefaultParams()
 #params = PProp.ReturnDefaultParams(npl0_change = 5.79e18, gbC_change = 2.34e6, 
 #                                   waist_change = -0.4513, hwup_change = 0.16)
 
-gamma_set = 20000.0
-beta_set = 0.5
-dens = 1e17
-hwup_set = 0.8358
-waist_set = -3.2479999999999998
-L_up_set = 4.179
+gamma_set = 19569.5
+beta_set = 0.1
+dens = 4.990288256059199e+16
+hwup_set = 0.1404
+waist_set = -0.3906
+L_up_set = 0.702
 
 params = PProp.ReturnDefaultParams(npl0_change = dens, gbC_change = gamma_set,
                                        beta_change = beta_set, waist_change = waist_set,
                                        L_up_change = L_up_set, hwup_change = hwup_set)
 
-params['npart'] = 10#1000
+params['npart'] = 1000#1000
 print(params['kb'])
 twiss = PProp.CallMakeTwiss(params)
 parts = PProp.CallMakeParts(twiss, params)

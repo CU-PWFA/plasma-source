@@ -14,11 +14,11 @@ import PlasmaPropagation as PProp
 
 debug = 1
 
-sigma_arr = np.linspace(0.35, 0.60, num = 50)
-zbeta_arr = np.linspace(-1.90, -1.20, num = 50)
+sigma_arr = np.linspace(0.09, 0.18, num = 100)
+zbeta_arr = np.linspace(-0.50, -0.25, num = 100)
 bmag_image = np.zeros((len(zbeta_arr),len(sigma_arr)))
 
-betalabel = 30
+betalabel = 10
 
 gamma_set = 19569.5
 
@@ -55,7 +55,7 @@ for i in range(len(zbeta_arr)):
         bmag_image[i][j] = Bmag
 
 #path = '/home/chris/Desktop/DataLoads/ContourBetaWaistSigma_First/'+str(betalabel)+'cm/'
-path = '/home/chris/Desktop/DataLoads/ContourBetaWaistSigma_10GeV/'+str(betalabel)+'cm/'
+path = '/home/chris/Desktop/DataLoads/ContourBetaWaistSigma_10GeV_HighRes_PostFix/'+str(betalabel)+'cm/'
 
 if not os.path.exists(path):
     print("Creating new directory")

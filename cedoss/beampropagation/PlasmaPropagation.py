@@ -113,7 +113,7 @@ def CallMakeBeam(twiss, parts, params):
 
 def MakeBulkPlasma(params):
     # define longitudinal steps
-    ds   = (1.0/params['kb'])*(1./40.)#10.)                  # m, step size
+    ds   = (1.0/params['kb'])*(1./10.)#10.)                  # m, step size
     s_ft = np.linspace(0,params['L_ft'],int(params['L_ft']/ds+1)) # m, steps for flat-top
     s_up = np.linspace(0,params['L_up'],int(params['L_up']/ds+1)) # m, steps for up-ramp
     s_dn = np.linspace(0,params['L_dn'],int(params['L_dn']/ds+1)) # m, steps for down-ramp
