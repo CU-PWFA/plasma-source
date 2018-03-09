@@ -9,32 +9,15 @@ Created on Wed Jun 28 15:18:15 2017
 import numpy as np
 from collections import defaultdict
 
-def calc_dgds(dgds0,npl0,npl,model=1):
+def calc_dgds(dgds0,npl0,npl):
     """calculate energy gain rate for each point in the plasma"""
 #    dgds = np.zeros(len(npl))
 #    if (dgds0!=0) & (npl0!=0):
-    if model==0:
+
         # wake strength ~sqrt(np), phase ~sqrt(np)
         dgds = dgds0*np.sqrt(npl/npl0)*(2*np.sqrt(npl/npl0)-1)
         
-    elif model==1:  #Robert's new model without small density term
-        dgds = dgds0*np.sqrt(npl/npl0)*(2*np.sqrt(npl/npl0)-1)
-        
-    elif model==2: #OLD MODEL; Before Robert's correction
-        dgds = (npl>(4/9)*npl0)*dgds0*np.sqrt(npl/npl0)*\
-        (3*np.sqrt(npl/npl0)-2) +\
-        (npl<=(4/9)*npl0)*(-dgds0)*(2/np.pi)*np.sqrt(npl/npl0)*\
-        np.sin((3*np.pi/2)*np.sqrt(npl/npl0))
     
-    elif model==3: #Robert's new model with small density term
-        dgds = (npl>(1/4)*npl0)*dgds0*np.sqrt(npl/npl0)*\
-        (2*np.sqrt(npl/npl0)-1) +\
-        (npl<=(1/4)*npl0)*(-dgds0)*np.sqrt(npl/npl0)*\
-        np.sin(2*np.sqrt(npl/npl0)+np.pi/2-1)    
-    
-    else:
-        dgds = dgds0
-    return dgds
 
 def make_ramp(s,updn,shape,hw,top_loc,npl0,dgds0,gbC0=20000):
     """create dictionary object describing plasma density ramp"""
