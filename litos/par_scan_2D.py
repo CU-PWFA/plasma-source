@@ -70,14 +70,14 @@ if __name__ == '__main__':
     
     # define plasma bulk (flat-top) properties
     npl0   = 5e16                      # cm^-3, plasma density
-    dEds0  = np.sqrt(npl0/(1e17))*10e9 # eV/m, energy gain rate
+    dEds0  = np.sqrt(npl0/(5e16))*16.67e9 # eV/m, energy gain rate
     dgds0  = dEds0/nc.me               # 1/m, energy gain rate for rel. gamma
     L_ft   = 0.00                      # m, length of flat-top
     
     # define plasma up-ramp
     shape_up = 'gauss' # shape of ramp
-    hw_up    = 0.1205  # m, half-width of ramp
-    L_up     = 1.5     # m, full length of ramp
+    hw_up    = 0.132  # m, half-width of ramp
+    L_up     = 1.50    # m, full length of ramp
     top_up   = L_up    # m, relative location of ramp top
     
     # define plasma down-ramp
@@ -89,7 +89,7 @@ if __name__ == '__main__':
     # define beam parameters
     npart  = 0       # number of macro particles
     dist   = 'gauss' # distribution shape in trace space
-    gbC    = 20000   # centroid relativistic lorentz factor
+    gbC    = (10e9)/nc.me # centroid relativistic lorentz factor
     dgb    = 0.01    # relative energy spread (HWHM)
     dz     = 0       # spread in z (HWHM)
     eps    = 5.0e-6  # m-rad, normalized emittance
@@ -121,12 +121,12 @@ if __name__ == '__main__':
     plasma0 = ps.make_plasma(bulk,up_ramp,dn_ramp) # output: plasma dict.
     
     # specify waist scan values
-    nwaist = 101 # number of values
-    waist  = np.linspace(-0.50,-0.10,nwaist) # m, waist location w.r.t. L_up
+    nwaist = 200 # number of values
+    waist  = np.linspace(-0.35,-0.45,nwaist) # m, waist location w.r.t. L_up
 
     # specify ramp half-width scan values
-    nhw_up = 101 # number of values
-    hw_up  = np.linspace(0.05,0.20,nhw_up) # m, HWHM of up-ramp
+    nhw_up = 200 # number of values
+    hw_up  = np.linspace(0.12,0.16,nhw_up) # m, HWHM of up-ramp
 
     # perform scan
     num_cores = multiprocessing.cpu_count() # get number of available cores
@@ -154,33 +154,60 @@ if __name__ == '__main__':
     print('matched B-mag: ',Bmin)
     print('emittance growth (%): ',100*(Bmin-1)/Bmin)
     
+    # find valley
+    valley = np.zeros(nhw_up)
+    for i in range(0,nhw_up):
+        valley[i] = waist[np.argmin(B[:,i])]
+    
+    vfit = np.polyfit(hw_up,valley,1)
+    v = np.poly1d(vfit)
+    
+    
     #%%
     # plot results
     
-    # filled color contour map of log10(B)
     X = np.tile(waist.reshape(-1,1),(1,nhw_up))
     Y = np.tile(hw_up.T,(nwaist,1))
-    fig, axes = plt.subplots(1,1, sharey=True)
-    plt.contourf(X,Y,np.log10(B),100,\
-                cmap=plt.get_cmap('Vega20c'),\
-                linewidth=2.0)
-    cbar = plt.colorbar()
-    plt.scatter(Bmin_x,Bmin_y,color='k')
-    cbar.ax.set_ylabel(r'$log_{10}(B_m)$')
-    plt.ylabel(r'$\sigma_{\rm hw}$ [m]')
-    plt.xlabel(r'$z_{\beta^{*}}$ [m]')
-#    plt.title(r'beam matching for %s ramp'%shape_up)
+    
+#    # filled color contour map of log10(B)
+#    fig, axes = plt.subplots(1,1, sharey=True)
+#    plt.contourf(X,Y,np.log10(B),100,\
+#                cmap=plt.get_cmap('Vega20c'),\
+#                linewidth=2.0)
+#    cbar = plt.colorbar()
+#    plt.scatter(Bmin_x,Bmin_y,color='k')
+#    cbar.ax.set_ylabel(r'$log_{10}(B_m)$')
+#    plt.ylabel(r'$\sigma_{\rm hw}$ [m]')
+#    plt.xlabel(r'$z_{\beta^{*}}$ [m]')
+##    plt.title(r'beam matching for %s ramp'%shape_up)
+#
+#    # thin line contour map of B
+#    levels = np.array([1.01,1.05,1.1,1.5,2.0,3.0,4.0,5.0])
+#    labels = np.array([1.01,1.05,1.1,1.5,2.0,3.0,4.0,5.0])
+#    fig, axes = plt.subplots(1,1, sharey=True)
+#    CS = plt.contour(X,Y,B,levels,cmap=plt.get_cmap('Vega20b'))
+#    plt.clabel(CS,labels,fontsize=9,inline=1,fmt='%1.2f')
+#    cbar = plt.colorbar()
+#    plt.scatter(Bmin_x,Bmin_y,color='k')
+#    cbar.ax.set_ylabel(r'$B_m$')
+#    cbar.set_ticks(levels)
+#    plt.ylabel(r'$\sigma_{\rm hw}$ [m]')
+#    plt.xlabel(r'$z_{\beta^{*}}$ [m]')
+##    plt.title(r'beam matching for %s ramp'%shape_up)
 
-    # thin line contour map of B
+    # thin line contour map of B with flipped axes
     levels = np.array([1.01,1.05,1.1,1.5,2.0,3.0,4.0,5.0])
     labels = np.array([1.01,1.05,1.1,1.5,2.0,3.0,4.0,5.0])
     fig, axes = plt.subplots(1,1, sharey=True)
-    CS = plt.contour(X,Y,B,levels,cmap=plt.get_cmap('Vega20b'))
+    CS = plt.contour(Y,X,B,levels,cmap=plt.get_cmap('tab20b'))
     plt.clabel(CS,labels,fontsize=9,inline=1,fmt='%1.2f')
-    cbar = plt.colorbar()
-    plt.scatter(Bmin_x,Bmin_y,color='k')
-    cbar.ax.set_ylabel(r'$B_m$')
-    cbar.set_ticks(levels)
-    plt.ylabel(r'$\sigma_{\rm hw}$ [m]')
-    plt.xlabel(r'$z_{\beta^{*}}$ [m]')
+#    cbar = plt.colorbar()
+    plt.scatter(Bmin_y,Bmin_x,color='k')
+#    cbar.ax.set_ylabel(r'$B_m$')
+#    cbar.set_ticks(levels)
+#    plt.xlim([0.08,0.24])
+#    plt.ylim([-0.7,-0.2])
+    plt.xlabel(r'$\sigma_{\rm hw}$ [m]',fontsize=16)
+    plt.ylabel(r'$z_v^*$ [m]',fontsize=16)
+#    plt.ylabel(r'$z_{\beta^{*}}$ [m]',fontsize=16)
 #    plt.title(r'beam matching for %s ramp'%shape_up)

@@ -29,13 +29,13 @@ def_npl0 = 5e16
 def_gbC = 20000
 def_L_up = 1.5
 
-option_energyscale = 0.8488676844976561 #To match Robert's measured 16.66 GeV/m energy gain in 5e16
+option_energyscale = 2.3575#0.8488676844976561 #To match Robert's measured 16.67 GeV/m energy gain in 5e16
 
 def ReturnDefaultParams(beta_change=def_beta, hwup_change=def_hwup, waist_change=def_waist, 
                         ramp_change=def_ramp, npl0_change=def_npl0, gbC_change = def_gbC,
                         L_up_change=def_L_up):
     npl0   = npl0_change                      # cm^-3, plasma density
-    dEds0  = np.sqrt(npl0/(1e17))*10e9/option_energyscale # eV/m, energy gain rate
+    dEds0  = np.sqrt(npl0/(1e17))*10e9*option_energyscale # eV/m, energy gain rate
     shape_up = ramp_change # shape of ramp
     hw_up    = hwup_change  # m, half-width of ramp
     L_up     = L_up_change     # m, full length of ramp, 1.5 for the Gaussian ramps
@@ -70,7 +70,7 @@ def ReturnDefaultParams(beta_change=def_beta, hwup_change=def_hwup, waist_change
             'gbC'    : gbC,   # centroid relativistic lorentz factor
             'dgb'    : 0.01,    # relative energy spread (HWHM)
             'dz'     : 0,       # spread in z (HWHM)
-            'eps'    : 5.0e-6,  # m-rad, normalized emittance
+            'eps'    : 7.0e-6,  # m-rad, normalized emittance
             'beta'   : beta,    # m, Twiss at vac. waist
             'alpha'  : alpha,    # Twiss at vac. waist
             'gamma'  : (1.0+alpha**2)/beta, # 1/m, Twiss at vac. waist
@@ -113,7 +113,7 @@ def CallMakeBeam(twiss, parts, params):
 
 def MakeBulkPlasma(params):
     # define longitudinal steps
-    ds   = (1.0/params['kb'])*(1./10.)                  # m, step size
+    ds   = (1.0/params['kb'])*(1./10.)#10.)                  # m, step size
     s_ft = np.linspace(0,params['L_ft'],int(params['L_ft']/ds+1)) # m, steps for flat-top
     s_up = np.linspace(0,params['L_up'],int(params['L_up']/ds+1)) # m, steps for up-ramp
     s_dn = np.linspace(0,params['L_dn'],int(params['L_dn']/ds+1)) # m, steps for down-ramp

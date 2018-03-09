@@ -11,7 +11,7 @@ from collections import defaultdict
 
 def calc_dgds(dgds0,npl0,npl,model=1):
     """calculate energy gain rate for each point in the plasma"""
-    dgds = np.zeros(len(npl))
+#    dgds = np.zeros(len(npl))
 #    if (dgds0!=0) & (npl0!=0):
     if model==0:
         # wake strength ~sqrt(np), phase ~sqrt(np)
@@ -36,7 +36,7 @@ def calc_dgds(dgds0,npl0,npl,model=1):
         dgds = dgds0
     return dgds
 
-def make_ramp(s,updn,shape,hw,top_loc,npl0,dgds0,gbC=20000):
+def make_ramp(s,updn,shape,hw,top_loc,npl0,dgds0,gbC0=20000):
     """create dictionary object describing plasma density ramp"""
     ramp = defaultdict(dict)
     npl  = np.zeros(len(s))
@@ -163,11 +163,14 @@ def make_ramp(s,updn,shape,hw,top_loc,npl0,dgds0,gbC=20000):
             if len(s)>1:
                 ds = abs(s[1]-s[0])
                 # down-ramp
+                igbC = np.zeros(len(s))
+                igbC[0] = gbC0
                 npl[0] = npl0
                 for i in range(1,len(s)):
 #                    npl[i] = npl[i-1]*(1-(2.12e-7)*np.sqrt(npl[i-1]/gbC)*ds)
-                    npl[i] = npl[i-1]-(6.66e-9)*\
-                       (npl[i-1]**(3/2))*(gbC**(-1/2))*(ds*100)
+                    npl[i] = npl[i-1]*(1-\
+                       0.01*(1.33e-4)*((npl[i-1]/igbC[i-1])**(1/2))*ds)
+                    igbC[i] = igbC[i-1]+calc_dgds(dgds0,npl0,npl[i])*ds
                 # up-ramp
                 if updn.lower() == 'up':
                     npl = np.fliplr([npl])[0]
