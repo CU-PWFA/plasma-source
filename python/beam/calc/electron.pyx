@@ -45,12 +45,12 @@ def electron_propagation_plasma(double[:, :] ptcls, double[:] z, double z0,
             warnings.warn('Plasma density less than zero, treating as zero.')
         # Pre-calculate the energy gain per slice
         dz = z[i+1] - z[i]
-        dgamma = dgammadz(ne[i]) * dz
+        dgamma = 0.5 * dgammadz(ne[i]) * dz
         with nogil:
             for j in prange(N, num_threads=n):
         #if True:
         #    for j in range(N):
-                ptcls[j, 5] += 0.5*dgamma
+                ptcls[j, 5] += dgamma
                 kb = kp/sqrt(2*ptcls[j, 5])
                 #print('z: %0.2f, kb: %0.2f, kp: %0.2E, ne: %0.2E' %(z[i], kb, kp, ne[i]))
                 coskb = cos(kb*dz)
@@ -73,7 +73,84 @@ def electron_propagation_plasma(double[:, :] ptcls, double[:] z, double z0,
                 ptcls[j, 1] = R21 * x + R22 * ptcls[j, 1]
                 ptcls[j, 2] = R11 * y + R12 * ptcls[j, 3]
                 ptcls[j, 3] = R21 * y + R22 * ptcls[j, 3]
-                ptcls[j, 5] += 0.5*dgamma
+                ptcls[j, 5] += dgamma
         if (i % dumpPeriod) == 0:
             saveP(ptcls, z[i]+z0)
     return np.array(ptcls)
+
+def cs_propagation(double[:] z, double[:] ne, double beta0, double alpha0, 
+                   double gb0, double dgdz0, double ne0):
+    """ Propagates the Courant_Snyder parameters through a plasma. 
+    
+    Calculates how the Courant-Snyder parameters evolve as the beam passes
+    through a plasma.
+    
+    Prameters
+    ---------
+    z : array-like
+        The grid in z, in meters.
+    ne : array-like
+        The plasma density on the grid in 10^17 cm^-3.
+    beta0 : float
+        The initial beta function at z[0], in meters.
+    alpha0 : folat
+        The inital value of the CS alpha at z[0].
+    gb0 : float
+        The inital relativisitc factor, gamma, of the beam.
+    dgdz0 : function
+        The change in the relativistic factor per unit length for a plasma ne0.
+    ne0 : function
+        The nominal plasma density dgdz0 is specified at 
+    
+    Returns
+    -------
+    beta : array-like
+        The beta function at each point in z, in meters.
+    alpha : array-like
+        The CS alpha at each point in z.
+    gamma : array-like
+        The CS gamma at each point in z, in meters^-1.
+    gb : array-like
+        The relativistic factor of the beam at each point in z.
+    """
+    cdef int i
+    cdef int Nz = len(z)
+    cdef double[:] beta = np.empty(Nz, dtype='double')
+    cdef double[:] alpha = np.empty(Nz, dtype='double')
+    cdef double[:] gamma = np.empty(Nz, dtype='double')
+    cdef double[:] gb = np.empty(Nz, dtype='double')
+    beta[0] = beta0
+    alpha[0] = alpha0
+    gamma[0] = (1+alpha0**2) / beta0
+    gb[0] = gb0
+    cdef double kp, dz, dgamma, kb, coskb, sinkb, cos2, sin2, cossin, ik   
+    for i in range(Nz-1):
+        kp = 5.95074e4 * sqrt(ne[i])
+        if ne[i] < -1e-18:
+            warnings.warn('Plasma density less than zero, treating as zero.')
+        dz = z[i+1] - z[i]
+        dgamma = 0.5 * dgammadz(ne[i], ne0, dgdz0) * dz
+        # Begin calculating the values
+        gb[i+1] = gb[i]+dgamma
+        kb = kp/sqrt(2*gb[i+1])
+        coskb = cos(kb*dz)
+        sinkb = sin(kb*dz)
+        cos2 = coskb**2
+        sin2 = sinkb**2
+        cossin = coskb*sinkb
+        ik = 1/kb
+        # propagate with the transfer matrix
+        if ne[i] < 1.0e-18:
+            beta[i+1]  = beta[i] - 2*dz*alpha[i] + dz**2*gamma[i]
+            alpha[i+1] = alpha[i] - dz*gamma[i]
+            gamma[i+1] = gamma[i]
+        else:
+            beta[i+1]  = cos2*beta[i] - 2*cossin*alpha[i]*ik + sin2*gamma[i]*ik**2
+            alpha[i+1] = kb*cossin*beta[i] + (cos2-sin2)*alpha[i] - cossin*gamma[i]*ik
+            gamma[i+1] = kb**2*sin2*beta[i] + 2*kb*cossin*alpha[i] + cos2*gamma[i]
+        gb[i+1] += dgamma
+    return beta, alpha, gamma, gb
+
+cdef double dgammadz(double ne, double ne0, double dgdz0):
+    cdef double eta = ne/ne0
+    return dgdz0 * (2*eta - sqrt(eta))
