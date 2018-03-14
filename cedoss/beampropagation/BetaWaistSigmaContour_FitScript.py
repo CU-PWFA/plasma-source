@@ -17,9 +17,9 @@ import sys
 sys.path.insert(0, "../")
 from beampropagation import PlasmaPropagation as PProp
 
-betalabel = 30
+betalabel = 10
 
-path = '/home/chris/Desktop/DataLoads/ContourBetaWaistSigma_10GeV/'+str(betalabel)+'cm/'
+path = '/home/chris/Desktop/DataLoads/ContourBetaWaistSigma_10GeV_HighRes_PostFix/'+str(betalabel)+'cm/'
 print(path)
 bmag_image = np.load(path+'bmagarr.npy')
 sigma_arr = np.load(path+'sig.npy')
@@ -83,10 +83,15 @@ plt.ylabel("B-mag")
 plt.xlabel(x_label)
 plt.grid(); plt.show();
 
-thresh_arr = [1.05,1.1]
+thresh_arr = [1.01]
 for thresh in thresh_arr:
     print("Threshold = "+str(thresh))
-    for i in range(len(bmag_mat)-1):
+    for i in range(1,len(bmag_mat)-1):
+        if (bmag_mat[i] < thresh) & (bmag_mat[i-1] > thresh):
+            zmin = zbeta_arr[i]
+            print(" Minimum z_beta for B-mag < "+str(thresh)+": ",zmin," [m]")
+            sigmax = lfit[0]*zmin + lfit[1]
+            print(" Corresponding maximum sigma_hw: ",sigmax, "[m]")
         if (bmag_mat[i] < thresh) & (bmag_mat[i+1] > thresh):
             zmax = zbeta_arr[i]
             print(" Maximum z_beta for B-mag < "+str(thresh)+": ",zmax," [m]")

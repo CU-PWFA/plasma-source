@@ -64,9 +64,11 @@ llabel_simp3 = llabel2
 llabel2 = llabel2 + " + " + '{0:.2e}'.format(pfit[2])
 
 plt.scatter(beta_arr, waist_arr, label="Contour Data")
-plt.plot(x_arr, pfit[0] * np.square(x_arr) + pfit[1] * x_arr + pfit[2], label=llabel2)
+#plt.plot(x_arr, pfit[0] * np.square(x_arr) + pfit[1] * x_arr + pfit[2], label=llabel2)
+plt.plot(x_arr, pfit[0] * np.square(x_arr) + pfit[1] * x_arr + pfit[2], label="all 3 terms")
 plt.plot(x_arr, pfit[1] * x_arr + pfit[2], label="no quad")
 plt.plot(x_arr, pfit[0] * np.square(x_arr), label="just quad")
+plt.plot(x_arr, pfit[0] * np.square(x_arr) + pfit[1] * x_arr, label="no offset")
 plt.title("Matched waist position vs beta")
 plt.ylabel(r'$z_{\beta*,m}$ [m]')
 plt.xlabel(r'$\beta^*$[m]')

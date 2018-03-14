@@ -121,12 +121,12 @@ if __name__ == '__main__':
     plasma0 = ps.make_plasma(bulk,up_ramp,dn_ramp) # output: plasma dict.
     
     # specify waist scan values
-    nwaist = 100 # number of values
-    waist  = np.linspace(-0.70,-0.20,nwaist) # m, waist location w.r.t. L_up
+    nwaist = 200 # number of values
+    waist  = np.linspace(-0.35,-0.45,nwaist) # m, waist location w.r.t. L_up
 
     # specify ramp half-width scan values
-    nhw_up = 100 # number of values
-    hw_up  = np.linspace(0.08,0.24,nhw_up) # m, HWHM of up-ramp
+    nhw_up = 200 # number of values
+    hw_up  = np.linspace(0.12,0.16,nhw_up) # m, HWHM of up-ramp
 
     # perform scan
     num_cores = multiprocessing.cpu_count() # get number of available cores
@@ -153,6 +153,15 @@ if __name__ == '__main__':
     print('matching ramp HWHM (m): ',Bmin_y)
     print('matched B-mag: ',Bmin)
     print('emittance growth (%): ',100*(Bmin-1)/Bmin)
+    
+    # find valley
+    valley = np.zeros(nhw_up)
+    for i in range(0,nhw_up):
+        valley[i] = waist[np.argmin(B[:,i])]
+    
+    vfit = np.polyfit(hw_up,valley,1)
+    v = np.poly1d(vfit)
+    
     
     #%%
     # plot results
@@ -196,6 +205,8 @@ if __name__ == '__main__':
     plt.scatter(Bmin_y,Bmin_x,color='k')
 #    cbar.ax.set_ylabel(r'$B_m$')
 #    cbar.set_ticks(levels)
+#    plt.xlim([0.08,0.24])
+#    plt.ylim([-0.7,-0.2])
     plt.xlabel(r'$\sigma_{\rm hw}$ [m]',fontsize=16)
     plt.ylabel(r'$z_v^*$ [m]',fontsize=16)
 #    plt.ylabel(r'$z_{\beta^{*}}$ [m]',fontsize=16)

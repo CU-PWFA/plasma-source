@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Fri Dec  1 13:30:12 2017
+Created on Fri Dec 15 10:35:53 2017
 
-Functions for beam propagation using Mike's code
-
-@author: chris
+@author: keenan
 """
 
 import sys
@@ -24,24 +22,16 @@ import beam_ana as ba
 def_beta = 0.10
 def_hwup = 0.1325
 def_waist = -0.36
-def_ramp = 'gauss'
-def_npl0 = 5e16
-def_gbC = 20000
-def_L_up = 1.5
 
-option_energyscale = 2.3575#0.8488676844976561 #To match Robert's measured 16.67 GeV/m energy gain in 5e16
-
-def ReturnDefaultParams(beta_change=def_beta, hwup_change=def_hwup, waist_change=def_waist, 
-                        ramp_change=def_ramp, npl0_change=def_npl0, gbC_change = def_gbC,
-                        L_up_change=def_L_up):
-    npl0   = npl0_change                      # cm^-3, plasma density
-    dEds0  = np.sqrt(npl0/(1e17))*10e9*option_energyscale # eV/m, energy gain rate
-    shape_up = ramp_change # shape of ramp
+def ReturnDefaultParams(beta_change=def_beta, hwup_change=def_hwup, waist_change=def_waist):
+    npl0   = 5e16                      # cm^-3, plasma density
+    dEds0  = np.sqrt(npl0/(1e17))*10e9 # eV/m, energy gain rate
+    shape_up = 'gauss' # shape of ramp
     hw_up    = hwup_change  # m, half-width of ramp
-    L_up     = L_up_change     # m, full length of ramp, 1.5 for the Gaussian ramps
+    L_up     = 1.5     # m, full length of ramp
     alpha  = 0.00    # Twiss at vac. waist
     beta   = beta_change    # m, Twiss at vac. waist
-    gbC    = gbC_change   # centroid relativistic lorentz factor
+    gbC    = 20000   # centroid relativistic lorentz factor
     wp0    = (5.64e4)*np.sqrt(npl0) # rad/s, plasma ang. freq. (flat-top)
     kp0    = wp0/nc.c               # 1/m, plasma wave number (flat-top)
     waist  = waist_change        # m, waist location w.r.t L_up
@@ -70,7 +60,7 @@ def ReturnDefaultParams(beta_change=def_beta, hwup_change=def_hwup, waist_change
             'gbC'    : gbC,   # centroid relativistic lorentz factor
             'dgb'    : 0.01,    # relative energy spread (HWHM)
             'dz'     : 0,       # spread in z (HWHM)
-            'eps'    : 7.0e-6,  # m-rad, normalized emittance
+            'eps'    : 5.0e-6,  # m-rad, normalized emittance
             'beta'   : beta,    # m, Twiss at vac. waist
             'alpha'  : alpha,    # Twiss at vac. waist
             'gamma'  : (1.0+alpha**2)/beta, # 1/m, Twiss at vac. waist
@@ -113,7 +103,7 @@ def CallMakeBeam(twiss, parts, params):
 
 def MakeBulkPlasma(params):
     # define longitudinal steps
-    ds   = (1.0/params['kb'])*(1./10.)#10.)                  # m, step size
+    ds   = (1.0/params['kb'])*(1./10.)                  # m, step size
     s_ft = np.linspace(0,params['L_ft'],int(params['L_ft']/ds+1)) # m, steps for flat-top
     s_up = np.linspace(0,params['L_up'],int(params['L_up']/ds+1)) # m, steps for up-ramp
     s_dn = np.linspace(0,params['L_dn'],int(params['L_dn']/ds+1)) # m, steps for down-ramp
@@ -227,67 +217,22 @@ def PlotPropagation(ebeam, vbeam, plasma):
     ax4.set_ylabel(r'$K_J/K_{J,0}$',color='r')
     ax4.tick_params('y',colors='r')
     ax4.set_ylim([0.975,1.075])
-    """
+    
     #These act goofy
     xlabel_locs = [0.5,1.0,1.5,2.0,2.5,3.0]
     xlabels = [0,0.5,1.0,1.5,2.0,2.5]
     plt.xticks(xlabel_locs, xlabels)
     
-    ax1.set_xlim([0.5,3.0])
-    ax3.set_xlim([0.5,3.0])
+    ax1.set_xlim([1.0,2.5])
+    ax3.set_xlim([1.0,2.5])
     #end goofs
-    """
+    
     figA.tight_layout()
     figA.subplots_adjust(hspace=0)
     
     plt.show()
-
-def Calc2DTolerance(arr, x, y, thresh):
-    minlocx = np.argmin(np.min(arr,1))
-    minlocy = np.argmin(np.min(arr,0))
-    dx = x[1]-x[0]
-    xarr = arr[:,minlocy]
-    print(" in +/- x:",str(Calc1DTolerance(xarr, dx, minlocx, thresh)/2))
     
-    dy = y[1]-y[0]
-    yarr = arr[minlocx,:]
-    print(" in +/- y:",str(Calc1DTolerance(yarr, dy, minlocy, thresh)/2))
-
-def Calc1DToleranceRange(arr, dx, minloc, thresh):
-    i = minloc
-    flag = 2
-    top = i; bot = i
-    
-    while i < (len(arr) - 1):
-        top = i
-        if arr[i] < thresh:
-            i = i + 1
-        else:
-            flag = flag - 1
-            break
-    
-    i = minloc
-    while i > 0:
-        bot = i
-        if arr[i] < thresh:
-            i = i - 1
-        else:
-            flag = flag - 1
-            break
-    
-    top = top - 1 + (thresh-arr[top-1])/(arr[top]-arr[top-1])
-    bot = bot + 1 - (thresh-arr[bot+1])/(arr[bot]-arr[bot+1])
-    
-    tol_range = (top-bot)*dx
-    if flag > 0:
-        print("Warning: domain edge reached for " + str(thresh))
-    return [tol_range,bot,top]
-    
-def Calc1DTolerance(arr, dx, minloc, thresh):
-    result = Calc1DToleranceRange(arr, dx, minloc, thresh)
-    return result[0]
-    
-def PlotContour(contour, x_arr, y_arr, x_label, y_label, log = 0):
+def PlotContour(contour, x_arr, y_arr, x_label, y_label):
         # find location of min(B)
     i_Bmin_x = np.argmin(np.min(contour,1))
     i_Bmin_y = np.argmin(np.min(contour,0))
@@ -311,14 +256,11 @@ def PlotContour(contour, x_arr, y_arr, x_label, y_label, log = 0):
     cbar.ax.set_ylabel(r'$log_{10}(B_m)$')
     plt.ylabel(y_label)
     plt.xlabel(x_label)
-    if log == 1:
-        plt.yscale('log'); plt.xscale('log')
 #    plt.title(r'beam matching for %s ramp'%shape_up)
 
     # thin line contour map of B
     levels = np.array([1.01,1.05,1.1,1.2,1.5,2.0,3.0,4.0,5.0])
     labels = np.array([1.01,1.05,1.1,1.2,1.5,2.0,3.0,4.0,5.0])
-    
     fig, axes = plt.subplots(1,1, sharey=True)
     CS = plt.contour(X,Y,contour,levels,cmap=plt.get_cmap('Vega20b'))
     plt.clabel(CS,labels,fontsize=9,inline=1,fmt='%1.2f')
@@ -328,9 +270,6 @@ def PlotContour(contour, x_arr, y_arr, x_label, y_label, log = 0):
     cbar.set_ticks(levels)
     plt.ylabel(y_label)
     plt.xlabel(x_label)
-    if log == 1:
-        plt.yscale('log'); plt.xscale('log')
-    plt.show()
 #    plt.title(r'beam matching for %s ramp'%shape_up)
 
     return [Bmin_x,Bmin_y]

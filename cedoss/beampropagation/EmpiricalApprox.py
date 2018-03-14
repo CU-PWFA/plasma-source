@@ -43,7 +43,7 @@ def CalcApprox(gamma_set, beta_set, kb_option=2):
     return [gamma_set, beta_set, n_calc, sig_calc, waist_calc, 5*sig_calc]
 
 if __name__ == '__main__':
-    gamma_set = 2e4
+    gamma_set = 19569.5
     beta_set = 0.10
     kb_opt = 2
     
