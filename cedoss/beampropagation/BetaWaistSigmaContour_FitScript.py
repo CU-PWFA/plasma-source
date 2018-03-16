@@ -17,9 +17,15 @@ import sys
 sys.path.insert(0, "../")
 from beampropagation import PlasmaPropagation as PProp
 
-betalabel = 10
+#betalabel = 10
+#path = '/home/chris/Desktop/DataLoads/ContourBetaWaistSigma_10GeV_HighRes_PostFix/'+str(betalabel)+'cm/'
 
-path = '/home/chris/Desktop/DataLoads/ContourBetaWaistSigma_10GeV_HighRes_PostFix/'+str(betalabel)+'cm/'
+betalabel = 300 #kbeta
+#titleadd = '; '+r'$\beta^* = $'+str(betalabel)+' cm'
+titleadd = '; '+r'$k_{\beta^*} = $'+str(betalabel)+r'$\,\mathrm{m^{-1}}$'
+
+path = '/home/chris/Desktop/DataLoads/ContourBetaWaistSigma_kbeta/'+str(betalabel)+'m-1/'
+
 print(path)
 bmag_image = np.load(path+'bmagarr.npy')
 sigma_arr = np.load(path+'sig.npy')
@@ -46,7 +52,6 @@ for i in range(len(zbeta_arr)):
 
 X = np.tile(zbeta_arr.reshape(-1,1),(1,len(sigma_arr)))
 Y = np.tile(sigma_arr.T,(len(zbeta_arr),1))
-titleadd = '; '+r'$\beta^* = $'+str(betalabel)+' cm'
 
 levels = np.array([1.01,1.05,1.1,1.2,1.5,2.0,3.0,4.0,5.0])
 labels = np.array([1.01,1.05,1.1,1.2,1.5,2.0,3.0,4.0,5.0])

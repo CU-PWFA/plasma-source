@@ -42,14 +42,20 @@ waist_arr= [-0.02655,-0.09931,-0.2862,-0.7414,-1.2276]
 #First is sigma vs beta
 x_arr=np.linspace(beta_arr[0], beta_arr[-1], 200)
 lfit1 = np.polyfit(beta_arr, sigma_arr, 1)
-#lfit1=[1.71,-0.0192]
+pfit1 = np.polyfit(beta_arr, sigma_arr, 2)
+#lfit1=[1.65,-0.0170]
 
 llabel1 = '{0:.2e}'.format(lfit1[0]) + r'$ \beta^* $'
 llabel_simp1 = llabel1
 llabel1 = llabel1 + " + " + '{0:.2e}'.format(lfit1[1])
 
+plabel1 = '{0:.2e}'.format(pfit1[0]) + r'$ (\beta^*)^2 $'
+plabel1 = plabel1 + " + " + '{0:.2e}'.format(pfit1[1]) + r'$ \beta^* $'
+plabel1 = plabel1 + " + " + '{0:.2e}'.format(pfit1[2])
+
 plt.scatter(beta_arr, sigma_arr, label="Contour Data")
 plt.plot(x_arr, lfit1[0] * x_arr + lfit1[1], label=llabel1)
+plt.plot(x_arr, pfit1[0] * np.square(x_arr) + pfit1[1] * x_arr + pfit1[2], label=plabel1)
 plt.title("Matched ramp half-length vs beta")
 plt.ylabel(r'$\sigma_{hw,m}$ [m]')
 plt.xlabel(r'$\beta^*$[m]')

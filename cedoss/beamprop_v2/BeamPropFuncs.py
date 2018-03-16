@@ -23,7 +23,7 @@ from lens import profile
 plt.rcParams['animation.ffmpeg_path'] = '/home/chris/anaconda3/envs/CU-PWFA/bin/ffmpeg'
 import matplotlib.animation as animation
 
-plasma_start_loc = 0.65
+plasma_start_loc = 0.80
 length_flattop = 0.50
 n_set = 0.5#0.5
 
@@ -31,7 +31,7 @@ def_Z = (2*plasma_start_loc + length_flattop)*1e6
 
 def ReturnDefaultElectronParams(path):
     beta_star = 0.10
-    beta_offset = -0.36
+    beta_offset = -0.387
     plasma_start = plasma_start_loc
     
     beta_init = beta_star + np.square(plasma_start + beta_offset)/beta_star
@@ -42,7 +42,7 @@ def ReturnDefaultElectronParams(path):
         'path' : path,
         'load' : False,
         'N' : 10000,
-        'gamma' : 20000,
+        'gamma' : 19569.5,
         'emittance' : 7e-6,
         'betax' : beta_init,
         'betay' : beta_init,
@@ -89,7 +89,7 @@ def ReturnDefaultPlasmaParams(path, Z_change = def_Z):
     Nx = 1;  Ny = 1
     Z = Z_change
     Nz = int((Z/10)+1)
-    sigma_hw = 13.25e4
+    sigma_hw = 14.0e4
     sigma = sigma_hw/(np.sqrt(2*np.log(2)))
     plasmaParams ={
         'name' : 'TestPlasma',
