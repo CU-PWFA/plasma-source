@@ -18,7 +18,19 @@ import particle_beam as pb
 params = PProp.ReturnDefaultParams()
 #params = PProp.ReturnDefaultParams(npl0_change = 5.79e18, gbC_change = 2.34e6, 
 #                                   waist_change = -0.4513, hwup_change = 0.16)
-params['npart'] = 1000
+
+gamma_set = 19569.5
+beta_set = 0.1
+dens = 5e+16
+hwup_set = 0.140314285925
+waist_set = -0.390533448461
+L_up_set = 0.701571429625
+
+params = PProp.ReturnDefaultParams(npl0_change = dens, gbC_change = gamma_set,
+                                       beta_change = beta_set, waist_change = waist_set,
+                                       L_up_change = L_up_set, hwup_change = hwup_set)
+
+params['npart'] = 10#1000
 print(params['kb'])
 twiss = PProp.CallMakeTwiss(params)
 parts = PProp.CallMakeParts(twiss, params)

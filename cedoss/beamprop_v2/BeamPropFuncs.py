@@ -23,12 +23,15 @@ from lens import profile
 plt.rcParams['animation.ffmpeg_path'] = '/home/chris/anaconda3/envs/CU-PWFA/bin/ffmpeg'
 import matplotlib.animation as animation
 
-plasma_start_loc = 0.75
-n_set = 0.5
+plasma_start_loc = 0.80
+length_flattop = 0.50
+n_set = 0.5#0.5
+
+def_Z = (2*plasma_start_loc + length_flattop)*1e6
 
 def ReturnDefaultElectronParams(path):
     beta_star = 0.10
-    beta_offset = -0.36
+    beta_offset = -0.387
     plasma_start = plasma_start_loc
     
     beta_init = beta_star + np.square(plasma_start + beta_offset)/beta_star
@@ -39,8 +42,8 @@ def ReturnDefaultElectronParams(path):
         'path' : path,
         'load' : False,
         'N' : 10000,
-        'gamma' : 20000,
-        'emittance' : 5e-6,
+        'gamma' : 19569.5,
+        'emittance' : 7e-6,
         'betax' : beta_init,
         'betay' : beta_init,
         'alphax' : alpha_init,
@@ -55,14 +58,17 @@ def GaussianBeam(electronParams, debug = 0):
     if debug == 1: beam.plot_current_phase();
     return beam
 
-def dgammadz(ne):
+def dgammadz(ne): #Used to have old small n term
     npl0 = n_set; npl = ne
-    dgds0 = np.sqrt(npl0) * 1.96e-2
-    if (npl > 1/4*npl0):
-        dgds = dgds0*np.sqrt(npl/npl0)*(2*np.sqrt(npl/npl0)-1)
+    if npl0 == 0:
+        return 0
     else:
-        dgds = (-dgds0)*np.sqrt(npl/npl0)*np.sin(2*np.sqrt(npl/npl0)+np.pi/2-1)
-    return dgds
+        dgds0 = 16.66e9 * np.sqrt(npl0/0.5) / 511e3
+        #if (npl > 1/4*npl0):
+        dgds = dgds0*np.sqrt(npl/npl0)*(2*np.sqrt(npl/npl0)-1)
+        #else:
+        #    dgds = (-dgds0)*np.sqrt(npl/npl0)*np.sin(2*np.sqrt(npl/npl0)+np.pi/2-1)
+        return dgds
 
 def dgammadz_preRobert(ne):
     npl0 = 0.5; npl = ne
@@ -79,11 +85,11 @@ def dgammadz_wrong(ne):
 def dgammadz_basic(ne):
     return 0.0
 
-def ReturnDefaultPlasmaParams(path):
+def ReturnDefaultPlasmaParams(path, Z_change = def_Z):
     Nx = 1;  Ny = 1
-    Z = 2e6
+    Z = Z_change
     Nz = int((Z/10)+1)
-    sigma_hw = 13.25e4
+    sigma_hw = 14.0e4
     sigma = sigma_hw/(np.sqrt(2*np.log(2)))
     plasmaParams ={
         'name' : 'TestPlasma',
@@ -112,7 +118,18 @@ def FineSpacingLens(z_orig, tpl_center, tpl_length):
     z = np.array(sorted(z))
     return z
 
-def GaussianRampPlasma(plasmaParams):
+def GaussianRampPlasma(plasmaParams, debug = 0):
+    Nz = plasmaParams['Nz']
+    
+    nez = plasmaParams['n0']*profile.plasma_gaussian_ramps(plasmaParams['z0'],
+       plasmaParams['l_flattop'], plasmaParams['sigma_in'], plasmaParams['sigma_out'], Nz, plasmaParams['Z'])[1]
+    
+    argon = plasma.Plasma(plasmaParams)
+    n = plasmaParams['n0']*np.ones(Nz, dtype='double')
+    argon.initialize_plasma(n, nez)
+    
+    if debug == 1: argon.plot_long_density_center();
+    """
     Nx = plasmaParams['Nx']; Ny = plasmaParams['Ny']; Nz = plasmaParams['Nz']
     argon = plasma.Plasma(plasmaParams)
     n = plasmaParams['n0']*np.ones((Nx, Ny, Nz), dtype='double')
@@ -121,7 +138,7 @@ def GaussianRampPlasma(plasmaParams):
        plasmaParams['l_flattop'], plasmaParams['sigma_in'], plasmaParams['sigma_out'], Nz, plasmaParams['Z'])[1]
     
     argon.initialize_plasma(n, ne)
-    argon.plot_long_density_center()
+    if debug == 1: argon.plot_long_density_center();"""
     return argon
 
 def GaussianRampPlasma_ThinPlasmaLens(plasmaParams, tpl_offset, tpl_n, tpl_l, debug = 0):
@@ -165,13 +182,66 @@ def GetBmag(beam,m):
     em = np.average(beam.get_emittance_n(m))*1e6
     return em/e0
 
-def PlotEmittance(beam,m):
+def PlotEmittance(beam, z_arr, m):
     en = np.zeros(m, dtype='double')
+    s = np.zeros(m, dtype='double')
     for i in range(m):
         en[i] = np.average(beam.get_emittance_n(i))*1e6
+        s[i] = z_arr[i]*1e-4
     
-    plt.plot(en)
-    plt.show()
+    plt.plot(s, en)
+    plt.title("Emittance Evolution")
+    plt.xlabel("s [cm]")
+    plt.ylabel("normalized emittance [mm-mrad]")
+    plt.grid(); plt.show()
+    return
+
+def PlotSigmar(beam, z_arr, m):
+    sig = np.zeros(m, dtype='double')
+    s = np.zeros(m, dtype='double')
+    for i in range(m):
+        sig[i] = np.average(beam.get_sigmar(i))*1e6
+        s[i] = z_arr[i]*1e-4
+    
+    plt.plot(s, sig)
+    plt.title("Sigmar Evolution")
+    plt.xlabel("s [cm]")
+    plt.ylabel("sigmar [um]")
+    plt.grid(); plt.show()
+    return
+
+def PlotEmittance_Compare(beam, beam2, z_arr, m, first, second):
+    en = np.zeros(m, dtype='double')
+    en2 = np.zeros(m, dtype='double')
+    s = np.zeros(m, dtype='double')
+    for i in range(m):
+        en[i] = np.average(beam.get_emittance_n(i))*1e6
+        en2[i] = np.average(beam2.get_emittance_n(i))*1e6
+        s[i] = z_arr[i]*1e-4
+    
+    plt.plot(s, en,label = first)
+    plt.plot(s, en2, label = second)
+    plt.title("Emittance Evolution")
+    plt.xlabel("s [cm]")
+    plt.ylabel("normalized emittance [mm-mrad]")
+    plt.grid(); plt.legend(); plt.show()
+    return
+
+def PlotSigmar_Compare(beam, beam2, z_arr, m, first, second):
+    sig = np.zeros(m, dtype='double')
+    sig2 = np.zeros(m, dtype='double')
+    s = np.zeros(m, dtype='double')
+    for i in range(m):
+        sig[i] = np.average(beam.get_sigmar(i))*1e6
+        sig2[i] = np.average(beam2.get_sigmar(i))*1e6
+        s[i] = z_arr[i]*1e-4
+    
+    plt.plot(s, sig, label = first)
+    plt.plot(s, sig2, label = second)
+    plt.title("Sigmar Evolution")
+    plt.xlabel("s [cm]")
+    plt.ylabel("sigmar [um]")
+    plt.grid(); plt.legend(); plt.show()
     return
 
 def PlotContour(contour, x_arr, y_arr, x_label, y_label):

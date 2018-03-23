@@ -79,24 +79,23 @@ def prop_twiss_plasma_step(i_twiss,ds=0,npl=0,dgds=0):
                   R[0][1]*R[1][0]+R[0][0]*R[1][1], \
                  -R[0][1]*R[1][1] ], \
                [  R[1][0]**2, -2*R[1][0]*R[1][1], R[1][1]**2 ] ]
-
+               
     # perform beam transport
     T = np.dot(RTwiss,T)
     [beta,alpha,gamma] = T
+
+    # get sign of alpha
+    alpha_sign = np.sign(alpha)
+    if alpha_sign==0:
+        alpha_sign=np.sign(+1)
+        print("alpha sign = 0")
 
     # add energy gain/loss
     dgb = dgds*ds
     gbC = gbC + dgb
     if gbC<0:
         gbC = 1.01
-#        print('warning: total energy loss!')
-
-    # reduce angle from energy gain/loss
-    dgb = dgds*ds
-    if dgb!=0:
-        beta  = beta*(1+dgb/gbC)
-        gamma = gamma*(1-dgb/gbC)
-        alpha = np.sign(alpha)*np.sqrt(np.abs(beta*gamma-1))
+        print('warning: total energy loss!')
 
     # return transported beam params
     i_twiss["beta"]  = beta

@@ -16,9 +16,9 @@ import numpy as np
 import PlasmaPropagation as PProp
 
 
-bmag_image = np.load('/home/chris/Desktop/testarr3.npy')
-npl0_arr = np.load('/home/chris/Desktop/testx3.npy')
-gamma_arr = np.load('/home/chris/Desktop/testy3.npy')
+bmag_image = np.load('/home/chris/Desktop/DataLoads/ContourDensityGamma/testarr.npy')
+npl0_arr = np.load('/home/chris/Desktop/DataLoads/ContourDensityGamma/testx.npy')
+gamma_arr = np.load('/home/chris/Desktop/DataLoads/ContourDensityGamma/testy.npy')
 
 for i in range(len(npl0_arr)):
     for j in range(len(gamma_arr)):
@@ -28,5 +28,5 @@ for i in range(len(npl0_arr)):
             bmag_image[i][j] = np.inf
         if not np.isfinite(bmag_image[i][j]):
             bmag_image[i][j] = 1e3
-            
+
 minloc = PProp.PlotContour(bmag_image, npl0_arr, gamma_arr, r'$ npl0 $ [cm^-3]', r'$ \gamma $', log=1)
