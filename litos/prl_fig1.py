@@ -103,6 +103,20 @@ ax1.set_xlim([0.5,2.0])
 ax1.plot([ent_z_v,ent_z_v],[0,6.5],color='b',linestyle='dashed')
 ax1.plot([exit_z_v,exit_z_v],[0,6.5],color='b',linestyle='dashed')
 
+ax1.yaxis.set_ticks(np.arange(0.0, 3.5, 0.5))
+
+# subfigure label
+if subfig=='a':
+    ax1.text(0.20, 0.85, r'(a)',
+        verticalalignment='center', horizontalalignment='center',
+        transform=ax1.transAxes,
+        color='black', fontsize=16)
+elif subfig=='b':
+    ax1.text(0.20, 0.85, r'(b)',
+        verticalalignment='center', horizontalalignment='center',
+        transform=ax1.transAxes,
+        color='black', fontsize=16)
+
 npl = plasma["npl"]/plasma["bulk"]["npl0"]
 ax2  = ax1.twinx()
 ax2.plot(s,npl,color='g',linestyle='solid')
@@ -111,6 +125,8 @@ ax2.tick_params('y',colors='g')
 ax1.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
 ax2.set_ylim([0,1.3])
 ax2.set_xlim([0.5,2.0])
+
+ax2.yaxis.set_ticks(np.arange(0.0, 1.4, 0.2))
 
 # plasma density text
 if subfig=='a':
@@ -137,22 +153,13 @@ ax3.tick_params('y',colors='k')
 ax1.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
 if subfig=='a':
     ax3.set_ylim([0.9875,1.0125]) # matched limits
+    ax3.yaxis.set_ticks(np.arange(0.990, 1.010, 0.005))
 elif subfig=='b':
     ax3.set_ylim([0.9,1.9]) # mismatched limits
+    ax3.yaxis.set_ticks(np.arange(1.0, 2.0, 0.2))
 else:
     ax3.set_ylim([0.9,1.9])
 ax3.set_xlim([0.5,2.0])
-
-if subfig=='a':
-    ax3.text(0.05, 0.85, r'a',
-        verticalalignment='center', horizontalalignment='center',
-        transform=ax3.transAxes,
-        color='black', fontsize=16)
-elif subfig=='b':
-    ax3.text(0.05, 0.85, r'b',
-        verticalalignment='center', horizontalalignment='center',
-        transform=ax3.transAxes,
-        color='black', fontsize=16)
 
 ax4 = ax3.twinx()
 ax4.plot(s,J_kurt/J_kurt[0],color='r',linestyle='--')
@@ -161,8 +168,10 @@ ax4.tick_params('y',colors='r')
 ax1.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
 if subfig=='a':
     ax4.set_ylim([0.9875,1.0125]) # matched limits
+    ax4.yaxis.set_ticks(np.arange(0.990, 1.010, 0.005))
 elif subfig=='b':
     ax4.set_ylim([0.9,1.9]) # mismatched limits
+    ax4.yaxis.set_ticks(np.arange(1.0, 2.0, 0.2))
 else:
     ax4.set_ylim([0.9,1.9])
 ax4.set_xlim([0.5,2.0])
