@@ -11,14 +11,12 @@ from collections import defaultdict
 
 def calc_dgds(dgds0,npl0,npl):
     """calculate energy gain rate for each point in the plasma"""
-#    dgds = np.zeros(len(npl))
-#    if (dgds0!=0) & (npl0!=0):
-
+    if (dgds0!=0) & (npl0!=0):
         # wake strength ~sqrt(np), phase ~sqrt(np)
-    dgds = dgds0*np.sqrt(npl/npl0)*(2*np.sqrt(npl/npl0)-1)
+        dgds = dgds0*np.sqrt(npl/npl0)*(2*np.sqrt(npl/npl0)-1)
+    else:
+        dgds = np.zeros(len(npl))
     return dgds
-        
-    
 
 def make_ramp(s,updn,shape,hw,top_loc,npl0,dgds0,gbC0=20000):
     """create dictionary object describing plasma density ramp"""
