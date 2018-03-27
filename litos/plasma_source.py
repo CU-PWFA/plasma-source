@@ -15,7 +15,8 @@ def calc_dgds(dgds0,npl0,npl):
 #    if (dgds0!=0) & (npl0!=0):
 
         # wake strength ~sqrt(np), phase ~sqrt(np)
-        dgds = dgds0*np.sqrt(npl/npl0)*(2*np.sqrt(npl/npl0)-1)
+    dgds = dgds0*np.sqrt(npl/npl0)*(2*np.sqrt(npl/npl0)-1)
+    return dgds
         
     
 
