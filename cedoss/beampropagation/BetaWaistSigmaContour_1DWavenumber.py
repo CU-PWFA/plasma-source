@@ -1,0 +1,69 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Jan  19 12:02:41 2017
+
+Loops over sigma_hw and beam beta waist
+
+@author: chris
+"""
+
+import numpy as np
+import os
+import PlasmaPropagation as PProp
+
+debug = 0
+
+sigma_arr = np.linspace(0.09, 0.18, num = 50)
+zbeta_arr = np.linspace(-0.50, -0.25, num = 50)
+bmag_image = np.zeros((len(zbeta_arr),len(sigma_arr)))
+
+betalabel = 10
+
+gamma_set = 19569.5
+
+kb_arr = [100, 150, 200, 250, 300]
+
+for k in range(len(kb_arr)):
+    kb_set = kb_arr[k]
+    dens = 56476779.72 * kb_set**2 * gamma_set
+    print("kb: ",kb_set,"dens: ",dens)
+    
+    beta_const = betalabel/100
+    
+    for i in range(len(zbeta_arr)):
+        for j in range(len(sigma_arr)):
+            hwup_set = sigma_arr[j]
+            zbeta_set = zbeta_arr[i]
+            
+            params = PProp.ReturnDefaultParams(beta_change=beta_const, hwup_change=hwup_set,
+                                               npl0_change=dens,     waist_change=zbeta_set,
+                                               L_up_change=5*hwup_set, gbC_change=gamma_set)#,
+                                               #dEds0_change=0)
+            params['npart'] = 0
+            params['L_ft'] = 0; params['L_dn'] = 0
+            
+            twiss = PProp.CallMakeTwiss(params)
+            parts = PProp.CallMakeParts(twiss, params)
+            ebeam0 = PProp.CallMakeBeam(twiss, parts, params)
+            ebeam0 = PProp.PropagateBackwards(ebeam0, params)
+            
+            plasma0 = PProp.MakeBulkPlasma(params)
+            ebeam0 = PProp.PropagatePlasma(ebeam0, plasma0)
+            
+            Bmag = PProp.CalcBmag(ebeam0, plasma0)
+            if debug == 1:
+                print('Bmag: ',Bmag,'sig: ',hwup_set,'zbeta: ',zbeta_set)
+            if np.isnan(Bmag):
+                Bmag = np.inf
+            bmag_image[i][j] = Bmag
+    
+    #path = '/home/chris/Desktop/DataLoads/ContourBetaWaistSigma_First/'+str(betalabel)+'cm/'
+    path = '/home/chris/Desktop/DataLoads/ContourBetaWaistSigma_kbeta/'+str(kb_set)+'m-1/'
+    
+    if not os.path.exists(path):
+        print("Creating new directory")
+        os.makedirs(path)
+    np.save(path + 'bmagarr.npy',bmag_image)
+    np.save(path + 'sig.npy',sigma_arr)
+    np.save(path + 'beta.npy',zbeta_arr)

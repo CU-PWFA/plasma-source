@@ -11,14 +11,14 @@ Loops over flattop density for tolerance measurements
 import numpy as np
 import PlasmaPropagation as PProp
 import matplotlib.pyplot as plt
-import EmpiricalApprox as Approx
+import EmpiricalApprox_old as Approx
 
 debug = 1
 
 gamma_set = 19569.5
-kb_set = 212.5
+kb_option = 2
 
-beta_arr = np.linspace(0.025, 0.80, num = 401)
+beta_arr = np.linspace(0.025, 0.40, num = 301)
 bmag_image = np.zeros((len(beta_arr)))
 
 nparts = 0
@@ -26,7 +26,7 @@ nparts = 0
 for i in range(len(beta_arr)):
     beta = beta_arr[i]
     
-    vals = Approx.CalcApprox(gamma_set, beta, kb_set)
+    vals = Approx.CalcApprox(gamma_set, beta, kb_option)
     
     dens = vals[2]
     hwup_set = vals[3]
@@ -61,7 +61,7 @@ for j in range(len(beta_arr)):
 
 plt.plot(100*beta_arr, bmag_image,label="Empirical Approximation")
 plt.plot([100*beta_arr[0],100*beta_arr[-1]],[1.01,1.01],ls='--',label='B-mag = 1.01')
-plt.title("B-mag vs Empirical Approximation; kb = "+str(kb_set)+r'$m^{-1}$')
+plt.title("B-mag vs Empirical Approximation; kb = "+str(Approx.Getkb(kb_option))+r'$m^{-1}$')
 plt.xlabel(r'$ \beta^* $ [cm]')
 plt.ylabel("B-mag")
 plt.grid(); plt.legend(); plt.show()

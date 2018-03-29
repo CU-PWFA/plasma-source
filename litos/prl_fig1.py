@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Mon Mar  5 20:53:15 2018
+Created on Sun Mar 25 16:03:59 2018
 
 @author: litos
 """
@@ -21,7 +21,6 @@ from collections import defaultdict
 import beam_ana as ba
 import scipy.spatial as spatial
 from matplotlib.ticker import FormatStrFormatter
-
 
 # do analysis on beam/plasma
 nstep = len(ebeam)
@@ -88,6 +87,10 @@ exit_beta_v = (1/gamma[nstep-1])/(1e-2)
 
 #%% beta and rms_x evolution through plasma
 
+# which subfigure?
+#subfig = 'a'
+subfig = 'b'
+
 figA, (ax1, ax3) = plt.subplots(2, sharex=True, sharey=False)
 
 ax1.plot(s,rms_x,color='b',linestyle='solid')
@@ -100,6 +103,20 @@ ax1.set_xlim([0.5,2.0])
 ax1.plot([ent_z_v,ent_z_v],[0,6.5],color='b',linestyle='dashed')
 ax1.plot([exit_z_v,exit_z_v],[0,6.5],color='b',linestyle='dashed')
 
+ax1.yaxis.set_ticks(np.arange(0.0, 3.5, 0.5))
+
+# subfigure label
+if subfig=='a':
+    ax1.text(0.20, 0.85, r'(a)',
+        verticalalignment='center', horizontalalignment='center',
+        transform=ax1.transAxes,
+        color='black', fontsize=16)
+elif subfig=='b':
+    ax1.text(0.20, 0.85, r'(b)',
+        verticalalignment='center', horizontalalignment='center',
+        transform=ax1.transAxes,
+        color='black', fontsize=16)
+
 npl = plasma["npl"]/plasma["bulk"]["npl0"]
 ax2  = ax1.twinx()
 ax2.plot(s,npl,color='g',linestyle='solid')
@@ -109,23 +126,39 @@ ax1.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
 ax2.set_ylim([0,1.3])
 ax2.set_xlim([0.5,2.0])
 
+ax2.yaxis.set_ticks(np.arange(0.0, 1.4, 0.2))
+
 # plasma density text
-#ax2.text(0.50, 0.85, r'$n_{p,0} = %2.1e \,{\rm cm^{-3}}$'%plasma["bulk"]["npl0"],
-#        verticalalignment='center', horizontalalignment='center',
-#        transform=ax2.transAxes,
-#        color='green', fontsize=16)
-ax2.text(0.50, 0.85, r'$n_{p,0} = 1\times 10^{18} \,{\rm cm^{-3}}$',
+if subfig=='a':
+    ax2.text(0.50, 0.85, r'$n_{p,0} = 5\times 10^{16} \,{\rm cm^{-3}}$',
         verticalalignment='center', horizontalalignment='center',
         transform=ax2.transAxes,
         color='green', fontsize=16)
-
+elif subfig=='b':
+    ax2.text(0.50, 0.85, r'$n_{p,0} = 1\times 10^{18} \,{\rm cm^{-3}}$',
+        verticalalignment='center', horizontalalignment='center',
+        transform=ax2.transAxes,
+        color='green', fontsize=16)
+else:
+    ax2.text(0.50, 0.85, \
+             r'$n_{p,0} = %2.1e \,{\rm cm^{-3}}$'%plasma["bulk"]["npl0"],
+        verticalalignment='center', horizontalalignment='center',
+        transform=ax2.transAxes,
+        color='green', fontsize=16)
+    
 ax3.plot(s,rms_x_eps/rms_x_eps[0],color='k',linestyle='-')
 ax3.plot(s,BB*np.ones(len(s)),color='k',linestyle='-.')
 ax3.set_ylabel(r'$\varepsilon_n/\varepsilon_{n,0}$',color='k',fontsize=16)
 ax3.tick_params('y',colors='k')
 ax1.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
-#ax3.set_ylim([0.9875,1.0125]) # matched limits
-ax3.set_ylim([0.9,1.9]) # mismatched limits
+if subfig=='a':
+    ax3.set_ylim([0.9875,1.0125]) # matched limits
+    ax3.yaxis.set_ticks(np.arange(0.990, 1.010, 0.005))
+elif subfig=='b':
+    ax3.set_ylim([0.9,1.9]) # mismatched limits
+    ax3.yaxis.set_ticks(np.arange(1.0, 2.0, 0.2))
+else:
+    ax3.set_ylim([0.9,1.9])
 ax3.set_xlim([0.5,2.0])
 
 ax4 = ax3.twinx()
@@ -133,8 +166,14 @@ ax4.plot(s,J_kurt/J_kurt[0],color='r',linestyle='--')
 ax4.set_ylabel(r'$\kappa/\kappa_{0}$',color='r',fontsize=16)
 ax4.tick_params('y',colors='r')
 ax1.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
-#ax4.set_ylim([0.9875,1.0125]) # matched limits
-ax4.set_ylim([0.9,1.9]) # mismatched limits
+if subfig=='a':
+    ax4.set_ylim([0.9875,1.0125]) # matched limits
+    ax4.yaxis.set_ticks(np.arange(0.990, 1.010, 0.005))
+elif subfig=='b':
+    ax4.set_ylim([0.9,1.9]) # mismatched limits
+    ax4.yaxis.set_ticks(np.arange(1.0, 2.0, 0.2))
+else:
+    ax4.set_ylim([0.9,1.9])
 ax4.set_xlim([0.5,2.0])
 
 ax1.tick_params(top=True,bottom=True,left=True,direction='in',length=4)
@@ -143,10 +182,20 @@ ax3.tick_params(top=True,bottom=True,left=True,direction='in',length=4)
 ax4.tick_params(direction='in',length=4)
 
 xlabel_locs = [0.5,0.75,1.0,1.25,1.5,1.75,2.0,2.25,2.5,2.75,3.0]
-xlabels = [0,0.25,0.5,0.75,1.0,1.25,1.5,1.75,2.0,2.25,2.5]
+if subfig=='a':
+    xlabels = []
+elif subfig=='b':
+    xlabels = [0,0.25,0.5,0.75,1.0,1.25,1.5,1.75,2.0,2.25,2.5]
+else:
+    xlabels = [0,0.25,0.5,0.75,1.0,1.25,1.5,1.75,2.0,2.25,2.5]
 plt.xticks(xlabel_locs, xlabels)
 
-ax3.set_xlabel('z [m]',fontsize=16)
+if subfig=='a':
+    ax3.set_xlabel('',fontsize=16)
+elif subfig=='b':
+    ax3.set_xlabel('z [m]',fontsize=16)
+else:
+    ax3.set_xlabel('z [m]',fontsize=16)
 
 # copy and past these two lines into console to remove
 # x-axis title and tick marks after initial plot is made

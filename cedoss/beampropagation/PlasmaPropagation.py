@@ -22,20 +22,21 @@ import particle_beam_propagation as pbp
 import beam_ana as ba
 
 def_beta = 0.10
-def_hwup = 0.1325
-def_waist = -0.36
+def_hwup = 0.14
+def_waist = -0.387
 def_ramp = 'gauss'
 def_npl0 = 5e16
-def_gbC = 20000
+def_gbC = 19569.5
 def_L_up = 1.5
+def_dEds0 = 1
 
-option_energyscale = 2.3575#0.8488676844976561 #To match Robert's measured 16.67 GeV/m energy gain in 5e16
+option_energyscale = 16.67e9 #To match Robert's measured 16.67 GeV/m energy gain in 5e16
 
 def ReturnDefaultParams(beta_change=def_beta, hwup_change=def_hwup, waist_change=def_waist, 
                         ramp_change=def_ramp, npl0_change=def_npl0, gbC_change = def_gbC,
-                        L_up_change=def_L_up):
+                        L_up_change=def_L_up, dEds0_change=def_dEds0):
     npl0   = npl0_change                      # cm^-3, plasma density
-    dEds0  = np.sqrt(npl0/(1e17))*10e9*option_energyscale # eV/m, energy gain rate
+    dEds0  = np.sqrt(npl0/(5e16))*option_energyscale * dEds0_change # eV/m, energy gain rate
     shape_up = ramp_change # shape of ramp
     hw_up    = hwup_change  # m, half-width of ramp
     L_up     = L_up_change     # m, full length of ramp, 1.5 for the Gaussian ramps

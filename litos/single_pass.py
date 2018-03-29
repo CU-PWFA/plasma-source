@@ -15,7 +15,7 @@ import particle_beam_propagation as pbp
 if __name__ == '__main__':
     
     # define plasma bulk (flat-top) properties
-    npl0   = 1e18                      # cm^-3, plasma density
+    npl0   = 5e17                      # cm^-3, plasma density
     dEds0  = np.sqrt(npl0/(5e16))*16.67e9  # eV/m, energy gain rate
     dgds0  = dEds0/nc.me               # 1/m, energy gain rate for rel. gamma
     L_ft   = 0.50                      # m, length of flat-top
@@ -62,7 +62,7 @@ if __name__ == '__main__':
     ebeam  = pb.make_ebeam(s0,twiss[0],parts[0])
     
     # set beam waist position
-    waist = -0.3884        # m, waist location w.r.t L_up
+    waist = (-0.3884)        # m, waist location w.r.t L_up
     s_w   = L_up + waist # m, absolute wasit location
     
     # define longitudinal steps
