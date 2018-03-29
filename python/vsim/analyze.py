@@ -125,6 +125,28 @@ def get_emittance(data):
     return e
 
 
+def get_sigmar(data):
+    """ Calculates the sigmar of the beam from the data object.
+
+    Parameters
+    ----------
+    data : HDF5 dataset
+        The data set for the beam of interest, use load.get_species_data to
+        load the dataset object from a file.
+
+    Returns
+    -------
+    sigmar : double
+        The sigmar of the beam in m.
+    """
+    y = get_y(data)
+    weights = get_weights(data)
+    dy = y - np.average(y, weights=weights)
+    # Calculate the RMS sizes and the correlation
+    sigmar = np.sqrt(np.average(dy**2, weights=weights))
+    return sigmar
+
+
 def get_normemittance(data):
     """ Calculates the normalized emittance of the beam from the data object.
 
