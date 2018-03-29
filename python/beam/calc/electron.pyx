@@ -55,7 +55,7 @@ def electron_propagation_plasma(double[:, :] ptcls, double[:] z, double z0,
                 #print('z: %0.2f, kb: %0.2f, kp: %0.2E, ne: %0.2E' %(z[i], kb, kp, ne[i]))
                 coskb = cos(kb*dz)
                 sinkb = sin(kb*dz)
-                angle = 1 - dgamma / ptcls[j, 5]
+                angle = 1 - 2*dgamma / ptcls[j, 5]
                 # Calculate the components of the transfer matrix
                 if ne[i] < 1.0e-18:
                     R11 = 1.0

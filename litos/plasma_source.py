@@ -16,7 +16,6 @@ def calc_dgds(dgds0,npl0,npl):
         dgds = dgds0*np.sqrt(npl/npl0)*(2*np.sqrt(npl/npl0)-1)
     else:
         dgds = np.zeros(len(npl))
-        
     return dgds
 
 def make_ramp(s,updn,shape,hw,top_loc,npl0,dgds0,gbC0=20000):

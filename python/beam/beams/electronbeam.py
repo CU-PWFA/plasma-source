@@ -137,11 +137,16 @@ class ElectronBeam(beam.Beam):
         ey = np.sqrt(sigmay2*sigmayp2 - sigmayyp**2)
         return ex, ey
     
+    def get_gamma_n(self, ind):
+        """ Calculate the Lorentz factor from a particular save file. """
+        ptcls = self.load_ptcls(ind)[0]
+        gamma = np.average(self.get_gamma(ptcls))
+        return gamma
+    
     def get_emittance_n(self, ind):
         """ Calculate the normalized emittance from a particular save file. """
-        ptcls = self.load_ptcls(ind)[0]
         ex, ey = self.get_emittance(ind)
-        gamma = np.average(self.get_gamma(ptcls))
+        gamma = self.get_gamma_n(ind)
         ex = ex*gamma
         ey = ey*gamma
         return ex, ey
@@ -171,6 +176,37 @@ class ElectronBeam(beam.Beam):
         sigmaxp = np.sqrt(np.average(dxp**2))
         sigmayp = np.sqrt(np.average(dyp**2))
         return sigmaxp, sigmayp
+
+    def get_beam_properties(self, ind):
+        """ Calculate most of the beam properties from a save file. 
+        
+        Creates an output dictionary exactly matching Mike's code.
+        """
+        prop = {}
+        
+        ptcls = self.load_ptcls(ind)[0]
+        x = self.get_x(ptcls)
+        xp = self.get_xp(ptcls)
+        gamma = np.average(self.get_gamma(ptcls))
+        # Calculate the differences from the average
+        dx = x - np.average(x)
+        dxp = xp - np.average(xp)
+        # Calculate the RMS sizes and the correlation
+        sigmax2 = np.average(dx**2)
+        sigmaxp2 = np.average(dxp**2)
+        sigmaxxp = np.average(dx*dxp)
+        # Calculate the emittance
+        exn = gamma*np.sqrt(sigmax2*sigmaxp2 - sigmaxxp**2)
+        prop['x_eps']   = exn
+        prop['x']       = np.sqrt(sigmax2)
+        prop['xp']      = np.sqrt(sigmaxp2)
+        prop['xxp']     = np.sqrt(sigmaxxp)
+        prop['x_beta']  = gamma*sigmax2/exn
+        prop['x_gamma'] = gamma*sigmaxp2/exn
+        prop['x_alpha'] = -gamma*sigmaxxp/exn
+        prop['x_phase'] = np.arctan2(2*prop['x_alpha'], 
+                          prop['x_gamma']-prop['x_beta'])/2
+        return prop
         
     # Visualization functions
     #--------------------------------------------------------------------------
