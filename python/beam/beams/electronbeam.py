@@ -158,6 +158,19 @@ class ElectronBeam(beam.Beam):
         sigmax = np.sqrt(np.average(dx**2))
         sigmay = np.sqrt(np.average(dy**2))
         return sigmax, sigmay
+    
+    def get_sigmarp(self, ind):
+        """ Calculate the beam divergence from a particular save file. """
+        ptcls = self.load_ptcls(ind)[0]
+        xp = self.get_xp(ptcls)
+        yp = self.get_yp(ptcls)
+        # Calculate the differences from the average
+        dxp = xp - np.average(xp)
+        dyp = yp - np.average(yp)
+        # Calculate the RMS sizes and the correlation
+        sigmaxp = np.sqrt(np.average(dxp**2))
+        sigmayp = np.sqrt(np.average(dyp**2))
+        return sigmaxp, sigmayp
         
     # Visualization functions
     #--------------------------------------------------------------------------
