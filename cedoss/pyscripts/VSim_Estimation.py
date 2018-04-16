@@ -14,7 +14,7 @@ dens = 5e16 #cm^-3
 gbC = 19569.5
 ppc_p = 1
 
-z_start = -0.40
+z_start = -0.45
 z_waist = -0.36
 z_end = 0.01
 L_sim = z_end - z_start #m

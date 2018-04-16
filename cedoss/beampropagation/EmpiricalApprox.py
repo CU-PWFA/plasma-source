@@ -30,7 +30,7 @@ def CalcApprox_Dens(gamma_set, beta_set, dens_set):
 
 if __name__ == '__main__':
     gamma_set = 19569.5
-    beta_set = 0.10
+    beta_set = 0.07
     dens_set = 5e16
 #    kb_set = 212.5
     

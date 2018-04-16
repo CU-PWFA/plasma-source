@@ -3,7 +3,7 @@
 """
 Created on Wed Dec 13 12:02:41 2017
 
-Single pass through plasma with optional TPL using Mike's code
+Single pass through plasma without TPL using Mike's code
 
 @author: chris
 """
@@ -20,17 +20,17 @@ params = PProp.ReturnDefaultParams()
 #                                   waist_change = -0.4513, hwup_change = 0.16)
 
 gamma_set = 19569.5
-beta_set = 0.50
+beta_set = 0.3
 dens = 5e+16
-hwup_set = 0.0924337467042
-waist_set = -0.37387
-L_up_set = 0.462168733521
+hwup_set = 0.474675685468
+waist_set = -1.5515489148
+L_up_set = 2.37337842734
 
 params = PProp.ReturnDefaultParams(npl0_change = dens, gbC_change = gamma_set,
                                        beta_change = beta_set, waist_change = waist_set,
                                        L_up_change = L_up_set, hwup_change = hwup_set)
 
-params['npart'] = int(1e3)
+params['npart'] = 10#1000
 print(params['kb'])
 twiss = PProp.CallMakeTwiss(params)
 parts = PProp.CallMakeParts(twiss, params)
@@ -51,13 +51,13 @@ Bmag_init = PProp.CalcBmag(ebeam_init, plasma_init)
 print('initial Bmag: ',Bmag_init)
 """
 vbeam0 = ebeam0.copy()
-
+"""
 tpl_n      = 5e16
-tpl_offset = waist_set
-tpl_l = 109.577053137e-6
+tpl_offset = -0.447#-0.48775510204081629
+tpl_l = 852.6e-6#3.9795918367346933e-05
 
 plasma0 = PProp.InsertPlasmaLens(tpl_n, tpl_l, tpl_offset, plasma0)
-
+"""
 ebeam0 = PProp.PropagatePlasma(ebeam0, plasma0)
 vbeam0 = PProp.PropagateVirtual(vbeam0, plasma0)
 PProp.PlotPropagation(ebeam0, vbeam0, plasma0)
