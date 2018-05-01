@@ -21,7 +21,7 @@ params = PProp.ReturnDefaultParams()
 
 gamma_set = 19569.5
 beta_set = 0.3
-dens = 5e+16
+dens = 1.2e+20
 hwup_set = 0.474675685468
 waist_set = -1.5515489148
 L_up_set = 2.37337842734
@@ -32,6 +32,9 @@ params = PProp.ReturnDefaultParams(npl0_change = dens, gbC_change = gamma_set,
 
 params['npart'] = 10#1000
 print(params['kb'])
+
+sys.exit()
+
 twiss = PProp.CallMakeTwiss(params)
 parts = PProp.CallMakeParts(twiss, params)
 ebeam_w = PProp.CallMakeBeam(twiss, parts, params)
