@@ -22,7 +22,7 @@ re = 2.8179e-15
 h = 6.6261e-27
 m = 9.1094e-28
 c = 2.9979e10
-comp = 2.4263e-10
+comp = 3.8616e-11
 re = 2.8179e-13
 
 def Get_KLls_WRONNNGNG(lens_width, focal_length):

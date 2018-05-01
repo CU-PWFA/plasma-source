@@ -13,18 +13,34 @@ from modules import TPLFocalLength as Foc
 from modules import OideCalc as Oide
 import numpy as np
 import matplotlib.pyplot as plt
-
+"""
 n0 = 1e18 #cm^-3
 emit = 7e-6 * 100# 7 cm-rad
 beta_f = .1 #cm
 gam = Foc.gam_def*5
 L = 110e-6 *100 #cm
+"""
+
+n0 = 3e20 #cm^-3
+emit = 2.5e-8 * 100# 7 cm-rad
+#beta_f = 43e-6 *100 #cm
+beta_f = 0.565e-3 *100 #cm
+gam = Foc.gam_def*100
+L = 48.88e-6 *100 #cm
 
 K = Foc.Calc_K(n0, gam)
 focal = Foc.Calc_Focus_KLength(K, L)
 #focal = Foc.Calc_Focus_Square_SI(n0, L, gam)/100 #gives focal length in m
-
 KLls_set = [K, L, Oide.Get_ls(L,focal)]
+"""
+f = 0.6 * 100
+L = 2/3*f
+K = 2.05/(L*f)
+emit = 2.5e-8 * 100
+gam = Foc.gam_def * 50
+KLls_set = [K, L, f-1/2*L]
+beta_f = 43e-6 * 100
+"""
 F_val = Oide.F_Oide(KLls_set)
 print("F val : ",F_val)
 
