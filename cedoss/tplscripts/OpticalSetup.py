@@ -19,30 +19,28 @@ from modules import GaussianBeam as GB
 from modules import ThreeDimensionAnalysis as ThrDim
 from modules import FourierRefraction as frefract
 
-c=2.998e8
-P=60e9
-n=1
-epsilon0 = 8.854e-12
-#cm_m=100
-wavelength = 785.3e-9
-w0 = 5e-3
-setupTitle = "old"
+c=2.998e8               #Speed of light constant
+P=60e9                  #Laser power in W
+n=1.                    #Refractive index
+epsilon0 = 8.854e-12    #Dielectric constant
+wavelength = 785.3e-9   #Laser wavelength in m
+w0 = 5e-3               #Initial spot size in m
+setupTitle = ""         #Name the setup 
 
 #I0 = 2*P/(np.pi*np.power(w0,2))*np.power(1/cm_m,2)
 
-l_step = 5e-5
-zi = 7.5e-3
-window = zi
-zoom=int(round(window/l_step))
+l_step = 5e-5           #dz in m
+zi = 7.5e-3             #Offset from small waist to plane we want to save params at
+zoom=int(round(zi/l_step))
 
 path = '/home/chris/Desktop/DataLoads/PulseFilesNp/'
 filename = 'pulseParams_narrow25.npy'
-save = 0
 
-calcdensity = 1
+save = 0                #Set to 1 to save anything
+calcdensity = 1         #Set to 1 to calc resulting plasma density w/out refraction
+choice=10               #Set to one of the setups below
 
-choice=10
-#Really the only choice is 4
+#Was my favorite setup in the beginning
 if choice==4:
     setupTitle = "Spherical_2Cylindrical"
     f1 = 0.100 #m
@@ -149,8 +147,6 @@ plt.plot(xrange,wy,label="Wide Waist Spot Size (y)")
 plt.legend()
 plt.show()
 
-
-
 #Print some diagnostics for minimum spot sizes
 GB.Prop_SpotInfo(q_x,wavelength,'w0x','z(w0x)')
 GB.Prop_SpotInfo(q_y,wavelength,'w0y','z(w0y)')
@@ -211,12 +207,3 @@ if calcdensity == 1:
             os.makedirs(savefolder)
         np.save(savefolder+'finalDensity.npy',H)
         np.save(savefolder+'params.npy',params)
-    
-    
-    
-    
-    
-    
-    
-    
-    

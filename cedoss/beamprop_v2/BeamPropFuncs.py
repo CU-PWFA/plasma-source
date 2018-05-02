@@ -18,22 +18,24 @@ import numpy as np
 from beam.beams import electronbeam
 from beam.elements import plasma_1d as plasma
 from beam import interactions
+import beam.calc.electron as ecalc
 from ionization import ionization
 from lens import profile
 plt.rcParams['animation.ffmpeg_path'] = '/home/chris/anaconda3/envs/CU-PWFA/bin/ffmpeg'
 import matplotlib.animation as animation
+import scipy.constants as const
+me = const.physical_constants['electron mass energy equivalent in MeV'][0]
 
-plasma_start_loc = 0.80
-length_flattop = 0.50
-n_set = 0.5#0.5
 
-def_Z = (2*plasma_start_loc + length_flattop)*1e6
+def_startloc = 0.80
+def_lenflat = 0.50
+def_nset = 1203.7#0.5
+def_betastar = 0.10
+def_betaoffs = -0.387
+def_Z = (2*def_startloc + def_lenflat)*1e6
 
-def ReturnDefaultElectronParams(path):
-    beta_star = 0.10
-    beta_offset = -0.387
-    plasma_start = plasma_start_loc
-    
+def ReturnDefaultElectronParams(path, beta_star=def_betastar, beta_offset=def_betaoffs,
+                                plasma_start=def_startloc):
     beta_init = beta_star + np.square(plasma_start + beta_offset)/beta_star
     alpha_init = (plasma_start + beta_offset)/beta_star
     
@@ -59,7 +61,7 @@ def GaussianBeam(electronParams, debug = 0):
     return beam
 
 def dgammadz(ne): #Used to have old small n term
-    npl0 = n_set; npl = ne
+    npl0 = def_nset; npl = ne
     if npl0 == 0:
         return 0
     else:
@@ -85,7 +87,8 @@ def dgammadz_wrong(ne):
 def dgammadz_basic(ne):
     return 0.0
 
-def ReturnDefaultPlasmaParams(path, Z_change = def_Z):
+def ReturnDefaultPlasmaParams(path, Z_change = def_Z, plasma_start = def_startloc,
+                              nset = def_nset):
     Nx = 1;  Ny = 1
     Z = Z_change
     Nz = int((Z/10)+1)
@@ -101,8 +104,8 @@ def ReturnDefaultPlasmaParams(path, Z_change = def_Z):
         'X' : 3,
         'Y' : 3,
         'Z' : Z,
-        'n0' : n_set,
-        'z0' : plasma_start_loc * 1e6,
+        'n0' : nset,
+        'z0' : plasma_start * 1e6,
         'l_flattop' : 0.5e6,
         'sigma_in' : sigma,
         'sigma_out' : sigma,
@@ -117,6 +120,8 @@ def FineSpacingLens(z_orig, tpl_center, tpl_length):
     z = np.append(z_orig,z_tpl)
     z = np.array(sorted(z))
     return z
+
+############# GAUSSIAN RAMPS ################################
 
 def GaussianRampPlasma(plasmaParams, debug = 0):
     Nz = plasmaParams['Nz']
@@ -168,6 +173,81 @@ def GaussianRampPlasma_ThinPlasmaLens(plasmaParams, tpl_offset, tpl_n, tpl_l, de
     if debug == 1: argon.plot_long_density_center();
     return argon
 
+################## CUSTOM OPTIONS ##########################
+
+def CustomPlasma(plasmaParams, nez, debug = 0):
+    Nz = plasmaParams['Nz']
+    argon = plasma.Plasma(plasmaParams)
+    n = plasmaParams['n0']*np.ones(Nz, dtype='double')
+    argon.initialize_plasma(n, nez)
+    
+    if debug == 1: argon.plot_long_density_center();
+    return argon
+
+def CustomPlasma_ThinPlasmaLens(plasmaParams, nez, tpl_offset, tpl_n, tpl_l, debug = 0):
+    #tpl_l = int(tpl_l)
+    Nz = plasmaParams['Nz']
+    
+    tpl_z = plasmaParams['z0'] + tpl_offset
+    dz = plasmaParams['Z']/(plasmaParams['Nz']-1)
+    
+    tpl_left = tpl_z-.5*tpl_l
+    tpl_right = tpl_z+.5*tpl_l
+    tpl_1 = int(np.floor(tpl_left/dz))
+    tpl_2 = int(np.ceil(tpl_right/dz))
+    if debug==1: print(tpl_1,tpl_2);
+    lens_loc = np.array(range(tpl_2 - tpl_1 - 1)) + tpl_1 + 1
+    
+    for i in lens_loc:
+        nez[i] = tpl_n
+    
+    argon = plasma.Plasma(plasmaParams)
+    n = plasmaParams['n0']*np.ones(Nz, dtype='double')
+    argon.initialize_plasma(n, nez)
+    if debug == 1: argon.plot_long_density_center();
+    return argon
+
+########################   #####################################
+
+def Calc_CSParams(beamParams, n_arr, z_arr):
+    beta0 = beamParams['betax']
+    alpha0 = beamParams['alphax']
+    gb0 = beamParams['gamma']
+    ne0 = max(n_arr)
+    dgdz0 = 16.66e9 * np.sqrt(ne0/0.5) / 511e3
+    
+    return ecalc.cs_propagation(z_arr, n_arr, beta0, alpha0, gb0, dgdz0, ne0)
+    #beta, alpha, gamma, gb = ecalc.cs_propagation(z, ne, beta0, alpha0, gb0, dgdz0, ne0)
+
+def Calc_Bmag(beamParams, n_arr, z_arr):
+    ne0 = max(n_arr)
+    beta, alpha, gamma, gb = Calc_CSParams(beamParams, n_arr, z_arr)
+    kp = 5.95074e4 * np.sqrt(ne0)
+    kb = kp/np.sqrt(2*gb[-1])
+    Bmag = 0.5*(beta[-1]*kb+gamma[-1]/kb)
+    return Bmag
+
+def Plot_CSEvo(beamParams, n_arr, z_arr, z_offset = 0):
+    beta, alpha, gamma, gb = Calc_CSParams(beamParams, n_arr, z_arr)
+    beta0, alpha0, gamma0, gb0 = Calc_CSParams(beamParams, np.zeros(len(z_arr)), z_arr)
+    
+    z_arr = z_arr - z_offset
+    #print(" ","beta","beta0"); print(" ",beta[740],beta0[740])
+    fig, ax1 = plt.subplots()
+    plt.title("Beta function evolution at "+r'$n_0=$'+str(max(n_arr))+r'$\,\mathrm{\times 10^{17}cm^{-3}}$')
+    ax1.plot(z_arr*1e2, np.array(beta)*1e2, 'b-', label=r'$\beta$')
+    ax1.plot(z_arr*1e2, np.array(beta0)*1e2, 'b--',label=r'$\beta_{vac}$')
+    ax1.set_ylabel(r'$\beta\,\mathrm{[cm]}$', color = 'b')
+    ax1.tick_params('y', colors = 'b')
+    ax1.set_xlabel('z [cm]')
+    ax1.set_ylim([-0.05,20.05])
+    
+    ax2 = ax1.twinx()
+    ax2.plot(z_arr*1e2, n_arr/max(n_arr), 'g-')
+    ax2.set_ylabel(r'$n/n_0$',color = 'g')
+    ax2.tick_params('y', colors = 'g')
+    ax1.grid(); ax1.legend(loc=2); plt.show()
+
 def PropBeamPlasma(beam, plasma, z_arr, dumpPeriod, cores=4, debug = 0):
     m = int(len(z_arr)/dumpPeriod) -1
     interactions.electron_plasma(beam, plasma, z_arr, dumpPeriod, cores)
@@ -186,8 +266,9 @@ def PlotEmittance(beam, z_arr, m):
     en = np.zeros(m, dtype='double')
     s = np.zeros(m, dtype='double')
     for i in range(m):
+        j = int(i * len(z_arr)/m)
         en[i] = np.average(beam.get_emittance_n(i))*1e6
-        s[i] = z_arr[i]*1e-4
+        s[i] = z_arr[j]*1e-4
     
     plt.plot(s, en)
     plt.title("Emittance Evolution")
@@ -200,8 +281,9 @@ def PlotSigmar(beam, z_arr, m):
     sig = np.zeros(m, dtype='double')
     s = np.zeros(m, dtype='double')
     for i in range(m):
+        j = int(i * len(z_arr)/m)
         sig[i] = np.average(beam.get_sigmar(i))*1e6
-        s[i] = z_arr[i]*1e-4
+        s[i] = z_arr[j]*1e-4
     
     plt.plot(s, sig)
     plt.title("Sigmar Evolution")
@@ -210,14 +292,30 @@ def PlotSigmar(beam, z_arr, m):
     plt.grid(); plt.show()
     return
 
+def PlotGamma(beam, z_arr, m):
+    gam = np.zeros(m, dtype='double')
+    s = np.zeros(m, dtype='double')
+    for i in range(m):
+        j = int(i * len(z_arr)/m)
+        gam[i] = np.average(beam.get_gamma_n(i))
+        s[i] = z_arr[j]*1e-4
+    
+    plt.plot(s, gam)
+    plt.title("Gamma Evolution")
+    plt.xlabel("s [cm]")
+    plt.ylabel("gamma")
+    plt.grid(); plt.show()
+    return
+
 def PlotEmittance_Compare(beam, beam2, z_arr, m, first, second):
     en = np.zeros(m, dtype='double')
     en2 = np.zeros(m, dtype='double')
     s = np.zeros(m, dtype='double')
     for i in range(m):
+        j = int(i * len(z_arr)/m)
         en[i] = np.average(beam.get_emittance_n(i))*1e6
         en2[i] = np.average(beam2.get_emittance_n(i))*1e6
-        s[i] = z_arr[i]*1e-4
+        s[i] = z_arr[j]*1e-4
     
     plt.plot(s, en,label = first)
     plt.plot(s, en2, label = second)
@@ -232,9 +330,10 @@ def PlotSigmar_Compare(beam, beam2, z_arr, m, first, second):
     sig2 = np.zeros(m, dtype='double')
     s = np.zeros(m, dtype='double')
     for i in range(m):
+        j = int(i * len(z_arr)/m)
         sig[i] = np.average(beam.get_sigmar(i))*1e6
         sig2[i] = np.average(beam2.get_sigmar(i))*1e6
-        s[i] = z_arr[i]*1e-4
+        s[i] = z_arr[j]*1e-4
     
     plt.plot(s, sig, label = first)
     plt.plot(s, sig2, label = second)
