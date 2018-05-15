@@ -32,10 +32,11 @@ def_lenflat = 0.50
 def_nset = 1203.7#0.5
 def_betastar = 0.10
 def_betaoffs = -0.387
+def_gamma = 19569.5 #10 GeV beam
 def_Z = (2*def_startloc + def_lenflat)*1e6
 
 def ReturnDefaultElectronParams(path, beta_star=def_betastar, beta_offset=def_betaoffs,
-                                plasma_start=def_startloc):
+                                plasma_start=def_startloc, gamma=def_gamma):
     beta_init = beta_star + np.square(plasma_start + beta_offset)/beta_star
     alpha_init = (plasma_start + beta_offset)/beta_star
     
@@ -43,8 +44,8 @@ def ReturnDefaultElectronParams(path, beta_star=def_betastar, beta_offset=def_be
         'name' : 'TestBeam',
         'path' : path,
         'load' : False,
-        'N' : 10000,
-        'gamma' : 19569.5,
+        'N' : 1000,
+        'gamma' : gamma,
         'emittance' : 7e-6,
         'betax' : beta_init,
         'betay' : beta_init,
@@ -207,7 +208,31 @@ def CustomPlasma_ThinPlasmaLens(plasmaParams, nez, tpl_offset, tpl_n, tpl_l, deb
     if debug == 1: argon.plot_long_density_center();
     return argon
 
-########################   #####################################
+######################## LONE TPL #####################################
+
+def NoPlasma_ThinPlasmaLens(plasmaParams, nez, tpl_offset, tpl_n, tpl_l, debug = 0):
+    #tpl_l = int(tpl_l)
+    Nz = plasmaParams['Nz']
+    
+    tpl_z = plasmaParams['z0'] + tpl_offset
+    dz = plasmaParams['Z']/(plasmaParams['Nz']-1)
+    
+    tpl_left = tpl_z-.5*tpl_l
+    tpl_right = tpl_z+.5*tpl_l
+    tpl_1 = int(np.floor(tpl_left/dz))
+    tpl_2 = int(np.ceil(tpl_right/dz))
+    if debug==1: print(tpl_1,tpl_2);
+    lens_loc = np.array(range(tpl_2 - tpl_1 - 1)) + tpl_1 + 1
+    for i in lens_loc:
+        nez[i] = tpl_n
+    
+    argon = plasma.Plasma(plasmaParams)
+    n = plasmaParams['n0']*np.ones(Nz, dtype='double')
+    argon.initialize_plasma(n, nez)
+    if debug == 1: argon.plot_long_density_center();
+    return argon
+
+########################  #####################################
 
 def Calc_CSParams(beamParams, n_arr, z_arr):
     beta0 = beamParams['betax']
