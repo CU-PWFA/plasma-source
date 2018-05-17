@@ -11,6 +11,7 @@ Functions for beam propagation using Robert's code
 import sys
 import matplotlib.pyplot as plt
 import scipy.stats as stats
+import scipy.integrate as Int
 
 sys.path.insert(0, "../../python")
 
@@ -251,6 +252,40 @@ def Calc_Bmag(beamParams, n_arr, z_arr):
     kb = kp/np.sqrt(2*gb[-1])
     Bmag = 0.5*(beta[-1]*kb+gamma[-1]/kb)
     return Bmag
+
+def Calc_Proj_CSParams(beamParams, n_arr, z_arr, delta):
+    gb0 = beamParams['gamma']
+    delta_arr = np.linspace(-delta, delta, 101)
+    gb_arr = gb0*(delta_arr+1)
+    beta_arr = np.zeros(len(gb_arr))
+    alpha_arr = np.zeros(len(gb_arr))
+    gamma_arr = np.zeros(len(gb_arr))
+    
+    beta = np.zeros((len(gb_arr),len(z_arr)))
+    alpha = np.zeros(beta.shape)
+    gamma = np.zeros(beta.shape)
+    
+    for i in range(len(gb_arr)):
+        beamParamsCopy = beamParams.copy()
+        beamParamsCopy['gamma'] = gb_arr[i]
+        beta[i], alpha[i], gamma[i], gb = Calc_CSParams(beamParamsCopy, n_arr, z_arr)
+    
+    bmag_arr = np.zeros(len(z_arr))
+    for j in range(len(bmag_arr)):
+        for i in range(len(gb_arr)):
+            index = j 
+            beta_arr[i] = beta[i][index]; alpha_arr[i] = alpha[i][index]; gamma_arr[i] = gamma[i][index]
+
+        #beta_pro = Int.simps(beta_arr, delta_arr)/(delta_arr[-1]-delta_arr[0])
+        #alpha_pro = Int.simps(alpha_arr, delta_arr)/(delta_arr[-1]-delta_arr[0])
+        #gamma_pro = Int.simps(gamma_arr, delta_arr)/(delta_arr[-1]-delta_arr[0])
+        beta_pro = np.average(beta_arr)
+        alpha_pro = np.average(alpha_arr)
+        gamma_pro = np.average(gamma_arr)
+        
+        bmag_arr[j] = np.sqrt(beta_pro*gamma_pro - alpha_pro**2)
+        
+    return gb_arr, beta_arr, alpha_arr, gamma_arr, bmag_arr
 
 def Plot_CSEvo(beamParams, n_arr, z_arr, z_offset = 0):
     beta, alpha, gamma, gb = Calc_CSParams(beamParams, n_arr, z_arr)

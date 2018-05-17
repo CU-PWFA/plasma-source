@@ -65,7 +65,7 @@ if __name__ == '__main__':
     gam_set = gam_def
     
     #focal = Calc_Target_Focal(beta_i,beta_f)
-    focal = 0.01
+    focal = 0.015
     f_len = Calc_Square_Lens(n0, focal*100, gam=gam_set)
     print(f_len," : lens length [um]")
     print(focal*100," : focal length[cm]")
