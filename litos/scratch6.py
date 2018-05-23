@@ -122,7 +122,7 @@ figA, (ax1, ax3) = plt.subplots(2, sharex=True, sharey=False)
 
 ax1.plot(skb,beta,color='b',linestyle='solid')
 ax1.plot(skb,vbeta,color='b',linestyle='-.')
-ax1.set_ylabel(r'$\tilde{\beta}_x$',color='b',fontsize=16)
+ax1.set_ylabel(r'$\beta_x$',color='b',fontsize=16)
 ax1.tick_params('y',colors='b')
 #ax1.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
 ax1.set_ylim([0,1.2])

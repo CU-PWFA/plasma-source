@@ -24,13 +24,13 @@ if __name__ == '__main__':
     # define plasma up-ramp
     shape_up = 'gauss' # shape of ramp
     hw_up    = 0 # m, half-width of ramp
-    L_up     = 0.50 # m, full length of ramp
+    L_up     = 0.05 # m, full length of ramp
     top_up   = L_up    # m, relative location of ramp top
     
     # define plasma down-ramp
     shape_dn = shape_up # shape of ramp
     hw_dn    = hw_up    # m, half-width of ramp
-    L_dn     = L_up     # m, full length of ramp
+    L_dn     = 0.10 # L_up     # m, full length of ramp
     top_dn   = 0        # m, relative location of ramp top
     
     # define beam parameters
@@ -45,22 +45,34 @@ if __name__ == '__main__':
     gamma  = (1.0+alpha**2)/beta # 1/m, Twiss at vac. waist
     auto_match = False # auto-match beam to plasma flat-top
     
-    f    = 0.40 # m
-    mag  = 0.10 # beta^* / beta_0
-    f0   = f/(1-mag) # m
-    L_ft = 50e-6
-    npl0 = (5.65e15)*gbC/((L_ft*1e6)*(f0*1e2)) # cm^-3
+    # choose either the focal length or the magnification
+    
+    f      = beta/2 # m, must be < beta/2 at lens
+    Kl     = (1+np.sqrt(1-4*((f/beta)**2)))/(2*f) # m
+    M      = f/(Kl*(beta**2))
+    print(M)
+
+#    M      = 0.05 # = waist beta / beta at lens
+#    Kl     = np.sqrt((1/M)-1)/beta
+#    f      = M*Kl*(beta**2)
+#    print(f)
+    
+    npl0   = 1e18 # cm^-3
     dEds0  = 0 # np.sqrt(npl0/(5e16))*16.67e9  # eV/m, energy gain rate
     dgds0  = dEds0/nc.me               # 1/m, energy gain rate for rel. gamma
+    L_ft   = (5.65e13)*Kl*gbC/(npl0*(1e6)) # m
     
     # calculate betatron wave number in flat-top
     wp0    = (5.64e4)*np.sqrt(npl0) # rad/s, plasma ang. freq. (flat-top)
     kp0    = wp0/nc.c               # 1/m, plasma wave number (flat-top)
-    kb     = kp0/np.sqrt(2*gbC)     # 1/m, betatron wave number (flat-top)
+    kb0    = kp0/np.sqrt(2*gbC)     # 1/m, betatron wave number (flat-top)
+    
+    print(np.sqrt(Kl*L_ft))
+    print(kb0*L_ft)
     
     # auto-match beam to plasma flat-top
     if (auto_match):
-        beta   = 1.0/kb
+        beta   = 1.0/kb0
         alpha  = 0.00    # Twiss at vac. waist
         gamma  = (1.0+alpha**2)/beta # 1/m, Twiss at vac. waist
 
@@ -75,7 +87,7 @@ if __name__ == '__main__':
     s_w   = L_up + waist # m, absolute wasit location
     
     # define longitudinal steps
-    ds   = (1.0/kb)*(1./10.)                  # m, step size
+    ds   = L_ft/10. #(1.0/kb0)*(1./10.)                  # m, step size
     s_ft = np.linspace(0,L_ft,int(L_ft/ds+1)) # m, steps for flat-top
     s_up = np.linspace(0,L_up,int(L_up/ds+1)) # m, steps for up-ramp
     s_dn = np.linspace(0,L_dn,int(L_dn/ds+1)) # m, steps for down-ramp
