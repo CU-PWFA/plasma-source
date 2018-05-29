@@ -22,7 +22,7 @@ zmult=1
 
 gammab = PProp.def_gamma
 
-tpl_f1 = 0.05
+tpl_f1 = 0.02
 tpl_f2 = 0.01
 tpl_n = 10.
 #tpl_l1 = 73.69 #um
@@ -30,7 +30,7 @@ tpl_n = 10.
 #tpl_d = .0075 #m
 tpl_l1 = Foc.Calc_Square_Lens(tpl_n*1e17, tpl_f1*100, gammab)
 tpl_l2 = Foc.Calc_Square_Lens(tpl_n*1e17, tpl_f2*100, gammab)
-tpl_d = 0.03 #m
+tpl_d = 0.015 #m
 
 tpl_f = Foc.Calc_Focus_Square_CM_UM(tpl_n*1e17, tpl_l1, gammab)/100
 tpl_f_plus = Foc.Calc_Focus_Square_CM_UM(tpl_n*1e17, tpl_l1, gammab*1.01)/100

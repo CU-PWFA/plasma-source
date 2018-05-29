@@ -21,14 +21,14 @@ debug = 0
 zmult=1
 
 gammab = PProp.def_gamma
-tpl_f = 0.01666
+tpl_f = 0.01333
 tpl_n = 10.
 tpl_l = Foc.Calc_Square_Lens(tpl_n*1e17, tpl_f*100, gammab)
 tpl_f = Foc.Calc_Focus_Square_CM_UM(tpl_n*1e17, tpl_l, gammab)/100
 tpl_f_plus = Foc.Calc_Focus_Square_CM_UM(tpl_n*1e17, tpl_l, gammab*1.01)/100
 tpl_f_mnus = Foc.Calc_Focus_Square_CM_UM(tpl_n*1e17, tpl_l, gammab*0.99)/100
 
-z_arr = np.linspace(-1*tpl_f, 2*tpl_f, int(3*tpl_f*1e6+1)*zmult)
+z_arr = np.linspace(-1*tpl_f, 3*tpl_f, int(4*tpl_f*1e6+1)*zmult)
 n_arr = np.zeros(len(z_arr))
 
 dump = 10
