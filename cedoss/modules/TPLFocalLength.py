@@ -60,12 +60,12 @@ def Calc_BetaStar(beta_i, focal):
 
 if __name__ == '__main__':
     beta_i = .10
-    beta_f = 0.000565
-    n0=1e18
+    beta_f = 0.011693
+    n0=5e16*5
     gam_set = gam_def
     
-    #focal = Calc_Target_Focal(beta_i,beta_f)
-    focal = 0.015
+    focal = Calc_Target_Focal(beta_i,beta_f)
+    #focal = 0.015
     f_len = Calc_Square_Lens(n0, focal*100, gam=gam_set)
     print(f_len," : lens length [um]")
     print(focal*100," : focal length[cm]")
