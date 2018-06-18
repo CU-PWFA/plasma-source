@@ -28,7 +28,10 @@ tpl_f = Foc.Calc_Focus_Square_CM_UM(tpl_n*1e17, tpl_l, gammab)/100
 tpl_f_plus = Foc.Calc_Focus_Square_CM_UM(tpl_n*1e17, tpl_l, gammab*1.01)/100
 tpl_f_mnus = Foc.Calc_Focus_Square_CM_UM(tpl_n*1e17, tpl_l, gammab*0.99)/100
 
-z_arr = np.linspace(-1*tpl_f, 3*tpl_f, int(4*tpl_f*1e6+1)*zmult)
+leftext = 1 #1
+rightext = 2 #3
+
+z_arr = np.linspace(-leftext*tpl_f, rightext*tpl_f, int((leftext+rightext)*tpl_f*1e6+1)*zmult)
 n_arr = np.zeros(len(z_arr))
 
 dump = 10
@@ -39,6 +42,8 @@ waist_loc = 0.
 tpl_offset = waist_loc
 z_offset = -z_arr[0]
 z_arr = z_arr + z_offset
+
+position_error = 0#-7*tpl_f*1e6 #um
 
 e_spec = np.array([0, -0.01, 0.01]) + 1.0
 colors = np.array(['g-','r-','b-'])
@@ -52,7 +57,7 @@ argon_params = PProp.ReturnDefaultPlasmaParams(path, plasma_start = z_offset,
 argon_params['Z'] = z_arr[-1]*1e6
 argon_params['Nz']= len(z_arr)
 argon_params['l_flattop'] = np.NaN; argon_params['sigma_in'] = np.NaN; argon_params['sigma_out'] = np.NaN
-argon = PProp.NoPlasma_ThinPlasmaLens(argon_params, n_arr, tpl_offset*1e6, tpl_n, tpl_l, debug)
+argon = PProp.NoPlasma_ThinPlasmaLens(argon_params, n_arr, tpl_offset*1e6 + position_error, tpl_n, tpl_l, debug)
 
 fig, ax1 = plt.subplots()
 plt.title("Beta function evolution at "+r'$f=$'+'{:.3f}'.format(tpl_f*100)+r'$\,\mathrm{cm}$')
