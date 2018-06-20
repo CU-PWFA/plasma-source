@@ -23,6 +23,8 @@ tpl_n = 0.5
 #tpl_l = 267
 tpl_l = 0
 
+sighw = 0.14 * 1e6
+
 dump = 1000
 cores = 4
 
@@ -30,7 +32,7 @@ cores = 4
 beam_params = PProp.ReturnDefaultElectronParams(path)
 beam = PProp.GaussianBeam(beam_params, debug)
 
-argon_params = PProp.ReturnDefaultPlasmaParams(path)
+argon_params = PProp.ReturnDefaultPlasmaParams(path, sigma_hw = sighw)
 argon = PProp.GaussianRampPlasma_ThinPlasmaLens(argon_params, tpl_offset, tpl_n, tpl_l, debug)
 
 z_orig = np.linspace(0,argon_params['Z'],int(((argon_params['Nz']-1)/5)+1))

@@ -1,0 +1,261 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 11.0' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       158,          7]
+NotebookDataLength[      7511,        253]
+NotebookOptionsPosition[      6824,        225]
+NotebookOutlinePosition[      7165,        240]
+CellTagsIndexPosition[      7122,        237]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"$Assumptions", "=", 
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{"ss", ">", "0"}], ",", 
+     RowBox[{"Bs", ">", "0"}], ",", 
+     RowBox[{"\[Sigma]", ">", "0"}], ",", 
+     RowBox[{"a", ">", "0"}]}], "}"}]}], ";"}]], "Input",
+ CellChangeTimes->{{3.737725395208782*^9, 3.737725401121406*^9}, {
+  3.73774319214718*^9, 3.7377431997627907`*^9}, {3.737743586003552*^9, 
+  3.737743588723768*^9}}],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[{
+ RowBox[{"sol", "=", 
+  RowBox[{
+   SubsuperscriptBox["\[Integral]", "a", "\[Infinity]"], 
+   RowBox[{
+    RowBox[{"Exp", "[", 
+     RowBox[{
+      RowBox[{"-", 
+       SuperscriptBox["s", "2"]}], "/", 
+      RowBox[{"(", 
+       RowBox[{"2", " ", 
+        SuperscriptBox["\[Sigma]", "2"]}], ")"}]}], "]"}], " ", 
+    RowBox[{"\[DifferentialD]", "s"}]}]}]}], "\[IndentingNewLine]", 
+ RowBox[{"sol", "/.", 
+  RowBox[{"{", 
+   RowBox[{
+    RowBox[{"a", "\[Rule]", "96.88"}], ",", 
+    RowBox[{"\[Sigma]", "->", "24.062976"}]}], "}"}]}]}], "Input",
+ CellChangeTimes->{{3.7377253236858463`*^9, 3.737725369527763*^9}, {
+  3.737725419075935*^9, 3.737725479582211*^9}}],
+
+Cell[BoxData[
+ RowBox[{
+  SqrtBox[
+   FractionBox["\[Pi]", "2"]], " ", "\[Sigma]", " ", 
+  RowBox[{"Erfc", "[", 
+   FractionBox["a", 
+    RowBox[{
+     SqrtBox["2"], " ", "\[Sigma]"}]], "]"}]}]], "Output",
+ CellChangeTimes->{3.737725371607403*^9, 3.7377254064124613`*^9, 
+  3.737725480677024*^9}],
+
+Cell[BoxData["0.001710258227195874`"], "Output",
+ CellChangeTimes->{3.737725371607403*^9, 3.7377254064124613`*^9, 
+  3.737725480677671*^9}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[{
+ RowBox[{"sol", "=", 
+  RowBox[{
+   RowBox[{
+    SubsuperscriptBox["\[Integral]", "a", "\[Infinity]"], 
+    RowBox[{
+     FractionBox[
+      SuperscriptBox[
+       RowBox[{"(", 
+        RowBox[{"s", "-", "ss"}], ")"}], "2"], "Bs"], " ", 
+     RowBox[{"Exp", "[", 
+      RowBox[{
+       RowBox[{"-", 
+        SuperscriptBox["s", "2"]}], "/", 
+       RowBox[{"(", 
+        RowBox[{"2", " ", 
+         SuperscriptBox["\[Sigma]", "2"]}], ")"}]}], "]"}], " ", 
+     RowBox[{"\[DifferentialD]", "s"}]}]}], "+", 
+   RowBox[{"Bs", " ", 
+    RowBox[{
+     SubsuperscriptBox["\[Integral]", "a", "\[Infinity]"], 
+     RowBox[{
+      RowBox[{"Exp", "[", 
+       RowBox[{
+        RowBox[{"-", 
+         SuperscriptBox["s", "2"]}], "/", 
+        RowBox[{"(", 
+         RowBox[{"2", " ", 
+          SuperscriptBox["\[Sigma]", "2"]}], ")"}]}], "]"}], " ", 
+      RowBox[{"\[DifferentialD]", "s"}]}]}]}], " ", "-", 
+   "1"}]}], "\[IndentingNewLine]", 
+ RowBox[{"sol", "/.", 
+  RowBox[{"{", 
+   RowBox[{
+    RowBox[{"a", "\[Rule]", "96.88"}], ",", 
+    RowBox[{"\[Sigma]", "->", "24.062976"}], ",", 
+    RowBox[{"ss", "\[Rule]", "78.115"}], ",", 
+    RowBox[{"Bs", "\[Rule]", "18.77"}]}], "}"}]}]}], "Input",
+ CellChangeTimes->{{3.737743175687417*^9, 3.7377431876435127`*^9}, {
+  3.7377432179746532`*^9, 3.737743300547214*^9}}],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"-", "1"}], "+", 
+  RowBox[{"Bs", " ", 
+   SqrtBox[
+    FractionBox["\[Pi]", "2"]], " ", "\[Sigma]", " ", 
+   RowBox[{"Erfc", "[", 
+    FractionBox["a", 
+     RowBox[{
+      SqrtBox["2"], " ", "\[Sigma]"}]], "]"}]}], "+", 
+  FractionBox[
+   RowBox[{
+    RowBox[{
+     SuperscriptBox["\[ExponentialE]", 
+      RowBox[{"-", 
+       FractionBox[
+        SuperscriptBox["a", "2"], 
+        RowBox[{"2", " ", 
+         SuperscriptBox["\[Sigma]", "2"]}]]}]], " ", 
+     RowBox[{"(", 
+      RowBox[{"a", "-", 
+       RowBox[{"2", " ", "ss"}]}], ")"}], " ", 
+     SuperscriptBox["\[Sigma]", "2"]}], "+", 
+    RowBox[{
+     SqrtBox[
+      FractionBox["\[Pi]", "2"]], " ", "\[Sigma]", " ", 
+     RowBox[{"(", 
+      RowBox[{
+       SuperscriptBox["ss", "2"], "+", 
+       SuperscriptBox["\[Sigma]", "2"]}], ")"}], " ", 
+     RowBox[{"Erfc", "[", 
+      FractionBox["a", 
+       RowBox[{
+        SqrtBox["2"], " ", "\[Sigma]"}]], "]"}]}]}], "Bs"]}]], "Output",
+ CellChangeTimes->{3.737743303088091*^9}],
+
+Cell[BoxData[
+ RowBox[{"-", "0.9122549067369876`"}]], "Output",
+ CellChangeTimes->{3.737743303088746*^9}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[{
+ RowBox[{"sol", "=", 
+  RowBox[{
+   RowBox[{
+    SubsuperscriptBox["\[Integral]", "a", "\[Infinity]"], 
+    RowBox[{
+     FractionBox[
+      SuperscriptBox[
+       RowBox[{"(", 
+        RowBox[{"s", "-", "ss"}], ")"}], "2"], "Bs"], " ", 
+     SuperscriptBox[
+      RowBox[{"Sech", "[", 
+       RowBox[{"s", "/", 
+        RowBox[{"(", 
+         RowBox[{"2", " ", "a"}], ")"}]}], "]"}], "2"], " ", 
+     RowBox[{"\[DifferentialD]", "s"}]}]}], "+", 
+   RowBox[{"Bs", " ", 
+    RowBox[{
+     SubsuperscriptBox["\[Integral]", "a", "\[Infinity]"], 
+     RowBox[{
+      SuperscriptBox[
+       RowBox[{"Sech", "[", 
+        RowBox[{"s", "/", 
+         RowBox[{"(", 
+          RowBox[{"2", " ", "a"}], ")"}]}], "]"}], "2"], " ", 
+      RowBox[{"\[DifferentialD]", "s"}]}]}]}], " ", "-", 
+   "1"}]}], "\[IndentingNewLine]", 
+ RowBox[{"sol", "/.", 
+  RowBox[{"{", 
+   RowBox[{
+    RowBox[{"a", "\[Rule]", "53.50"}], ",", 
+    RowBox[{"a", "\[Rule]", "3.1746"}], ",", 
+    RowBox[{"ss", "\[Rule]", "36.005"}], ",", 
+    RowBox[{"Bs", "\[Rule]", "17.5"}]}], "}"}]}]}], "Input",
+ CellChangeTimes->{{3.737743175687417*^9, 3.7377431876435127`*^9}, {
+  3.7377432179746532`*^9, 3.737743300547214*^9}, {3.737743525348822*^9, 
+  3.7377436229317207`*^9}, {3.7377436725433073`*^9, 3.737743677220907*^9}}],
+
+Cell[BoxData[
+ RowBox[{"ConditionalExpression", "[", 
+  RowBox[{
+   RowBox[{
+    RowBox[{"-", "1"}], "+", 
+    FractionBox[
+     RowBox[{"4", " ", "a", " ", "Bs"}], 
+     RowBox[{"1", "+", "\[ExponentialE]"}]], "+", 
+    RowBox[{
+     SubsuperscriptBox["\[Integral]", "a", "\[Infinity]"], 
+     RowBox[{
+      FractionBox[
+       RowBox[{
+        SuperscriptBox[
+         RowBox[{"(", 
+          RowBox[{"s", "-", "ss"}], ")"}], "2"], " ", 
+        SuperscriptBox[
+         RowBox[{"Sech", "[", 
+          FractionBox["s", 
+           RowBox[{"2", " ", "a"}]], "]"}], "2"]}], "Bs"], 
+      RowBox[{"\[DifferentialD]", "s"}]}]}]}], ",", 
+   RowBox[{
+    RowBox[{"Re", "[", "a", "]"}], ">", "0"}]}], "]"}]], "Output",
+ CellChangeTimes->{3.737743920376981*^9}],
+
+Cell[BoxData["32890.004321715074`"], "Output",
+ CellChangeTimes->{3.737743986755645*^9}]
+}, Open  ]]
+},
+WindowSize->{808, 911},
+WindowMargins->{{1047, Automatic}, {57, Automatic}},
+FrontEndVersion->"11.0 for Linux x86 (64-bit) (September 21, 2016)",
+StyleDefinitions->"Default.nb"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[558, 20, 425, 11, 34, "Input"],
+Cell[CellGroupData[{
+Cell[1008, 35, 677, 19, 75, "Input"],
+Cell[1688, 56, 296, 9, 60, "Output"],
+Cell[1987, 67, 139, 2, 32, "Output"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[2163, 74, 1324, 39, 83, "Input"],
+Cell[3490, 115, 1025, 34, 87, "Output"],
+Cell[4518, 151, 105, 2, 32, "Output"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[4660, 158, 1297, 36, 83, "Input"],
+Cell[5960, 196, 757, 23, 63, "Output"],
+Cell[6720, 221, 88, 1, 32, "Output"]
+}, Open  ]]
+}
+]
+*)
+

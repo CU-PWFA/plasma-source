@@ -30,11 +30,12 @@ me = const.physical_constants['electron mass energy equivalent in MeV'][0]
 
 def_startloc = 0.80
 def_lenflat = 0.50
-def_nset = 1203.7#0.5
+def_nset = 0.5#1203.7 for gas cell
 def_betastar = 0.10
 def_betaoffs = -0.387
 def_gamma = 19569.5 #10 GeV beam
-def_Z = (2*def_startloc + def_lenflat)*1e6
+
+def_sigma_hw = 14.0e4
 
 def ReturnDefaultElectronParams(path, beta_star=def_betastar, beta_offset=def_betaoffs,
                                 plasma_start=def_startloc, gamma=def_gamma):
@@ -89,12 +90,11 @@ def dgammadz_wrong(ne):
 def dgammadz_basic(ne):
     return 0.0
 
-def ReturnDefaultPlasmaParams(path, Z_change = def_Z, plasma_start = def_startloc,
-                              nset = def_nset):
+def ReturnDefaultPlasmaParams(path, plasma_start = def_startloc,
+                              nset = def_nset, sigma_hw = def_sigma_hw, scaledown = 10):
     Nx = 1;  Ny = 1
-    Z = Z_change
-    Nz = int((Z/10)+1)
-    sigma_hw = 14.0e4
+    Z = (2*plasma_start + def_lenflat)*1e6
+    Nz = int((Z/scaledown)+1)
     sigma = sigma_hw/(np.sqrt(2*np.log(2)))
     plasmaParams ={
         'name' : 'TestPlasma',
