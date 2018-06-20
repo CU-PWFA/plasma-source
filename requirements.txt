@@ -139,7 +139,6 @@ dependencies:
   - mpmath==0.19
   - pillow==5.1.0
   - prompt-toolkit==1.0.15
-  - pycapture2==0.0.0
   - pycparser==2.18
   - pyserial==3.4
   - pyusb==1.0.2
