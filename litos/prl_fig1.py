@@ -35,7 +35,7 @@ rms_x = np.zeros(nstep)
 rms_x_eps = np.zeros(nstep)
 cent_x  = np.zeros(nstep)
 cent_xp = np.zeros(nstep)
-un_kurt = np.zeros(nstep)
+#un_kurt = np.zeros(nstep)
 J_kurt  = np.zeros(nstep)
 
 frac = 1.0
@@ -43,28 +43,46 @@ frac = 1.0
 for i in range(0,nstep):
     s[i]     = ebeam[i]["s"] # m\
     gbC[i]   = ebeam[i]["gbC"]
-    eps[i]   = ebeam[i]["eps"] # mm-mrad
-    beta[i]  = ebeam[i]["beta"]/(1e-2) # m
+    eps[i]   = ebeam[i]["eps"] # m-rad
+    beta[i]  = ebeam[i]["beta"]/(1e-2) # cm
     alpha[i] = ebeam[i]["alpha"]
     gamma[i] = ebeam[i]["gamma"] # 1/m
     ebeam_rms = ba.calc_ebeam_rms(ebeam,i,frac)
     ebeam_cent = ba.calc_ebeam_cent(ebeam,i,frac)
-    cent_x[i]  = ebeam_cent["x"]/(1e-6)
-    cent_xp[i] = ebeam_cent["xp"]/(1e-6)
-    rms_x[i]     = ebeam_rms["x"]/(1e-6)
-    rms_x_eps[i] = ebeam_rms["x_eps"]/(1e-6)
-    
+    cent_x[i]  = ebeam_cent["x"]/(1e-6) # um
+    cent_xp[i] = ebeam_cent["xp"]/(1e-6) # urad
+    rms_x[i]     = ebeam_rms["x"]/(1e-6) # um
+    rms_x_eps[i] = ebeam_rms["x_eps"]/(1e-6) # mm-mrad
+
     [u,v] = ba.real2norm_coords(ebeam[i]["x"],ebeam[i]["xp"],\
                                 ebeam_rms["x_beta"],ebeam_rms["x_alpha"])
-    J = (u**2+v**2)/2
-    phi = np.arctan2(v,u)
-    un = np.sqrt(2*J*ebeam[i]["gbC"])*np.cos(phi)/np.sqrt(rms_x_eps[i])
-    un_kurt[i] = stats.kurtosis(un,0,True)
-    J_kurt[i] = stats.kurtosis(J,0,False,True)
     
+#    wp      = (5.64e4)*np.sqrt(plasma["npl"][i]) # rad/s, plasma ang. freq.
+#    kp      = wp/nc.c # m^-1, plasma wave number
+#    kb      = kp/np.sqrt(2*gbC[i])
+#    beta_m  = 1.0/kb
+#    alpha_m = 0
+#    u = ebeam[i]["x"]/np.sqrt(ebeam_rms["x_beta"])
+#    v = ebeam[i]["xp"]*np.sqrt(ebeam_rms["x_beta"])+\
+#        ebeam[i]["x"]*ebeam_rms["x_alpha"]/np.sqrt(ebeam_rms["x_beta"])
+
+    J    = (u**2+v**2)/2
+    phi  = np.arctan2(v,u)
+    un   = np.sqrt(2*J*ebeam[i]["gbC"])*np.cos(phi)/np.sqrt(rms_x_eps[i])
+#    un_kurt[i] = stats.kurtosis(un,0,True)
+    J_kurt[i]  = stats.kurtosis(J,fisher=True)
     
+# save some memory
+u = []
+v = []
+J = []
+phi = []
+un = []
+
+# find start of flat-top
 i_flat_start = np.argwhere(plasma["s"]>=plasma["up_ramp"]["top_loc"])[0][0]
 
+# calculate B-mag at start of flat-top
 Tbeta   = ebeam[i_flat_start]["beta"]
 Talpha  = ebeam[i_flat_start]["alpha"]
 Tgamma  = ebeam[i_flat_start]["gamma"]
@@ -80,10 +98,32 @@ TTmatch = [Tbeta_m,0,1.0/Tbeta_m]
 BB      = ba.calc_Bmag(TTbeam,TTmatch)
 print('Bmag: ',BB)
     
+# calculate virtual vacuum waist parameters
 ent_z_v = s[0]+alpha[0]/gamma[0]
 ent_beta_v = (1/gamma[0])/(1e-2)
 exit_z_v = s[nstep-1]+alpha[nstep-1]/gamma[nstep-1]
 exit_beta_v = (1/gamma[nstep-1])/(1e-2)
+
+#%% betatron action
+istep = 0
+[u,v] = ba.real2norm_coords(ebeam[istep]["x"],ebeam[istep]["xp"],\
+                            ebeam_rms["x_beta"],ebeam_rms["x_alpha"])
+J    = (u**2+v**2)/2
+phi  = np.arctan2(v,u)
+
+#%%
+figB, ax0 = plt.subplots(1)
+
+#ax0.hist(J,log=True,range=[0,2e-7],bins=100)
+#plot_J = np.linspace(0,2e-7,100)
+#dJ = plot_J[1]-plot_J[0]
+#ax0.semilogy(plot_J,(dJ*gbC[istep]/(eps[istep]))\
+#             *np.exp(-plot_J*gbC[istep]/(eps[istep])))
+
+#ax0.scatter(np.sqrt(2*J)*np.cos(phi),-np.sqrt(2*J)*np.sin(phi))
+
+#ax0.hist(u,bins=50)
+ax0.hist(v,bins=50)
 
 #%% beta and rms_x evolution through plasma
 

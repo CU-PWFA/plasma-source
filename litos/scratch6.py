@@ -71,10 +71,11 @@ for i in range(0,nstep):
     vbeta[i]  = vbeam[i]["beta"]
     valpha[i] = vbeam[i]["alpha"]
     
-    if i==0:
+    if i==0 or npl==0:
         dndz[i] = 0
     else:
-        dndz[i] = (plasma["npl"][i]-plasma["npl"][i-1])/(npl*ds)
+        dndz[i] = (plasma["npl"][i]-plasma["npl"][i-1])/ \
+        ((ebeam[i]["s"]-ebeam[i-1]["s"]))
     
 #    [u,v] = ba.real2norm_coords(ebeam[i]["x"],ebeam[i]["xp"],\
 #                                ebeam_rms["x_beta"],ebeam_rms["x_alpha"])
@@ -88,7 +89,6 @@ dndz[0] = dndz[1]
 
 # normalized distance
 skb = (s[2]-s[1])*np.abs(kb)
-skb = s
 
 #i_flat_start = np.argwhere(plasma["s"]>=plasma["up_ramp"]["top_loc"])[0][0]
 #
@@ -125,7 +125,7 @@ ax1.plot(skb,vbeta,color='b',linestyle='-.')
 ax1.set_ylabel(r'$\beta_x$',color='b',fontsize=16)
 ax1.tick_params('y',colors='b')
 #ax1.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
-ax1.set_ylim([0,1.2])
+ax1.set_ylim([0,0.15])
 #ax1.set_ylim([0.1,2])
 #ax1.set_xlim([0.5,2.0])
 
@@ -148,12 +148,12 @@ ax1.set_ylim([0,1.2])
 
 npl = plasma["npl"]/plasma["bulk"]["npl0"]
 ax2  = ax1.twinx()
-ax2.plot(skb,npl,color='g',linestyle='solid')
+ax2.plot(s,npl,color='g',linestyle='solid')
 #ax2.plot(skb,dndz/kb,color='g',linestyle='-.')
 ax2.set_ylabel(r'$n_p/n_{p,0}$',color='g',fontsize=16)
 ax2.tick_params('y',colors='g')
 #ax1.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
-ax2.set_ylim([0,1.2])
+#ax2.set_ylim([0,1.2])
 #ax2.set_ylim([1e-6,20])
 #ax2.set_xlim([0.5,2.0])
 
@@ -177,8 +177,8 @@ ax2.set_ylim([0,1.2])
 #        transform=ax2.transAxes,
 #        color='green', fontsize=16)
     
-ax3.plot(skb,alpha,color='k',linestyle='-')
-ax3.plot(skb,valpha,color='k',linestyle='-.')
+ax3.plot(s,alpha,color='k',linestyle='-')
+ax3.plot(s,valpha,color='k',linestyle='-.')
 ax3.set_ylabel(r'$\alpha_x$',color='k',fontsize=16)
 ax3.tick_params('y',colors='k')
 #ax1.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))

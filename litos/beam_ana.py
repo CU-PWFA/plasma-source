@@ -13,11 +13,15 @@ import scipy.spatial as spatial
 import matplotlib.pyplot as plt
 import mike_math as mm
 
-def calc_ebeam_cent(ebeam,step=0,frac=1.00):
+def calc_ebeam_cent(ebeam,step=0,frac=1.00,dim='x'):
     ebeam_cent = defaultdict(dict)
     
-    x  = ebeam[step]["x"] # m
-    xp = ebeam[step]["xp"] # rad
+    if dim.lower()=='y':
+        x  = ebeam[step]["y"] # m
+        xp = ebeam[step]["yp"] # rad
+    else:
+        x  = ebeam[step]["x"] # m
+        xp = ebeam[step]["xp"] # rad
 
     cent_x = mm.calc_mean(x,frac)
     cent_xp = mm.calc_mean(xp,frac)
@@ -26,17 +30,26 @@ def calc_ebeam_cent(ebeam,step=0,frac=1.00):
     gb = ebeam[step]["gb"]
     avg_gb = np.mean(gb)
     
-    ebeam_cent["x"]       = cent_x
-    ebeam_cent["xp"]      = cent_xp
-    ebeam_cent["xxp"]     = cent_xxp
-    
+    if dim.lower()=='y':
+        ebeam_cent["y"]       = cent_x
+        ebeam_cent["yp"]      = cent_xp
+        ebeam_cent["yyp"]     = cent_xxp
+    else:
+        ebeam_cent["x"]       = cent_x
+        ebeam_cent["xp"]      = cent_xp
+        ebeam_cent["xxp"]     = cent_xxp
+        
     return ebeam_cent
   
-def calc_ebeam_rms(ebeam,step=0,frac=1.00):
+def calc_ebeam_rms(ebeam,step=0,frac=1.00,dim='x'):
     ebeam_rms = defaultdict(dict)
     
-    x  = ebeam[step]["x"] # m
-    xp = ebeam[step]["xp"] # rad
+    if dim.lower()=='y':
+        x  = ebeam[step]["y"] # m
+        xp = ebeam[step]["yp"] # rad
+    else:
+        x  = ebeam[step]["x"] # m
+        xp = ebeam[step]["xp"] # rad
 
     rms_x = mm.calc_rms(x,frac)
     rms_xp = mm.calc_rms(xp,frac)
@@ -47,7 +60,10 @@ def calc_ebeam_rms(ebeam,step=0,frac=1.00):
     
     avg_x2  = np.mean((x-np.mean(x))**2)
     avg_xp2 = np.mean((xp-np.mean(xp))**2)
-    avg_xxp = np.mean((x-np.mean(x))*(xp-np.mean(xp)))
+#    avg_xxp = np.mean((x-np.mean(x))*(xp-np.mean(xp)))
+#    avg_xxp = np.mean(x*xp-np.mean(x*xp))
+    avg_xxp = np.mean(( (x-np.mean(x)) * (xp-np.mean(xp)) \
+                       -np.mean( (x-np.mean(x)) * (xp-np.mean(xp)) ) ))
 
     rms_x_eps   = avg_gb*np.sqrt(avg_x2*avg_xp2-avg_xxp**2)
 #    rms_x_eps   = avg_gb*np.sqrt((rms_x**2)*(rms_xp**2)-avg_xxp**2)
@@ -56,14 +72,24 @@ def calc_ebeam_rms(ebeam,step=0,frac=1.00):
     rms_x_alpha = -avg_gb*avg_xxp/rms_x_eps
     rms_x_phase = np.arctan2(2*rms_x_alpha,rms_x_gamma-rms_x_beta)/2
     
-    ebeam_rms["x"]       = rms_x
-    ebeam_rms["xp"]      = rms_xp
-    ebeam_rms["xxp"]     = rms_xxp
-    ebeam_rms["x_eps"]   = rms_x_eps
-    ebeam_rms["x_beta"]  = rms_x_beta
-    ebeam_rms["x_alpha"] = rms_x_alpha
-    ebeam_rms["x_gamma"] = rms_x_gamma
-    ebeam_rms["x_phase"] = rms_x_phase
+    if dim.lower()=='y':
+        ebeam_rms["y"]       = rms_x
+        ebeam_rms["yp"]      = rms_xp
+        ebeam_rms["yyp"]     = rms_xxp
+        ebeam_rms["y_eps"]   = rms_x_eps
+        ebeam_rms["y_beta"]  = rms_x_beta
+        ebeam_rms["y_alpha"] = rms_x_alpha
+        ebeam_rms["y_gamma"] = rms_x_gamma
+        ebeam_rms["y_phase"] = rms_x_phase
+    else:
+        ebeam_rms["x"]       = rms_x
+        ebeam_rms["xp"]      = rms_xp
+        ebeam_rms["xxp"]     = rms_xxp
+        ebeam_rms["x_eps"]   = rms_x_eps
+        ebeam_rms["x_beta"]  = rms_x_beta
+        ebeam_rms["x_alpha"] = rms_x_alpha
+        ebeam_rms["x_gamma"] = rms_x_gamma
+        ebeam_rms["x_phase"] = rms_x_phase
     
     return ebeam_rms
     

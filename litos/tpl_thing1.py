@@ -34,7 +34,7 @@ if __name__ == '__main__':
     top_dn   = 0        # m, relative location of ramp top
     
     # define beam parameters
-    npart  = 0   # number of macro particles
+    npart  = 10   # number of macro particles
     dist   = 'gauss' # distribution shape in trace space
     gbC    = (10e9)/nc.me   # centroid relativistic lorentz factor
     dgb    = 0.01    # relative energy spread (HWHM)
@@ -61,6 +61,18 @@ if __name__ == '__main__':
     dEds0  = 0 # np.sqrt(npl0/(5e16))*16.67e9  # eV/m, energy gain rate
     dgds0  = dEds0/nc.me               # 1/m, energy gain rate for rel. gamma
     L_ft   = (5.65e13)*Kl*gbC/(npl0*(1e6)) # m
+    
+    # define plasma up-ramp
+    shape_up = 'gauss' # shape of ramp
+    hw_up    = 0 # m, half-width of ramp
+    L_up     = 0.10 # m, full length of ramp
+    top_up   = L_up    # m, relative location of ramp top
+    
+    # define plasma down-ramp
+    shape_dn = shape_up # shape of ramp
+    hw_dn    = hw_up    # m, half-width of ramp
+    L_dn     = L_up     # m, full length of ramp
+    top_dn   = 0        # m, relative location of ramp top
     
     # calculate betatron wave number in flat-top
     wp0    = (5.64e4)*np.sqrt(npl0) # rad/s, plasma ang. freq. (flat-top)
@@ -89,6 +101,7 @@ if __name__ == '__main__':
     # define longitudinal steps
     ds   = L_ft/10. #(1.0/kb0)*(1./10.)                  # m, step size
     s_ft = np.linspace(0,L_ft,int(L_ft/ds+1)) # m, steps for flat-top
+#    ds   = beta/10.
     s_up = np.linspace(0,L_up,int(L_up/ds+1)) # m, steps for up-ramp
     s_dn = np.linspace(0,L_dn,int(L_dn/ds+1)) # m, steps for down-ramp
        

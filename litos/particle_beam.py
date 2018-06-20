@@ -15,6 +15,10 @@ import mike_math as mm
 import nat_consts as nc
 import scipy.stats as stats
 
+def add_offset(ebeam,dim,offset,step=0):
+    ebeam[step][dim] = ebeam[step][dim]+offset
+    return
+
 def make_ebeam(s,i_twiss,i_parts):
     """create ebeam dictionary object"""
     ebeam = defaultdict(dict)
