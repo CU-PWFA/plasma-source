@@ -18,17 +18,20 @@ give an array of decimals ranging from 0 to 1.
 import numpy as np
 import matplotlib.pyplot as plt
 
-folder = '/home/chris/Desktop/day_21/'
+folder = '/home/chris/Desktop/'
 
-imagefile = folder + '1805210001/Cam02_1805210001_0001.tiff'
+imagefile = folder + 'day_21/1805210001/Cam02_1805210001_0001.tiff'
+#imagefile = folder + 'CameraPics/Cam01_1805170002_0001.tiff'
 image = plt.imread(imagefile)
 
-im_arr = np.array(image)[140:200,540:600]
-max_tiffunit = np.iinfo(im_arr.dtype).max
-im_arr = im_arr/max_tiffunit
+im_arr = np.array(image)#[140:200,540:600]
+#max_tiffunit = np.iinfo(im_arr.dtype).max
+#im_arr = im_arr/max_tiffunit
+
+im_arr = im_arr/16
 
 plt.set_cmap('gray')
 plt.imshow(im_arr)
 CB = plt.colorbar()
-plt.clim(0,1.)
+#plt.clim(0,1.)
 plt.show()

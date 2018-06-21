@@ -42,7 +42,7 @@ for i in range(len(den_arr)):
     
     K = Foc.Calc_K(n0, gam)
     focal = Foc.Calc_Focus_KLength(K, L)
-    KLls_set = [K, L, Oide.Get_ls(L,focal)]
+    KLls_set = [K, L, Oide.Get_ls_corrected(L,focal,beta_i)]
     #print(KLls_set[0]*KLls_set[1]*KLls_set[2])
     F_val = Oide.F_Oide(KLls_set)
     betam_arr[i] = Oide.Calc_BetaMin(F_val, emit, gam)

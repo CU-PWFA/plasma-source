@@ -32,6 +32,7 @@ K = Foc.Calc_K(n0, gam)
 focal = Foc.Calc_Focus_KLength(K, L)
 #focal = Foc.Calc_Focus_Square_SI(n0, L, gam)/100 #gives focal length in m
 KLls_set = [K, L, Oide.Get_ls(L,focal)]
+KLls_set = [K, L, Oide.Get_ls_corrected(L,focal,10)]
 """
 f = 0.6 * 100
 L = 2/3*f

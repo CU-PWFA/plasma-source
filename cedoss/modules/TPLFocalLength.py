@@ -5,6 +5,10 @@ Created on Tue Nov  7 12:39:09 2017
 
 Calculates the focal length as an integral of density
 
+Here focal refers to the 'focal length' = 1/KL
+The actual waist position is at z=focal(1-beta_f/beta_i) for simple case,
+and is given by Calc_Waist_Delta for offset cases
+
 @author: chris
 """
 import numpy as np
@@ -57,6 +61,16 @@ def Calc_Target_Focal(beta_i, beta_f):
 def Calc_BetaStar(beta_i, focal):
     beta_f = beta_i/(1+beta_i**2/focal**2)
     return beta_f
+
+#Given focal length and initial beta and offset delta, what is final beta
+def Calc_BetaStar_DeltaOff(beta_i, focal, delta=0):
+    beta_f = beta_i/((beta_i/focal)**2+(1-delta/focal)**2)
+    return beta_f
+
+#Given focla length, initial beta, and offset delta; what is distance from lens to waist
+def Calc_WaistPos_DeltaOff(beta_i, focal, delta=0):
+    z = ((1/focal)*(beta_i**2 + delta**2) - delta)/((beta_i/focal)**2+(1-delta/focal)**2)
+    return z
 
 if __name__ == '__main__':
     beta_i = .10

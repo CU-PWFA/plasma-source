@@ -19,17 +19,26 @@ debug = 1
 path = '/home/chris/Desktop/BeamProp/testGaussian'
 gamma = PProp.def_gamma
 
-case = 2
+case = 11
 if case == 1:
     sighw = 0.08 * 1e6
     tpl_n = 0.5
     tpl_l = 174.5
     zvac = -0.2006
+    betastar = .10
 if case == 2:
     sighw = 0.01 * 1e6
     tpl_n = 0.5
     tpl_l = 607.5
     zvac = -0.01372
+    betastar = .10
+
+if case == 11:
+    tpl_n = 0.5
+    tpl_l = 0
+    sighw = 0.08 * 1e6
+    zvac = -0.2006
+    betastar = .061608
 
 z0 = sighw/1e6*5
 
@@ -45,11 +54,10 @@ cores = 4
 ramp_end = argon_params['z0']/1e6
 endindex = np.nonzero(z>ramp_end)[0][0]
 
-focal = Foc.Calc_Focus_Square_SI(tpl_n*1e17, tpl_l/1e6, gamma)
-betastar = .10
+#focal = Foc.Calc_Focus_Square_SI(tpl_n*1e17, tpl_l/1e6, gamma)
+focal = 1
 beta_f = Foc.Calc_BetaStar(betastar, focal)
 tpl_f = focal*(1-beta_f/betastar)
-
 waist_loc = zvac - tpl_f
 tpl_offset = waist_loc
 
@@ -71,4 +79,4 @@ print("Bmag BP: ",PProp.GetBmag(beam,m))
 bmagc = PProp.Calc_Bmag(beam_params,n[:endindex], z[:endindex])
 print("Bmag CS: ",bmagc)
 
-PProp.Plot_CSEvo(beam_params, n, z, z0)
+PProp.Plot_CSEvo(beam_params, n, z, z0, legend_loc = 10)

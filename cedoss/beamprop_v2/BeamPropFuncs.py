@@ -27,6 +27,8 @@ import matplotlib.animation as animation
 import scipy.constants as const
 me = const.physical_constants['electron mass energy equivalent in MeV'][0]
 
+sys.path.insert(0, "../")
+from modules import ThreeDimensionAnalysis as ThrDim
 
 def_startloc = 0.80
 def_lenflat = 0.50
@@ -128,7 +130,7 @@ def FineSpacingLens(z_orig, tpl_center, tpl_length):
 def GaussianRampPlasma(plasmaParams, debug = 0):
     Nz = plasmaParams['Nz']
     
-    nez = plasmaParams['n0']*profile.plasma_gaussian_ramps(plasmaParams['z0'],
+    nez = .5/.4995*plasmaParams['n0']*profile.plasma_gaussian_ramps(plasmaParams['z0'],
        plasmaParams['l_flattop'], plasmaParams['sigma_in'], plasmaParams['sigma_out'], Nz, plasmaParams['Z'])[1]
     
     argon = plasma.Plasma(plasmaParams)
@@ -287,7 +289,7 @@ def Calc_Proj_CSParams(beamParams, n_arr, z_arr, delta):
         
     return gb_arr, beta_arr, alpha_arr, gamma_arr, bmag_arr
 
-def Plot_CSEvo(beamParams, n_arr, z_arr, z_offset = 0):
+def Plot_CSEvo(beamParams, n_arr, z_arr, z_offset = 0, legend_loc=0):
     beta, alpha, gamma, gb = Calc_CSParams(beamParams, n_arr, z_arr)
     beta0, alpha0, gamma0, gb0 = Calc_CSParams(beamParams, np.zeros(len(z_arr)), z_arr)
     
@@ -306,7 +308,7 @@ def Plot_CSEvo(beamParams, n_arr, z_arr, z_offset = 0):
     ax2.plot(z_arr*1e2, n_arr/max(n_arr), 'g-')
     ax2.set_ylabel(r'$n/n_0$',color = 'g')
     ax2.tick_params('y', colors = 'g')
-    ax1.grid(); ax1.legend(loc=2); plt.show()
+    ax1.grid(); ax1.legend(loc=legend_loc); plt.show()
 
 def PropBeamPlasma(beam, plasma, z_arr, dumpPeriod, cores=4, debug = 0):
     m = int(len(z_arr)/dumpPeriod) -1
@@ -403,7 +405,7 @@ def PlotSigmar_Compare(beam, beam2, z_arr, m, first, second):
     plt.grid(); plt.legend(); plt.show()
     return
 
-def PlotContour(contour, x_arr, y_arr, x_label, y_label):
+def PlotContour(contour, x_arr, y_arr, x_label, y_label, simple = False):
         # find location of min(B)
     i_Bmin_x = np.argmin(np.min(contour,1))
     i_Bmin_y = np.argmin(np.min(contour,0))
@@ -435,7 +437,10 @@ def PlotContour(contour, x_arr, y_arr, x_label, y_label):
     fig, axes = plt.subplots(1,1, sharey=True)
     CS = plt.contour(X,Y,contour,levels,cmap=plt.get_cmap('Vega20b'))
     plt.clabel(CS,labels,fontsize=9,inline=1,fmt='%1.2f')
-    cbar = plt.colorbar()
+    if simple:
+        plt.grid()
+    else:
+        cbar = plt.colorbar()
     plt.scatter(Bmin_x,Bmin_y,color='k')
     cbar.ax.set_ylabel(r'$B_m$')
     cbar.set_ticks(levels)

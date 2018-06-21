@@ -34,11 +34,11 @@ for i in range(len(beta_arr)):
     
     K = Foc.Calc_K(n0, gam)
     focal = Foc.Calc_Focus_KLength(K, L)
-    KLls_set = [K, L, Oide.Get_ls(L,focal)]
+    KLls_set = [K, L, Oide.Get_ls_corrected(L,focal,beta_i)]
     #print(KLls_set[0]*KLls_set[1]*KLls_set[2])
     F_val = Oide.F_Oide(KLls_set)
     betam_arr[i] = Oide.Calc_BetaMin(F_val, emit, gam)
-    betaf_arr[i] = Foc.Calc_BetaStar(beta_i, focal)
+    betaf_arr[i] = Foc.Calc_BetaStar_DeltaOff(beta_i, focal)
     
     sig_min = Oide.Calc_SigMin(F_val, emit)
     sig = Oide.Calc_SigOide(F_val, emit, gam, betaf_arr[i])
@@ -56,7 +56,7 @@ for i in range(len(beta_arr)):
 plt.semilogx(beta_arr, betam_arr, label=r'$\beta^*_{opt}$')
 plt.semilogx(beta_arr, betaf_arr, label=r'$\beta^*_{f}$')
 plt.title("Beta function at waist vs inital beta function")
-plt.xlabel(r'$\beta^*\mathrm{\,[cm]}$')
+plt.xlabel(r'$\beta_i^*\mathrm{\,[cm]}$')
 plt.ylabel(r'$\beta \mathrm{\,[cm]}$')
 plt.grid(); plt.legend(); plt.show()
 
@@ -64,6 +64,6 @@ plt.semilogx(beta_arr, sigo_arr*1e4, label="Oide")
 plt.semilogx(beta_arr, sigi_arr*1e4, label="Ideal")
 plt.semilogx(beta_arr, sigm_arr*1e4, label="Minimum")
 plt.title("Beam sizes vs initial beta function")
-plt.xlabel(r'$\beta^*\mathrm{\,[cm]}$')
+plt.xlabel(r'$\beta_i^*\mathrm{\,[cm]}$')
 plt.ylabel(r'$\sigma^* \mathrm{\,[\mu m]}$')
 plt.grid(); plt.legend(); plt.show()

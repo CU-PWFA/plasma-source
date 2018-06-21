@@ -28,7 +28,6 @@ def BuildDomain(size,step):
     return np.arange(-size/2,size/2,step)
 
 #Takes a 3D intensity and returns a 3D ionization fraction
-#!!I want to put this in a better place eventually!!
 #  I - 3D intensity in W/cm^2
 #  chi - Ionization energy of species
 #  delt_t - Temporal pulse length of beam in s
@@ -40,6 +39,16 @@ def IonFracFromIntensity(I,chi,delt_t):
         for j in j_counter:
             E = ionization.field_from_intensity(I[i][j]/1e14)
             H[i][j] = adk.gaussian_frac(chi,E,delt_t/1e-15,1)
+    return H
+
+#Takes a 1D intensity and returns a 3D ionization fraction
+#  I - 1D intensity in W/cm^2
+#  chi - Ionization energy of species
+#  delt_t - Temporal pulse length of beam in s
+def IonFracFromIntensity_1D(I,chi,delt_t):
+    H=np.zeros(len(I))
+    E = ionization.field_from_intensity(I/1e14)
+    H = adk.gaussian_frac(chi,E,delt_t/1e-15,1)
     return H
 
 #If using data from roberts code, we need to roll the axis to fit my convention

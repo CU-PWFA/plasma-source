@@ -10,6 +10,7 @@ Calculates values from Oide paper
 
 import numpy as np
 import scipy.integrate as Int
+from modules import TPLFocalLength as Foc
 
 pi = np.pi
 """#SI values
@@ -32,7 +33,13 @@ def Get_KLls_WRONNNGNG(lens_width, focal_length):
     return [K,L,ls]
 
 def Get_ls(lens_width, focal_length):
+    print("Update to Get_ls_corrected please")
     return focal_length - 1/2*lens_width
+
+#Where delta is offset from waist to lens
+def Get_ls_corrected(lens_width, focal, beta_i, delta=0):
+    focal_length = Foc.Calc_WaistPos_DeltaOff(beta_i, focal, delta)
+    return focal_length
 
 def Inner_F(lens, focs, x):
     return Int.quad(lambda y: np.square(np.sin(y)+focs*np.cos(y)), 0, x)[0]

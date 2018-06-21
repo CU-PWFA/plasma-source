@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Fri Jun  1 14:05:11 2018
+Created on Tue Jun 19 12:29:30 2018
+
+Script to make nice tolerance plot
 
 @author: chris
 """
@@ -31,6 +33,8 @@ if case == 2:
     zvac = -0.01372
     z0 = sighw/1e6*6
 
+#RUN scaledown = 0.1 overnight!!
+
 argon_params = PProp.ReturnDefaultPlasmaParams(path, sigma_hw = sighw, plasma_start = z0, scaledown = 1)
 argon = PProp.GaussianRampPlasma(argon_params, debug)
 
@@ -47,8 +51,8 @@ tpl_f = focal*(1-beta_f/betastar)
 
 waist_loc = zvac - tpl_f
 
-offset_arr = np.linspace(-0.01, 0.01, 11)
-length_arr = np.linspace(tpl_l - 50., tpl_l + 50, 11)
+offset_arr = np.linspace(-0.01, 0.008, 101)
+length_arr = np.linspace(tpl_l - 50., tpl_l + 50, 101)
 bmag_image = np.zeros((len(offset_arr),len(length_arr)))
 
 for i in range(len(offset_arr)):
@@ -65,4 +69,4 @@ for i in range(len(offset_arr)):
         
         bmag_image[i][j] = PProp.Calc_Bmag(beam_params,n[:endindex], z[:endindex])
         #print("Bmag CS: ",bmagc)
-minloc = PProp.PlotContour(bmag_image, offset_arr, length_arr, r'$\Delta z_{TPL}$ [m]', r'$TPL_{\rm L}$ [um]')
+minloc = PProp.PlotContour(bmag_image, offset_arr*100, length_arr, r'$\Delta z_{TPL}$ [cm]', r'$\mathrm{Plamsa \ lens \ thickness \ [\mu m]}$', True)
