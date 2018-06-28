@@ -21,15 +21,15 @@ debug = 0
 zmult=1
 
 gammab = PProp.def_gamma
-tpl_f = 0.01333
-tpl_n = 10.
+tpl_f = 0.10
+tpl_n = 1.
 tpl_l = Foc.Calc_Square_Lens(tpl_n*1e17, tpl_f*100, gammab)
 tpl_f = Foc.Calc_Focus_Square_CM_UM(tpl_n*1e17, tpl_l, gammab)/100
 tpl_f_plus = Foc.Calc_Focus_Square_CM_UM(tpl_n*1e17, tpl_l, gammab*1.01)/100
 tpl_f_mnus = Foc.Calc_Focus_Square_CM_UM(tpl_n*1e17, tpl_l, gammab*0.99)/100
 
 leftext = 1 #1
-rightext = 2 #3
+rightext = 3 #3
 
 z_arr = np.linspace(-leftext*tpl_f, rightext*tpl_f, int((leftext+rightext)*tpl_f*1e6+1)*zmult)
 n_arr = np.zeros(len(z_arr))
@@ -83,7 +83,7 @@ ax2.tick_params('y', colors = 'k')
 ax1.grid(); ax1.legend(); plt.show()
 
 ###############################################################################
-"""
+
 fig, ax3 = plt.subplots()
 plt.title("Beta function evolution at "+r'$f=$'+'{:.3f}'.format(tpl_f*100)+r'$\,\mathrm{cm}$')
 ax3.set_ylabel(r'$\beta\,\mathrm{[cm]}$', color = 'b')
@@ -92,7 +92,7 @@ ax3.set_xlabel('z ['+r'$\mu$'+'m]')
 #ax3.set_ylim([-0.05,20.05])
 beta0 = PProp.Calc_CSParams(beam_params0, np.zeros(len(z_arr)), z_arr)[0]
 center0 = np.argmin(beta0)
-crange0 = 10*zmult
+crange0 = 150*zmult
 ax3.plot((z_arr[center0-crange0:center0+crange0]-tpl_f)*1e6, np.array(beta0[center0-crange0:center0+crange0])*1e2, 'b--',label=r'$\beta_{vac}$')
 
 for i in range(len(e_spec)):
@@ -110,7 +110,7 @@ ax4.plot((z_arr[center0-crange0:center0+crange0]-tpl_f)*1e6, n_arr[center0-crang
 ax4.set_ylabel(r'$n\,\mathrm{[10^{17}cm^{-3}]}$',color = 'k')
 ax4.tick_params('y', colors = 'k')
 ax3.grid(); ax3.legend(); plt.show()
-"""
+
 ###############################################################################
 
 fig, ax5 = plt.subplots()
@@ -121,7 +121,7 @@ ax5.set_xlabel('z [cm]')
 
 maxbetacomp = np.zeros(len(z_arr))
 center = -1.
-crange = 120*zmult
+crange = 200*zmult
 betacent = np.zeros(3)
 centloc = np.zeros(3)
 for i in range(len(e_spec)):
@@ -139,11 +139,11 @@ for i in range(len(e_spec)):
     betacent[i] = beta[center]
     beta = beta[center-crange:center+crange]
     ax5.plot((z_arr[center-crange:center+crange]-tpl_f)*1e2, np.array(beta)*1e2, colors[i], label=r'$\gamma/\gamma_{b}$' + " = "+str(e_spec[i]))
-"""
+
 ax5.axvline(x=(centloc[0])*100, c='g')
 ax5.axvline(x=(centloc[1])*100, c='r')
 ax5.axvline(x=(centloc[2])*100, c='b')
-"""
+
 ax5.grid(); ax5.legend(); plt.show()
 
 print("beta at center's waist: ",betacent)
@@ -187,6 +187,8 @@ print("Beta derivative: ",dbetaf)
 print("Der. spread [%]: ",100*(dbetaf[1]-dbetaf[2])/dbetaf[0])
 
 ###############################################################################
+
+sys.exit()
 
 print("Attempting with projected")
 beam_params = PProp.ReturnDefaultElectronParams(path, beta_star=betastar, beta_offset=waist_loc,

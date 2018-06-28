@@ -21,12 +21,12 @@ gam = Foc.gam_def*5
 L = 110e-6 *100 #cm
 """
 
-n0 = 3e20 #cm^-3
-emit = 2.5e-8 * 100# 7 cm-rad
+n0 = 4.9e12 #cm^-3
+emit = 100e-6 * 100# cm-rad
 #beta_f = 43e-6 *100 #cm
-beta_f = 0.565e-3 *100 #cm
-gam = Foc.gam_def*100
-L = 48.88e-6 *100 #cm
+beta_f = .0007 *100 #cm
+gam = 30
+L = 20000e-6 *100 #cm
 
 K = Foc.Calc_K(n0, gam)
 focal = Foc.Calc_Focus_KLength(K, L)

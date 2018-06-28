@@ -235,6 +235,34 @@ def NoPlasma_ThinPlasmaLens(plasmaParams, nez, tpl_offset, tpl_n, tpl_l, debug =
     if debug == 1: argon.plot_long_density_center();
     return argon
 
+#tpl_fit = [a,b,n0] - see ThreeDimensionAnalysis for more details
+def NoPlasma_ThinPlasmaLens_Tanh(plasmaParams, nez, tpl_offset, tpl_fit, debug = 0):
+    tpl_l = 2*tpl_fit[0] + 6*tpl_fit[1]
+    Nz = plasmaParams['Nz']
+    
+    tpl_z = plasmaParams['z0'] + tpl_offset
+    dz = plasmaParams['Z']/(plasmaParams['Nz']-1)
+    
+    tpl_left = tpl_z-.5*tpl_l
+    tpl_right = tpl_z+.5*tpl_l
+    tpl_1 = int(np.floor(tpl_left/dz))
+    tpl_2 = int(np.ceil(tpl_right/dz))
+    if debug==1: print(tpl_1,tpl_2);
+    lens_loc = np.array(range(tpl_2 - tpl_1 - 1)) + tpl_1 + 1
+    
+    z_tpl = np.linspace(-.5 * tpl_l, .5 * tpl_l, len(lens_loc))
+    n_tpl = ThrDim.DoubleTanh(tpl_fit, z_tpl)
+    j=0
+    for i in lens_loc:
+        nez[i] = n_tpl[j]
+        j+=1
+    
+    argon = plasma.Plasma(plasmaParams)
+    n = plasmaParams['n0']*np.ones(Nz, dtype='double')
+    argon.initialize_plasma(n, nez)
+    if debug == 1: argon.plot_long_density_center();
+    return argon
+
 ########################  #####################################
 
 def Calc_CSParams(beamParams, n_arr, z_arr):

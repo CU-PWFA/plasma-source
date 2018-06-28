@@ -1,23 +1,24 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Mon Mar 26 14:09:26 2018
+Created on Thu Jun 28 13:24:24 2018
 
 Given parameters of a VSim simulation, estimate MPP core hours from the
  400 ns per step metric and estimate GB storage from other 3D sims
  
-First estimation for the proposal where dz=dx is requried
+Second estimation where smaller beta and ramp length are considered
 
 @author: chris
 """
+
 import numpy as np
 
 dens = 5e16 #cm^-3
 gbC = 19569.5
 ppc_p = 1
 
-z_start = -0.45
-z_waist = -0.36
+z_start = -0.272
+z_waist = -0.201
 z_end = 0.01
 L_sim = z_end - z_start #m
 
@@ -25,7 +26,7 @@ specie = ["drive", "witness"]
 witness_delay = 135. #um
 drive_window = 10. #um
 lrms = [5.2, 18.] #um
-sigrms = [5.1, 5.9] #um
+sigrms = [4.1, 4.7] #um
 emit_n = [5.3, 7.] #um-rad
 ppc = [8,8] #and plasma is 1
 
