@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed May 04 10:52:25 2018
+Created on Mon Jul  9 13:21:40 2018
 
-Chromatic analysis of TPL
+Version of TPL_Chromaticity meant to handle large offsets
+
+As it turned out, all I really needed to do was shift z_arr also by the amount 
+'position_error', this way z_arr is already shifted but the rest of the code
+understands that it is really offset so the beam is initialized differently
 
 @author: chris
 """
+
 
 import sys
 import BeamPropFuncs as PProp
@@ -23,10 +28,13 @@ zmult=1
 gammab = PProp.def_gamma
 tpl_n = 10.
 
-#tpl_f = 0.10
-#tpl_l = Foc.Calc_Square_Lens(tpl_n*1e17, tpl_f*100, gammab)
+tpl_f = 0.01
+tpl_l = Foc.Calc_Square_Lens(tpl_n*1e17, tpl_f*100, gammab)
 
-tpl_l = 1400
+#tpl_l = 1400
+position_error = -0.0 * 1e6#-7*tpl_f*1e6 #um
+
+delta = 0.01
 
 tpl_f = Foc.Calc_Focus_Square_CM_UM(tpl_n*1e17, tpl_l, gammab)/100
 tpl_f_plus = Foc.Calc_Focus_Square_CM_UM(tpl_n*1e17, tpl_l, gammab*1.01)/100
@@ -35,7 +43,7 @@ tpl_f_mnus = Foc.Calc_Focus_Square_CM_UM(tpl_n*1e17, tpl_l, gammab*0.99)/100
 leftext = 1 #1
 rightext = 3 #3
 
-z_arr = np.linspace(-leftext*tpl_f, rightext*tpl_f, int((leftext+rightext)*tpl_f*1e6+1)*zmult)
+z_arr = np.linspace(-leftext*tpl_f, rightext*tpl_f, int((leftext+rightext)*tpl_f*1e6+1)*zmult) + (position_error / 1e6)
 n_arr = np.zeros(len(z_arr))
 
 dump = 10
@@ -47,9 +55,7 @@ tpl_offset = waist_loc
 z_offset = -z_arr[0]
 z_arr = z_arr + z_offset
 
-position_error = 0#-7*tpl_f*1e6 #um
-
-e_spec = np.array([0, -0.01, 0.01]) + 1.0
+e_spec = np.array([0, -delta, delta]) + 1.0
 colors = np.array(['g-','r-','b-'])
 arrlist = np.array([])
 
@@ -85,35 +91,6 @@ ax2.plot((z_arr-tpl_f)*1e2, n_arr, 'k-')
 ax2.set_ylabel(r'$n\,\mathrm{[10^{17}cm^{-3}]}$',color = 'k')
 ax2.tick_params('y', colors = 'k')
 ax1.grid(); ax1.legend(); plt.show()
-
-###############################################################################
-
-fig, ax3 = plt.subplots()
-plt.title("Beta function evolution at "+r'$f=$'+'{:.3f}'.format(tpl_f*100)+r'$\,\mathrm{cm}$')
-ax3.set_ylabel(r'$\beta\,\mathrm{[cm]}$', color = 'b')
-ax3.tick_params('y', colors = 'b')
-ax3.set_xlabel('z ['+r'$\mu$'+'m]')
-#ax3.set_ylim([-0.05,20.05])
-beta0 = PProp.Calc_CSParams(beam_params0, np.zeros(len(z_arr)), z_arr)[0]
-center0 = np.argmin(beta0)
-crange0 = 150*zmult
-ax3.plot((z_arr[center0-crange0:center0+crange0]-tpl_f)*1e6, np.array(beta0[center0-crange0:center0+crange0])*1e2, 'b--',label=r'$\beta_{vac}$')
-
-for i in range(len(e_spec)):
-#Make beam and bulk plasma just as in single_pass
-    beam_params = PProp.ReturnDefaultElectronParams(path, beta_star=betastar,
-                                                   beta_offset=waist_loc, plasma_start=z_offset,
-                                                   gamma=gammab * e_spec[i])
-    beam = PProp.GaussianBeam(beam_params, debug)
-    
-    beta = PProp.Calc_CSParams(beam_params, n_arr, z_arr)[0]
-    ax3.plot((z_arr[center0-crange0:center0+crange0]-tpl_f)*1e6, np.array(beta[center0-crange0:center0+crange0])*1e2, colors[i], label=r'$\gamma/\gamma_{b}$' + " = "+str(e_spec[i]))
-    
-ax4 = ax3.twinx()
-ax4.plot((z_arr[center0-crange0:center0+crange0]-tpl_f)*1e6, n_arr[center0-crange0:center0+crange0], 'k-')
-ax4.set_ylabel(r'$n\,\mathrm{[10^{17}cm^{-3}]}$',color = 'k')
-ax4.tick_params('y', colors = 'k')
-ax3.grid(); ax3.legend(); plt.show()
 
 ###############################################################################
 
@@ -192,13 +169,11 @@ print("Der. spread [%]: ",100*(dbetaf[1]-dbetaf[2])/dbetaf[0])
 
 ###############################################################################
 
-sys.exit()
-
 print("Attempting with projected")
 beam_params = PProp.ReturnDefaultElectronParams(path, beta_star=betastar, beta_offset=waist_loc,
                                                 plasma_start=z_offset, gamma=gammab)
 
-gb_arr, beta_arr, alpha_arr, gamma_arr, bmag_arr = PProp.Calc_Proj_CSParams(beam_params, n_arr, z_arr, 0.01)
+gb_arr, beta_arr, alpha_arr, gamma_arr, bmag_arr = PProp.Calc_Proj_CSParams(beam_params, n_arr, z_arr, delta)
 
 plt.title("B-mag vs z")
 plt.ylabel("B-mag")

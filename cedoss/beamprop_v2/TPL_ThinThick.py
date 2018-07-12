@@ -24,6 +24,7 @@ betas_arr = np.zeros(num)
 waist_arr = np.zeros(num)
 focus_arr = np.zeros(num)
 focus2_arr = np.zeros(num)
+focus3_arr = np.zeros(num)
 betap_arr = np.zeros(num)
 
 for i in range(len(thick_arr)):
@@ -69,12 +70,16 @@ for i in range(len(thick_arr)):
     betas_arr[i] = betacent
     focus_arr[i] = tpl_f
     focus2_arr[i] = tpl_f*(1-betacent/betastar)
+    focus3_arr[i] = (tpl_f*tpl_l*1e-6)**(1/2)/(np.tan(tpl_l*1e-6/tpl_f))**(1/2) + (tpl_l*1e-6/2)
+    focus3_arr[i] = focus3_arr[i]*(1-betacent/betastar)
+    
     betap_arr[i] = Foc.Calc_BetaStar(betastar, tpl_f)
 
 plt.title("Waist Locations:  Propagation vs Theory")
 plt.semilogy(thick_arr, waist_arr*100, label = "Waist locations")
 #plt.semilogy(thick_arr, focus_arr*100)
-plt.semilogy(thick_arr, focus2_arr*100, label = "f*(1-b_f/b_i)")
+plt.semilogy(thick_arr, focus2_arr*100, label = r'$f*(1-\beta_f^*/\beta_i^*)$')
+#plt.semilogy(thick_arr, focus3_arr*100, label = "f_thick")
 plt.xlabel(r'$\mathrm{Lens \ Thickness \ [\mu m]}$')
 plt.ylabel(r'$\mathrm{Waist \ Location \ [cm]}$')
 plt.grid(); plt.legend(); plt.show()
