@@ -36,11 +36,12 @@ def_nset = 0.5#1203.7 for gas cell
 def_betastar = 0.10
 def_betaoffs = -0.387
 def_gamma = 19569.5 #10 GeV beam
+def_emit = 3e-6 #New value as of July 2018
 
 def_sigma_hw = 14.0e4
 
 def ReturnDefaultElectronParams(path, beta_star=def_betastar, beta_offset=def_betaoffs,
-                                plasma_start=def_startloc, gamma=def_gamma):
+                                plasma_start=def_startloc, gamma=def_gamma, emit=def_emit):
     beta_init = beta_star + np.square(plasma_start + beta_offset)/beta_star
     alpha_init = (plasma_start + beta_offset)/beta_star
     
@@ -50,7 +51,7 @@ def ReturnDefaultElectronParams(path, beta_star=def_betastar, beta_offset=def_be
         'load' : False,
         'N' : 1000,
         'gamma' : gamma,
-        'emittance' : 7e-6,
+        'emittance' : emit,
         'betax' : beta_init,
         'betay' : beta_init,
         'alphax' : alpha_init,
@@ -327,6 +328,29 @@ def Plot_CSEvo(beamParams, n_arr, z_arr, z_offset = 0, legend_loc=0):
     plt.title("Beta function evolution at "+r'$n_0=$'+str(max(n_arr))+r'$\,\mathrm{\times 10^{17}cm^{-3}}$')
     ax1.plot(z_arr*1e2, np.array(beta)*1e2, 'b-', label=r'$\beta$')
     ax1.plot(z_arr*1e2, np.array(beta0)*1e2, 'b--',label=r'$\beta_{vac}$')
+    ax1.set_ylabel(r'$\beta\,\mathrm{[cm]}$', color = 'b')
+    ax1.tick_params('y', colors = 'b')
+    ax1.set_xlabel('z [cm]')
+    ax1.set_ylim([-0.05,20.05])
+    
+    ax2 = ax1.twinx()
+    ax2.plot(z_arr*1e2, n_arr/max(n_arr), 'g-')
+    ax2.set_ylabel(r'$n/n_0$',color = 'g')
+    ax2.tick_params('y', colors = 'g')
+    ax1.grid(); ax1.legend(loc=legend_loc); plt.show()
+    
+def Plot_CSEvo_MatchedCompare(beamParams, beamParams_matched, n_arr, z_arr, z_offset = 0, legend_loc=0):
+    beta, alpha, gamma, gb = Calc_CSParams(beamParams, n_arr, z_arr)
+    beta0, alpha0, gamma0, gb0 = Calc_CSParams(beamParams, np.zeros(len(z_arr)), z_arr)
+    betaM, alphaM, gammaM, gbM = Calc_CSParams(beamParams_matched, np.zeros(len(z_arr)), z_arr)
+    
+    z_arr = z_arr - z_offset
+    #print(" ","beta","beta0"); print(" ",beta[740],beta0[740])
+    fig, ax1 = plt.subplots()
+    plt.title("Beta function evolution at "+r'$n_0=$'+str(max(n_arr))+r'$\,\mathrm{\times 10^{17}cm^{-3}}$')
+    ax1.plot(z_arr*1e2, np.array(beta)*1e2, 'b-', label=r'$\beta$')
+    ax1.plot(z_arr*1e2, np.array(beta0)*1e2, 'b--',label=r'$\beta_{vac}$')
+    ax1.plot(z_arr*1e2, np.array(betaM)*1e2, 'r--',label=r'$\beta_{m,vac}$')
     ax1.set_ylabel(r'$\beta\,\mathrm{[cm]}$', color = 'b')
     ax1.tick_params('y', colors = 'b')
     ax1.set_xlabel('z [cm]')

@@ -9,14 +9,28 @@ My implementation of Robert's code to plot phase space of VSim species
 """
 
 import sys
+import os
 sys.path.insert(0,"../../python")
 from vsim import plot
 
-params = {
-        'species' : 'WitnessBeam',
-        'dumpInd' : 1,
-        'path' : '/home/chris/Desktop/VSim_NERSC_Template_2dTest/',
-        'simName' : 'Drive_Witness_Ramps',
+if __name__ == "__main__":
+    #arg = 'Drive_Witness_Ramps_WitnessBeam_2.h5'
+    arg = sys.argv[1]
+    
+    strlist = arg.split("_")
+    dumpInd = int(strlist[-1].split(".")[0])
+    species = strlist[-2]
+    simname = "_".join(strlist[:-2])
+    
+    #cwd = '/home/chris/Desktop/'
+    cwd = os.getcwd()
+    
+    params = {
+        'species' : species,
+        'dumpInd' : dumpInd,
+        'path' : cwd,
+        'simName' : simname,
         'cutoff' : 0.0
         }
-plot.phase_space(params)
+    print(params)
+    #plot.phase_space(params)

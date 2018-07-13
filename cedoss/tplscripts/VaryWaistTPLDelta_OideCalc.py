@@ -16,11 +16,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 gam = Foc.gam_def
-emit = 7e-6 *100 #cm-rad
+emit = 3e-6 *100 #cm-rad
 beta_i = 10. #cm
-delta_arr = np.linspace(-20,20,401)
-n0 = 5e18
-L = 100e-6 * 100 #cm
+delta_arr = np.linspace(-40,5,401)
+n0 = 1e18
+L = 265e-6 * 100 #cm
 
 simple = 1
 
@@ -79,6 +79,9 @@ else:
 plt.ylabel(r'$\sigma^* \mathrm{\,[\mu m]}$')
 plt.grid(); plt.legend(); plt.show()
 
+print("minimum sigma: ",min(sigo_arr*1e7)," nm")
+
+"""
 plt.plot(delta_arr, ls_arr)
 plt.title("Distance from lens to waist vs delta")
 plt.xlabel(r'$\delta\mathrm{\,[cm]}$')
@@ -91,7 +94,7 @@ zmin_sigo = delta_arr[np.argmin(sigo_arr)]
 print("Predicted min at: ",zmin_pred)
 print("Calculated min  : ",zmin_calc)
 print("Sigma's min at  : ",zmin_sigo)
-
+"""
 betainit_arr = np.zeros(nlen)
 betainit_arr = beta_i + np.square(delta_arr)/beta_i
 
