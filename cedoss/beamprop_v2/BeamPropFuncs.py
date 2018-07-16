@@ -32,7 +32,7 @@ from modules import ThreeDimensionAnalysis as ThrDim
 
 def_startloc = 0.80
 def_lenflat = 0.50
-def_nset = 0.5#1203.7 for gas cell
+def_nset = 10#0.5#1203.7 for gas cell
 def_betastar = 0.10
 def_betaoffs = -0.387
 def_gamma = 19569.5 #10 GeV beam

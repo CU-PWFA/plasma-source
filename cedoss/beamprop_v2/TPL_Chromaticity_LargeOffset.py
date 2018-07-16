@@ -28,10 +28,10 @@ zmult=1
 gammab = PProp.def_gamma
 tpl_n = 10.
 
-tpl_f = 0.01
-tpl_l = Foc.Calc_Square_Lens(tpl_n*1e17, tpl_f*100, gammab)
+#tpl_f = 0.001
+#tpl_l = Foc.Calc_Square_Lens(tpl_n*1e17, tpl_f*100, gammab)
+tpl_l = 1500
 
-#tpl_l = 1400
 position_error = -0.0 * 1e6#-7*tpl_f*1e6 #um
 
 delta = 0.01
@@ -67,7 +67,7 @@ argon_params = PProp.ReturnDefaultPlasmaParams(path, plasma_start = z_offset,
 argon_params['Z'] = z_arr[-1]*1e6
 argon_params['Nz']= len(z_arr)
 argon_params['l_flattop'] = np.NaN; argon_params['sigma_in'] = np.NaN; argon_params['sigma_out'] = np.NaN
-argon = PProp.NoPlasma_ThinPlasmaLens(argon_params, n_arr, tpl_offset*1e6 + position_error, tpl_n, tpl_l, debug)
+argon = PProp.NoPlasma_ThinPlasmaLens(argon_params, n_arr, tpl_offset*1e6 + position_error + tpl_l/2, tpl_n, tpl_l, debug)
 
 fig, ax1 = plt.subplots()
 plt.title("Beta function evolution at "+r'$f=$'+'{:.3f}'.format(tpl_f*100)+r'$\,\mathrm{cm}$')
@@ -181,3 +181,11 @@ plt.xlabel("z [m]")
 plt.plot(z_arr, bmag_arr)
 plt.grid(); plt.show()
 print("Final B-mag: ",bmag_arr[-1])
+"""
+beam = PProp.GaussianBeam(beam_params, debug)
+argon = PProp.CustomPlasma(argon_params, n_arr+.00000000001, 1)
+PProp.PropBeamPlasma(beam, argon, z_arr*1e6, dump, cores, debug)
+m = int(len(z_arr)/dump)-1
+PProp.PlotEmittance(beam,z_arr*1e6,m)
+print("Bmag: ",PProp.GetBmag(beam,m))
+"""
