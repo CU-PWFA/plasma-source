@@ -147,7 +147,7 @@ def plot_field_rt(field, pos, cbar_label):
     Plots a field in the in the rz plane
     '''
     r = pos[0] * 1e6; nr = len(r)
-    t = pos[1] * 1e15; nt = len(t)
+    t = pos[1] * 1e15 + pos[1][-1]*1e15; nt = len(t)
     plt.imshow(abs(field), cmap = 'jet')
     x_locs = [0, nt/2, nt]
     x_labs = [0, 2*int(t[int(len(t)/2 -1)]), 2*int(t[-1])]
