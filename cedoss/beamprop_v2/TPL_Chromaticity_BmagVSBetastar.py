@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Mon Jul  9 15:12:05 2018
+Created on Mon Jul 16 15:24:45 2018
 
 Copy of TPL_Chromaticity_LargeOffset built specifically to measure emittance
-growth vs lens-waist separation
+growth vs lens thickness
 
 @author: chris
 """
@@ -22,21 +22,21 @@ debug = 0
 zmult=1
 
 num = 101
-d_arr = np.linspace(-0.40, -0.00, num)
+betastar_arr = np.linspace(0.03, 0.30, num)
 emit_arr = np.zeros(num)
 betamin_arr = np.zeros(num)
+position_error = 0
 
 gammab = PProp.def_gamma
 tpl_n = 10.
 tpl_l = 110.5
-betastar = .10 #0.00213065326633
 
 delta = 0.01
 
-for k in range(len(d_arr)):
-    if k%10 == 0: print(k/len(d_arr)*100,"%");
-    position_error = d_arr[k] * 1e6 #um
+for k in range(len(betastar_arr)):
+    if k%10 == 0: print(k/len(betastar_arr)*100,"%");
     
+    betastar = betastar_arr[k]
     tpl_f = Foc.Calc_Focus_Square_CM_UM(tpl_n*1e17, tpl_l, gammab)/100
     
     leftext = 1 #1
@@ -96,34 +96,33 @@ for k in range(len(d_arr)):
     emit_arr[k] = bmag_arr[-1]
 
 kl = 1/tpl_f
-bw = betastar * kl
-dw_arr = d_arr * kl
+bw_arr = betastar_arr * kl
+dw = 0
 sigmaE = 0.60 * delta
-bmag_w2_arr = W2.CalcEmit(W2.ThinW2_Norm(bw, dw_arr),sigmaE)
+bmag_w2_arr = W2.CalcEmit(W2.ThinW2_Norm(bw_arr, dw),sigmaE)
 
 #Thick
-l = tpl_l*1e-6
-k = 1/(l*tpl_f)
-bmag_w2_arr_thick = np.zeros(len(d_arr))
-for x in range(len(d_arr)):
-    w2 = W2.ThickW2_UnNormalized(k, l, betastar, d_arr[x])
+k = 1/(tpl_l*1e-6*tpl_f)
+bmag_w2_arr_thick = np.zeros(len(betastar_arr))
+for x in range(len(betastar_arr)):
+    w2 = W2.ThickW2_UnNormalized(k, tpl_l*1e-6, betastar_arr[x], 0)
     bmag_w2_arr_thick[x] = W2.CalcEmit(w2, sigmaE)
 
-plt.title("B-mag vs Lens-Waist Separation for L = "+str(tpl_l)+r'$\ \mu m$')
-plt.plot(d_arr*1e2, emit_arr, label = "Beam Propagation")
-plt.plot(d_arr*1e2, bmag_w2_arr, label = "Analytic Thin")
-plt.plot(d_arr*1e2, bmag_w2_arr_thick, label = "Analytic Thick")
+plt.title("B-mag vs " + r'$\mathrm{Inital \ Vacuum \ }\beta_i^*$' + " for L = "+str(tpl_l)+r'$\ \mu m$')
+plt.plot(betastar_arr*1e2, emit_arr, label = "Beam Propagation")
+plt.plot(betastar_arr*1e2, bmag_w2_arr, label = "Analytic Thin")
+plt.plot(betastar_arr*1e2, bmag_w2_arr_thick, label = "Analytic Thick")
 plt.ylabel("B-mag")
-plt.xlabel("Lens-Waist Separation d [cm]")
+plt.xlabel(r'$\mathrm{Inital \ Vacuum \ }\beta_i^* \mathrm{\ [cm]}$')
 plt.grid(); plt.legend(); plt.show()
 
-plt.title("Minimum "+r'$\beta$'+" vs Lens-Waist Separation for L = "+str(tpl_l)+r'$\ \mu m$')
-plt.plot(d_arr*1e2, betamin_arr*1e6)
+plt.title("Minimum "+r'$\beta$'+" vs " + r'$\mathrm{Inital \ Vacuum \ }\beta_i^*$' + " for L = "+str(tpl_l)+r'$\ \mu m$')
+plt.plot(betastar_arr*1e2, betamin_arr*1e6)
 plt.ylabel(r'$\beta_{min}\mathrm{\ [\mu m]}$')
-plt.xlabel("Lens-Waist Separation d [cm]")
+plt.xlabel(r'$\mathrm{Inital \ Vacuum \ }\beta_i^* \mathrm{\ [cm]}$')
 plt.grid(); plt.show()
 
 minloc = np.argmin(betamin_arr)
 print("Minimum possible beta: ",betamin_arr[minloc]*1e6," um")
-print("d = ",d_arr[minloc]*100," cm")
+print("bi = ",betastar_arr[minloc]*1e2," cm")
 print("B-mag = ",emit_arr[minloc])
