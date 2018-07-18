@@ -30,6 +30,20 @@ def peak_charge_dens(beamParams):
     Q       = beamParams[3]
     pPK = Q / ((2*np.pi)**(3/2) * sigma_r**2 * sigma_z)
     return pPK
+def get_sigma_r(en, beta_s, gamma):
+    '''
+    Computes the width of the electron beam.
+    
+    Params:
+    -------
+    en : float
+        Beam normalized emittance in m-rad
+    beta_s : float
+        beam beta function at waist
+    gamma : float
+        Relativistic factor of the beam
+    '''
+    return np.sqrt(en * beta_s /gamma)
 def rad_E_field(pos, beamParams, eps0 = SI.permFreeSpace,\
                 c = SI.lightSpeed, peak = False, rz = False):
     '''
@@ -121,7 +135,25 @@ def ionization_rate(Er, beamParams, Vi, Z = 1):
          (20.5 * Vi**(3/2) / Er)**(2*n-1) * \
          np.exp(-6.83 * Vi**1.5 /Er);
     return W
-def plasmaDens(W, t):
+def maxIonization(beta_s, sigma_z, gamma, en, Q, Vi, c = SI.lightSpeed):
+    max_ion = np.zeros(len(beta_s))
+    beta = np.sqrt(1 - 1 / gamma**2)
+    npoints = 1000
+    n_sigma_r = 10;
+    n_sigma_t = 10;
+    sigma_t = sigma_z / (beta * c)
+    t = np.linspace(-(sigma_t/2)*n_sigma_t, (sigma_t/2) * n_sigma_t, npoints)
+    for i in range(len(beta_s)):
+        sigma_r = get_sigma_r(en, beta_s[i], gamma)
+        r = np.linspace(-sigma_r * n_sigma_r, sigma_r * n_sigma_r, npoints)
+        pos = [r, t]
+        beamParams = [sigma_z, sigma_r, beta, Q]
+        dum, dum, Er = rad_E_field(pos, beamParams, peak = True)
+        W = ionization_rate(Er, beamParams, Vi)
+        n = plasmaDens([W], t, sigma_t)
+        max_ion[i] = np.amax(n)
+    return max_ion
+def plasmaDens(W, t, sigma_t):
     '''
     Calculates the plasma density of the gas ionized by the electron beam in 
     the r-t plane
@@ -138,28 +170,54 @@ def plasmaDens(W, t):
     '''
     
     # Preallocate for loop
-    n_plasma = np.zeros((len(W)))
-    for i in range(len(W)):
-        n_plasma[i] = 1 - np.exp(-simps(W[i,:]*1e15, t))
+    if len(W) == 1:
+        n_plasma = 1 - np.exp(-W[0] * 1e15 * sigma_t)
+    else:
+        n_plasma = np.zeros((len(W)))
+        for i in range(len(W)):
+            n_plasma[i] = 1 - np.exp(-simps(W[i,:]*1e15, t))
     return n_plasma
-def plot_field_rt(field, pos, cbar_label):
+def plot_plasma(r, n_plasma, limits, gas, betas):
+    '''
+    Plots the ionization fraction of a neutral gas along r. 
+    '''
+    label1 = r'$\beta$ = ' + str(betas[0])
+    plt.plot(r[0] * 1e6, n_plasma[0], '-b', label = label1)
+    if len(betas) > 1:
+        label2 = r'$\beta$ = ' + str(betas[1])
+        plt.plot(r[1] * 1e6, n_plasma[1], '--r', label = label2)
+    plt.ylabel('$n/n_0$')
+    plt.xlabel('r [$\mu$m]')
+    plt.title('Ionization Fraction of ' + gas)
+    plt.xlim(limits)
+    plt.legend(bbox_to_anchor=(1, 1), loc=1, borderaxespad=0)
+    plt.show()
+def plot_field_rt(field, pos, cbar_label, lims = [], gas = False, gasName = None):
     '''
     Plots a field in the in the rz plane
     '''
+    if gas:
+        title = 'Ionization Rate of ' + gasName
+    else:
+        title = '';
     r = pos[0] * 1e6; nr = len(r)
     t = pos[1] * 1e15 + pos[1][-1]*1e15; nt = len(t)
-    plt.imshow(abs(field), cmap = 'jet')
+    if not lims:
+        plt.imshow(field, cmap = 'jet')
+    else:
+        plt.imshow(field, cmap = 'jet', vmin = lims[0], vmax = lims[1])
     x_locs = [0, nt/2, nt]
     x_labs = [0, 2*int(t[int(len(t)/2 -1)]), 2*int(t[-1])]
     y_locs = [0, nr/2, nr] 
-    y_labs = [int(r[-1]), int(r[int(nr/2 - 1)]), \
-              int(r[0])]
+    y_labs = [int(r[0]), int(r[int(nr/2 - 1)]), \
+              int(r[-1])]
     plt.xticks(x_locs, x_labs)
     plt.yticks(y_locs, y_labs)
     cbar = plt.colorbar()
     cbar.set_label(cbar_label)
     plt.xlabel('t [fs]');
     plt.ylabel('r [$\mu$m]');
+    plt.title(title)
     plt.show()
 def plot_field_rz_norm(field, pos, beamParams, cbar_label):
     '''
@@ -183,3 +241,22 @@ def plot_field_rz_norm(field, pos, beamParams, cbar_label):
     plt.xlabel('z/$\sigma_z$');
     plt.ylabel('r/$\sigma_r$');
     plt.show()
+def plot_2D_plasma(W, r, t, lims, title, c = SI.lightSpeed):
+    W_int = np.fliplr(np.cumsum(W, axis = 1)) * ((t[1]-t[0]) * 1e15)
+    n_rz = 1 - np.exp(-W_int)
+    plt.imshow(n_rz, cmap = 'jet', vmin = lims[0], vmax = lims[1])
+    nt = len(t)
+    nr = len(r)
+    t_arr = t - t[0]
+    y_locs = np.array([0, nr/4, nr/2, 3*nr/4, nr-1]); y_locs = [int(i) for i in y_locs]
+    x_locs = [0, nt/4, nt/2, 3*nt/4, nt-1]; x_locs = [int(i) for i in x_locs]
+    y_labs = [int(i*1e6) for i in r[y_locs]]
+    x_labs = [int(i*1e6*c) for i in t_arr[x_locs]]
+    plt.yticks(y_locs, y_labs)
+    plt.xticks(x_locs, x_labs)
+    plt.xlabel('z [$\mu$m]')
+    plt.ylabel('r [$\mu$m]')
+    plt.title(title)
+    plt.colorbar()
+    plt.show()
+    return n_rz;
