@@ -7,14 +7,16 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.special import gamma as gm
 from scipy.integrate import simps
+
+
 def peak_charge_dens(beamParams):
     ''' 
     Computes the peak charge density of a Gaussian beam
 
     Params:
     -------
-    beamParams : array_like
-        Array of beam parameters 
+    beamParams : array_like, array of beam parameters
+        dictionary of beam parameters 
         [0] - sigma_z, longitudinal beam size m
         [1] - sigma_r, transverse beam size m
         [2] - beta, relativistic factor of beam (no energy spread)
@@ -241,10 +243,13 @@ def plot_field_rz_norm(field, pos, beamParams, cbar_label):
     plt.xlabel('z/$\sigma_z$');
     plt.ylabel('r/$\sigma_r$');
     plt.show()
-def plot_2D_plasma(W, r, t, lims, title, c = SI.lightSpeed):
+def plot_2D_plasma(W, r, t, title, lims = [], c = SI.lightSpeed):
     W_int = np.fliplr(np.cumsum(W, axis = 1)) * ((t[1]-t[0]) * 1e15)
     n_rz = 1 - np.exp(-W_int)
-    plt.imshow(n_rz, cmap = 'jet', vmin = lims[0], vmax = lims[1])
+    if not lims:
+        plt.imshow(n_rz, cmap = 'jet')
+    else:
+        plt.imshow(n_rz, cmap = 'jet', vmin = lims[0], vmax = lims[1])
     nt = len(t)
     nr = len(r)
     t_arr = t - t[0]
