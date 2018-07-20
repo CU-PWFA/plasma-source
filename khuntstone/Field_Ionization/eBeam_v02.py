@@ -7,8 +7,7 @@ from scipy.special import gamma as gm
 from scipy.integrate import simps
 
 global gasDict
-gasDict = {Ar : {'Vi' : 15.75962, 'Name' : 'Ar$^{++}$' }
-}	
+gasDict = {'Ar' : {'Vi' : 15.75962, 'Name' : 'Ar$^{++}$' }}	
 def peak_charge_dens(beamParams):
 	''' 
 	Computes the peak charge density of a Gaussian beam
