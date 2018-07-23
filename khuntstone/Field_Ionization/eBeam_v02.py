@@ -6,8 +6,18 @@ import matplotlib.pyplot as plt
 from scipy.special import gamma as gm
 from scipy.integrate import simps
 
-global gasDict
-gasDict = {'Ar' : {'Vi' : 15.75962, 'Name' : 'Ar$^{++}$' }}	
+global plasmaDict
+# Dictionary of plasmas and their attributes 
+plasmaDict = {'Ar+' : {'Vi' : 15.75962, 'Name' :  'Ar$^{+}$', 'Z' : 1},
+		   'Ar2+': {'Vi' : 27.62967, 'Name' : 'Ar$^{2+}$', 'Z' : 2},
+		   'Ar3+': {'Vi' : 40.74, 'Name' : 'Ar$^{3+}$', 'Z' : 3},
+		   'Ar4+': {'Vi' : 59.81, 'Name': 'Ar$^{4+}$', 'Z' : 4},
+		   'Ar5+': {'Vi' : 59.81, 'Name': 'Ar$^{5+}$', 'Z' : 5},
+		   'He+': {'Vi' : 59.81, 'Name': 'Ar$^{4+}$', 'Z' : 1},
+		   'He2+': {'Vi': 59.81, 'Name': 'Ar$^{5+}$', 'Z' : 2}
+}
+	
+	
 def peak_charge_dens(beamParams):
 	''' 
 	Computes the peak charge density of a Gaussian beam
@@ -34,6 +44,7 @@ def peak_charge_dens(beamParams):
 	sigma_r = beamParams['sigma_r']
 	Q       = beamParams['charge']
 	return Q / ((2*np.pi)**(3/2) * sigma_r**2 * sigma_z)
+
 def get_sigma_r(beamParams):
 	'''
 	Calculates transverse beam width from beam emittance, gamma, and beta_s and 
@@ -55,8 +66,9 @@ def get_pos(beamParams, nr = 10, nxi = 10, npoints = 1000):
 		r_arr[i][:] = np.linspace(-nr * sigma_r[i], nr * sigma_r[i], npoints)
 	xi_arr = np.linspace(-nxi * sigma_z, nxi * sigma_z, npoints)
 	return r_arr, xi_arr, npoints
+
 def rad_E_field(pos, beamParams, eps0 = SI.permFreeSpace, \
-				c = SI.lightSpeed, peak = False, rz = False):
+				c = SI.lightSpeed, peak = False):
 	'''
 	Computes the radial electric field of an electron beam, assumes beam is 
 	transversely and radially gaussian.
@@ -71,13 +83,11 @@ def rad_E_field(pos, beamParams, eps0 = SI.permFreeSpace, \
 		beamParams as described above
 	peak : Boolean, optional
 		Set to true if you only want the peak E-field 
-	rz : Boolean, optional
-		Set to true to compute the E(r,z) with t = 0.0, default false
 
 	Returns:
 	--------
 	Er : array_like
-		3D array of electric field values at r, and, xi, and sigma_r, GV/m
+		3D array of electric field values at r, xi, and sigma_r, GV/m
 	rPeak : float
 		Approximate position of peak radial electric field um
 	EPeak : float
@@ -105,7 +115,7 @@ def rad_E_field(pos, beamParams, eps0 = SI.permFreeSpace, \
 						np.exp(-(xi)**2 / (2 * sigma_z**2))
 			Er[i, :,:] = Er[i,:,:] / 1e9;
 		return Er, rPeak, EPeak
-def ionization_rate(Er, beamParams, Vi, Z = 1):
+def ionization_rate(Er, beamParams, gasName):
 	''' 
 	Computes the ionization rate of a neutral gas due to the radial electric 
 	field of a transversely and radially Gaussian beam
@@ -118,27 +128,22 @@ def ionization_rate(Er, beamParams, Vi, Z = 1):
 		3D array of the radial electric field in sigma_r, r, and t
 	beamParams : dictionary
 		dictionary of beam parameters as defined above
-	Vi : float
-		the ionization potential of the neutral gas
-	Z : int, optional
-		atomic residue charge after ionization, default 1
-
+	gasName : str
+		Name of plasma to compute ionization rate, must be key in plasmaDict
 	Returns:
 	--------
-	W_t : array like
-		3D array of ionization rate in sigma_r, r, and t
-	W_z : array_like
-		3D array of ionization rate in sigma_r, r, and z
+	W : array like
+		3D array of ionization rate in sigma_r, r, and xi
 	'''
 	Vh = 13.6; 
+	Vi = plasmaDict[gasName]['Vi']
+	Z  = plasmaDict[gasName]['Z']
 	n = Z / np.sqrt(Vi/Vh);
 	Er = abs(Er)
 
 	W = 1.52 * ((4**n * Vi) / (n * gm(2*n))) * \
 		 (20.5 * Vi**(3/2) / Er)**(2*n-1) * \
 		 np.exp(-6.83 * Vi**1.5 /Er);
-
-
 	return W
 def ionization_frac(W, pos, beamParams, c = SI.lightSpeed):
 	'''
@@ -163,14 +168,17 @@ def ionization_frac(W, pos, beamParams, c = SI.lightSpeed):
 	plasma_frac = 1 - np.exp(-simps(W * 1e15, t));
 	max_frac = np.max(plasma_frac, axis = 1);
 	return plasma_frac, max_frac
+
 def plot_plasma_frac(plasma_frac, pos, beamParams, gasName, ind):
 	beta_s = beamParams['beta_s'][ind]
-	title = 'Ionization Fraction of ' + gasName + ' $\\beta$ = %.2f' % beta_s
+	name = plasmaDict['gasName']['Name']
+	title = 'Ionization Fraction of ' + name + ' $\\beta$ = %.2f' % beta_s
 	plt.plot(pos['r'][ind]*1e6, plasma_frac[ind])
 	plt.xlabel('r [$\mu$m]')
 	plt.ylabel('Ionization Fraction')
 	plt.title(title)
 	plt.show()
+
 def neutral_ring_width(plasma_frac, pos):
 	'''
 	Computes the width of the neutral gas ring for each beta_s
@@ -205,41 +213,44 @@ def neutral_ring_width(plasma_frac, pos):
 					 int(np.argwhere(upper_half[0:max_upper_ind] == 0)[-1]) + \
 					 int(npoints/2)
 			width[i] = r[i][upper_zero] - r[i][lower_zero]
-	return width	
+	return width
+
 def plot_width(widths, plasmaNames, beamParams, logx = False, logy = False, \
 	           log = False):
+	names = [plasmaDict[i]['Name'] for i in gasNames] 
 	for i in range(len(widths)):
 		if logx:
 			plt.semilogx(beamParams['beta_s'], widths[i]*1e6,\
-						 label = plasmaNames[i])
+						 label = names[i])
 		elif logy:
 			plt.semilogy(beamParams['beta_s'], widths[i]*1e6,\
-						 label = plasmaNames[i])
+						 label = names[i])
 		elif log:
 			plt.loglog(beamParams['beta_s'], widths[i]*1e6, \
-					 label = plasmaNames[i])
+					 label = names[i])
 		else:
 			plt.plot(beamParams['beta_s'], widths[i]*1e6,\
-						 label = plasmaNames[i])
+						 label = names[i])
 	plt.xlabel('$\\beta$ [m]')
 	plt.ylabel('Neutral gas Diameter [$\\mu$m]')
 	plt.legend()
 	plt.show()
 def plot_max_frac(max_frac, beamParams, plasmaNames, logx = False,\
 	logy = False, log = False):
+	names = [plasmaDict[i]['Name'] for i in plasmaNames]
 	for i in range(len(max_frac)):
 		if logx:
 			plt.semilogx(beamParams['beta_s'], max_frac[i], \
-				label = plasmaNames[i])
+				label = names[i])
 		elif logy:
 			plt.semilogy(beamParams['beta_s'], max_frac[i], \
-				label = plasmaNames[i])
+				label = names[i])
 		elif log:
 			plt.loglog(beamParams['beta_s'], max_frac[i], \
-				label = plasmaNames[i])
+				label = names[i])
 		else:
 			plt.plot(beamParams['beta_s'], max_frac[i], \
-				label = plasmaNames[i])
+				label = names[i])
 	plt.xlabel('$\\beta$ [m]')
 	plt.ylabel('Maximum Ionization Fraction')
 	plt.legend()
