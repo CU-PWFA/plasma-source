@@ -72,6 +72,28 @@ def Calc_WaistPos_DeltaOff(beta_i, focal, delta=0):
     z = ((1/focal)*(beta_i**2 + delta**2) - delta)/((beta_i/focal)**2+(1-delta/focal)**2)
     return z
 
+#Where l, b, d are defined
+#l = tpl_l * sqrt(k)
+#b = beta_i * sqrt(k)
+#d = d * sqrt(k)
+#Distance from edge of lens to waist for thick lenses
+def Calc_ThickWaistPos_DeltaOff_UnNormalized(tpl_k, tpl_l, beta_i, d):
+    return Calc_ThickWaistPos_DeltaOff(tpl_l*np.sqrt(tpl_k), beta_i*np.sqrt(tpl_k),
+                                       d*np.sqrt(tpl_k))/np.sqrt(tpl_k)
+
+def Calc_ThickWaistPos_DeltaOff(l, b, d):
+    num = (np.square(b)+np.square(d)-1)*(np.cos(l)*np.sin(l))-d*np.cos(2*l)
+    den = (np.square(b)+np.square(d))*np.square(np.sin(l))+np.square(np.cos(l))-d*np.sin(2*l)
+    return num/den
+    
+def Calc_ThickBetaStar_DeltaOff_UnNormalized(tpl_k, tpl_l, beta_i, d):
+    return Calc_ThickBetaStar_DeltaOff(tpl_l*np.sqrt(tpl_k), beta_i*np.sqrt(tpl_k),
+                                       d*np.sqrt(tpl_k))/np.sqrt(tpl_k)
+    
+def Calc_ThickBetaStar_DeltaOff(l, b, d):
+    den = (np.square(b)+np.square(d))*np.square(np.sin(l))+np.square(np.cos(l))-d*np.sin(2*l)
+    return b/den
+
 if __name__ == '__main__':
     beta_i = .10
     beta_f = 0.011693

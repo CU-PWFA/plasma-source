@@ -29,3 +29,26 @@ def ThickW2(l, b, d):
     thirdn = (-d*np.cos(l)**2+d*np.sin(l)**2-.5*(1-b**2-d**2)*np.sin(2*l))*(-d*l*np.cos(l)**2+(1+d*l)*np.sin(l)**2+.5*(d-l+b**2*l+d**2*l)*np.sin(2*l))
     thirdd = (b**2+d**2)*np.cos(l)**2+np.sin(l)**2+d*np.sin(2*l)
     return first + 1/b**2*(second - thirdn / thirdd)**2
+
+def ProjBeta_UnNormalized(kl, b, d, delta):
+    return ProjBeta(b*kl, d*kl, delta)/kl
+    
+#Normalized to k*l.  Valid for thin lenses.
+def ProjBeta(b, d, delta):
+    first = 2*b*delta*(b**2+(d-1)**2)**2
+    second = 2*delta/(delta**2-1)*(b**6*(delta**2-2)+(delta**2-2)*(d-1)**2*d**4+b**2*(d-1)*(3*d-1)*(delta**2-1+(delta**2-2)*d**2)+b**4*(-3+4*d-6*d**2+delta**2*(3+d*(3*d-2))))
+    third = -4*(b**2+(d-1)*d)*(b**2-d*(b**2+d**2)+(b**2+d**2)**2)*np.arctanh(delta)
+    return (second + third) / first
+
+#This approach used an unnecesary assumption
+"""
+def ProjBeta_UnNormalized_OLD(kl, b, d, delta):
+    return ProjBeta_OLD(b*kl, d*kl, delta)/kl
+    
+#Normalized to k*l.  Valid for thin lenses.
+def ProjBeta_OLD(b, d, delta):
+    first = 2*delta*b*(b**2 + (b**2 + d**2)**2)
+    second = (b**4 + 3*b**2*d +d**3 - d**4)*(np.arctan(b/(d-1+delta))-np.arctan(b/(d-1-delta)))
+    third = (b**3*(d-1) + b*d**3)*np.log((b**2+(1-d-delta)**2)/(b**2+(1-d+delta)**2))
+    return 1/(2*delta*b**2)*(first + (b**2+d**2-d)*(second - third))
+"""

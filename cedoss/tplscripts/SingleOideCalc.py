@@ -17,9 +17,16 @@ import matplotlib.pyplot as plt
 n0 = 1e18 #cm^-3
 emit = 3e-6 * 100# 7 cm-rad
 beta_i = 10 #cm
-beta_f = 0.0188 #cm
+beta_f = 36.795*1e-4 #cm
 gam = Foc.gam_def
-L = 265e-6 *100 #cm
+L = 600e-6 *100 #cm
+
+n0 = 1e18 #cm^-3
+emit = 3e-6 * 100# 7 cm-rad
+beta_i = 10 #cm
+beta_f = 36.795*1e-4 #cm
+gam = Foc.gam_def
+L = 1500e-6 *100 #cm
 
 """Thompson 2010
 n0 = 4.9e12 #cm^-3

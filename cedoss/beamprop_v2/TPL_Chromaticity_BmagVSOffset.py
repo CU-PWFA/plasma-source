@@ -25,6 +25,7 @@ num = 101
 d_arr = np.linspace(-0.40, -0.00, num)
 emit_arr = np.zeros(num)
 betamin_arr = np.zeros(num)
+betapromin_arr= np.zeros(num)
 
 gammab = PProp.def_gamma
 tpl_n = 10.
@@ -91,15 +92,17 @@ for k in range(len(d_arr)):
     beam_params = PProp.ReturnDefaultElectronParams(path, beta_star=betastar, beta_offset=waist_loc,
                                                     plasma_start=z_offset, gamma=gammab)
     
-    gb_arr, beta_arr, alpha_arr, gamma_arr, bmag_arr = PProp.Calc_Proj_CSParams(beam_params, n_arr, z_arr, delta)
+    gb_arr, beta_arr, alpha_arr, gamma_arr, bmag_arr, betapro_arr = PProp.Calc_Proj_CSParams(beam_params, n_arr, z_arr, delta)
     
+    betapromin_arr[k] = min(betapro_arr)
     emit_arr[k] = bmag_arr[-1]
 
 kl = 1/tpl_f
 bw = betastar * kl
 dw_arr = d_arr * kl
 sigmaE = 0.60 * delta
-bmag_w2_arr = W2.CalcEmit(W2.ThinW2_Norm(bw, dw_arr),sigmaE)
+w2_arr = W2.ThinW2_Norm(bw, dw_arr)
+bmag_w2_arr = W2.CalcEmit(w2_arr,sigmaE)
 
 #Thick
 l = tpl_l*1e-6
@@ -108,6 +111,12 @@ bmag_w2_arr_thick = np.zeros(len(d_arr))
 for x in range(len(d_arr)):
     w2 = W2.ThickW2_UnNormalized(k, l, betastar, d_arr[x])
     bmag_w2_arr_thick[x] = W2.CalcEmit(w2, sigmaE)
+
+projbeta_arr = np.zeros(len(d_arr))
+projbetaAlt_arr = np.zeros(len(d_arr))
+for x in range(len(d_arr)):
+    projbeta_arr[x] = W2.ProjBeta_UnNormalized(kl, betastar, d_arr[x], delta)
+    projbetaAlt_arr[x] = W2.ProjBetaAlt_UnNormalized(kl, betastar, d_arr[x], delta)
 
 plt.title("B-mag vs Lens-Waist Separation for L = "+str(tpl_l)+r'$\ \mu m$')
 plt.plot(d_arr*1e2, emit_arr, label = "Beam Propagation")
@@ -118,12 +127,32 @@ plt.xlabel("Lens-Waist Separation d [cm]")
 plt.grid(); plt.legend(); plt.show()
 
 plt.title("Minimum "+r'$\beta$'+" vs Lens-Waist Separation for L = "+str(tpl_l)+r'$\ \mu m$')
-plt.plot(d_arr*1e2, betamin_arr*1e6)
+plt.plot(d_arr*1e2, betamin_arr*1e6, label="Measured")
+plt.plot(d_arr*1e2, Foc.Calc_BetaStar_DeltaOff(betastar, tpl_f, d_arr)*1e6, label="Ideal Calculated")
+plt.plot(d_arr*1e2, projbeta_arr*1e6, label="Calculated "+r'$\beta_{pro}$')
+plt.plot(d_arr*1e2, betapromin_arr*1e6, label="Propagated "+r'$\beta_{pro}$')
 plt.ylabel(r'$\beta_{min}\mathrm{\ [\mu m]}$')
 plt.xlabel("Lens-Waist Separation d [cm]")
-plt.grid(); plt.show()
+plt.ylim([.1*min(betamin_arr*1e6), 1*max(betamin_arr*1e6)])
+plt.grid(); plt.legend(); plt.show()
 
 minloc = np.argmin(betamin_arr)
 print("Minimum possible beta: ",betamin_arr[minloc]*1e6," um")
 print("d = ",d_arr[minloc]*100," cm")
 print("B-mag = ",emit_arr[minloc])
+
+plt.plot(d_arr*1e2, np.sqrt(projbeta_arr*3e-6*bmag_w2_arr/gammab)*1e9, label="Calculated "+r'$\sigma_r$')
+plt.plot(d_arr*1e2, np.sqrt(projbeta_arr*3e-6*bmag_w2_arr_thick/gammab)*1e9, label="Thick Calculated "+r'$\sigma_r$')
+plt.plot(d_arr*1e2, np.sqrt(betapromin_arr*3e-6*emit_arr/gammab)*1e9, label="Propagated "+r'$\sigma_r$')
+plt.ylabel(r'$\sigma_r\mathrm{\ [nm]}$')
+plt.xlabel("Lens-Waist Separation d [cm]")
+plt.grid(); plt.legend(); plt.show()
+
+diff = np.sqrt(projbeta_arr*3e-6*bmag_w2_arr/gammab)*1e9 - np.sqrt(projbetaAlt_arr*3e-6*bmag_w2_arr/gammab)*1e9
+#plt.plot(d_arr*1e2, np.sqrt(projbeta_arr*3e-6*bmag_w2_arr/gammab)*1e9, label="Calculated "+r'$\sigma_r$')
+#plt.plot(d_arr*1e2, np.sqrt(projbetaAlt_arr*3e-6*bmag_w2_arr/gammab)*1e9, label="Calculated "+r'$\sigma_r$')
+plt.plot(d_arr*1e2, diff, label="Difference between methods")
+plt.ylabel(r'$\sigma_r\mathrm{\ [nm]}$')
+plt.xlabel("Lens-Waist Separation d [cm]")
+plt.grid(); plt.legend(); plt.show()
+

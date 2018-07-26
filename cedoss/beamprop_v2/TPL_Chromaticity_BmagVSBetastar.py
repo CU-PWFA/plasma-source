@@ -20,16 +20,16 @@ from modules import CalcEmitGrowth as W2
 path = '/home/chris/Desktop/BeamProp/Placeholder'
 debug = 0
 zmult=1
-
+"""
 num = 101
-betastar_arr = np.linspace(0.03, 0.30, num)
+betastar_arr = np.linspace(0.05, 1.00, num)
 emit_arr = np.zeros(num)
 betamin_arr = np.zeros(num)
 position_error = 0
 
 gammab = PProp.def_gamma
-tpl_n = 10.
-tpl_l = 110.5
+tpl_n = 0.5
+tpl_l = 200.0
 
 delta = 0.01
 
@@ -40,7 +40,7 @@ for k in range(len(betastar_arr)):
     tpl_f = Foc.Calc_Focus_Square_CM_UM(tpl_n*1e17, tpl_l, gammab)/100
     
     leftext = 1 #1
-    rightext = 3 #3
+    rightext = 2 #3
     
     z_arr = np.linspace(-leftext*tpl_f, rightext*tpl_f, int((leftext+rightext)*tpl_f*1e6+1)*zmult) + (position_error / 1e6)
     n_arr = np.zeros(len(z_arr))
@@ -94,7 +94,7 @@ for k in range(len(betastar_arr)):
     gb_arr, beta_arr, alpha_arr, gamma_arr, bmag_arr = PProp.Calc_Proj_CSParams(beam_params, n_arr, z_arr, delta)
     
     emit_arr[k] = bmag_arr[-1]
-
+"""
 kl = 1/tpl_f
 bw_arr = betastar_arr * kl
 dw = 0
@@ -109,7 +109,7 @@ for x in range(len(betastar_arr)):
     bmag_w2_arr_thick[x] = W2.CalcEmit(w2, sigmaE)
 
 plt.title("B-mag vs " + r'$\mathrm{Inital \ Vacuum \ }\beta_i^*$' + " for L = "+str(tpl_l)+r'$\ \mu m$')
-plt.plot(betastar_arr*1e2, emit_arr, label = "Beam Propagation")
+#plt.plot(betastar_arr*1e2, emit_arr, label = "Beam Propagation")
 plt.plot(betastar_arr*1e2, bmag_w2_arr, label = "Analytic Thin")
 plt.plot(betastar_arr*1e2, bmag_w2_arr_thick, label = "Analytic Thick")
 plt.ylabel("B-mag")
@@ -117,10 +117,11 @@ plt.xlabel(r'$\mathrm{Inital \ Vacuum \ }\beta_i^* \mathrm{\ [cm]}$')
 plt.grid(); plt.legend(); plt.show()
 
 plt.title("Minimum "+r'$\beta$'+" vs " + r'$\mathrm{Inital \ Vacuum \ }\beta_i^*$' + " for L = "+str(tpl_l)+r'$\ \mu m$')
-plt.plot(betastar_arr*1e2, betamin_arr*1e6)
-plt.ylabel(r'$\beta_{min}\mathrm{\ [\mu m]}$')
+plt.plot(betastar_arr*1e2, betamin_arr*1e2, label = r'$\beta_{min}$')
+plt.plot(betastar_arr*1e2, betastar_arr/(1+np.square(betastar_arr/tpl_f))*1e2, label = r'$\beta_{f,centroid}$')
+plt.ylabel(r'$\beta_{min}\mathrm{\ [c m]}$')
 plt.xlabel(r'$\mathrm{Inital \ Vacuum \ }\beta_i^* \mathrm{\ [cm]}$')
-plt.grid(); plt.show()
+plt.grid(); plt.legend(); plt.show()
 
 minloc = np.argmin(betamin_arr)
 print("Minimum possible beta: ",betamin_arr[minloc]*1e6," um")

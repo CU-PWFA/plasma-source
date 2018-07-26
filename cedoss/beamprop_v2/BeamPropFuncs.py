@@ -296,12 +296,13 @@ def Calc_Proj_CSParams(beamParams, n_arr, z_arr, delta):
     alpha = np.zeros(beta.shape)
     gamma = np.zeros(beta.shape)
     
-    for i in range(len(gb_arr)):
+    for n in range(len(gb_arr)):
         beamParamsCopy = beamParams.copy()
-        beamParamsCopy['gamma'] = gb_arr[i]
-        beta[i], alpha[i], gamma[i], gb = Calc_CSParams(beamParamsCopy, n_arr, z_arr)
+        beamParamsCopy['gamma'] = gb_arr[n]
+        beta[n], alpha[n], gamma[n], gb = Calc_CSParams(beamParamsCopy, n_arr, z_arr)
     
     bmag_arr = np.zeros(len(z_arr))
+    beta_pro_arr = np.zeros(len(z_arr))
     for j in range(len(bmag_arr)):
         for i in range(len(gb_arr)):
             index = j 
@@ -314,9 +315,11 @@ def Calc_Proj_CSParams(beamParams, n_arr, z_arr, delta):
         alpha_pro = np.average(alpha_arr)
         gamma_pro = np.average(gamma_arr)
         
+        beta_pro_arr[j] = beta_pro
+        
         bmag_arr[j] = np.sqrt(beta_pro*gamma_pro - alpha_pro**2)
         
-    return gb_arr, beta_arr, alpha_arr, gamma_arr, bmag_arr
+    return gb_arr, beta_arr, alpha_arr, gamma_arr, bmag_arr, beta_pro_arr
 
 def Plot_CSEvo(beamParams, n_arr, z_arr, z_offset = 0, legend_loc=0):
     beta, alpha, gamma, gb = Calc_CSParams(beamParams, n_arr, z_arr)
@@ -499,6 +502,32 @@ def PlotContour(contour, x_arr, y_arr, x_label, y_label, simple = False):
     plt.ylabel(y_label)
     plt.xlabel(x_label)
 #    plt.title(r'beam matching for %s ramp'%shape_up)
+
+    return [Bmin_x,Bmin_y]
+
+def PlotContour_General(contour, x_arr, y_arr, x_label, y_label, data_label):
+        # find location of min(B)
+    i_Bmin_x = np.argmin(np.min(contour,1))
+    i_Bmin_y = np.argmin(np.min(contour,0))
+    Bmin_x = x_arr[i_Bmin_x]
+    Bmin_y = y_arr[i_Bmin_y]
+    Bmin   = np.min(np.min(contour))
+    
+    print('matching x value: ',Bmin_x)
+    print('matching y value: ',Bmin_y)
+    print('minimum value: ',Bmin)
+    
+    X = np.tile(x_arr.reshape(-1,1),(1,len(y_arr)))
+    Y = np.tile(y_arr.T,(len(x_arr),1))
+    fig, axes = plt.subplots(1,1, sharey=True)
+    plt.contourf(X,Y,contour,100,\
+                cmap=plt.get_cmap('Vega20c'),\
+                linewidth=2.0)
+    cbar = plt.colorbar()
+    plt.scatter(Bmin_x,Bmin_y,color='k')
+    cbar.ax.set_ylabel(data_label)
+    plt.ylabel(y_label)
+    plt.xlabel(x_label)
 
     return [Bmin_x,Bmin_y]
 
