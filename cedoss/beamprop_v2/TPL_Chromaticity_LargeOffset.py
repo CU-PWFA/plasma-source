@@ -30,9 +30,9 @@ tpl_n = 10.
 
 #tpl_f = 0.001
 #tpl_l = Foc.Calc_Square_Lens(tpl_n*1e17, tpl_f*100, gammab)
-tpl_l = 110.5#1500
+tpl_l = 380
 
-position_error = -.30 * 1e6#-7*tpl_f*1e6 #um
+position_error = 0 * 1e6#-7*tpl_f*1e6 #um
 
 delta = 0.01
 
@@ -125,7 +125,7 @@ beam_params = PProp.ReturnDefaultElectronParams(path, beta_star=betastar,
                                                    beta_offset=waist_loc, plasma_start=z_offset,
                                                    gamma=gammab)
 dmy1, dmy2, dmy3, dmy4, dmy5, beta_pro = PProp.Calc_Proj_CSParams(beam_params, n_arr, z_arr, delta)
-beta_pro = np.array(beta_pro[center-crange:center+crange])*1e2*1.15481839214
+beta_pro = np.array(beta_pro[center-crange:center+crange])*1e2
 
 ax5.plot((z_arr[center-crange:center+crange]-tpl_f)*1e2, beta_pro, 'k--', label=r'$\beta_{pro}$')
     
@@ -181,7 +181,7 @@ print("Attempting with projected")
 beam_params = PProp.ReturnDefaultElectronParams(path, beta_star=betastar, beta_offset=waist_loc,
                                                 plasma_start=z_offset, gamma=gammab)
 
-gb_arr, beta_arr, alpha_arr, gamma_arr, bmag_arr, hoi = PProp.Calc_Proj_CSParams(beam_params, n_arr, z_arr, delta)
+gb_arr, beta_arr, alpha_arr, gamma_arr, bmag_arr, betapro_arr = PProp.Calc_Proj_CSParams(beam_params, n_arr, z_arr, delta)
 
 plt.title("B-mag vs z")
 plt.ylabel("B-mag")
@@ -189,6 +189,7 @@ plt.xlabel("z [m]")
 plt.plot(z_arr, bmag_arr)
 plt.grid(); plt.show()
 print("Final B-mag: ",bmag_arr[-1])
+print("Min Betapro: ",min(betapro_arr))
 """
 beam = PProp.GaussianBeam(beam_params, debug)
 argon = PProp.CustomPlasma(argon_params, n_arr+.00000000001, 1)

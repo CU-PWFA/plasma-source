@@ -18,6 +18,7 @@ import matplotlib.pyplot as plt
 
 gam = Foc.gam_def*20
 emit = 10e-6 * 100#3e-6 *100 #cm-rad
+emit = 35e-9 * 100#3e-6 *100 #cm-rad
 beta_i = 5. #cm
 d_arr = np.linspace(-10,5,201)
 n0 = 1e20

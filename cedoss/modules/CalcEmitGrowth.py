@@ -33,7 +33,7 @@ def ThickW2(l, b, d):
 def ProjBeta_UnNormalized(kl, b, d, delta):
     return ProjBeta(b*kl, d*kl, delta)/kl
     
-#Normalized to k*l.  Valid for thin lenses.
+#Normalized to k*l.  Valid for thin lenses but it works well for thick too.
 def ProjBeta(b, d, delta):
     first = 2*b*delta*(b**2+(d-1)**2)**2
     second = 2*delta/(delta**2-1)*(b**6*(delta**2-2)+(delta**2-2)*(d-1)**2*d**4+b**2*(d-1)*(3*d-1)*(delta**2-1+(delta**2-2)*d**2)+b**4*(-3+4*d-6*d**2+delta**2*(3+d*(3*d-2))))

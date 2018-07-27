@@ -20,16 +20,16 @@ from modules import CalcEmitGrowth as W2
 path = '/home/chris/Desktop/BeamProp/Placeholder'
 debug = 0
 zmult=1
-
+"""
 num = 101
-d_arr = np.linspace(-0.40, -0.00, num)
+d_arr = np.linspace(-0.20, -0.00, num)
 emit_arr = np.zeros(num)
 betamin_arr = np.zeros(num)
 betapromin_arr= np.zeros(num)
 
 gammab = PProp.def_gamma
 tpl_n = 10.
-tpl_l = 110.5
+tpl_l = 1200
 betastar = .10 #0.00213065326633
 
 delta = 0.01
@@ -43,7 +43,7 @@ for k in range(len(d_arr)):
     leftext = 1 #1
     rightext = 3 #3
     
-    z_arr = np.linspace(-leftext*tpl_f, rightext*tpl_f, int((leftext+rightext)*tpl_f*1e6+1)*zmult) + (position_error / 1e6)
+    z_arr = np.linspace(-leftext*tpl_f, rightext*tpl_f, int((leftext+rightext)*tpl_f*1e7+1)*zmult) + (position_error / 1e6)
     n_arr = np.zeros(len(z_arr))
     
     waist_loc = 0.
@@ -96,7 +96,7 @@ for k in range(len(d_arr)):
     
     betapromin_arr[k] = min(betapro_arr)
     emit_arr[k] = bmag_arr[-1]
-
+"""
 kl = 1/tpl_f
 bw = betastar * kl
 dw_arr = d_arr * kl
@@ -113,10 +113,8 @@ for x in range(len(d_arr)):
     bmag_w2_arr_thick[x] = W2.CalcEmit(w2, sigmaE)
 
 projbeta_arr = np.zeros(len(d_arr))
-projbetaAlt_arr = np.zeros(len(d_arr))
 for x in range(len(d_arr)):
     projbeta_arr[x] = W2.ProjBeta_UnNormalized(kl, betastar, d_arr[x], delta)
-    projbetaAlt_arr[x] = W2.ProjBetaAlt_UnNormalized(kl, betastar, d_arr[x], delta)
 
 plt.title("B-mag vs Lens-Waist Separation for L = "+str(tpl_l)+r'$\ \mu m$')
 plt.plot(d_arr*1e2, emit_arr, label = "Beam Propagation")
@@ -148,11 +146,13 @@ plt.ylabel(r'$\sigma_r\mathrm{\ [nm]}$')
 plt.xlabel("Lens-Waist Separation d [cm]")
 plt.grid(); plt.legend(); plt.show()
 
-diff = np.sqrt(projbeta_arr*3e-6*bmag_w2_arr/gammab)*1e9 - np.sqrt(projbetaAlt_arr*3e-6*bmag_w2_arr/gammab)*1e9
-#plt.plot(d_arr*1e2, np.sqrt(projbeta_arr*3e-6*bmag_w2_arr/gammab)*1e9, label="Calculated "+r'$\sigma_r$')
-#plt.plot(d_arr*1e2, np.sqrt(projbetaAlt_arr*3e-6*bmag_w2_arr/gammab)*1e9, label="Calculated "+r'$\sigma_r$')
-plt.plot(d_arr*1e2, diff, label="Difference between methods")
+##Nice plot of sigma r vs sqrt(k)d
+plt.title("Beam spot size vs lens-waist separation")
+plt.plot(d_arr*np.sqrt(k), np.sqrt(projbeta_arr*3e-6*bmag_w2_arr/gammab)*1e9, label="Thin W2 Calculated "+r'$\sigma_r$')
+plt.plot(d_arr*np.sqrt(k), np.sqrt(projbeta_arr*3e-6*bmag_w2_arr_thick/gammab)*1e9, label="Thick W2 Calculated "+r'$\sigma_r$')
+plt.plot(d_arr*np.sqrt(k), np.sqrt(betapromin_arr*3e-6*emit_arr/gammab)*1e9, label="Propagated "+r'$\sigma_r$')
+plt.plot(d_arr*np.sqrt(k), np.sqrt(Foc.Calc_BetaStar_DeltaOff(betastar, tpl_f, d_arr)*3e-6/gammab)*1e9, label="Thin Ideal "+r'$\sigma_r$')
+plt.plot(d_arr*np.sqrt(k), np.sqrt(Foc.Calc_ThickBetaStar_DeltaOff_UnNormalized(k,tpl_l*1e-6,betastar, d_arr)*3e-6/gammab)*1e9, label="Thick Ideal "+r'$\sigma_r$')
 plt.ylabel(r'$\sigma_r\mathrm{\ [nm]}$')
-plt.xlabel("Lens-Waist Separation d [cm]")
+plt.xlabel(r'$\mathrm{Lens-Waist \ Separation \ }\sqrt{K}d $')
 plt.grid(); plt.legend(); plt.show()
-

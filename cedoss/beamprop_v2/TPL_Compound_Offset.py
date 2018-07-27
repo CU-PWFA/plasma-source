@@ -22,18 +22,18 @@ zmult=1
 
 gammab = PProp.def_gamma
 
-position_error = -0.068 * 1e6
+position_error = -0.0 * 1e6
 
 tpl_n = 10.
-tpl_x = 0.0005 #m
+tpl_x = 0.003 #m
 
 #tpl_f1 = 0.02
 #tpl_f2 = 0.01
 #tpl_l1 = Foc.Calc_Square_Lens(tpl_n*1e17, tpl_f1*100, gammab)
 #tpl_l2 = Foc.Calc_Square_Lens(tpl_n*1e17, tpl_f2*100, gammab)
 
-tpl_l1 = 500
-tpl_l2 = 300
+tpl_l1 = 200
+tpl_l2 = 400
 tpl_f1 = Foc.Calc_Focus_Square_CM_UM(tpl_n*1e17, tpl_l1, gammab)/100
 tpl_f2 = Foc.Calc_Focus_Square_CM_UM(tpl_n*1e17, tpl_l2, gammab)/100
 
@@ -218,7 +218,7 @@ print("Der. spread [%]: ",100*(dbetaf[1]-dbetaf[2])/dbetaf[0])
 
 beam_params = PProp.ReturnDefaultElectronParams(path, beta_star=betastar, beta_offset=waist_loc,
                                                 plasma_start=z_offset, gamma=gammab)
-gb_arr, beta_arr, alpha_arr, gamma_arr, bmag_arr = PProp.Calc_Proj_CSParams(beam_params, n_arr, z_arr, 0.01)
+gb_arr, beta_arr, alpha_arr, gamma_arr, bmag_arr, betapro_arr = PProp.Calc_Proj_CSParams(beam_params, n_arr, z_arr, 0.01)
 
 plt.title("B-mag vs z")
 plt.ylabel("B-mag")
@@ -226,3 +226,4 @@ plt.xlabel("z [m]")
 plt.plot(z_arr, bmag_arr)
 plt.grid(); plt.show()
 print("Final B-mag: ",bmag_arr[-1])
+print("Min Betapro: ",min(betapro_arr))
