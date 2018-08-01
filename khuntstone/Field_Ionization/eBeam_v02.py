@@ -235,7 +235,7 @@ def plot_width(widths, plasmaNames, beamParams, logx = False, logy = False, \
 	plt.ylabel('Neutral gas Diameter [$\\mu$m]')
 	plt.legend()
 	plt.show()
-def plot_max_frac(max_frac, beamParams, plasmaNames, logx = False,\
+def plot_max_frac(max_frac, beamParams, plasmaNames, fs = 12, logx = False,\
 	logy = False, log = False):
 	names = [plasmaDict[i]['Name'] for i in plasmaNames]
 	for i in range(len(max_frac)):
@@ -251,65 +251,52 @@ def plot_max_frac(max_frac, beamParams, plasmaNames, logx = False,\
 		else:
 			plt.plot(beamParams['beta_s'], max_frac[i], \
 				label = names[i])
-	plt.xlabel('$\\beta$ [m]')
-	plt.ylabel('Maximum Ionization Fraction')
-	plt.legend()
+	plt.xlabel('$\\beta$ [m]', fontsize = fs)
+	plt.ylabel('Maximum Ionization Fraction', fontsize = fs)
+	lg = plt.legend()
+	lg.fontsize = fs - 2
+	ax = plt.gca()
+	ax.tick_params(labelsize = fs - 2)
 	plt.show()
 
-def plot_field(field, pos, beamParams, cbar_label, beta_s, ind, \
+def plot_field(field, pos, beamParams, cbar_label, beta_s, ind, fs = 12, \
 			   lims = [], gas = False, gasName = None, c = SI.lightSpeed):
 	'''
 	Plots a field in the in the rz and rt planes
 	'''
 	if gas:
-		title = 'Ionization Rate of ' + gasName +'$\\beta$ = %.2f' % beta_s[ind]
+		title = 'Ionization Rate of ' + gasName 
 	else:
-		title = 'Radial Electric Field ' + '$\\beta$ = %.2f' % beta_s[ind] ;
+		title = 'Radial Electric Field ' 
+	beta_str = 'Beta = %.2f' % beta_s[ind] + 'm' ;
+	print(beta_str)
 	# rt plane
 	r = np.flipud(pos['r'][ind]) * 1e6; nr = len(r)
 	t = (pos['xi'] * 1e15 / (beamParams['beta']*c)) -\
 		(pos['xi'][0]*1e15 /(beamParams['beta']*c)); 
-	nt = len(t)
-	if not lims:
-		plt.imshow(np.flipud(field[ind]), cmap = 'jet')
-	else:
-		plt.imshow(np.flipud(field[ind]), cmap = 'jet',\
-							 vmin = lims[0], vmax = lims[1])
-	x_locs = [0, nt/2, nt]
-	x_labs = [0, int(t[int(len(t)/2 -1)]), int(t[-1])]
-	y_locs = [0, nr/2, nr] 
-	y_labs = [int(r[0]), int(r[int(nr/2 - 1)]), \
-			  int(r[-1])]
-	plt.xticks(x_locs, x_labs)
-	plt.yticks(y_locs, y_labs)
+	ext = [min(t), max(t), min(r), max(r)]
+	plt.imshow(np.flipud(field[ind]), cmap = 'jet',aspect = 'auto', extent = ext)
 	cbar = plt.colorbar()
-	cbar.set_label(cbar_label)
-	plt.xlabel('t [fs]');
-	plt.ylabel('r [$\mu$m]');
-	plt.title(title)
+	cbar.set_label(cbar_label, fontsize = fs)
+	cbar.ax.tick_params(labelsize = fs - 2)
+	plt.xlabel('t [fs]', fontsize = fs);
+	plt.ylabel('r [$\mu$m]', fontsize = fs);
+	plt.title(title, fontsize = fs)
+	ax = plt.gca()
+	ax.tick_params(axis = 'both', labelsize = fs - 2)
 	plt.show()
 
 	# rz
-	r = r * 1e-6;
-	z = pos['xi']; nz = len(z)
-	sigma_r  = beamParams['sigma_r'][ind]
-	sigma_z = beamParams['sigma_z']
-	if not lims:
-		plt.imshow(np.flipud(field[ind]), cmap = 'jet')
-	else:
-		plt.imshow(np.flipud(field[ind]), cmap = 'jet', \
-				   vmin = lims[0], vmax = lims[1])
-	x_locs = [0, nz/2, nz]
-	x_labs = [int(z[0]/sigma_z), int(z[int(len(z)/2 -1)]/sigma_z),\
-			  int(z[-1]/sigma_z)]
-	y_locs = [0, nr/2, nr] 
-	y_labs = [int(r[0]/sigma_r), int(r[int(nr/2 - 1)]/sigma_r), \
-			  int(r[-1]/sigma_r)]
-	plt.xticks(x_locs, x_labs)
-	plt.yticks(y_locs, y_labs)
+	z = pos['xi'] * 1e6;
+	ext = [min(z), max(z), min(r), max(r)]
+	plt.imshow(np.flipud(field[ind]), cmap = 'jet', aspect = 'auto', extent = ext)
 	cbar = plt.colorbar()
-	cbar.set_label(cbar_label)
-	plt.xlabel('z/$\sigma_z$');
-	plt.ylabel('r/$\sigma_r$');
-	plt.title(title)
+	cbar.set_label(cbar_label, fontsize = fs)
+	cbar.ax.tick_params(labelsize = fs)
+	plt.xlabel('z [$\mu$m]', fontsize = fs);
+	plt.ylabel('r [$\mu$m]', fontsize = fs);
+	plt.title(title, fontsize = fs)
+	ax = plt.gca()
+	ax.tick_params(axis = 'both', labelsize = fs - 2)
 	plt.show()
+
