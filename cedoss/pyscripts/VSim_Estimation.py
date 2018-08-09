@@ -5,6 +5,8 @@ Created on Mon Mar 26 14:09:26 2018
 
 Given parameters of a VSim simulation, estimate MPP core hours from the
  400 ns per step metric and estimate GB storage from other 3D sims
+ 
+First estimation for the proposal where dz=dx is requried
 
 @author: chris
 """
@@ -37,8 +39,10 @@ dx = min(sigmar_m)/5
 Nx = np.ceil(umtrans/1e6/dx)
 
 #Longitudinal Domain
+
 umlong = 5*lrms[0]+5*lrms[1] + witness_delay + drive_window
-dz = min(lrms)/5/1e6
+#dz = min(lrms)/5/1e6
+dz = dx
 Nz = np.ceil(umlong/1e6/dz)
 
 #Simulation Length

@@ -15,14 +15,14 @@ import particle_beam_propagation as pbp
 if __name__ == '__main__':
     
     # define plasma bulk (flat-top) properties
-    npl0   = 5e17                      # cm^-3, plasma density
+    npl0   = 1e18                      # cm^-3, plasma density
     dEds0  = np.sqrt(npl0/(5e16))*16.67e9  # eV/m, energy gain rate
     dgds0  = dEds0/nc.me               # 1/m, energy gain rate for rel. gamma
     L_ft   = 0.50                      # m, length of flat-top
     
     # define plasma up-ramp
     shape_up = 'gauss' # shape of ramp
-    hw_up    = 0.1403  # m, half-width of ramp
+    hw_up    = 0.139 # 0.1403  # m, half-width of ramp
     L_up     = 1.0 # m, full length of ramp
     top_up   = L_up    # m, relative location of ramp top
     
@@ -33,7 +33,7 @@ if __name__ == '__main__':
     top_dn   = 0        # m, relative location of ramp top
     
     # define beam parameters
-    npart  = 1000   # number of macro particles
+    npart  = 0   # number of macro particles
     dist   = 'gauss' # distribution shape in trace space
     gbC    = (10e9)/nc.me   # centroid relativistic lorentz factor
     dgb    = 0.01    # relative energy spread (HWHM)

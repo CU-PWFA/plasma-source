@@ -11,6 +11,7 @@ Functions for beam propagation using Robert's code
 import sys
 import matplotlib.pyplot as plt
 import scipy.stats as stats
+import scipy.integrate as Int
 
 sys.path.insert(0, "../../python")
 
@@ -26,16 +27,21 @@ import matplotlib.animation as animation
 import scipy.constants as const
 me = const.physical_constants['electron mass energy equivalent in MeV'][0]
 
+sys.path.insert(0, "../")
+from modules import ThreeDimensionAnalysis as ThrDim
 
 def_startloc = 0.80
 def_lenflat = 0.50
-def_nset = 1203.7#0.5
+def_nset = 10#0.5#1203.7 for gas cell
 def_betastar = 0.10
 def_betaoffs = -0.387
-def_Z = (2*def_startloc + def_lenflat)*1e6
+def_gamma = 19569.5 #10 GeV beam
+def_emit = 3e-6 #New value as of July 2018
+
+def_sigma_hw = 14.0e4
 
 def ReturnDefaultElectronParams(path, beta_star=def_betastar, beta_offset=def_betaoffs,
-                                plasma_start=def_startloc):
+                                plasma_start=def_startloc, gamma=def_gamma, emit=def_emit):
     beta_init = beta_star + np.square(plasma_start + beta_offset)/beta_star
     alpha_init = (plasma_start + beta_offset)/beta_star
     
@@ -43,9 +49,9 @@ def ReturnDefaultElectronParams(path, beta_star=def_betastar, beta_offset=def_be
         'name' : 'TestBeam',
         'path' : path,
         'load' : False,
-        'N' : 10000,
-        'gamma' : 19569.5,
-        'emittance' : 7e-6,
+        'N' : 1000,
+        'gamma' : gamma,
+        'emittance' : emit,
         'betax' : beta_init,
         'betay' : beta_init,
         'alphax' : alpha_init,
@@ -87,12 +93,11 @@ def dgammadz_wrong(ne):
 def dgammadz_basic(ne):
     return 0.0
 
-def ReturnDefaultPlasmaParams(path, Z_change = def_Z, plasma_start = def_startloc,
-                              nset = def_nset):
+def ReturnDefaultPlasmaParams(path, plasma_start = def_startloc,
+                              nset = def_nset, sigma_hw = def_sigma_hw, scaledown = 10):
     Nx = 1;  Ny = 1
-    Z = Z_change
-    Nz = int((Z/10)+1)
-    sigma_hw = 14.0e4
+    Z = (2*plasma_start + def_lenflat)*1e6
+    Nz = int((Z/scaledown)+1)
     sigma = sigma_hw/(np.sqrt(2*np.log(2)))
     plasmaParams ={
         'name' : 'TestPlasma',
@@ -126,7 +131,7 @@ def FineSpacingLens(z_orig, tpl_center, tpl_length):
 def GaussianRampPlasma(plasmaParams, debug = 0):
     Nz = plasmaParams['Nz']
     
-    nez = plasmaParams['n0']*profile.plasma_gaussian_ramps(plasmaParams['z0'],
+    nez = .5/.4995*plasmaParams['n0']*profile.plasma_gaussian_ramps(plasmaParams['z0'],
        plasmaParams['l_flattop'], plasmaParams['sigma_in'], plasmaParams['sigma_out'], Nz, plasmaParams['Z'])[1]
     
     argon = plasma.Plasma(plasmaParams)
@@ -207,7 +212,59 @@ def CustomPlasma_ThinPlasmaLens(plasmaParams, nez, tpl_offset, tpl_n, tpl_l, deb
     if debug == 1: argon.plot_long_density_center();
     return argon
 
-########################   #####################################
+######################## LONE TPL #####################################
+
+def NoPlasma_ThinPlasmaLens(plasmaParams, nez, tpl_offset, tpl_n, tpl_l, debug = 0):
+    #tpl_l = int(tpl_l)
+    Nz = plasmaParams['Nz']
+    
+    tpl_z = plasmaParams['z0'] + tpl_offset
+    dz = plasmaParams['Z']/(plasmaParams['Nz']-1)
+    
+    tpl_left = tpl_z-.5*tpl_l
+    tpl_right = tpl_z+.5*tpl_l
+    tpl_1 = int(np.floor(tpl_left/dz))
+    tpl_2 = int(np.ceil(tpl_right/dz))
+    if debug==1: print(tpl_1,tpl_2);
+    lens_loc = np.array(range(tpl_2 - tpl_1 - 1)) + tpl_1 + 1
+    for i in lens_loc:
+        nez[i] = tpl_n
+    
+    argon = plasma.Plasma(plasmaParams)
+    n = plasmaParams['n0']*np.ones(Nz, dtype='double')
+    argon.initialize_plasma(n, nez)
+    if debug == 1: argon.plot_long_density_center();
+    return argon
+
+#tpl_fit = [a,b,n0] - see ThreeDimensionAnalysis for more details
+def NoPlasma_ThinPlasmaLens_Tanh(plasmaParams, nez, tpl_offset, tpl_fit, debug = 0):
+    tpl_l = 2*tpl_fit[0] + 6*tpl_fit[1]
+    Nz = plasmaParams['Nz']
+    
+    tpl_z = plasmaParams['z0'] + tpl_offset
+    dz = plasmaParams['Z']/(plasmaParams['Nz']-1)
+    
+    tpl_left = tpl_z-.5*tpl_l
+    tpl_right = tpl_z+.5*tpl_l
+    tpl_1 = int(np.floor(tpl_left/dz))
+    tpl_2 = int(np.ceil(tpl_right/dz))
+    if debug==1: print(tpl_1,tpl_2);
+    lens_loc = np.array(range(tpl_2 - tpl_1 - 1)) + tpl_1 + 1
+    
+    z_tpl = np.linspace(-.5 * tpl_l, .5 * tpl_l, len(lens_loc))
+    n_tpl = ThrDim.DoubleTanh(tpl_fit, z_tpl)
+    j=0
+    for i in lens_loc:
+        nez[i] = n_tpl[j]
+        j+=1
+    
+    argon = plasma.Plasma(plasmaParams)
+    n = plasmaParams['n0']*np.ones(Nz, dtype='double')
+    argon.initialize_plasma(n, nez)
+    if debug == 1: argon.plot_long_density_center();
+    return argon
+
+########################  #####################################
 
 def Calc_CSParams(beamParams, n_arr, z_arr):
     beta0 = beamParams['betax']
@@ -227,7 +284,44 @@ def Calc_Bmag(beamParams, n_arr, z_arr):
     Bmag = 0.5*(beta[-1]*kb+gamma[-1]/kb)
     return Bmag
 
-def Plot_CSEvo(beamParams, n_arr, z_arr, z_offset = 0):
+def Calc_Proj_CSParams(beamParams, n_arr, z_arr, delta):
+    gb0 = beamParams['gamma']
+    delta_arr = np.linspace(-delta, delta, 101)
+    gb_arr = gb0*(delta_arr+1)
+    beta_arr = np.zeros(len(gb_arr))
+    alpha_arr = np.zeros(len(gb_arr))
+    gamma_arr = np.zeros(len(gb_arr))
+    
+    beta = np.zeros((len(gb_arr),len(z_arr)))
+    alpha = np.zeros(beta.shape)
+    gamma = np.zeros(beta.shape)
+    
+    for n in range(len(gb_arr)):
+        beamParamsCopy = beamParams.copy()
+        beamParamsCopy['gamma'] = gb_arr[n]
+        beta[n], alpha[n], gamma[n], gb = Calc_CSParams(beamParamsCopy, n_arr, z_arr)
+    
+    bmag_arr = np.zeros(len(z_arr))
+    beta_pro_arr = np.zeros(len(z_arr))
+    for j in range(len(bmag_arr)):
+        for i in range(len(gb_arr)):
+            index = j 
+            beta_arr[i] = beta[i][index]; alpha_arr[i] = alpha[i][index]; gamma_arr[i] = gamma[i][index]
+
+        #beta_pro = Int.simps(beta_arr, delta_arr)/(delta_arr[-1]-delta_arr[0])
+        #alpha_pro = Int.simps(alpha_arr, delta_arr)/(delta_arr[-1]-delta_arr[0])
+        #gamma_pro = Int.simps(gamma_arr, delta_arr)/(delta_arr[-1]-delta_arr[0])
+        beta_pro = np.average(beta_arr)
+        alpha_pro = np.average(alpha_arr)
+        gamma_pro = np.average(gamma_arr)
+        
+        beta_pro_arr[j] = beta_pro
+        
+        bmag_arr[j] = np.sqrt(beta_pro*gamma_pro - alpha_pro**2)
+        
+    return gb_arr, beta_arr, alpha_arr, gamma_arr, bmag_arr, beta_pro_arr
+
+def Plot_CSEvo(beamParams, n_arr, z_arr, z_offset = 0, legend_loc=0):
     beta, alpha, gamma, gb = Calc_CSParams(beamParams, n_arr, z_arr)
     beta0, alpha0, gamma0, gb0 = Calc_CSParams(beamParams, np.zeros(len(z_arr)), z_arr)
     
@@ -246,7 +340,30 @@ def Plot_CSEvo(beamParams, n_arr, z_arr, z_offset = 0):
     ax2.plot(z_arr*1e2, n_arr/max(n_arr), 'g-')
     ax2.set_ylabel(r'$n/n_0$',color = 'g')
     ax2.tick_params('y', colors = 'g')
-    ax1.grid(); ax1.legend(loc=2); plt.show()
+    ax1.grid(); ax1.legend(loc=legend_loc); plt.show()
+    
+def Plot_CSEvo_MatchedCompare(beamParams, beamParams_matched, n_arr, z_arr, z_offset = 0, legend_loc=0):
+    beta, alpha, gamma, gb = Calc_CSParams(beamParams, n_arr, z_arr)
+    beta0, alpha0, gamma0, gb0 = Calc_CSParams(beamParams, np.zeros(len(z_arr)), z_arr)
+    betaM, alphaM, gammaM, gbM = Calc_CSParams(beamParams_matched, np.zeros(len(z_arr)), z_arr)
+    
+    z_arr = z_arr - z_offset
+    #print(" ","beta","beta0"); print(" ",beta[740],beta0[740])
+    fig, ax1 = plt.subplots()
+    plt.title("Beta function evolution at "+r'$n_0=$'+str(max(n_arr))+r'$\,\mathrm{\times 10^{17}cm^{-3}}$')
+    ax1.plot(z_arr*1e2, np.array(beta)*1e2, 'b-', label=r'$\beta$')
+    ax1.plot(z_arr*1e2, np.array(beta0)*1e2, 'b--',label=r'$\beta_{vac}$')
+    ax1.plot(z_arr*1e2, np.array(betaM)*1e2, 'r--',label=r'$\beta_{m,vac}$')
+    ax1.set_ylabel(r'$\beta\,\mathrm{[cm]}$', color = 'b')
+    ax1.tick_params('y', colors = 'b')
+    ax1.set_xlabel('z [cm]')
+    ax1.set_ylim([-0.05,20.05])
+    
+    ax2 = ax1.twinx()
+    ax2.plot(z_arr*1e2, n_arr/max(n_arr), 'g-')
+    ax2.set_ylabel(r'$n/n_0$',color = 'g')
+    ax2.tick_params('y', colors = 'g')
+    ax1.grid(); ax1.legend(loc=legend_loc); plt.show()
 
 def PropBeamPlasma(beam, plasma, z_arr, dumpPeriod, cores=4, debug = 0):
     m = int(len(z_arr)/dumpPeriod) -1
@@ -343,7 +460,7 @@ def PlotSigmar_Compare(beam, beam2, z_arr, m, first, second):
     plt.grid(); plt.legend(); plt.show()
     return
 
-def PlotContour(contour, x_arr, y_arr, x_label, y_label):
+def PlotContour(contour, x_arr, y_arr, x_label, y_label, simple = False):
         # find location of min(B)
     i_Bmin_x = np.argmin(np.min(contour,1))
     i_Bmin_y = np.argmin(np.min(contour,0))
@@ -375,13 +492,42 @@ def PlotContour(contour, x_arr, y_arr, x_label, y_label):
     fig, axes = plt.subplots(1,1, sharey=True)
     CS = plt.contour(X,Y,contour,levels,cmap=plt.get_cmap('Vega20b'))
     plt.clabel(CS,labels,fontsize=9,inline=1,fmt='%1.2f')
-    cbar = plt.colorbar()
+    if simple:
+        plt.grid()
+    else:
+        cbar = plt.colorbar()
     plt.scatter(Bmin_x,Bmin_y,color='k')
     cbar.ax.set_ylabel(r'$B_m$')
     cbar.set_ticks(levels)
     plt.ylabel(y_label)
     plt.xlabel(x_label)
 #    plt.title(r'beam matching for %s ramp'%shape_up)
+
+    return [Bmin_x,Bmin_y]
+
+def PlotContour_General(contour, x_arr, y_arr, x_label, y_label, data_label):
+        # find location of min(B)
+    i_Bmin_x = np.argmin(np.min(contour,1))
+    i_Bmin_y = np.argmin(np.min(contour,0))
+    Bmin_x = x_arr[i_Bmin_x]
+    Bmin_y = y_arr[i_Bmin_y]
+    Bmin   = np.min(np.min(contour))
+    
+    print('matching x value: ',Bmin_x)
+    print('matching y value: ',Bmin_y)
+    print('minimum value: ',Bmin)
+    
+    X = np.tile(x_arr.reshape(-1,1),(1,len(y_arr)))
+    Y = np.tile(y_arr.T,(len(x_arr),1))
+    fig, axes = plt.subplots(1,1, sharey=True)
+    plt.contourf(X,Y,contour,100,\
+                cmap=plt.get_cmap('Vega20c'),\
+                linewidth=2.0)
+    cbar = plt.colorbar()
+    plt.scatter(Bmin_x,Bmin_y,color='k')
+    cbar.ax.set_ylabel(data_label)
+    plt.ylabel(y_label)
+    plt.xlabel(x_label)
 
     return [Bmin_x,Bmin_y]
 

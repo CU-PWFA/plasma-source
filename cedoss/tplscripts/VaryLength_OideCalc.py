@@ -34,7 +34,7 @@ for i in range(len(len_arr)):
     L = len_arr[i]
     K = Foc.Calc_K(n0, gam)
     focal = Foc.Calc_Focus_KLength(K, L)
-    KLls_set = [K, L, Oide.Get_ls(L,focal)]
+    KLls_set = [K, L, Oide.Get_ls_corrected(L,focal,beta_i)]
     #focal = Foc.Calc_Focus_Square_CM_UM(n0, L*1e4, gam) #gives focal length in m
     beta_f = Foc.Calc_BetaStar(beta_i, focal)
     #KLls_set = Oide.Get_KLls(L,focal)

@@ -61,9 +61,12 @@ def prop_twiss_plasma_step(i_twiss,ds=0,npl=0,dgds=0):
     T     = [beta,alpha,gamma]
 
     # calculate kb
-    wp = (5.64e4)*np.sqrt(npl) # rad/s, plasma ang. freq.
-    kp = wp/nc.c # m^-1, plasma wave nutarget_betaer
-    kb = kp/np.sqrt(2*gbC) # m^-1, betatron wave number
+    if npl<=0:
+        kb = 0
+    else:
+        wp = (5.64e4)*np.sqrt(npl) # rad/s, plasma ang. freq.
+        kp  = wp/nc.c # m^-1, plasma wave nutarget_betaer
+        kb = kp/np.sqrt(2*gbC) # m^-1, betatron wave number
     
     # create beam phase space transfer matrix
     if kb>0: # if plasma density is non-zero
@@ -88,7 +91,7 @@ def prop_twiss_plasma_step(i_twiss,ds=0,npl=0,dgds=0):
     alpha_sign = np.sign(alpha)
     if alpha_sign==0:
         alpha_sign=np.sign(+1)
-        print("alpha sign = 0")
+#        print("alpha sign = 0")
 
     # add energy gain/loss
     dgb = dgds*ds
@@ -166,9 +169,12 @@ def prop_part_plasma_step(i_phase6D,ds=0,npl=0,dgds=0):
     [x,xp,y,yp,z,gb] = i_phase6D
 
     # calculate kb
-    wp = (5.64e4)*np.sqrt(npl) # rad/s, plasma ang. freq.
-    kp = wp/nc.c # m^-1, plasma wave number
-    kb = kp/np.sqrt(2*gb) # m^-1, betatron wave number
+    if npl<=0:
+        kb = 0
+    else:
+        wp = (5.64e4)*np.sqrt(npl) # rad/s, plasma ang. freq.
+        kp = wp/nc.c # m^-1, plasma wave number
+        kb = kp/np.sqrt(2*gb) # m^-1, betatron wave number
  
     # beam phase space transfer matrix
     if kb>0: # if plasma density is non-zero

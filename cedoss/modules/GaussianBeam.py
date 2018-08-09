@@ -60,6 +60,18 @@ def IntensityFromSpotSizes(wy,wz,x,y,z,I0,w0):
                 I[i][j][k]=GaussianBeamIntensity_SpotArray_2D(I0,wy[i],wz[i],w0,y[j],z[k])
     return I
 
+#Transverse cut of intensity
+#  wy - spot size along cut
+#  wz - spot size out of page
+#  y - axis for cut
+#  I0 - initial intensity
+#  w0 - initial spot size
+def IntensityFromSpotSizes_1D(wy,wz,y,I0,w0):
+    I=np.zeros(len(y))
+    for j in range(len(y)):
+        I[j]=GaussianBeamIntensity_SpotArray_2D(I0,wy,wz,w0,y[j],0)
+    return I
+
 #Calculates the spot size (Transerve spread of beam)
 #  z - distance along propagation axis
 #  z0 - location of beam waist
@@ -141,7 +153,7 @@ def Prop_ThinLens(q,f):
 
 #Propagates q through a cylindrcal thin lens, returning list of q paramters 
 # with topmost q updates due to the lens
-#  q_P - list of q parameters Parallel to cyclindrical axis
+#  q_P - list of q parameters Parallel to cyclindrical axis - not affected
 #  q_T - list of q parameters Transverse to cylindrical axis
 #  R - radius of curvature in the radial direction
 def Prop_CylindricalLens(q_P,q_T,R):

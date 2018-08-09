@@ -1,0 +1,81 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Jun 19 11:45:40 2018
+
+Creates an example offset TPL for presentation figures
+
+@author: chris
+"""
+
+import sys
+import BeamPropFuncs as PProp
+import matplotlib.pyplot as plt
+import numpy as np
+sys.path.insert(0, "../")
+from modules import TPLFocalLength as Foc
+
+path = '/home/chris/Desktop/BeamProp/GasCellTest'
+debug = 0
+
+zmult=1
+
+gammab = PProp.def_gamma
+tpl_f = 0.01
+tpl_n = 10.
+tpl_l = Foc.Calc_Square_Lens(tpl_n*1e17, tpl_f*100, gammab)
+tpl_f = Foc.Calc_Focus_Square_CM_UM(tpl_n*1e17, tpl_l, gammab)/100
+tpl_f_plus = Foc.Calc_Focus_Square_CM_UM(tpl_n*1e17, tpl_l, gammab*1.01)/100
+tpl_f_mnus = Foc.Calc_Focus_Square_CM_UM(tpl_n*1e17, tpl_l, gammab*0.99)/100
+
+leftext = 2 #1
+rightext = 8 #3
+
+z_arr = np.linspace(-leftext*tpl_f, rightext*tpl_f, int((leftext+rightext)*tpl_f*1e6+1)*zmult)
+n_arr = np.zeros(len(z_arr))
+
+dump = 10
+cores = 4
+
+betastar = .10 #0.00213065326633
+waist_loc = 0.
+tpl_offset = waist_loc
+z_offset = -z_arr[0]
+z_arr = z_arr + z_offset
+
+position_error = 5*tpl_f*1e6 #um
+
+colors = np.array(['g-','r-','b-'])
+arrlist = np.array([])
+
+beam_params0 = PProp.ReturnDefaultElectronParams(path, beta_star=betastar,
+                                                   beta_offset=waist_loc, plasma_start=z_offset,
+                                                   gamma=gammab)
+argon_params = PProp.ReturnDefaultPlasmaParams(path, plasma_start = z_offset,
+                                                   nset = tpl_n)
+argon_params['Z'] = z_arr[-1]*1e6
+argon_params['Nz']= len(z_arr)
+argon_params['l_flattop'] = np.NaN; argon_params['sigma_in'] = np.NaN; argon_params['sigma_out'] = np.NaN
+argon = PProp.NoPlasma_ThinPlasmaLens(argon_params, n_arr, tpl_offset*1e6 + position_error, tpl_n, tpl_l, debug)
+
+fig, ax1 = plt.subplots()
+plt.title("Beta function evolution with a f = 1 cm plasma lens")
+ax1.set_ylabel(r'$\beta\,\mathrm{[cm]}$', color = 'b')
+ax1.tick_params('y', colors = 'b')
+ax1.set_xlabel('z [cm]')
+ax1.set_ylim([-0.05,20.05])
+
+
+beam_params = PProp.ReturnDefaultElectronParams(path, beta_star=betastar,
+                                                   beta_offset=waist_loc, plasma_start=z_offset,
+                                                   gamma=gammab)
+beta = PProp.Calc_CSParams(beam_params, n_arr, z_arr)[0]
+ax1.plot((z_arr-2*tpl_f)*1e2, np.array(beta)*1e2, 'b-', label=r'$\beta$')
+beta0 = PProp.Calc_CSParams(beam_params0, np.zeros(len(z_arr)), z_arr)[0]
+ax1.plot((z_arr-2*tpl_f)*1e2, np.array(beta0)*1e2, 'b--',label=r'$\beta_{vac}$')
+ax2 = ax1.twinx()
+ax2.plot((z_arr-2*tpl_f)*1e2, n_arr/tpl_n, 'k-')
+ax2.set_ylabel(r'$n_p\,\mathrm{[10^{18}cm^{-3}]}$',color = 'k')
+ax2.tick_params('y', colors = 'k')
+ax2.set_ylim([0,1.1])
+ax1.grid(); ax1.legend(); plt.show()

@@ -156,6 +156,21 @@ def make_ramp(s,updn,shape,hw,top_loc,npl0,dgds0,gbC0=20000):
                 # up-ramp
                 if updn.lower() == 'up':
                     npl = np.fliplr([npl])[0]
+                    
+        # box-to-Gauss ramp shape
+        elif shape.lower() == 'boxgauss':
+            # define gauss. sigma
+            sig = hw/(np.sqrt(2*np.log(2)))            
+            # up-ramp
+            if updn.lower() == 'up':
+                npl = npl0*((s<top_loc)*np.exp(-((s-top_loc)**2)/(2*(sig**2))) +\
+                           (s>=top_loc)*1)
+            # down-ramp
+            else:
+                npl = npl0*((s>top_loc)*np.exp(-((s-top_loc)**2)/(2*(sig**2))) +\
+                           (s<=top_loc)*1)
+            # box section of ramp
+            npl = [0.009*npl0 if (x<0.05*npl0) & (x>0.0001*npl0) else x for x in npl]
 
     ramp["s"]    = s
     ramp["npl"]  = npl
