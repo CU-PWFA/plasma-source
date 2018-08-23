@@ -14,9 +14,9 @@ plasmaDict = {'Ar+' : {'Vi' : 15.75962, 'Name' :  'Ar$^{+}$', 'Z' : 1},
 		   'Ar2+': {'Vi' : 27.62967, 'Name' : 'Ar$^{2+}$', 'Z' : 2},
 		   'Ar3+': {'Vi' : 40.74, 'Name' : 'Ar$^{3+}$', 'Z' : 3},
 		   'Ar4+': {'Vi' : 59.81, 'Name': 'Ar$^{4+}$', 'Z' : 4},
-		   'Ar5+': {'Vi' : 59.81, 'Name': 'Ar$^{5+}$', 'Z' : 5},
-		   'He+': {'Vi' : 59.81, 'Name': 'He$^{+}$', 'Z' : 1},
-		   'He2+': {'Vi': 59.81, 'Name': 'He$^{2+}$', 'Z' : 2}
+		   'Ar5+': {'Vi' : 	75.02, 'Name': 'Ar$^{5+}$', 'Z' : 5},
+		   'He+': {'Vi' : 24.58741, 'Name': 'He$^{+}$', 'Z' : 1},
+		   'He2+': {'Vi': 54.41778, 'Name': 'He$^{2+}$', 'Z' : 2}
 }
 def get_sigma_r(beamParams):
 	'''
@@ -32,7 +32,7 @@ def get_sigma_r(beamParams):
 	np.sqrt(beamParams['emitt'] * beamParams['beta_s'] /beamParams['gamma'])
 
 def get_beam(gamma = 20000.,en = 5.3e-6, beta_s = np.array([.1]),\
-            sigma_z = 5.2e-6, Q = 1.5e-9, ):
+            sigma_z = 5.2e-6, Q = 1.5e-9 ):
 	'''
 	Creates a dictionary of beam params based on input values. Defualt is a 
 	Facet II like beam
