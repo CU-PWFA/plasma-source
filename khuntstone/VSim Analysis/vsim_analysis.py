@@ -150,3 +150,15 @@ def plot_pulse(pulse, t, LX, LY, savePath, aniName):
 	ani = animation.FuncAnimation(fig, updatefig, frames = len(pulse[0,0,:]), \
 					repeat = True, interval = 500)
 	ani.save(savePath + aniName)
+
+def vdf_fit(species):
+	''' Plots the VDF (total and in individual directions) at the end of the
+	    simulation
+	'''
+	ux = species[:,3]
+	uy = species[:,4]
+	uz = species[:,5]
+	weights = species[:,-1]
+	fig1 = plt.figure(); fig2 = plt.figure(); fig3 = plt.figure;
+	fig4 = plt.figure(); ax1 = fig1.gca(); ax2 = fig2.gca(); 
+	ax3  = 
