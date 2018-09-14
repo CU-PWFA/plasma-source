@@ -16,7 +16,7 @@ plasmaDict = {'Ar+' : {'Vi' : 15.75962, 'Name' :  'Ar$^{+}$', 'Z' : 1},
 
 def plot_plasma_frac(plasma_frac, pos, beamParams, gasName, ind):
 	beta_s = beamParams['beta_s'][ind]
-	name = plasmaDict['gasName']['Name']
+	name = plasmaDict[gasName]['Name']
 	title = 'Ionization Fraction of ' + name + ' $\\beta$ = %.2f' % beta_s
 	plt.figure(figsize = (5,3), dpi = 150)
 	plt.plot(pos['r'][ind]*1e6, plasma_frac[ind])
