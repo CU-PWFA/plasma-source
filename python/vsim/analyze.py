@@ -8,7 +8,7 @@ Created on Tue Aug  8 16:05:19 2017
 
 import scipy.constants as const
 import numpy as np
-
+import sys
 
 def get_ptc_gamma(data):
     """ Calculates the relativistic factor for each particle in the beam.
@@ -50,6 +50,27 @@ def get_gamma(data):
     gammaAvg = np.average(gamma, weights=weights)
     return gammaAvg
 
+def get_gamma_rms(data):
+    """ Calculates the relativistic factor from the data object for the beam.
+
+    Parameters
+    ----------
+    data : HDF5 dataset
+        The data set for the beam of interest, use load.get_species_data to
+        load the dataset object from a file.
+
+    Returns
+    -------
+    gammaAvg : double
+        The average gamma of all the particles in the beam.
+    """
+    weights = get_weights(data)
+    gamma = get_ptc_gamma(data)
+    
+    average = np.average(gamma, weights=weights)
+    variance = np.average((gamma-average)**2, weights=weights)
+    
+    return np.sqrt(variance)/average*100
 
 def get_ptc_energy(data, mass):
     """ Calculates the energy of each particle from the data object for a beam.
@@ -108,10 +129,12 @@ def get_emittance(data):
     -------
     e : double
         The emittance of the beam in mm*mrad.
-    """
-    y = get_y(data)
-    ux = get_ux(data)
-    uy = get_uy(data)
+    """      
+    dim = int(data.attrs['numSpatialDims'])
+    
+    y = get_y(data,dim)
+    ux = get_ux(data,dim)
+    uy = get_uy(data,dim)
     weights = get_weights(data)
     yp = uy / ux
     dy = y - np.average(y, weights=weights)
@@ -240,28 +263,62 @@ def get_density_temp(data, mass, attrs, mesh):
     return den ,temp
 
 
-def get_x(data):
+def get_x(data, dim=2):
     """ Get the array of x positions from the data object.
     """
-    return data[:, 0]
+    if dim == 2:
+        ind = 0
+    elif dim == 3:
+        ind = 0
+    return data[:, ind]
 
 
-def get_y(data):
+def get_y(data, dim=2):
     """ Get the array of y positions from the data object.
     """
-    return data[:, 1]
+    if dim == 2:
+        ind = 1
+    elif dim == 3:
+        ind = 1
+    return data[:, ind]
 
+def get_z(data, dim=2):
+    """ Get the array of y positions from the data object.
+    """
+    if dim == 2:
+        print("z Coord. not in 2D!")
+        sys.exit()
+    elif dim == 3:
+        ind = 2
+    return data[:, ind]
 
-def get_ux(data):
+def get_ux(data, dim=2):
     """ Get the array of x velocities from the data object.
     """
-    return data[:, 2]
+    if dim == 2:
+        ind = 2
+    elif dim == 3:
+        ind = 3
+    return data[:, ind]
 
 
-def get_uy(data):
+def get_uy(data, dim=2):
     """ Get the array of y velocities from the data object.
     """
-    return data[:, 3]
+    if dim == 2:
+        ind = 3
+    elif dim == 3:
+        ind = 4
+    return data[:, ind]
+
+def get_uz(data, dim=3):
+    """ Get the array of y velocities from the data object.
+    """
+    if dim == 2:
+        ind = 4
+    elif dim == 3:
+        ind = 5
+    return data[:, ind]
 
 
 def get_weights(data):
