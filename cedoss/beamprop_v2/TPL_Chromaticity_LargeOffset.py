@@ -26,13 +26,13 @@ debug = 0
 zmult=1
 
 gammab = PProp.def_gamma
-tpl_n = 10.
+tpl_n = 0.5
 
 #tpl_f = 0.001
 #tpl_l = Foc.Calc_Square_Lens(tpl_n*1e17, tpl_f*100, gammab)
-tpl_l = 380
+tpl_l = 5428
 
-position_error = 0 * 1e6#-7*tpl_f*1e6 #um
+position_error = -0.0 * 1e6#-7*tpl_f*1e6 #um
 
 delta = 0.01
 
@@ -41,7 +41,7 @@ tpl_f_plus = Foc.Calc_Focus_Square_CM_UM(tpl_n*1e17, tpl_l, gammab*1.01)/100
 tpl_f_mnus = Foc.Calc_Focus_Square_CM_UM(tpl_n*1e17, tpl_l, gammab*0.99)/100
 
 leftext = 1 #1
-rightext = 3 #3
+rightext = 4 #3
 
 z_arr = np.linspace(-leftext*tpl_f, rightext*tpl_f, int((leftext+rightext)*tpl_f*1e6+1)*zmult) + (position_error / 1e6)
 n_arr = np.zeros(len(z_arr))

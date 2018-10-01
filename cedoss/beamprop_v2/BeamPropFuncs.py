@@ -32,7 +32,7 @@ from modules import ThreeDimensionAnalysis as ThrDim
 
 def_startloc = 0.80
 def_lenflat = 0.50
-def_nset = 10#0.5#1203.7 for gas cell
+def_nset = 10 #1203.7 for gas cell
 def_betastar = 0.10
 def_betaoffs = -0.387
 def_gamma = 19569.5 #10 GeV beam
@@ -49,7 +49,7 @@ def ReturnDefaultElectronParams(path, beta_star=def_betastar, beta_offset=def_be
         'name' : 'TestBeam',
         'path' : path,
         'load' : False,
-        'N' : 1000,
+        'N' : 100000,         #10000 for normal, 1000000 for production
         'gamma' : gamma,
         'emittance' : emit,
         'betax' : beta_init,
@@ -90,7 +90,7 @@ def dgammadz_preRobert(ne):
 def dgammadz_wrong(ne):
     return np.sqrt(ne) * 1.96e-2
 
-def dgammadz_basic(ne):
+def dgammadz_none(ne):
     return 0.0
 
 def ReturnDefaultPlasmaParams(path, plasma_start = def_startloc,
@@ -394,6 +394,19 @@ def PlotEmittance(beam, z_arr, m):
     plt.grid(); plt.show()
     return
 
+def GetSigmaMin(beam, m):
+    sig = np.zeros(m, dtype='double')
+    for i in range(m):
+        sig[i] = np.average(beam.get_sigmar(i))
+    return min(sig)
+
+def GetBetaMin(beam, m):
+    sig = np.zeros(m, dtype='double')
+    for i in range(m):
+        sig[i] = np.average(beam.get_sigmar(i))
+    ef = np.average(beam.get_emittance(m))
+    return np.square(min(sig))/ef
+
 def PlotSigmar(beam, z_arr, m):
     sig = np.zeros(m, dtype='double')
     s = np.zeros(m, dtype='double')
@@ -423,6 +436,9 @@ def PlotGamma(beam, z_arr, m):
     plt.ylabel("gamma")
     plt.grid(); plt.show()
     return
+
+def GetFinalGamma(beam, m):
+    return np.average(beam.get_gamma_n(m))
 
 def PlotEmittance_Compare(beam, beam2, z_arr, m, first, second):
     en = np.zeros(m, dtype='double')
@@ -530,6 +546,40 @@ def PlotContour_General(contour, x_arr, y_arr, x_label, y_label, data_label):
     plt.xlabel(x_label)
 
     return [Bmin_x,Bmin_y]
+
+def Plot_CSEvo_MatchedCompare_NicePlot(beamParams, beamParams_matched, n_arr, z_arr, z_offset = 0, legend_loc=0):
+    beta, alpha, gamma, gb = Calc_CSParams(beamParams, n_arr, z_arr)
+    beta0, alpha0, gamma0, gb0 = Calc_CSParams(beamParams, np.zeros(len(z_arr)), z_arr)
+    betaM, alphaM, gammaM, gbM = Calc_CSParams(beamParams_matched, np.zeros(len(z_arr)), z_arr)
+    
+    z_arr = z_arr - z_offset
+    #print(" ","beta","beta0"); print(" ",beta[740],beta0[740])
+    """
+    font = {'family' : 'normal',
+        'weight' : 'bold',
+        'size'   : 15}
+
+    plt.rc('font', **font)
+    """
+    lwid = 2.0
+    
+    fig, ax1 = plt.subplots()
+    ax1.plot(z_arr*1e2, np.array(beta)*1e2, 'b-', label=r'$\beta$', linewidth = lwid)
+    ax1.plot(z_arr*1e2, np.array(beta0)*1e2, 'b--',label=r'$\beta_{vac}$', linewidth = lwid)
+    ax1.plot(z_arr*1e2, np.array(betaM)*1e2, 'r--',label=r'$\beta_{m,vac}$', linewidth = lwid)
+    ax1.set_ylabel(r'$\beta\,\mathrm{[cm]}$', color = 'b')
+    ax1.tick_params('y', colors = 'b')
+    ax1.set_xlabel('z [cm]')
+    
+    ax2 = ax1.twinx()
+    ax2.plot(z_arr*1e2, n_arr/max(n_arr), 'g-', linewidth = lwid)
+    ax2.set_ylabel(r'$n/n_0$',color = 'g')
+    ax2.tick_params('y', colors = 'g')
+    ax1.set_xlim([-45, 5])
+    ax1.set_ylim([0, 20])
+    ax2.set_ylim([0, 1.1])
+    fig.set_size_inches(3.4*1.5,2.5*1.5)
+    ax1.grid(); ax1.legend(); plt.show()
 
 ###############################################################################
 

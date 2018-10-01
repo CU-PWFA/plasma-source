@@ -16,13 +16,22 @@ from modules import CalcEmitGrowth as W2
 import numpy as np
 import matplotlib.pyplot as plt
 
-gam = Foc.gam_def*20
+"""#ILC
+gam = Foc.gam_def*50
 emit = 10e-6 * 100#3e-6 *100 #cm-rad
 emit = 35e-9 * 100#3e-6 *100 #cm-rad
 beta_i = 5. #cm
 d_arr = np.linspace(-10,5,201)
 n0 = 1e20
-L = 100e-6 * 100 #cm
+L = 120e-6 * 100 #cm
+"""
+
+gam = Foc.gam_def
+emit = 3e-6 *100 #cm-rad
+beta_i = 10. #cm
+d_arr = np.linspace(-30,0,201)
+n0 = 1e18
+L = 800e-6 * 100 #cm
 
 delta = 0.01
 
@@ -42,15 +51,15 @@ ls_arr = np.zeros(nlen)
 
 for i in range(len(d_arr)):
     d = d_arr[i]
-    
     K = Foc.Calc_K(n0, gam)
     focal = Foc.Calc_Focus_KLength(K, L)
-    KLls_set = [K, L, Oide.Get_ls_corrected(L, focal, beta_i, d)]
+    
+    KLls_set = [K, L, Oide.Get_ls_thick(K,L,beta_i,d)]
     ls_arr[i] = KLls_set[2]
-    #print(KLls_set[0]*KLls_set[1]*KLls_set[2])
+    
     F_val = Oide.F_Oide(KLls_set)
     betam_arr[i] = Oide.Calc_BetaMin(F_val, emit, gam)
-    betaf_arr[i] = Foc.Calc_BetaStar_DeltaOff(beta_i, focal, d)
+    betaf_arr[i] = Foc.Calc_ThickBetaStar_DeltaOff_UnNormalized(K,L,beta_i,d)
     
     sig_min = Oide.Calc_SigMin(F_val, emit)
     sig = Oide.Calc_SigOide(F_val, emit, gam, betaf_arr[i])
@@ -65,24 +74,28 @@ for i in range(len(d_arr)):
     len_arr[i] = L
     focal_arr[i] = focal
     
-plt.plot(d_arr, betam_arr, label=r'$\beta^*_{opt}$')
-plt.plot(d_arr, betaf_arr, label=r'$\beta^*_{f}$')
-plt.title("Beta function at waist vs delta")
-plt.xlabel(r'$\delta\mathrm{\,[cm]}$')
-plt.ylabel(r'$\beta \mathrm{\,[cm]}$')
-plt.grid(); plt.legend(); plt.show()
-
 kl = 1/focal
 projbeta_arr = np.zeros(nlen)
-for x in range(len(projbeta_arr)):
-    projbeta_arr[x] = W2.ProjBeta_UnNormalized(kl, beta_i, d_arr[x], delta)
-sigmaE = 0.60 * delta
-bw = beta_i * kl
-dw_arr = d_arr * kl
-w2_arr = W2.ThinW2_Norm(bw, dw_arr)
-bmag_w2_arr = W2.CalcEmit(w2_arr,sigmaE)
+bmag_w2_arr = np.zeros(nlen)
+sigmaE = np.sqrt(1/3) * delta
 
-sigc_arr = np.sqrt(projbeta_arr*emit*bmag_w2_arr/gam)
+k = 1/(L*focal)
+
+for x in range(len(projbeta_arr)):
+    projbeta_arr[x] = W2.ProjBeta_Thick(k, L, beta_i, d_arr[x], delta)
+    w2 = W2.ThickW2_UnNormalized(k, L, beta_i, d_arr[x])
+    bmag_w2_arr[x] = W2.CalcEmit(w2, sigmaE)
+
+
+sigc_arr = np.sqrt(projbeta_arr*emit*bmag_w2_arr/gam)    
+
+"""
+plt.plot(d_arr, betam_arr, label=r'$\beta^*_{opt}$')
+plt.plot(d_arr, betaf_arr, label=r'$\beta^*_{f}$')
+plt.title("Beta function at waist vs d")
+plt.xlabel(r'$d\mathrm{\ [cm]}$')
+plt.ylabel(r'$\beta \mathrm{ \ [cm]}$')
+plt.grid(); plt.legend(); plt.show()
 
 plt.plot(d_arr, sigo_arr*1e7, label="Oide")
 plt.plot(d_arr, sigi_arr*1e7, label="Ideal")
@@ -90,19 +103,36 @@ plt.plot(d_arr, sigm_arr*1e7, label="Minimum")
 plt.plot(d_arr, sigc_arr*1e7, label="Chromaticity")
 plt.title("Beam sizes vs lens-waist separation")
 if simple != 1:
-    plt.xlabel(r'$\delta\mathrm{\,[cm]}$')
+    plt.xlabel(r'$d\mathrm{\ [cm]}$')
 else:
     plt.xlabel(r'$\mathrm{Lens-waist \ separation \ [cm]}$')
-plt.ylabel(r'$\sigma^* \mathrm{\,[n m]}$')
+plt.ylabel(r'$\sigma^* \mathrm{\ [n m]}$')
 plt.grid(); plt.legend(); plt.show()
 
 print("minimum sigma oide: ",min(sigo_arr*1e7)," nm")
 print("minimum sigma chr.: ",min(sigc_arr*1e7)," nm")
+"""
+#Below is production figure
+
+font = {'family' : 'normal',
+        'weight' : 'bold',
+        'size'   : 15}
+
+plt.rc('font', **font)
+lwid = 3.0
+plt.plot(d_arr, sigo_arr*1e7, 'b-', label="Sync. Rad.", linewidth = lwid)
+plt.plot(d_arr, sigm_arr*1e7, 'c--', label="Oide Limit", linewidth = lwid)
+plt.plot(d_arr, sigc_arr*1e7, 'r-', label="Chromaticity", linewidth = lwid)
+plt.plot(d_arr, sigi_arr*1e7, 'g-', label="Ideal "+r'$\sigma_E=0$', linewidth = lwid)
+plt.xlabel(r'$d\mathrm{\ [cm]}$')
+plt.ylabel(r'$\sigma^* \mathrm{\ [n m]}$')
+plt.grid(); plt.legend(); plt.show()
+
 
 """
 plt.plot(delta_arr, ls_arr)
-plt.title("Distance from lens to waist vs delta")
-plt.xlabel(r'$\delta\mathrm{\,[cm]}$')
+plt.title("Distance from lens to waist vs d")
+plt.xlabel(r'$d\mathrm{\,[cm]}$')
 plt.ylabel(r'$l^*\mathrm{\,[cm]}$')
 plt.grid(); plt.show()
 
