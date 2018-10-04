@@ -2489,8 +2489,8 @@ $CellContext`\[Alpha]0 - $CellContext`I1 $CellContext`\[Gamma]0)}, 0, 2, 1],
 }, Open  ]]
 }, Open  ]]
 },
-WindowSize->{1855, 1056},
-WindowMargins->{{0, Automatic}, {Automatic, 0}},
+WindowSize->{1920, 1056},
+WindowMargins->{{Automatic, 0}, {Automatic, 0}},
 FrontEndVersion->"11.0 for Linux x86 (64-bit) (September 21, 2016)",
 StyleDefinitions->"Default.nb"
 ]
@@ -2630,7 +2630,7 @@ Cell[CellGroupData[{
 Cell[81848, 2433, 118, 1, 35, "Subsubsection"],
 Cell[CellGroupData[{
 Cell[81991, 2438, 600, 17, 56, "Input"],
-Cell[82594, 2457, 1236, 30, 85, "Output"]
+Cell[82594, 2457, 1236, 30, 52, "Output"]
 }, Open  ]]
 }, Open  ]]
 }
