@@ -8,6 +8,8 @@ Created on Fri Dec  8 10:49:43 2017
 
 import numpy as np
 from beam.beams import beam
+from vsim import load as Vload
+from vsim import analyze as Vanalyze
 import matplotlib.pyplot as plt
 
 class ElectronBeam(beam.Beam):
@@ -106,6 +108,9 @@ class ElectronBeam(beam.Beam):
         z = self.z[ind]
         return ptcls, z
     
+    def get_save_z(self,ind):
+        return self.load_ptcls(ind)[1]
+    
     # Physics functions
     #--------------------------------------------------------------------------
         
@@ -113,68 +118,81 @@ class ElectronBeam(beam.Beam):
         """ Propagate the field to an array of z distances. """
         #TODO implement this function
     
-    def get_emittance(self, ind, ptcls=None):
+    def get_emittance(self, ind, ptcls=None, weights=None):
         """ Calculate the emittance from a particular save file. """
         ptcls = self.load_ptcls(ind)[0]
         x = self.get_x(ptcls)
         xp = self.get_xp(ptcls)
         y = self.get_y(ptcls)
         yp = self.get_yp(ptcls)
+        #If weights aren't given, just initialize an array of 1's
+        if weights is None:
+            weights = np.zeros(len(x))+1
         # Calculate the differences from the average
-        dx = x - np.average(x)
-        dxp = xp - np.average(xp)
-        dy = y - np.average(y)
-        dyp = yp - np.average(yp)
+        dx = x - np.average(x, weights=weights)
+        dxp = xp - np.average(xp, weights=weights)
+        dy = y - np.average(y, weights=weights)
+        dyp = yp - np.average(yp, weights=weights)
         # Calculate the RMS sizes and the correlation
-        sigmax2 = np.average(dx**2)
-        sigmaxp2 = np.average(dxp**2)
-        sigmaxxp = np.average(dx*dxp)
-        sigmay2 = np.average(dy**2)
-        sigmayp2 = np.average(dyp**2)
-        sigmayyp = np.average(dy*dyp)
+        sigmax2 = np.average(dx**2, weights=weights)
+        sigmaxp2 = np.average(dxp**2, weights=weights)
+        sigmaxxp = np.average(dx*dxp, weights=weights)
+        sigmay2 = np.average(dy**2, weights=weights)
+        sigmayp2 = np.average(dyp**2, weights=weights)
+        sigmayyp = np.average(dy*dyp, weights=weights)
         # Calculate the emittance
         ex = np.sqrt(sigmax2*sigmaxp2 - sigmaxxp**2)
         ey = np.sqrt(sigmay2*sigmayp2 - sigmayyp**2)
         return ex, ey
     
-    def get_gamma_n(self, ind):
+    def get_gamma_n(self, ind, weights=None):
         """ Calculate the Lorentz factor from a particular save file. """
         ptcls = self.load_ptcls(ind)[0]
-        gamma = np.average(self.get_gamma(ptcls))
+        gamma_arr = self.get_gamma(ptcls)
+        #If weights aren't given, just initialize an array of 1's
+        if weights is None:
+            weights = np.zeros(len(gamma_arr))+1
+        gamma = np.average(gamma_arr, weights=weights)
         return gamma
     
-    def get_emittance_n(self, ind):
+    def get_emittance_n(self, ind, weights=None):
         """ Calculate the normalized emittance from a particular save file. """
-        ex, ey = self.get_emittance(ind)
-        gamma = self.get_gamma_n(ind)
+        ex, ey = self.get_emittance(ind, weights=weights)
+        gamma = self.get_gamma_n(ind, weights=weights)
         ex = ex*gamma
         ey = ey*gamma
         return ex, ey
     
-    def get_sigmar(self, ind):
+    def get_sigmar(self, ind, weights=None):
         """ Caclulate the transverse beam size from a particular save file. """
         ptcls = self.load_ptcls(ind)[0]
         x = self.get_x(ptcls)
         y = self.get_y(ptcls)
+        #If weights aren't given, just initialize an array of 1's
+        if weights is None:
+            weights = np.zeros(len(x))+1
         # Calculate the differences from the average
         dx = x - np.average(x)
         dy = y - np.average(y)
         # Calculate the RMS sizes and the correlation
-        sigmax = np.sqrt(np.average(dx**2))
-        sigmay = np.sqrt(np.average(dy**2))
+        sigmax = np.sqrt(np.average(dx**2, weights=weights))
+        sigmay = np.sqrt(np.average(dy**2, weights=weights))
         return sigmax, sigmay
     
-    def get_sigmarp(self, ind):
+    def get_sigmarp(self, ind, weights=None):
         """ Calculate the beam divergence from a particular save file. """
         ptcls = self.load_ptcls(ind)[0]
         xp = self.get_xp(ptcls)
         yp = self.get_yp(ptcls)
+        #If weights aren't given, just initialize an array of 1's
+        if weights is None:
+            weights = np.zeros(len(xp))+1
         # Calculate the differences from the average
         dxp = xp - np.average(xp)
         dyp = yp - np.average(yp)
         # Calculate the RMS sizes and the correlation
-        sigmaxp = np.sqrt(np.average(dxp**2))
-        sigmayp = np.sqrt(np.average(dyp**2))
+        sigmaxp = np.sqrt(np.average(dxp**2, weights=weights))
+        sigmayp = np.sqrt(np.average(dyp**2, weights=weights))
         return sigmaxp, sigmayp
 
     def get_beam_properties(self, ind):
@@ -228,11 +246,19 @@ class ElectronBeam(beam.Beam):
         self.plot_phase(ptcls, z)
         plt.show()
     
-    def plot_phase(self, ptcls, z, xlim=None, ylim=None):
+    def plot_phase(self, ptcls, z, xlim=None, ylim=None, weights = None):
         """ Create an x-y plot of the particles. """        
+        #If weights aren't given, just initialize an array of 1's
+        if weights is None:
+            weights = np.zeros(self.N)+1
+        else:
+            sort = np.argsort(weights)
+            weights = weights[sort]
+            ptcls = ptcls[sort]
+            
         fig = plt.figure(figsize=(10, 4), dpi=150)
         plt.subplot(121)
-        sctx = plt.scatter(ptcls[:, 0]*1e6, ptcls[:, 1]*1e3, 1)
+        sctx = plt.scatter(ptcls[:, 0]*1e6, ptcls[:, 1]*1e3, 1, c=weights)
         plt.title('x phase space')
         plt.xlabel('x (um)')
         plt.ylabel("x' (mrad)")
@@ -241,7 +267,7 @@ class ElectronBeam(beam.Beam):
         if ylim is not None:
             plt.ylim(ylim)
         plt.subplot(122)
-        scty = plt.scatter(ptcls[:, 2]*1e6, ptcls[:, 3]*1e3, 1)
+        scty = plt.scatter(ptcls[:, 2]*1e6, ptcls[:, 3]*1e3, 1, c=weights)
         plt.title('y phase space')
         plt.xlabel('y (um)')
         plt.ylabel("y' (mrad)")
@@ -319,3 +345,112 @@ class GaussianElectronBeam(ElectronBeam):
         ptcls[:, 4] = np.random.normal(0.0, self.sigmaz, N)
         ptcls[:, 5] = gamma * (1 + self.dE*np.random.uniform(-1, 1, N))
         super().initialize_particles(ptcls) 
+
+class VorpalElectronBeam(ElectronBeam):
+    """ A electron beam imported from VSim, includes weights. 
+    
+    Parameters
+    ----------
+    filename : string
+        Filename of h5 file to load data from
+    thresh : double
+        Lowest particle weight to load, set to 0 to load all
+    """
+    
+    def __init__(self, params):
+        self.keys.extend([
+                'filename',
+                'thresh'])
+        super().__init__(params)
+    
+    def initialize_particles(self):
+        """ Initialize the particles in a 6D distribution. """
+        #Given a filename, parse the info
+        # 'Drive_Witness_Ramps_WitnessBeam_2.h5'
+        filename = self.filename
+        thresh = self.thresh
+        file = filename.split("/")[-1]
+        strlist = file.split("_")
+        dumpInd = int(strlist[-1].split(".")[0])
+        species = strlist[-2]
+        simname = "_".join(strlist[:-2])
+        
+        data = Vload.get_species_data(filename, species)
+        dim = int(data.attrs['numSpatialDims'])
+        
+        y = np.array(Vanalyze.get_y(data,dim)) #tran
+        uy = np.array(Vanalyze.get_uy(data,dim))
+        z = np.array(Vanalyze.get_z(data,dim)) #tran
+        uz = np.array(Vanalyze.get_uz(data,dim))
+        x = np.array(Vanalyze.get_x(data,dim)) #long
+        gamma = np.array(Vanalyze.get_ptc_gamma(data))
+        weights = np.array(Vanalyze.get_weights(data))
+        
+        ux = np.array(Vanalyze.get_ux(data,dim))
+        uy = uy/ux
+        uz = uz/ux
+        
+        x = x-np.average(x, weights=weights)#recenter to x=-0
+         
+        threshset = np.array(np.where(weights > thresh)[0])
+        N = len(threshset)
+        self.N = N
+        
+        ptcls = np.zeros((N, 7), dtype='double')
+        ptcls[:, 0] = y[threshset]
+        ptcls[:, 1] = uy[threshset]
+        ptcls[:, 2] = z[threshset]
+        ptcls[:, 3] = uz[threshset]
+        ptcls[:, 4] = x[threshset]
+        ptcls[:, 5] = gamma[threshset]
+        ptcls[:, 6] = weights[threshset]
+        
+        super().initialize_particles(ptcls)
+    
+    def get_weights(self, ptcls):
+        return ptcls[:, 6]
+
+    def get_emittance(self, ind):
+        ptcls = self.load_ptcls(ind)[0]
+        weights = self.get_weights(ptcls)
+        return super().get_emittance(ind, weights)
+        
+    def get_gamma_n(self, ind):
+        ptcls = self.load_ptcls(ind)[0]
+        weights = self.get_weights(ptcls)
+        return super().get_gamma_n(ind, weights)
+
+    def get_emittance_n(self, ind):
+        """ Calculate the normalized emittance from a particular save file. """
+        ptcls = self.load_ptcls(ind)[0]
+        weights = self.get_weights(ptcls)
+        ex, ey = super().get_emittance(ind, weights=weights)
+        gamma = super().get_gamma_n(ind, weights=weights)
+        ex = ex*gamma
+        ey = ey*gamma
+        return ex, ey
+
+    def get_sigmar(self, ind):
+        ptcls = self.load_ptcls(ind)[0]
+        weights = self.get_weights(ptcls)
+        return super().get_sigmar(ind, weights)
+
+    def get_sigmarp(self, ind):
+        ptcls = self.load_ptcls(ind)[0]
+        weights = self.get_weights(ptcls)
+        return super().get_sigmarp(ind, weights)
+    
+    def plot_current_phase(self, xlim=None, ylim=None):
+        weights = self.get_weights(self.ptcls)
+        super().plot_phase(self.ptcls, self.z[-1], xlim, ylim, weights=weights)
+        plt.show()
+    
+    def plot_phase_at(self, ind):
+        ptcls, z = self.load_ptcls(ind)
+        weights = self.get_weights(ptcls)
+        super().plot_phase(ptcls, z, weights=weights)
+        plt.show()
+    
+    def plot_phase(self, ptcls, z, xlim=None, ylim=None):
+        weights = self.get_weights(ptcls)
+        super().plot_phase(ptcls, z, xlim, ylim, weights)

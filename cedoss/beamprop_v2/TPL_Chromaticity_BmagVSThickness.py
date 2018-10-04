@@ -37,7 +37,7 @@ position_error = 0
 
 gammab = PProp.def_gamma
 tpl_n = 10.
-betastar = .60 #0.00213065326633
+betastar = .05 #0.00213065326633
 
 delta = 0.01
 
