@@ -17,14 +17,14 @@ kl = 1/focal
 bstar = 0.10
 b = bstar * kl
 
-dsep = -0.10
+dsep = 0
 d = dsep * kl
 
-sigmaE = 0.0058
+sigmaE = 1/np.sqrt(3)*0.01
 
-#W2 = (b**2+d**2)**2/b**2
-W2 = 19666.5
+W2 = (b**2+d**2)**2/b**2
+#W2 = 19666.5
 
-bmag = 1 + 1/2*W2*sigmaE**2
+bmag = np.sqrt(1+W2*sigmaE**2)
 
 print(bmag)

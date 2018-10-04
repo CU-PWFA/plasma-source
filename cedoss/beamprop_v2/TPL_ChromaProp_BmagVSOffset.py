@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Mon Jul  9 15:12:05 2018
+Created on Fri Aug 24 12:33:24 2018
 
-Copy of TPL_Chromaticity_LargeOffset built specifically to measure emittance
-growth vs lens-waist separation
+Uses macro-particles to numerically caluclate emittance growth and beam rms size
+slower but more authentic.
 
 @author: chris
 """
@@ -26,10 +26,13 @@ d_arr = np.linspace(-0.30, -0.00, num)
 emit_arr = np.zeros(num)
 betamin_arr = np.zeros(num)
 betapromin_arr= np.zeros(num)
+sigm_arr = np.zeros(num)
+betam_arr = np.zeros(num)
+gammaf_arr = np.zeros(num)
 
 gammab = PProp.def_gamma
 tpl_n = 10.
-tpl_l = 400
+tpl_l = 800
 betastar = .10 #0.00213065326633
 
 delta = 0.01
@@ -44,7 +47,7 @@ for k in range(len(d_arr)):
     rightext = 3 #3
     
     z_arr = np.linspace(-leftext*tpl_f, rightext*tpl_f, int((leftext+rightext)*tpl_f*1e6+1)*zmult) + (position_error / 1e6)
-    n_arr = np.zeros(len(z_arr))
+    n_arr = np.zeros(len(z_arr))+1e-9
     
     waist_loc = 0.
     tpl_offset = waist_loc
@@ -96,6 +99,24 @@ for k in range(len(d_arr)):
     
     betapromin_arr[k] = min(betapro_arr)
     emit_arr[k] = bmag_arr[-1]
+    
+    beam = PProp.GaussianBeam(beam_params, debug)
+    dump = 10; cores = 4
+    z_fine = np.copy(z_arr)*1e6
+    PProp.PropBeamPlasma(beam, argon, z_fine, dump, cores, debug)
+
+    m = int(len(z_fine)/dump)
+    emit_arr[k] = PProp.GetBmag(beam,m)
+    sigm_arr[k] = PProp.GetSigmaMin(beam, m)
+    betam_arr[k] = PProp.GetBetaMin(beam, m)
+    #print(sigm_arr[k])
+    #print(emit_arr[k])
+    gammaf_arr[k] = PProp.GetFinalGamma(beam,m)
+
+#tpl_f = Foc.Calc_Focus_Square_CM_UM(tpl_n*1e17, tpl_l, gammab)/100
+#gammaf=np.average(gammaf_arr)
+#ave_factor = 1+(0.5*(gammaf-gammab)/gammab)
+#tpl_f=tpl_f*ave_factor
 
 kl = 1/tpl_f
 bw = betastar * kl
@@ -113,13 +134,16 @@ for x in range(len(d_arr)):
     bmag_w2_arr_thick[x] = W2.CalcEmit(w2, sigmaE)
 
 projbeta_arr = np.zeros(len(d_arr))
+projbeta_arr2 = np.zeros(len(d_arr))
 for x in range(len(d_arr)):
     projbeta_arr[x] = W2.ProjBeta_UnNormalized(kl, betastar, d_arr[x], delta)
+    b0 = betastar+d_arr[x]**2/betastar;  a0 = -d_arr[x]/betastar;  g0 = 1/betastar
+    projbeta_arr2[x] = W2.ProjBetaCS_UnNormalized(k, l, b0, a0, g0, delta)
     
 projbetathick_arr = np.zeros(len(d_arr))
 for x in range(len(d_arr)):
-    projbetathick_arr[x] = W2.ProjBeta_Thick(k, l, betastar, d_arr[x], delta)
-    #projbetathick_arr[x] = W2.ProjBeta_Thick_Gauss(k, l, betastar, d_arr[x], sigmaE)
+    #projbetathick_arr[x] = W2.ProjBeta_Thick(k, l, betastar, d_arr[x], delta)
+    projbetathick_arr[x] = W2.ProjBeta_Thick_Gauss(k, l, betastar, d_arr[x], sigmaE)
 
 plt.title("B-mag vs Lens-Waist Separation for L = "+str(tpl_l)+r'$\ \mu m$')
 plt.plot(d_arr*1e2, emit_arr, label = "Beam Propagation")
@@ -130,7 +154,8 @@ plt.xlabel("Lens-Waist Separation d [cm]")
 plt.grid(); plt.legend(); plt.show()
 
 plt.title("Minimum "+r'$\beta$'+" vs Lens-Waist Separation for L = "+str(tpl_l)+r'$\ \mu m$')
-plt.plot(d_arr*1e2, betamin_arr*1e6, label="Measured")
+#plt.plot(d_arr*1e2, betamin_arr*1e6, label="Measured")
+plt.plot(d_arr*1e2, betam_arr*1e6, label="Statistical")
 plt.plot(d_arr*1e2, Foc.Calc_BetaStar_DeltaOff(betastar, tpl_f, d_arr)*1e6, label="Ideal Calculated")
 plt.plot(d_arr*1e2, projbeta_arr*1e6, label="Calculated "+r'$\beta_{pro}$')
 plt.plot(d_arr*1e2, projbetathick_arr*1e6, label="Thick Calculated "+r'$\beta_{pro}$')
@@ -145,18 +170,29 @@ print("Minimum possible beta: ",betamin_arr[minloc]*1e6," um")
 print("d = ",d_arr[minloc]*100," cm")
 print("B-mag = ",emit_arr[minloc])
 
+b0_arr = betastar + np.square(d_arr)/betastar
+a0_arr = -d_arr/betastar
+p_arr = np.sqrt(1+np.square(b0_arr*sigmaE/tpl_f))
+sigp_arr = np.sqrt(b0_arr*3e-6/gammab)*p_arr/np.sqrt(np.square(p_arr)+np.square(a0_arr+b0_arr/tpl_f))
+
 ##Nice plot of sigma r vs sqrt(k)d
 plt.title("Beam spot size vs lens-waist separation")
-plt.plot(d_arr*np.sqrt(k), np.sqrt(projbeta_arr*3e-6*bmag_w2_arr/gammab)*1e9, label="Thin Calculated "+r'$\sigma_r$')
-plt.plot(d_arr*np.sqrt(k), np.sqrt(projbetathick_arr*3e-6*bmag_w2_arr_thick/gammab)*1e9, label="Thick Calculated "+r'$\sigma_r$')
-plt.plot(d_arr*np.sqrt(k), np.sqrt(betapromin_arr*3e-6*emit_arr/gammab)*1e9, label="Propagated "+r'$\sigma_r$')
-plt.plot(d_arr*np.sqrt(k), np.sqrt(Foc.Calc_BetaStar_DeltaOff(betastar, tpl_f, d_arr)*3e-6/gammab)*1e9, label="Thin Ideal "+r'$\sigma_r$')
-plt.plot(d_arr*np.sqrt(k), np.sqrt(Foc.Calc_ThickBetaStar_DeltaOff_UnNormalized(k,tpl_l*1e-6,betastar, d_arr)*3e-6/gammab)*1e9, label="Thick Ideal "+r'$\sigma_r$')
+#plt.plot(d_arr*np.sqrt(k), np.sqrt(projbeta_arr*3e-6/gammab)*1e9, label="Thin Calculated "+r'$\sigma_r$')
+plt.plot(d_arr*np.sqrt(k), np.sqrt(projbetathick_arr*3e-6/gammab)*1e9, 'b-', label="Thick Calculated "+r'$\sigma_r$')
+plt.plot(d_arr*np.sqrt(k), sigm_arr*1e9, 'r--', label="Propagated "+r'$\sigma_r$')
+plt.plot(d_arr*np.sqrt(k), np.sqrt(Foc.Calc_BetaStar_DeltaOff(betastar, tpl_f, d_arr)*3e-6/gammab)*1e9, 'g-', label="Ideal "+r'$\sigma_r$')
+#plt.plot(d_arr*np.sqrt(k), np.sqrt(Foc.Calc_ThickBetaStar_DeltaOff_UnNormalized(k,tpl_l*1e-6,betastar, d_arr)*3e-6/gammab)*1e9, label="Thick Ideal "+r'$\sigma_r$')
+#plt.plot(d_arr*np.sqrt(k), sigp_arr*1e9, 'k--',label="Chen 1989 "+r'$\sigma_r$')
 plt.ylabel(r'$\sigma_r\mathrm{\ [nm]}$')
 plt.xlabel(r'$\mathrm{Lens-Waist \ Separation \ }\sqrt{K}d $')
 plt.grid(); plt.legend(); plt.show()
 
+#This was to confirm new betapro formula worked
+#plt.plot(d_arr, projbeta_arr, 'b-')
+#plt.plot(d_arr, projbeta_arr2, 'r--')
+#plt.show()
 
+"""
 #Below is production figure
 
 font = {'family' : 'normal',
@@ -166,12 +202,15 @@ font = {'family' : 'normal',
 plt.rc('font', **font)
 lwid = 3.0
 #fig, ax1 = plt.subplots()
-plt.plot(d_arr*1e2, np.sqrt(projbeta_arr*3e-6*bmag_w2_arr/gammab)*1e9, 'b-', label="Thin Approx.", linewidth = lwid)
+#plt.plot(d_arr*1e2, np.sqrt(projbeta_arr*3e-6*bmag_w2_arr/gammab)*1e9, 'b-', label="Thin Approx.", linewidth = lwid)
+plt.plot(d_arr*1e2, np.sqrt(projbeta_arr*3e-6/gammab)*1e9, 'b-', label="Thin Approx.", linewidth = lwid)
 #plt.plot(d_arr*1e2, np.sqrt(projbetathick_arr*3e-6*bmag_w2_arr_thick/gammab)*1e9, 'c-', label="Thick Regime", linewidth = lwid)
-plt.plot(d_arr*1e2, np.sqrt(betapromin_arr*3e-6*emit_arr/gammab)*1e9, 'r--', label="Numerical", linewidth = lwid)
+plt.plot(d_arr*1e2, np.sqrt(projbetathick_arr*3e-6/gammab)*1e9, 'c-', label="Thick Regime", linewidth = lwid)
+plt.plot(d_arr*1e2, sigm_arr*1e9, 'r--', label="Numerical", linewidth = lwid)
 plt.plot(d_arr*1e2, np.sqrt(Foc.Calc_ThickBetaStar_DeltaOff_UnNormalized(k,tpl_l*1e-6,betastar, d_arr)*3e-6/gammab)*1e9, 'g-', label="Ideal "+r'$\sigma_E=0$', linewidth = lwid)
 plt.ylabel(r'$\sigma_r\mathrm{\ [nm]}$')
 plt.xlabel(r'$\mathrm{Lens-Waist \ Separation} \ d \ \mathrm{[cm]}$')
 plt.ylim([60, 125])
 #fig.set_size_inches(6,5)
 plt.grid(); plt.legend(loc=(.22,.63)); plt.show()
+"""

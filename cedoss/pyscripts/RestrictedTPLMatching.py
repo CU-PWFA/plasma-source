@@ -13,9 +13,9 @@ import sys
 sys.path.insert(0, "../")
 from modules import TPLFocalLength as Foc
 
-bi = .061608 #initial beta
+bi = .10 #initial beta
 bf = .061608 #final beta / matching condition
-zm = 0.10 #distance from inital waist to final waist - set by facility and mathcing condition
+zm = 0.10 #distance from inital waist to final waist - set by facility and matching condition
 
 if bi == bf:
     print("Using bi = bf case:")
@@ -57,7 +57,7 @@ else:
         zmin = np.sqrt(bi*(x*bf-bi))+bf*np.sqrt(x-1)
         print("zmin = ",zmin)
     
-    #It appears taking the other sign allos for negative KL - unphysical
+    #It appears taking the other sign allows for negative KL - unphysical
     """
     kl = (2*bf*bi*zm - np.sqrt(bf*bi*(bf+bi)**2*(bi**2-2*bf*bi+bf**2+zm**2))) / (bf*bi*(bi**2+2*bf*bi+bf**2+zm**2))
     

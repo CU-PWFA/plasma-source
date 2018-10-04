@@ -19,7 +19,7 @@ debug = 1
 path = '/home/chris/Desktop/BeamProp/testGaussian'
 gamma = PProp.def_gamma
 
-case = 1
+case = 2
 if case == 1:
     sighw = 0.08 * 1e6
     tpl_n = 0.5
