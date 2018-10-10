@@ -24,8 +24,9 @@ def get_ptc_gamma(data):
     gamma : array-like
         The gamma of each particle in the beam.
     """
-    ux = get_ux(data)
-    uy = get_uy(data)
+    dim = int(data.attrs['numSpatialDims'])
+    ux = get_ux(data,dim)
+    uy = get_uy(data,dim)
     u2 = ux**2 + uy**2
     gamma = 1/np.sqrt(1 - u2/(const.c**2 + u2))
     return gamma

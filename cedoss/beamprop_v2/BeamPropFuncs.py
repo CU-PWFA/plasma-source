@@ -49,7 +49,7 @@ def ReturnDefaultElectronParams(path, beta_star=def_betastar, beta_offset=def_be
         'name' : 'TestBeam',
         'path' : path,
         'load' : False,
-        'N' : 100000,         #10000 for normal, 1000000 for production
+        'N' : 10000,         #10000 for normal, 1000000 for production
         'gamma' : gamma,
         'emittance' : emit,
         'betax' : beta_init,
@@ -66,9 +66,22 @@ def GaussianBeam(electronParams, debug = 0):
     if debug == 1: beam.plot_current_phase();
     return beam
 
+def VorpalBeam(path, filename, threshold, debug = 0):
+    vorpalParams = {
+            'N' : 1,
+            'load' : False,
+            'name' : 'VorpalBeam',
+            'path' : path,
+            'filename' : filename,
+            'thresh' : threshold
+    }
+    beam = electronbeam.VorpalElectronBeam(vorpalParams)
+    if debug ==1: beam.plot_current_phase();
+    return beam
+
 def dgammadz(ne): #Used to have old small n term
     npl0 = def_nset; npl = ne
-    if npl0 == 0:
+    if npl == 0:
         return 0
     else:
         dgds0 = 16.66e9 * np.sqrt(npl0/0.5) / 511e3
@@ -383,10 +396,10 @@ def PlotEmittance(beam, z_arr, m):
     en = np.zeros(m, dtype='double')
     s = np.zeros(m, dtype='double')
     for i in range(m):
-        j = int(i * len(z_arr)/m)
+        #j = int(i * len(z_arr)/m)
         en[i] = np.average(beam.get_emittance_n(i))*1e6
-        s[i] = z_arr[j]*1e-4
-    
+        s[i] = beam.get_save_z(i)
+        #s[i] = z_arr[j]*1e-4
     plt.plot(s, en)
     plt.title("Emittance Evolution")
     plt.xlabel("s [cm]")
@@ -411,10 +424,12 @@ def PlotSigmar(beam, z_arr, m):
     sig = np.zeros(m, dtype='double')
     s = np.zeros(m, dtype='double')
     for i in range(m):
-        j = int(i * len(z_arr)/m)
+        #j = int(i * len(z_arr)/m)
         sig[i] = np.average(beam.get_sigmar(i))*1e6
-        s[i] = z_arr[j]*1e-4
-    
+        s[i] = beam.get_save_z(i)
+        #s[i] = z_arr[j]*1e-4
+    print(sig)
+    print(s)
     plt.plot(s, sig)
     plt.title("Sigmar Evolution")
     plt.xlabel("s [cm]")
