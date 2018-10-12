@@ -52,8 +52,8 @@ def ProjBetaCS(l, b, a, g, delta):
     first = 2*delta*(g+l*(2*a+b*l))**2
     second = 2*delta/(delta**2-1)*((g+4*a*l)*(delta**2-1)+b*l**2*(a**2*(1-2*delta**2)+3*b*g*(-1+delta**2))+b**2*l**3*(2*a+b*l)*(-2+delta**2))
     third = -4*l*(a+b*l)*(1+a*b*l+b**2*l**2)*np.arctanh(delta)
-    print(first,second,third)
-    print((second + third) / first)
+    #print(first,second,third)
+    #print((second + third) / first)
     return (second + third) / first
 
 def ProjBeta_Thick(k, l, b, d, delta):

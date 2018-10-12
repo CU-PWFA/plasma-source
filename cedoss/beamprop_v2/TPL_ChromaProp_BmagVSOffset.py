@@ -19,7 +19,7 @@ from modules import CalcEmitGrowth as W2
 
 path = '/home/chris/Desktop/BeamProp/Placeholder'
 debug = 0
-zmult=1
+zmult=10
 
 num = 101
 d_arr = np.linspace(-0.30, -0.00, num)
@@ -47,7 +47,7 @@ for k in range(len(d_arr)):
     rightext = 3 #3
     
     z_arr = np.linspace(-leftext*tpl_f, rightext*tpl_f, int((leftext+rightext)*tpl_f*1e6+1)*zmult) + (position_error / 1e6)
-    n_arr = np.zeros(len(z_arr))+1e-9
+    n_arr = np.zeros(len(z_arr))#+1e-9
     
     waist_loc = 0.
     tpl_offset = waist_loc
@@ -146,9 +146,9 @@ for x in range(len(d_arr)):
     projbetathick_arr[x] = W2.ProjBeta_Thick_Gauss(k, l, betastar, d_arr[x], sigmaE)
 
 plt.title("B-mag vs Lens-Waist Separation for L = "+str(tpl_l)+r'$\ \mu m$')
-plt.plot(d_arr*1e2, emit_arr, label = "Beam Propagation")
-plt.plot(d_arr*1e2, bmag_w2_arr, label = "Analytic Thin")
-plt.plot(d_arr*1e2, bmag_w2_arr_thick, label = "Analytic Thick")
+plt.plot(d_arr*1e2, emit_arr, 'r-', label = "Beam Propagation")
+plt.plot(d_arr*1e2, bmag_w2_arr, 'g--', label = "Analytic Thin")
+plt.plot(d_arr*1e2, bmag_w2_arr_thick, 'b--', label = "Analytic Thick")
 plt.ylabel("B-mag")
 plt.xlabel("Lens-Waist Separation d [cm]")
 plt.grid(); plt.legend(); plt.show()
@@ -178,8 +178,8 @@ sigp_arr = np.sqrt(b0_arr*3e-6/gammab)*p_arr/np.sqrt(np.square(p_arr)+np.square(
 ##Nice plot of sigma r vs sqrt(k)d
 plt.title("Beam spot size vs lens-waist separation")
 #plt.plot(d_arr*np.sqrt(k), np.sqrt(projbeta_arr*3e-6/gammab)*1e9, label="Thin Calculated "+r'$\sigma_r$')
-plt.plot(d_arr*np.sqrt(k), np.sqrt(projbetathick_arr*3e-6/gammab)*1e9, 'b-', label="Thick Calculated "+r'$\sigma_r$')
-plt.plot(d_arr*np.sqrt(k), sigm_arr*1e9, 'r--', label="Propagated "+r'$\sigma_r$')
+plt.plot(d_arr*np.sqrt(k), np.sqrt(projbetathick_arr*3e-6/gammab)*1e9, 'b--', label="Thick Calculated "+r'$\sigma_r$')
+plt.plot(d_arr*np.sqrt(k), sigm_arr*1e9, 'r-', label="Propagated "+r'$\sigma_r$')
 plt.plot(d_arr*np.sqrt(k), np.sqrt(Foc.Calc_BetaStar_DeltaOff(betastar, tpl_f, d_arr)*3e-6/gammab)*1e9, 'g-', label="Ideal "+r'$\sigma_r$')
 #plt.plot(d_arr*np.sqrt(k), np.sqrt(Foc.Calc_ThickBetaStar_DeltaOff_UnNormalized(k,tpl_l*1e-6,betastar, d_arr)*3e-6/gammab)*1e9, label="Thick Ideal "+r'$\sigma_r$')
 #plt.plot(d_arr*np.sqrt(k), sigp_arr*1e9, 'k--',label="Chen 1989 "+r'$\sigma_r$')

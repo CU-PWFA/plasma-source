@@ -66,14 +66,16 @@ def GaussianBeam(electronParams, debug = 0):
     if debug == 1: beam.plot_current_phase();
     return beam
 
-def VorpalBeam(path, filename, threshold, debug = 0):
+def VorpalBeam(path, filename, threshold, minz=-np.inf, maxz = np.inf, debug = 0):
     vorpalParams = {
             'N' : 1,
             'load' : False,
             'name' : 'VorpalBeam',
             'path' : path,
             'filename' : filename,
-            'thresh' : threshold
+            'thresh' : threshold,
+            'minz' : minz,
+            'maxz' : maxz
     }
     beam = electronbeam.VorpalElectronBeam(vorpalParams)
     if debug ==1: beam.plot_current_phase();
@@ -81,7 +83,7 @@ def VorpalBeam(path, filename, threshold, debug = 0):
 
 def dgammadz(ne): #Used to have old small n term
     npl0 = def_nset; npl = ne
-    if npl == 0:
+    if npl < 1e-18:
         return 0
     else:
         dgds0 = 16.66e9 * np.sqrt(npl0/0.5) / 511e3
@@ -405,6 +407,7 @@ def PlotEmittance(beam, z_arr, m):
     plt.xlabel("s [cm]")
     plt.ylabel("normalized emittance [mm-mrad]")
     plt.grid(); plt.show()
+    print(en[0])
     return
 
 def GetSigmaMin(beam, m):
@@ -426,16 +429,15 @@ def PlotSigmar(beam, z_arr, m):
     for i in range(m):
         #j = int(i * len(z_arr)/m)
         sig[i] = np.average(beam.get_sigmar(i))*1e6
-        s[i] = beam.get_save_z(i)
+        s[i] = beam.get_save_z(i)*1e2
         #s[i] = z_arr[j]*1e-4
-    print(sig)
-    print(s)
+        
     plt.plot(s, sig)
     plt.title("Sigmar Evolution")
     plt.xlabel("s [cm]")
     plt.ylabel("sigmar [um]")
     plt.grid(); plt.show()
-    return
+    return sig, s
 
 def PlotGamma(beam, z_arr, m):
     gam = np.zeros(m, dtype='double')
