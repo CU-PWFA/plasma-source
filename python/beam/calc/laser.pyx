@@ -87,7 +87,7 @@ def fourier_prop(double complex[:, :] E, double[:] x, double[:] y, double[:] z,
 
 
 def beam_prop(double complex[:, :] E, double[:] x, double[:] y, double[:] z,
-              double lam, double nh, double z0, fft, ifft, save, loadn):
+              double lam, loadnh, double z0, fft, ifft, save, loadn):
     """ Propagates a em wave through a region with a non-uniform index. 
     
     Propagates an electromagnetic wave through a region with a non-uniform
@@ -104,11 +104,12 @@ def beam_prop(double complex[:, :] E, double[:] x, double[:] y, double[:] z,
     # Pre-calculate the spatial frequencies
     cdef double[:] fx = fftfreq(Nx, dx)
     cdef double[:] fy = fftfreq(Ny, dy)
-    cdef double complex[:, :] ikz = ikz_RS(fx, fy, lam, nh)
+    cdef double complex[:, :] ikz = ikz_RS(fx, fy, lam, loadnh(0))
     cdef double complex arg
     cdef double dz
     for i in range(1, Nz):
-        nih = loadn(i-1);
+        ikz = ikz_RS(fx, fy, lam, loadnh(i))
+        nih = (loadn(i) + loadn(i-1))/2;
         arg = 1j*2*np.pi*dz / lam
         E = fourier_step(E, ikz, dz, fft, ifft)
         with nogil:
