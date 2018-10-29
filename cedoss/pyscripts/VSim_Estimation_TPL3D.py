@@ -20,9 +20,9 @@ z_end = 700e-6
 L_sim = z_end - z_start #m
 
 specie = ["drive", "witness"]
-witness_delay = 55. #um
+witness_delay = 30. #um
 drive_window = 26. #um
-lrms = [5.2, 12.] #um
+lrms = [5.2, 5.2] #um
 sigrms = [5.2, 3.9] #um
 emit_n = [5.3, 3.] #um-rad
 ppc = [8,8] #and plasma is 1

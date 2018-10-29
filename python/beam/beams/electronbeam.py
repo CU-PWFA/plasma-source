@@ -11,6 +11,8 @@ from beam.beams import beam
 from vsim import load as Vload
 from vsim import analyze as Vanalyze
 import matplotlib.pyplot as plt
+from scipy.stats import norm
+from scipy import optimize
 
 class ElectronBeam(beam.Beam):
     """ An electron beam class that stores a collection of macroparticles.
@@ -172,8 +174,8 @@ class ElectronBeam(beam.Beam):
         if weights is None:
             weights = np.zeros(len(x))+1
         # Calculate the differences from the average
-        dx = x - np.average(x)
-        dy = y - np.average(y)
+        dx = x - np.average(x, weights=weights)
+        dy = y - np.average(y, weights=weights)
         # Calculate the RMS sizes and the correlation
         sigmax = np.sqrt(np.average(dx**2, weights=weights))
         sigmay = np.sqrt(np.average(dy**2, weights=weights))
@@ -188,8 +190,8 @@ class ElectronBeam(beam.Beam):
         if weights is None:
             weights = np.zeros(len(xp))+1
         # Calculate the differences from the average
-        dxp = xp - np.average(xp)
-        dyp = yp - np.average(yp)
+        dxp = xp - np.average(xp, weights=weights)
+        dyp = yp - np.average(yp, weights=weights)
         # Calculate the RMS sizes and the correlation
         sigmaxp = np.sqrt(np.average(dxp**2, weights=weights))
         sigmayp = np.sqrt(np.average(dyp**2, weights=weights))
@@ -256,6 +258,9 @@ class ElectronBeam(beam.Beam):
             weights = weights[sort]
             ptcls = ptcls[sort]
             
+        #zf = self.get_z(ptcls)
+        #weights = zf
+            
         fig = plt.figure(figsize=(10, 4), dpi=150)
         plt.subplot(121)
         sctx = plt.scatter(ptcls[:, 0]*1e6, ptcls[:, 1]*1e3, 1, c=weights)
@@ -278,7 +283,74 @@ class ElectronBeam(beam.Beam):
 
         plt.tight_layout()
         return fig, sctx, scty
-
+    
+    def plot_hist_at(self, ind):
+        ptcls, z = self.load_ptcls(ind)
+        self.plot_hist(ptcls, z, ind)
+    
+    def plot_hist(self, ptcls, z, ind, weights = None):
+        if weights is None:
+            weights = np.zeros(self.N)+1
+        else:
+            sort = np.argsort(weights)
+            weights = weights[sort]
+            ptcls = ptcls[sort]
+        
+        sigma = self.get_sigmar(ind)[0]
+        #There used to be many different fits, but now only the Gauss+Gauss remains.
+        # If you want to implement more, use the general procudure below with
+        # functions at the bottom of this script.
+        
+        plt.figure(figsize=(10, 4), dpi=150)
+        plt.subplot(121)
+        left = plt.hist(ptcls[:,0]*1e6, bins = 50, weights = weights, log=True)        
+        x = np.linspace(min(ptcls[:,0]),max(ptcls[:,0]),100)
+        fx = max(left[0])*np.exp(-1*np.square(x)/2/np.square(sigma))
+        plt.plot(x*1e6, fx, label=r'$\sigma_x=$'+str(sigma*1e6)+r'$\ \mu m$')
+        plt.xlabel(r'$x\mathrm{\ [\mu m]}$')
+        plt.ylabel('Counts')
+        plt.ylim(bottom = 0.1)
+        plt.ylim(top = max(left[0])*6)
+        plt.legend()
+        
+        plt.subplot(122)
+        right = plt.hist(ptcls[:,0]*1e6, bins = 50, weights = weights, log=False)
+        plt.plot(x*1e6, fx, label=r'$\sigma_x=$'+str(sigma*1e6)+r'$\ \mu m$')
+        plt.xlabel(r'$x\mathrm{\ [\mu m]}$')
+        plt.ylim(bottom = 0.1)
+        plt.ylim(top = max(right[0])*1.2)
+        plt.legend(); plt.show()
+        
+        #With the data from left we now want to try a Gauss + Gauss fit
+        wdata = np.array(left[0])
+        rdata = np.array(left[1])*1e-6
+        rdata = rdata[0:-1]+.5*(rdata[1]-rdata[0])
+        p = FitDataSomething(wdata, rdata, GaussPlusGauss, [sigma, sigma*3, max(left[0]), max(left[0])/100])
+        print("G+G: ",p)
+        
+        plt.figure(figsize=(10, 4), dpi=150)
+        plt.subplot(121)
+        left = plt.hist(ptcls[:,0]*1e6, bins = 50, weights = weights, log=True)
+        fxg = GaussPlusGauss(p,x)
+        plt.plot(x*1e6, fxg, label="G+G: "+r'$\sigma_1=$'+("%0.2f"%(np.abs(p[0])*1e6))+r'$\ \mu m$'+" & "+r'$\sigma_2=$'+("%0.2f"%(np.abs(p[1])*1e6))+r'$\ \mu m$')
+        plt.plot(x*1e6, Gauss([p[0],p[2]],x), 'k--')
+        plt.plot(x*1e6, Gauss([p[1],p[3]],x), 'c--')
+        plt.xlabel(r'$x\mathrm{\ [\mu m]}$')
+        plt.ylabel('Counts')
+        plt.ylim(bottom = 0.1)
+        plt.ylim(top = max(left[0])*6)
+        plt.legend()
+        
+        plt.subplot(122)
+        right = plt.hist(ptcls[:,0]*1e6, bins = 50, weights = weights, log=False)
+        plt.plot(x*1e6, fxg, label="G+G: "+r'$\sigma_1=$'+("%0.2f"%(np.abs(p[0])*1e6))+r'$\ \mu m$'+" & "+r'$\sigma_2=$'+("%0.2f"%(np.abs(p[1])*1e6))+r'$\ \mu m$')
+        plt.plot(x*1e6, Gauss([p[0],p[2]],x), 'k--')
+        plt.plot(x*1e6, Gauss([p[1],p[3]],x), 'c--')
+        plt.xlabel(r'$x\mathrm{\ [\mu m]}$')
+        plt.ylim(bottom = 0.1)
+        plt.ylim(top = max(right[0])*1.2)
+        plt.legend(); plt.show()
+        return
 
 class GaussianElectronBeam(ElectronBeam):
     """ A electron beam with a Gaussian transverse profile. 
@@ -360,7 +432,9 @@ class VorpalElectronBeam(ElectronBeam):
     def __init__(self, params):
         self.keys.extend([
                 'filename',
-                'thresh'])
+                'thresh',
+                'minz',
+                'maxz'])
         super().__init__(params)
     
     def initialize_particles(self):
@@ -369,6 +443,9 @@ class VorpalElectronBeam(ElectronBeam):
         # 'Drive_Witness_Ramps_WitnessBeam_2.h5'
         filename = self.filename
         thresh = self.thresh
+        minz = self.minz
+        maxz = self.maxz
+        
         file = filename.split("/")[-1]
         strlist = file.split("_")
         dumpInd = int(strlist[-1].split(".")[0])
@@ -391,7 +468,27 @@ class VorpalElectronBeam(ElectronBeam):
         uz = uz/ux
         
         x = x-np.average(x, weights=weights)#recenter to x=-0
-         
+        
+        if minz > -np.inf:
+            zset = np.array(np.where(x > minz)[0])
+            y = y[zset]
+            uy = uy[zset]
+            z = z[zset]
+            uz = uz[zset]
+            x = x[zset]
+            gamma = gamma[zset]
+            weights = weights[zset]
+            
+        if maxz < np.inf:
+            zset = np.array(np.where(x < maxz)[0])
+            y = y[zset]
+            uy = uy[zset]
+            z = z[zset]
+            uz = uz[zset]
+            x = x[zset]
+            gamma = gamma[zset]
+            weights = weights[zset]
+        
         threshset = np.array(np.where(weights > thresh)[0])
         N = len(threshset)
         self.N = N
@@ -454,3 +551,107 @@ class VorpalElectronBeam(ElectronBeam):
     def plot_phase(self, ptcls, z, xlim=None, ylim=None):
         weights = self.get_weights(ptcls)
         super().plot_phase(ptcls, z, xlim, ylim, weights)
+        
+    def plot_hist_at(self, ind):
+        ptcls, z = self.load_ptcls(ind)
+        weights = self.get_weights(ptcls)
+        super().plot_hist(ptcls, z, ind, weights=weights)
+        plt.show()
+    
+    def plot_hist(self, ptcls, z, ind):
+        weights = self.get_weights(ptcls)
+        super().plot_hist(ptcls, z, weights)
+    
+    def get_emittance_n_zcond(self, ind, minz, maxz):
+        """ Calculate the normalized emittance from a particular save file. """
+        ptcls = self.load_ptcls(ind)[0]
+        weights = self.get_weights(ptcls)
+        ex, ey = self.get_emittance_zcond(ind, minz, maxz, weights=weights)
+        gamma = super().get_gamma_n(ind, weights=weights)
+        ex = ex*gamma
+        ey = ey*gamma
+        return ex, ey    
+    
+    def get_emittance_zcond(self, ind, minz, maxz, weights, ptcls=None):
+        """ Calculate the emittance from a particular save file. """
+        ptcls = self.load_ptcls(ind)[0]
+        x = self.get_x(ptcls)
+        xp = self.get_xp(ptcls)
+        y = self.get_y(ptcls)
+        yp = self.get_yp(ptcls)
+        #If weights aren't given, just initialize an array of 1's
+            
+        z = self.get_z(ptcls)
+        zset = np.array(np.where((z > minz))[0])
+        x = x[zset]
+        xp = xp[zset]
+        y = y[zset]
+        yp = yp[zset]
+        weights = weights[zset]
+        z = z[zset]
+        
+        zset = np.array(np.where((z < maxz))[0])
+        x = x[zset]
+        xp = xp[zset]
+        y = y[zset]
+        yp = yp[zset]
+        weights = weights[zset]
+        
+        # Calculate the differences from the average
+        dx = x - np.average(x, weights=weights)
+        dxp = xp - np.average(xp, weights=weights)
+        dy = y - np.average(y, weights=weights)
+        dyp = yp - np.average(yp, weights=weights)
+        # Calculate the RMS sizes and the correlation
+        sigmax2 = np.average(dx**2, weights=weights)
+        sigmaxp2 = np.average(dxp**2, weights=weights)
+        sigmaxxp = np.average(dx*dxp, weights=weights)
+        sigmay2 = np.average(dy**2, weights=weights)
+        sigmayp2 = np.average(dyp**2, weights=weights)
+        sigmayyp = np.average(dy*dyp, weights=weights)
+        # Calculate the emittance
+        ex = np.sqrt(sigmax2*sigmaxp2 - sigmaxxp**2)
+        ey = np.sqrt(sigmay2*sigmayp2 - sigmayyp**2)
+        return ex, ey
+    
+#p[sig,gam,n0]
+def Voigt(p, x):
+    lorentz = (p[1]/(np.square(x)+np.square(p[1])))/np.pi
+    gauss = np.exp(-.5*np.square(x)/np.square(p[0]))/p[0]/np.sqrt(2*np.pi)
+    return p[2]*lorentz*gauss
+
+def GaussPlusLorentz(p, x):
+    lorentz = (p[1]/(np.square(x)+np.square(p[1])))/np.pi
+    gauss = np.exp(-.5*np.square(x)/np.square(p[0]))
+    return p[2]*gauss+p[3]*lorentz
+
+def GaussPlusGauss(p, x):
+    gauss1 = np.exp(-.5*np.square(x)/np.square(p[0]))
+    gauss2 = np.exp(-.5*np.square(x)/np.square(p[1]))
+    return p[2]*gauss1 + p[3]*gauss2
+
+def GaussTimesGauss(p, x):
+    gauss1 = np.exp(-.5*np.square(x)/np.square(p[0]))
+    gauss2 = np.exp(-.5*np.square(x)/np.square(p[1]))
+    return p[2]*gauss1 * gauss2
+
+#p[gam,B]
+def Lorentz(p,x):
+    return p[1]*(p[0]/(np.square(x)+np.square(p[0])))/np.pi
+
+#p[sig,A]
+def Gauss(p, x):
+    return p[1]*np.exp(-.5*np.square(x)/np.square(p[0]))
+    
+def FitDataSomething(data, axis, function, guess = [0.,0.,0.]):
+    errfunc = lambda p, x, y: function(p, x) - y
+    p0 = guess
+    p1, success = optimize.leastsq(errfunc,p0[:], args=(axis, data))
+    """
+    plt.plot(axis, data, label=datlabel)
+    #plt.plot(axis, function(guess,axis), label="Guess "+ function.__name__ +" profile")
+    plt.plot(axis, function(p1,axis), label="Fitted "+ function.__name__ +" profile")
+    plt.title("Comparison of data with "+ function.__name__ +" profile")
+    plt.legend(); plt.grid(); plt.show()
+    """
+    return p1

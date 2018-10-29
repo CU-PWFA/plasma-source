@@ -13,11 +13,12 @@ from modules import TPLFocalLength as Foc
 import numpy as np
 import matplotlib.pyplot as plt
 
-beta_i_arr = np.linspace(10, 100, 100) #cm
+beta_i_arr = np.linspace(10, 20, 100) #cm
 nmax_arr = np.zeros(len(beta_i_arr))
 
 #emitx = 5.3e-6 *100 #cm-rad
-emitx = 3e-6*100 #cm-rad
+#emitx = 3e-6*100 #cm-rad
+emitx = 100e-9*100 #cm-rad
 gam = Foc.gam_def
 nbeam = 6e9
 sigz = 5.2e-6*100 #cm
