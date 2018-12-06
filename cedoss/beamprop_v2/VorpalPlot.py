@@ -13,7 +13,7 @@ import numpy as np
 from vsim import plot
 import matplotlib.pyplot as plt
 """
-path = '/home/chris/Desktop/SimulationRepo/TestCases/3D/200um/'
+path = '/home/chris/Desktop/SimulationRepo/TestCases/3D/SingleBunch/5e17/200um/'
 params = {'drive' : 'rhoDrive',
           'plasma' : 'electrons',
           'dumpInd' : 4,
@@ -24,15 +24,16 @@ params = {'drive' : 'rhoDrive',
           }
 plot.single_drive_density(params)
 """
-
-path = '/home/chris/Desktop/SimulationRepo/TestCases/3D/TwoBunch/1e18/200um/'
+#"""
+path = '/media/chris/New Volume/VSimRuns/NERSCResults/3D/TwoBunch/1e18/50um/'
 params = {'drive' : 'rhoDrive',
           'witness' : 'rhoWitness',
           'plasma' : 'electrons',
-          'dumpInd' : 4,
+          'dumpInd' : 3,
           'path' : path,
           'simName' : 'ThinPlasmaLens3D',
           'zoom' : 4.0,
           'alphaCutoff' : 0.05
           }
-plot.drive_witness_density(params)
+plot.drive_witness_density_new(params)
+#"""

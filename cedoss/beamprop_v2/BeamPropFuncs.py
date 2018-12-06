@@ -31,8 +31,8 @@ sys.path.insert(0, "../")
 from modules import ThreeDimensionAnalysis as ThrDim
 
 def_startloc = 0.80
-def_lenflat = 0.50
-def_nset = 10 #1203.7 for gas cell
+def_lenflat = 0.10 #0.50
+def_nset = 0.5 #1203.7 for gas cell
 def_betastar = 0.10
 def_betaoffs = -0.387
 def_gamma = 19569.5 #10 GeV beam
@@ -126,7 +126,7 @@ def ReturnDefaultPlasmaParams(path, plasma_start = def_startloc,
         'Z' : Z,
         'n0' : nset,
         'z0' : plasma_start * 1e6,
-        'l_flattop' : 0.5e6,
+        'l_flattop' : def_lenflat*1e6,
         'sigma_in' : sigma,
         'sigma_out' : sigma,
         'atom' : ionization.Ar,

@@ -20,11 +20,13 @@ import matplotlib.pyplot as plt
 #FACET II
 n0 = 1e18 #cm^-3
 emit = 3e-6 *100#cm-rad
-beta_i = 50 #cm
+beta_i = 10 #cm
 gam = Foc.gam_def
-delta = 0.0025
-len_arr = np.linspace(300,1400,101)/1e4 #cm
-ymode = 1 #1 for nm, 0 for um
+sigmaE = 0.01
+delta = sigmaE/np.sqrt(1/3)
+#delta = 0.0025
+len_arr = np.linspace(100,800,101)/1e4 #cm
+ymode = 0 #1 for nm, 0 for um
 sigmaE = np.sqrt(1/3) * delta
 lumi=0
 

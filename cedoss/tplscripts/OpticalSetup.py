@@ -43,17 +43,78 @@ calcdensity = 0         #Set to 1 to calc resulting plasma density w/out refract
 calcfocal = 1
 
 foc_dom_fac = 2
+radscl = 1   #Set to larger to increase the beam axis domain
 
-choice=35           #Set to one of the setups below
+choice=38         #Set to one of the setups below
 
-if choice==35:#Case 5 but opposite
+if choice==38:#Case 6 but opposite  Gives l = 775 um 
+    setupTitle = "Spherical_2Cylindrical_reversed"
+    reverse = 1
+    zi = 5e-2             #Offset from small waist to plane we want to save params at
+    zoom=int(round(zi/l_step))
+    radscl = 3
+    
+    setupTitle = "Spherical_2Cylindrical"
+    f1 = 0.075 #m
+    f2 = 0.0125
+    L1 = 0.037
+    L2 = 0.088
+    P=200e9
+    #  0.00625 0.0125 0.025 0.050 0.100
+    #  0.015 0.020 0.030 0.040 0.075 0.150
+    q_x = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    q_y = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,.1,l_step)
+    GB.Prop_CylindricalLens(q_y,q_x,.200)
+    GB.Prop_CylindricalLens(q_x,q_y,.200)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L1,l_step) 
+    GB.Prop_CylindricalLens(q_y,q_x,-2*f1)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L2-L1,l_step) 
+    GB.Prop_CylindricalLens(q_x,q_y,-2*f2)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y, 0.5,l_step)
+
+if choice==37:#Case 6 but opposite  Gives l = 775 um 
+    setupTitle = "Spherical_2Cylindrical_reversed"
+    reverse = 1
+    zi = 5e-2             #Offset from small waist to plane we want to save params at
+    zoom=int(round(zi/l_step))
+    radscl = 3
+    
+    setupTitle = "Spherical_2Cylindrical"
+    f1 = 0.075 #m
+    f2 = 0.025
+    L1 = 0.037
+    L2 = 0.076
+    P=200e9
+    #  0.00625 0.0125 0.025 0.050 0.100
+    #  0.015 0.020 0.030 0.040 0.075 0.150
+    q_x = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    q_y = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,.1,l_step)
+    GB.Prop_CylindricalLens(q_y,q_x,.200)
+    GB.Prop_CylindricalLens(q_x,q_y,.200)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L1,l_step) 
+    GB.Prop_CylindricalLens(q_y,q_x,-2*f1)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L2-L1,l_step) 
+    GB.Prop_CylindricalLens(q_x,q_y,-2*f2)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y, 0.5,l_step)
+
+if choice==35:#Case 5 but opposite  Gives l = 174 um
     setupTitle = "Spherical_2Cylindrical_reversed"
     choice = 5
     reverse = 1
     zi = 1.5e-2             #Offset from small waist to plane we want to save params at
     zoom=int(round(zi/l_step))
     
-if choice==36:#Case 5 but opposite
+if choice==36:#Case 6 but opposite  Gives l - 199 um 
     setupTitle = "Spherical_2Cylindrical_reversed"
     choice = 6
     reverse = 1
@@ -351,10 +412,19 @@ if calcfocal == 1:
     den = 0.5
     #den = 10
     params = frefract.GetDefaultParams()
-    X = params['X']*foc_dom_fac; Nx = params['Nx']
+    X = params['X']*foc_dom_fac*radscl; Nx = params['Nx']
     y = np.linspace(-X/2, X/2, Nx, False)/1e6
-    wz_center = wy[int(len(wy)/2)]
-    wy_center = wx[int(len(wx)/2)]
+    
+    wmult = wy * wx
+    wmult_min = np.argmin(wmult)
+    
+    #wz_center = wy[int(len(wy)/2)]
+    #wy_center = wx[int(len(wx)/2)]
+    print("center change: ",int(len(wy)/2), " to " ,wmult_min)
+    wz_center = wy[wmult_min]
+    wy_center = wx[wmult_min]
+    
+    
     I = GB.IntensityFromSpotSizes_1D(wy_center,wz_center,y,I0/1e4,w0)
     plt.plot(y*1e6,I)
     plt.title("Intensity along beam axis")
@@ -385,7 +455,7 @@ if calcdensity == 1:
     params['Ny'] = int(params['Ny']/4)
     params['Z'] = zi*1e6*2
     
-    X = params['X']; Nx = params['Nx']
+    X = params['X']*radscl; Nx = params['Nx']
     Y = params['Y']; Ny = params['Ny']
     Z = params['Z']; Nz = params['Nz']
 
