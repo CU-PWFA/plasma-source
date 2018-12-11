@@ -20,13 +20,16 @@ from modules import ProfileAnalyzer as Prof
 directory = '/home/chris/Desktop/CSVFiles/'
 #filename = '3DLES_Wide_Radial.csv'
 filename = 'lowp1_Radial.csv'
+
+directory = '/home/chris/Desktop/LowDenSim'
+filename = '5mmradial.csv'
+
 path = directory + filename
 
-variable = 'Density'
-axis = 'Points:0'  #Typically 0 for a radial cut, 1 for an axial cut
+variable = 'Den'
+axis = 'Points:2'  #Typically 0 for a radial cut, 1 for an axial cut
 simlabel = "Radial-Simulation"
 offset = 0e-6 #For if you didnt set up your OpenFOAM to have nice axes
-trim = 38 #For if you want only the center region or data is NaN at edges
 zoom = 1e6 #For when you have meters and work with micrometers
 
 guess = [1.75e20,100,0] #Tweak this if python doesnt want to fit
@@ -45,18 +48,18 @@ with open(path, newline='') as csvfile:
     arr = np.array(arr)
     dist = np.array(dist)
     
+    arr = arr[round(len(arr)*1/4):round(len(arr)*3/4)]
+    dist = dist[round(len(dist)*1/4):round(len(dist)*3/4)]
+    
     dist=dist*1e6
 #    arr=arr-arr[0]
-    
-    arr2 = arr[trim:-trim]
-    dist2 = dist[trim:-trim]
     
     xwindow = dist[-1]; xstep = (dist[2]-dist[1])/50 #microns
     dist_precise = np.arange(-xwindow, xwindow, xstep)
     
-    gfit = ThrDim.FitDataGaussian(arr2, dist2, guess)
+    gfit = ThrDim.FitDataGaussian(arr, dist, guess)
     #tfit = ThrDim.FitDataDoubleTanh(arr2, dist2, guess_tanh)
-    tfit = ThrDim.FitDataDoubleTanhAbs(arr2, dist2, guess_tanh)
+    tfit = ThrDim.FitDataDoubleTanhAbs(arr, dist, guess_tanh)
 #   lfit = ThrDim.FitDataLorentz(arr2, dist2, guess)
     #sfit = ThrDim.FitDataSuperGaussian(arr2, dist2, guess_super)
     """
