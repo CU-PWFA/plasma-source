@@ -26,6 +26,7 @@ n=1.                    #Refractive index
 epsilon0 = 8.854e-12    #Dielectric constant
 wavelength = 785.3e-9   #Laser wavelength in m
 w0 = 5e-3               #Initial spot size in m
+E_ion = 13.6            #Ionization Energy:  13.6 for H, 15.8 for Ar, 
 setupTitle = ""         #Name the setup 
 reverse = 0
 
@@ -39,13 +40,13 @@ path = '/home/chris/Desktop/DataLoads/PulseFilesNp/'
 filename = 'pulseParams_rotate.npy'
 
 save = 0                #Set to 1 to save anything
-calcdensity = 0         #Set to 1 to calc resulting plasma density w/out refraction
+calcdensity = 1         #Set to 1 to calc resulting plasma density w/out refraction
 calcfocal = 1
 
 foc_dom_fac = 2
 radscl = 1   #Set to larger to increase the beam axis domain
 
-choice=38         #Set to one of the setups below
+choice=37         #Set to one of the setups below
 
 if choice==38:#Case 6 but opposite  Gives l = 775 um 
     setupTitle = "Spherical_2Cylindrical_reversed"
@@ -59,7 +60,7 @@ if choice==38:#Case 6 but opposite  Gives l = 775 um
     f2 = 0.0125
     L1 = 0.037
     L2 = 0.088
-    P=200e9
+    P=50e9
     #  0.00625 0.0125 0.025 0.050 0.100
     #  0.015 0.020 0.030 0.040 0.075 0.150
     q_x = GB.Prop_Init_q(wavelength, w0, -.1, 1)
@@ -77,7 +78,7 @@ if choice==38:#Case 6 but opposite  Gives l = 775 um
     
     GB.Prop_Cylindrical_FreeSpace(q_x,q_y, 0.5,l_step)
 
-if choice==37:#Case 6 but opposite  Gives l = 775 um 
+if choice==37:#Gives l = 775 um 
     setupTitle = "Spherical_2Cylindrical_reversed"
     reverse = 1
     zi = 5e-2             #Offset from small waist to plane we want to save params at
@@ -89,7 +90,7 @@ if choice==37:#Case 6 but opposite  Gives l = 775 um
     f2 = 0.025
     L1 = 0.037
     L2 = 0.076
-    P=200e9
+    P=83e9 #83 GW for 597 um, 218 GW for 996 um
     #  0.00625 0.0125 0.025 0.050 0.100
     #  0.015 0.020 0.030 0.040 0.075 0.150
     q_x = GB.Prop_Init_q(wavelength, w0, -.1, 1)
@@ -409,7 +410,7 @@ if save == 1:
     np.save(pulseParams['Location'],pulseParams)
 
 if calcfocal == 1:
-    den = 0.5
+    den = 1
     #den = 10
     params = frefract.GetDefaultParams()
     X = params['X']*foc_dom_fac*radscl; Nx = params['Nx']
@@ -432,6 +433,7 @@ if calcfocal == 1:
     plt.ylabel(r'$\mathrm{Intensity \, [W/cm^2]}$')
     plt.grid(); plt.show()
     
+    params['EI'] = E_ion
     H = ThrDim.IonFracFromIntensity_1D(I,params['EI'],35e-15)
     H = H * den
     plt.plot(y*1e6,H)
@@ -467,6 +469,7 @@ if calcdensity == 1:
     wy=np.array(wx)*1e6
     I = GB.IntensityFromSpotSizes(wy/1e6,wz/1e6,x/1e6,y/1e6,z/1e6,I0/1e4,w0)
     ThrDim.ImageCut(I,x,y,z,0,0,0,1e-3,'(mm)','Intensity','W/cm^2',0)
+    params['EI'] = E_ion
     H = ThrDim.IonFracFromIntensity(I,params['EI'],35e-15)
     ThrDim.ImageCut(H,x,y,z,0,0,0,1e-3,'(mm)','Ion. Frac.','%',0)
     H = H * den
