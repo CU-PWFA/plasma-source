@@ -58,6 +58,36 @@ argon_params['Nz']= len(z_arr)
 argon_params['l_flattop'] = np.NaN; argon_params['sigma_in'] = np.NaN; argon_params['sigma_out'] = np.NaN
 argon = PProp.NoPlasma_ThinPlasmaLens(argon_params, n_arr, tpl_offset*1e6 + position_error, tpl_n, tpl_l, debug)
 
+font = {'family' : 'normal',
+        'weight' : 'bold',
+        'size'   : 15}
+
+plt.rc('font', **font)
+lwid = 3.0
+
+fig, ax1 = plt.subplots()
+ax1.set_ylabel(r'$\beta\,\mathrm{[cm]}$', color = 'b')
+ax1.tick_params('y', colors = 'b')
+ax1.set_xlabel('z [cm]')
+ax1.set_ylim([-0.05,20.05])
+
+beam_params = PProp.ReturnDefaultElectronParams(path, beta_star=betastar,
+                                                   beta_offset=waist_loc, plasma_start=z_offset,
+                                                   gamma=gammab)
+beta = PProp.Calc_CSParams(beam_params, n_arr, z_arr)[0]
+ax1.plot((z_arr-7*tpl_f)*1e2, np.array(beta)*1e2, 'b-', label=r'$\beta$', linewidth = lwid)
+beta0 = PProp.Calc_CSParams(beam_params0, np.zeros(len(z_arr)), z_arr)[0]
+ax1.plot((z_arr-7*tpl_f)*1e2, np.array(beta0)*1e2, 'b--',label=r'$\beta_{vac}$', linewidth = lwid)
+ax2 = ax1.twinx()
+ax2.plot((z_arr-7*tpl_f)*1e2, n_arr/tpl_n, 'g-', linewidth = lwid)
+ax2.set_ylabel(r'$n_p\,\mathrm{[10^{18}cm^{-3}]}$',color = 'g')
+ax2.tick_params('y', colors = 'g')
+ax2.set_ylim([0,1.1])
+ax1.set_xlim([-7.2, 3.2])
+ax1.grid(); ax1.legend(); plt.show()
+
+"""
+
 fig, ax1 = plt.subplots()
 plt.title("Beta function evolution with a f = 1 cm plasma lens")
 ax1.set_ylabel(r'$\beta\,\mathrm{[cm]}$', color = 'b')
@@ -79,3 +109,5 @@ ax2.set_ylabel(r'$n_p\,\mathrm{[10^{18}cm^{-3}]}$',color = 'k')
 ax2.tick_params('y', colors = 'k')
 ax2.set_ylim([0,1.1])
 ax1.grid(); ax1.legend(); plt.show()
+
+"""

@@ -25,14 +25,14 @@ gammab = PProp.def_gamma
 position_error = -0.0 * 1e6
 
 tpl_n = 10.
-tpl_x = 0.003 #m
+tpl_x = 0.002 #m
 
 #tpl_f1 = 0.02
 #tpl_f2 = 0.01
 #tpl_l1 = Foc.Calc_Square_Lens(tpl_n*1e17, tpl_f1*100, gammab)
 #tpl_l2 = Foc.Calc_Square_Lens(tpl_n*1e17, tpl_f2*100, gammab)
 
-tpl_l1 = 200
+tpl_l1 = 400
 tpl_l2 = 400
 tpl_f1 = Foc.Calc_Focus_Square_CM_UM(tpl_n*1e17, tpl_l1, gammab)/100
 tpl_f2 = Foc.Calc_Focus_Square_CM_UM(tpl_n*1e17, tpl_l2, gammab)/100
@@ -57,7 +57,8 @@ z_arr = z_arr + z_offset
 tpl_1loc = tpl_offset
 tpl_2loc = tpl_offset + tpl_x
 
-e_spec = np.array([0, -0.01, 0.01]) + 1.0
+delta = 0.01
+e_spec = np.array([0, -delta, delta]) + 1.0
 colors = np.array(['g-','r-','b-'])
 arrlist = np.array([])
 
@@ -158,6 +159,15 @@ for i in range(len(e_spec)):
     betacent[i] = beta[center]
     beta = beta[center-crange:center+crange]
     ax5.plot((z_arr[center-crange:center+crange]-tpl_f)*1e2, np.array(beta)*1e2, colors[i], label=r'$\gamma/\gamma_{b}$' + " = "+str(e_spec[i]))
+
+beam_params = PProp.ReturnDefaultElectronParams(path, beta_star=betastar,
+                                                   beta_offset=waist_loc, plasma_start=z_offset,
+                                                   gamma=gammab)
+dmy1, dmy2, dmy3, dmy4, dmy5, beta_pro = PProp.Calc_Proj_CSParams(beam_params, n_arr, z_arr, delta)
+beta_pro = np.array(beta_pro[center-crange:center+crange])*1e2
+
+ax5.plot((z_arr[center-crange:center+crange]-tpl_f)*1e2, beta_pro, 'k--', label=r'$\beta_{pro}$')
+
 """
 ax5.axvline(x=(centloc[0])*100, c='g')
 ax5.axvline(x=(centloc[1])*100, c='r')

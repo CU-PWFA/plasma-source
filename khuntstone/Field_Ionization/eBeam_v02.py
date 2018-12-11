@@ -2,22 +2,76 @@ import sys
 sys.path.insert(0, "../")
 import Constants.SI as SI
 import numpy as np
-import matplotlib.pyplot as plt
 from scipy.special import gamma as gm
 from scipy.integrate import simps
-
-global plasmaDict
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+#plt.style.use('presentation')
+global plasmaDict, c
+c = SI.lightSpeed
 # Dictionary of plasmas and their attributes 
 plasmaDict = {'Ar+' : {'Vi' : 15.75962, 'Name' :  'Ar$^{+}$', 'Z' : 1},
 		   'Ar2+': {'Vi' : 27.62967, 'Name' : 'Ar$^{2+}$', 'Z' : 2},
 		   'Ar3+': {'Vi' : 40.74, 'Name' : 'Ar$^{3+}$', 'Z' : 3},
 		   'Ar4+': {'Vi' : 59.81, 'Name': 'Ar$^{4+}$', 'Z' : 4},
-		   'Ar5+': {'Vi' : 59.81, 'Name': 'Ar$^{5+}$', 'Z' : 5},
-		   'He+': {'Vi' : 59.81, 'Name': 'Ar$^{4+}$', 'Z' : 1},
-		   'He2+': {'Vi': 59.81, 'Name': 'Ar$^{5+}$', 'Z' : 2}
+		   'Ar5+': {'Vi' : 	75.02, 'Name': 'Ar$^{5+}$', 'Z' : 5},
+		   'He+': {'Vi' : 24.58741, 'Name': 'He$^{+}$', 'Z' : 1},
+		   'He2+': {'Vi': 54.41778, 'Name': 'He$^{2+}$', 'Z' : 2}
 }
+def get_sigma_r(beamParams):
+	'''
+	Calculates transverse beam width from beam emittance, gamma, and beta_s and 
+	appends it to beamParams.
+	Params:
+	-------
+	beamParams : dictionary
+		Dictionary of beam parameters (more detail below)
+	'''
 	
+	beamParams['sigma_r'] = \
+	np.sqrt(beamParams['emitt'] * beamParams['beta_s'] /beamParams['gamma'])
+
+def get_beam(gamma = 20000.,en = 5.3e-6, beta_s = np.array([.1]),\
+            sigma_z = 5.2e-6, Q = 1.5e-9 ):
+	'''
+	Creates a dictionary of beam params based on input values. Defualt is a 
+	Facet II like beam
+
+	Parameters:
+	-----------
+	gamma : float, optional
+		Relativistic factor for the centroid beam energy, default 20000.
+	en : float, optional
+		Normalized emittance of the beam [mm-rad], default 5.3e-6
+	beta_s : array_like, optional
+		Array of beam waist betas [m], default [.1]
+	sigma_z : float, optional
+		Longitudinal beam size [m], default 5.2e-6
+	Q : float, optional
+		Charge of the beam [C], default 1.5e-9
+
+	Returns:
+	--------
+	beamParams : dictionary
+		Dictionary of beam parameters
+	'''
+
+	beamParams = {
+              'gamma'   : gamma,  
+              'sigma_z' : sigma_z,  
+              'charge'  : Q, 
+              'emitt'   : en, 
+              'beta_s'  : beta_s
+             }
+    # get sigma_r from current gamma, beta_s, and en
+	get_sigma_r(beamParams)
 	
+	# get beta from gamma
+	beamParams['beta'] = np.sqrt(1 - 1/gamma**2); 
+	# get sigma t from beta and sigma_z
+	beamParams['sigma_t'] = sigma_z / (beamParams['beta'] * c)
+	return beamParams
+
 def peak_charge_dens(beamParams):
 	''' 
 	Computes the peak charge density of a Gaussian beam
@@ -45,17 +99,7 @@ def peak_charge_dens(beamParams):
 	Q       = beamParams['charge']
 	return Q / ((2*np.pi)**(3/2) * sigma_r**2 * sigma_z)
 
-def get_sigma_r(beamParams):
-	'''
-	Calculates transverse beam width from beam emittance, gamma, and beta_s and 
-	appends it to beamParams.
-	Params:
-	-------
-	beamParams as described above
-	'''
-	
-	beamParams['sigma_r'] = \
-	np.sqrt(beamParams['emitt'] * beamParams['beta_s'] /beamParams['gamma'])    
+    
 def get_pos(beamParams, nr = 10, nxi = 10, npoints = 1000):
 	'''
 	Quick function to create position r, xi from beamParams
@@ -65,7 +109,8 @@ def get_pos(beamParams, nr = 10, nxi = 10, npoints = 1000):
 	for i in range(len(sigma_r)):
 		r_arr[i][:] = np.linspace(-nr * sigma_r[i], nr * sigma_r[i], npoints)
 	xi_arr = np.linspace(-nxi * sigma_z, nxi * sigma_z, npoints)
-	return r_arr, xi_arr, npoints
+	pos = {'r' : r_arr, 'xi' : xi_arr, 'npoints' : npoints}
+	return pos
 
 def rad_E_field(pos, beamParams, eps0 = SI.permFreeSpace, \
 				c = SI.lightSpeed, peak = False):
@@ -115,7 +160,33 @@ def rad_E_field(pos, beamParams, eps0 = SI.permFreeSpace, \
 						np.exp(-(xi)**2 / (2 * sigma_z**2))
 			Er[i, :,:] = Er[i,:,:] / 1e9;
 		return Er, rPeak, EPeak
-def ionization_rate(Er, beamParams, gasName):
+def rad_E_field__sigma_z(pos, beamParams, peak = False,
+						 eps0 = SI.permFreeSpace, c = SI.lightSpeed):
+	# Same as above but with fixed sigma_r and array of sigma_z
+	sigma_z = beamParams['sigma_z']
+	sigma_r = beamParams['sigma_r']
+	beta    = beamParams['beta']
+
+	# peak charge density and electric field have no spatial dependence
+
+	ppK   =  peak_charge_dens(beamParams);
+	EPeak = (ppK * sigma_r / (2*eps0)) / 1e9;
+	rPeak = (np.pi * sigma_r /2) * 1e6; 
+	if peak:
+		return np.nan, rPeak, EPeak
+	else:
+		r = pos['r']
+		xi = pos['xi']
+		Er = np.zeros((len(sigma_z), len(r), len(xi[0])))
+		rp = np.reshape(r, (len(r), 1))
+		for i in range(len(sigma_z)):
+			
+			Er[i,:,:] = (ppK[i] * sigma_r**2 / (eps0 * rp)) * \
+						(1 - np.exp(-rp**2/(2*sigma_r**2))) * \
+						np.exp(-(xi[i])**2 / (2 * sigma_z[i]**2))
+			Er[i, :,:] = Er[i,:,:] / 1e9;
+		return Er, rPeak, EPeak
+def ionization_rate(Er, gasName):
 	''' 
 	Computes the ionization rate of a neutral gas due to the radial electric 
 	field of a transversely and radially Gaussian beam
@@ -168,16 +239,16 @@ def ionization_frac(W, pos, beamParams, c = SI.lightSpeed):
 	plasma_frac = 1 - np.exp(-simps(W * 1e15, t));
 	max_frac = np.max(plasma_frac, axis = 1);
 	return plasma_frac, max_frac
+def ionization_frac_sigma_z(W, pos, beamParams, c = SI.lightSpeed):
+	# Same as above but with varying sigma_z, only returns max_frac
+	t = pos['xi']  / (beamParams['beta']*c)
+	max_frac = np.zeros(len(W))
+	for i in range(len(W)):
+		plasma_frac = 1 - np.exp(-simps(W[i] * 1e15, t[i]))
+		max_frac[i] = np.amax(plasma_frac)
+	return max_frac 
 
-def plot_plasma_frac(plasma_frac, pos, beamParams, gasName, ind):
-	beta_s = beamParams['beta_s'][ind]
-	name = plasmaDict['gasName']['Name']
-	title = 'Ionization Fraction of ' + name + ' $\\beta$ = %.2f' % beta_s
-	plt.plot(pos['r'][ind]*1e6, plasma_frac[ind])
-	plt.xlabel('r [$\mu$m]')
-	plt.ylabel('Ionization Fraction')
-	plt.title(title)
-	plt.show()
+
 
 def neutral_ring_width(plasma_frac, pos):
 	'''
@@ -215,101 +286,3 @@ def neutral_ring_width(plasma_frac, pos):
 			width[i] = r[i][upper_zero] - r[i][lower_zero]
 	return width
 
-def plot_width(widths, plasmaNames, beamParams, logx = False, logy = False, \
-	           log = False):
-	names = [plasmaDict[i]['Name'] for i in gasNames] 
-	for i in range(len(widths)):
-		if logx:
-			plt.semilogx(beamParams['beta_s'], widths[i]*1e6,\
-						 label = names[i])
-		elif logy:
-			plt.semilogy(beamParams['beta_s'], widths[i]*1e6,\
-						 label = names[i])
-		elif log:
-			plt.loglog(beamParams['beta_s'], widths[i]*1e6, \
-					 label = names[i])
-		else:
-			plt.plot(beamParams['beta_s'], widths[i]*1e6,\
-						 label = names[i])
-	plt.xlabel('$\\beta$ [m]')
-	plt.ylabel('Neutral gas Diameter [$\\mu$m]')
-	plt.legend()
-	plt.show()
-def plot_max_frac(max_frac, beamParams, plasmaNames, logx = False,\
-	logy = False, log = False):
-	names = [plasmaDict[i]['Name'] for i in plasmaNames]
-	for i in range(len(max_frac)):
-		if logx:
-			plt.semilogx(beamParams['beta_s'], max_frac[i], \
-				label = names[i])
-		elif logy:
-			plt.semilogy(beamParams['beta_s'], max_frac[i], \
-				label = names[i])
-		elif log:
-			plt.loglog(beamParams['beta_s'], max_frac[i], \
-				label = names[i])
-		else:
-			plt.plot(beamParams['beta_s'], max_frac[i], \
-				label = names[i])
-	plt.xlabel('$\\beta$ [m]')
-	plt.ylabel('Maximum Ionization Fraction')
-	plt.legend()
-	plt.show()
-
-def plot_field(field, pos, beamParams, cbar_label, beta_s, ind, \
-			   lims = [], gas = False, gasName = None, c = SI.lightSpeed):
-	'''
-	Plots a field in the in the rz and rt planes
-	'''
-	if gas:
-		title = 'Ionization Rate of ' + gasName +'$\\beta$ = %.2f' % beta_s[ind]
-	else:
-		title = 'Radial Electric Field ' + '$\\beta$ = %.2f' % beta_s[ind] ;
-	# rt plane
-	r = np.flipud(pos['r'][ind]) * 1e6; nr = len(r)
-	t = (pos['xi'] * 1e15 / (beamParams['beta']*c)) -\
-		(pos['xi'][0]*1e15 /(beamParams['beta']*c)); 
-	nt = len(t)
-	if not lims:
-		plt.imshow(np.flipud(field[ind]), cmap = 'jet')
-	else:
-		plt.imshow(np.flipud(field[ind]), cmap = 'jet',\
-							 vmin = lims[0], vmax = lims[1])
-	x_locs = [0, nt/2, nt]
-	x_labs = [0, int(t[int(len(t)/2 -1)]), int(t[-1])]
-	y_locs = [0, nr/2, nr] 
-	y_labs = [int(r[0]), int(r[int(nr/2 - 1)]), \
-			  int(r[-1])]
-	plt.xticks(x_locs, x_labs)
-	plt.yticks(y_locs, y_labs)
-	cbar = plt.colorbar()
-	cbar.set_label(cbar_label)
-	plt.xlabel('t [fs]');
-	plt.ylabel('r [$\mu$m]');
-	plt.title(title)
-	plt.show()
-
-	# rz
-	r = r * 1e-6;
-	z = pos['xi']; nz = len(z)
-	sigma_r  = beamParams['sigma_r'][ind]
-	sigma_z = beamParams['sigma_z']
-	if not lims:
-		plt.imshow(np.flipud(field[ind]), cmap = 'jet')
-	else:
-		plt.imshow(np.flipud(field[ind]), cmap = 'jet', \
-				   vmin = lims[0], vmax = lims[1])
-	x_locs = [0, nz/2, nz]
-	x_labs = [int(z[0]/sigma_z), int(z[int(len(z)/2 -1)]/sigma_z),\
-			  int(z[-1]/sigma_z)]
-	y_locs = [0, nr/2, nr] 
-	y_labs = [int(r[0]/sigma_r), int(r[int(nr/2 - 1)]/sigma_r), \
-			  int(r[-1]/sigma_r)]
-	plt.xticks(x_locs, x_labs)
-	plt.yticks(y_locs, y_labs)
-	cbar = plt.colorbar()
-	cbar.set_label(cbar_label)
-	plt.xlabel('z/$\sigma_z$');
-	plt.ylabel('r/$\sigma_r$');
-	plt.title(title)
-	plt.show()

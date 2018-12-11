@@ -96,9 +96,12 @@ def Calc_ThickBetaStar_DeltaOff(l, b, d):
 
 if __name__ == '__main__':
     beta_i = .10
-    beta_f = 8.88e-5
-    n0=1e18
+    beta_f = .00539
+    n0=3.8e16
     gam_set = gam_def
+    
+    #tpl_l = 200 #um
+    #print("betaf",Calc_ThickBetaStar_DeltaOff_UnNormalized(Calc_K(n0,gam_set), tpl_l*1e-4, beta_i*1e2, 0))
     
     focal = Calc_Target_Focal(beta_i,beta_f)
     #focal = 0.015
@@ -107,5 +110,10 @@ if __name__ == '__main__':
     print(focal*100," : focal length[cm]")
     #print(750*np.sqrt(gam_set/n0)*1e6," : max length [um]")
     
-    #print(Calc_Focus_Square_CM_UM(1e18, 74.91, 19565.5)/100)
-    #print(Calc_Focus_Square_SI(5e16, 100e-6, 2e4))
+    print(Calc_Focus_Square_CM_UM(1e18, 50, 19565.5)/100)
+    print()
+    k=Calc_K(5e16,gam_def)
+    print(Calc_K(1e18,gam_def))
+    print(np.sqrt(3*1.01**2-3)/(10*k*0.01)*1e4,'um')
+    
+    print(np.sqrt(k)*5428*1e-4)

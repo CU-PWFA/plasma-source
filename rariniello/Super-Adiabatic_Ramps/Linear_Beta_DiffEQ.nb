@@ -10,10 +10,10 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[       158,          7]
-NotebookDataLength[    263417,       6001]
-NotebookOptionsPosition[    258082,       5822]
-NotebookOutlinePosition[    258422,       5837]
-CellTagsIndexPosition[    258379,       5834]
+NotebookDataLength[    263601,       6009]
+NotebookOptionsPosition[    258266,       5830]
+NotebookOutlinePosition[    258606,       5845]
+CellTagsIndexPosition[    258563,       5842]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
@@ -926,8 +926,9 @@ Cell[BoxData[
                    None, Evaluator -> Automatic, Method -> "Preemptive"], 
                   Alignment -> {Center, Center}, ImageSize -> 
                   Dynamic[{
-                    Automatic, 3.5 CurrentValue["FontCapHeight"]/
-                    AbsoluteCurrentValue[Magnification]}]], 
+                    Automatic, 
+                    3.5 (CurrentValue["FontCapHeight"]/AbsoluteCurrentValue[
+                    Magnification])}]], 
                  GraphicsBox[{{{{}, {}, 
                     TagBox[{
                     Directive[
@@ -982,8 +983,9 @@ scf4esDl7PloGfglRw0N034HwXK/h/677wbdyxgeN0t9/wMEafKr
                    GridLines -> {None, None}, GridLinesStyle -> Directive[
                     GrayLevel[0.5, 0.4]], ImageSize -> 
                    Dynamic[{
-                    Automatic, 3.5 CurrentValue["FontCapHeight"]/
-                    AbsoluteCurrentValue[Magnification]}], 
+                    Automatic, 
+                    3.5 (CurrentValue["FontCapHeight"]/AbsoluteCurrentValue[
+                    Magnification])}], 
                    Method -> {
                     "DefaultBoundaryStyle" -> Automatic, "DefaultMeshStyle" -> 
                     AbsolutePointSize[6], "ScalingFunctions" -> None, 
@@ -1047,8 +1049,9 @@ scf4esDl7PloGfglRw0N034HwXK/h/677wbdyxgeN0t9/wMEafKr
                    None, Evaluator -> Automatic, Method -> "Preemptive"], 
                   Alignment -> {Center, Center}, ImageSize -> 
                   Dynamic[{
-                    Automatic, 3.5 CurrentValue["FontCapHeight"]/
-                    AbsoluteCurrentValue[Magnification]}]], 
+                    Automatic, 
+                    3.5 (CurrentValue["FontCapHeight"]/AbsoluteCurrentValue[
+                    Magnification])}]], 
                  GraphicsBox[{{{{}, {}, 
                     TagBox[{
                     Directive[
@@ -1103,8 +1106,9 @@ scf4esDl7PloGfglRw0N034HwXK/h/677wbdyxgeN0t9/wMEafKr
                    GridLines -> {None, None}, GridLinesStyle -> Directive[
                     GrayLevel[0.5, 0.4]], ImageSize -> 
                    Dynamic[{
-                    Automatic, 3.5 CurrentValue["FontCapHeight"]/
-                    AbsoluteCurrentValue[Magnification]}], 
+                    Automatic, 
+                    3.5 (CurrentValue["FontCapHeight"]/AbsoluteCurrentValue[
+                    Magnification])}], 
                    Method -> {
                     "DefaultBoundaryStyle" -> Automatic, "DefaultMeshStyle" -> 
                     AbsolutePointSize[6], "ScalingFunctions" -> None, 
@@ -1521,8 +1525,9 @@ Cell[BoxData[
                    None, Evaluator -> Automatic, Method -> "Preemptive"], 
                   Alignment -> {Center, Center}, ImageSize -> 
                   Dynamic[{
-                    Automatic, 3.5 CurrentValue["FontCapHeight"]/
-                    AbsoluteCurrentValue[Magnification]}]], 
+                    Automatic, 
+                    3.5 (CurrentValue["FontCapHeight"]/AbsoluteCurrentValue[
+                    Magnification])}]], 
                  GraphicsBox[{{{{}, {}, 
                     TagBox[{
                     Directive[
@@ -1578,8 +1583,9 @@ j5n4AgF7F2aHs9RoyJxZ3th4AbO1Wi27KjX+B7AK6gU=
                    GridLines -> {None, None}, GridLinesStyle -> Directive[
                     GrayLevel[0.5, 0.4]], ImageSize -> 
                    Dynamic[{
-                    Automatic, 3.5 CurrentValue["FontCapHeight"]/
-                    AbsoluteCurrentValue[Magnification]}], 
+                    Automatic, 
+                    3.5 (CurrentValue["FontCapHeight"]/AbsoluteCurrentValue[
+                    Magnification])}], 
                    Method -> {
                     "DefaultBoundaryStyle" -> Automatic, "DefaultMeshStyle" -> 
                     AbsolutePointSize[6], "ScalingFunctions" -> None, 
@@ -1642,8 +1648,9 @@ j5n4AgF7F2aHs9RoyJxZ3th4AbO1Wi27KjX+B7AK6gU=
                    None, Evaluator -> Automatic, Method -> "Preemptive"], 
                   Alignment -> {Center, Center}, ImageSize -> 
                   Dynamic[{
-                    Automatic, 3.5 CurrentValue["FontCapHeight"]/
-                    AbsoluteCurrentValue[Magnification]}]], 
+                    Automatic, 
+                    3.5 (CurrentValue["FontCapHeight"]/AbsoluteCurrentValue[
+                    Magnification])}]], 
                  GraphicsBox[{{{{}, {}, 
                     TagBox[{
                     Directive[
@@ -1699,8 +1706,9 @@ j5n4AgF7F2aHs9RoyJxZ3th4AbO1Wi27KjX+B7AK6gU=
                    GridLines -> {None, None}, GridLinesStyle -> Directive[
                     GrayLevel[0.5, 0.4]], ImageSize -> 
                    Dynamic[{
-                    Automatic, 3.5 CurrentValue["FontCapHeight"]/
-                    AbsoluteCurrentValue[Magnification]}], 
+                    Automatic, 
+                    3.5 (CurrentValue["FontCapHeight"]/AbsoluteCurrentValue[
+                    Magnification])}], 
                    Method -> {
                     "DefaultBoundaryStyle" -> Automatic, "DefaultMeshStyle" -> 
                     AbsolutePointSize[6], "ScalingFunctions" -> None, 
@@ -5820,8 +5828,8 @@ Cell[BoxData[
  CellChangeTimes->{3.7359121224444847`*^9}]
 }, Open  ]]
 },
-WindowSize->{928, 1028},
-WindowMargins->{{927, Automatic}, {0, Automatic}},
+WindowSize->{960, 1028},
+WindowMargins->{{Automatic, 960}, {0, Automatic}},
 FrontEndVersion->"11.0 for Linux x86 (64-bit) (September 21, 2016)",
 StyleDefinitions->"Default.nb"
 ]
@@ -5839,7 +5847,7 @@ Notebook[{
 Cell[558, 20, 1058, 33, 120, "Input"],
 Cell[CellGroupData[{
 Cell[1641, 57, 791, 23, 34, "Input"],
-Cell[2435, 82, 5529, 172, 252, "Output"]
+Cell[2435, 82, 5529, 172, 292, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
 Cell[8001, 259, 207, 3, 32, "Input"],
@@ -5874,134 +5882,134 @@ Cell[25117, 766, 4671, 90, 236, "Output"]
 Cell[CellGroupData[{
 Cell[29825, 861, 1127, 33, 82, "Input"],
 Cell[30955, 896, 345, 8, 23, "Message"],
-Cell[31303, 906, 14294, 280, 65, "Output"],
-Cell[45600, 1188, 8592, 155, 218, "Output"]
+Cell[31303, 906, 14386, 284, 65, "Output"],
+Cell[45692, 1192, 8592, 155, 218, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[54229, 1348, 1415, 40, 55, "Input"],
-Cell[55647, 1390, 1591, 45, 68, "Output"]
+Cell[54321, 1352, 1415, 40, 55, "Input"],
+Cell[55739, 1394, 1591, 45, 68, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[57275, 1440, 1878, 54, 134, "Input"],
-Cell[59156, 1496, 217, 3, 32, "Output"],
-Cell[59376, 1501, 14329, 280, 65, "Output"],
-Cell[73708, 1783, 4846, 94, 233, "Output"]
+Cell[57367, 1444, 1878, 54, 134, "Input"],
+Cell[59248, 1500, 217, 3, 32, "Output"],
+Cell[59468, 1505, 14421, 284, 65, "Output"],
+Cell[73892, 1791, 4846, 94, 233, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[78591, 1882, 925, 26, 34, "Input"],
-Cell[79519, 1910, 8852, 264, 387, "Output"]
+Cell[78775, 1890, 925, 26, 34, "Input"],
+Cell[79703, 1918, 8852, 264, 387, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[88408, 2179, 461, 14, 41, "Input"],
-Cell[88872, 2195, 958, 31, 61, "Output"]
+Cell[88592, 2187, 461, 14, 41, "Input"],
+Cell[89056, 2203, 958, 31, 61, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[89867, 2231, 546, 13, 41, "Input"],
-Cell[90416, 2246, 6858, 126, 235, "Output"]
+Cell[90051, 2239, 546, 13, 41, "Input"],
+Cell[90600, 2254, 6858, 126, 235, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[97311, 2377, 3560, 117, 373, "Input"],
-Cell[100874, 2496, 1191, 16, 32, "Output"],
-Cell[102068, 2514, 1188, 16, 32, "Output"],
-Cell[103259, 2532, 1286, 19, 32, "Output"],
-Cell[104548, 2553, 1286, 19, 32, "Output"],
-Cell[105837, 2574, 23513, 396, 237, "Output"],
-Cell[129353, 2972, 63296, 1053, 237, "Output"]
+Cell[97495, 2385, 3560, 117, 373, "Input"],
+Cell[101058, 2504, 1191, 16, 32, "Output"],
+Cell[102252, 2522, 1188, 16, 32, "Output"],
+Cell[103443, 2540, 1286, 19, 32, "Output"],
+Cell[104732, 2561, 1286, 19, 32, "Output"],
+Cell[106021, 2582, 23513, 396, 237, "Output"],
+Cell[129537, 2980, 63296, 1053, 237, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[192686, 4030, 2097, 65, 179, "Input"],
-Cell[194786, 4097, 359, 5, 32, "Output"]
+Cell[192870, 4038, 2097, 65, 156, "Input"],
+Cell[194970, 4105, 359, 5, 32, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[195182, 4107, 1781, 57, 195, "Input"],
-Cell[196966, 4166, 516, 7, 32, "Output"]
+Cell[195366, 4115, 1781, 57, 195, "Input"],
+Cell[197150, 4174, 516, 7, 32, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[197519, 4178, 2475, 75, 231, "Input"],
-Cell[199997, 4255, 465, 7, 32, "Output"]
+Cell[197703, 4186, 2475, 75, 231, "Input"],
+Cell[200181, 4263, 465, 7, 32, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[200499, 4267, 783, 26, 58, "Input"],
-Cell[201285, 4295, 1333, 46, 104, "Output"]
+Cell[200683, 4275, 783, 26, 58, "Input"],
+Cell[201469, 4303, 1333, 46, 104, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[202655, 4346, 667, 22, 41, "Input"],
-Cell[203325, 4370, 1003, 33, 71, "Output"]
+Cell[202839, 4354, 667, 22, 41, "Input"],
+Cell[203509, 4378, 1003, 33, 71, "Output"]
 }, Open  ]],
-Cell[204343, 4406, 1763, 60, 244, "Input"],
+Cell[204527, 4414, 1763, 60, 244, "Input"],
 Cell[CellGroupData[{
-Cell[206131, 4470, 379, 10, 34, "Input"],
-Cell[206513, 4482, 1705, 58, 134, "Output"]
-}, Open  ]],
-Cell[CellGroupData[{
-Cell[208255, 4545, 936, 31, 76, "Input"],
-Cell[209194, 4578, 311, 10, 74, "Output"]
+Cell[206315, 4478, 379, 10, 34, "Input"],
+Cell[206697, 4490, 1705, 58, 105, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[209542, 4593, 1853, 57, 198, "Input"],
-Cell[211398, 4652, 2493, 76, 148, "Output"]
+Cell[208439, 4553, 936, 31, 76, "Input"],
+Cell[209378, 4586, 311, 10, 74, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[213928, 4733, 262, 5, 32, "Input"],
-Cell[214193, 4740, 646, 20, 63, "Output"]
+Cell[209726, 4601, 1853, 57, 130, "Input"],
+Cell[211582, 4660, 2493, 76, 148, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[214876, 4765, 208, 4, 32, "Input"],
-Cell[215087, 4771, 455, 16, 79, "Output"]
+Cell[214112, 4741, 262, 5, 32, "Input"],
+Cell[214377, 4748, 646, 20, 63, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[215579, 4792, 2943, 87, 231, "Input"],
-Cell[218525, 4881, 533, 10, 34, "Output"],
-Cell[219061, 4893, 14923, 262, 241, "Output"]
+Cell[215060, 4773, 208, 4, 32, "Input"],
+Cell[215271, 4779, 455, 16, 79, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[234021, 5160, 1386, 42, 110, "Input"],
-Cell[235410, 5204, 762, 22, 63, "Output"]
+Cell[215763, 4800, 2943, 87, 231, "Input"],
+Cell[218709, 4889, 533, 10, 34, "Output"],
+Cell[219245, 4901, 14923, 262, 241, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[236209, 5231, 847, 25, 66, "Input"],
-Cell[237059, 5258, 287, 9, 60, "Output"]
+Cell[234205, 5168, 1386, 42, 110, "Input"],
+Cell[235594, 5212, 762, 22, 63, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[237383, 5272, 847, 25, 66, "Input"],
-Cell[238233, 5299, 547, 17, 55, "Output"]
+Cell[236393, 5239, 847, 25, 66, "Input"],
+Cell[237243, 5266, 287, 9, 60, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[238817, 5321, 513, 16, 76, "Input"],
-Cell[239333, 5339, 431, 15, 73, "Output"]
+Cell[237567, 5280, 847, 25, 66, "Input"],
+Cell[238417, 5307, 547, 17, 55, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[239801, 5359, 360, 11, 59, "Input"],
-Cell[240164, 5372, 238, 7, 54, "Output"]
+Cell[239001, 5329, 513, 16, 76, "Input"],
+Cell[239517, 5347, 431, 15, 73, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[240439, 5384, 402, 11, 59, "Input"],
-Cell[240844, 5397, 6240, 117, 230, "Output"]
+Cell[239985, 5367, 360, 11, 59, "Input"],
+Cell[240348, 5380, 238, 7, 54, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[247121, 5519, 465, 14, 60, "Input"],
-Cell[247589, 5535, 306, 10, 60, "Output"]
+Cell[240623, 5392, 402, 11, 59, "Input"],
+Cell[241028, 5405, 6240, 117, 230, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[247932, 5550, 505, 15, 60, "Input"],
-Cell[248440, 5567, 228, 5, 47, "Output"]
+Cell[247305, 5527, 465, 14, 60, "Input"],
+Cell[247773, 5543, 306, 10, 60, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[248705, 5577, 371, 10, 51, "Input"],
-Cell[249079, 5589, 4471, 88, 232, "Output"]
+Cell[248116, 5558, 505, 15, 60, "Input"],
+Cell[248624, 5575, 228, 5, 47, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[253587, 5682, 495, 11, 51, "Input"],
-Cell[254085, 5695, 340, 7, 41, "Message"],
-Cell[254428, 5704, 441, 8, 32, "Output"]
+Cell[248889, 5585, 371, 10, 51, "Input"],
+Cell[249263, 5597, 4471, 88, 232, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[254906, 5717, 262, 7, 51, "Input"],
-Cell[255171, 5726, 177, 3, 32, "Output"]
+Cell[253771, 5690, 495, 11, 51, "Input"],
+Cell[254269, 5703, 340, 7, 41, "Message"],
+Cell[254612, 5712, 441, 8, 32, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[255385, 5734, 1583, 48, 149, "Input"],
-Cell[256971, 5784, 1095, 35, 77, "Output"]
+Cell[255090, 5725, 262, 7, 51, "Input"],
+Cell[255355, 5734, 177, 3, 32, "Output"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[255569, 5742, 1583, 48, 149, "Input"],
+Cell[257155, 5792, 1095, 35, 77, "Output"]
 }, Open  ]]
 }
 ]

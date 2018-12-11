@@ -6,11 +6,17 @@ Comparing recombination rates from Hinnov and Hirschberg, Hoffert and Lien,
 Simpson, and Gurachev
 @author: keenan
 """
-
+import sys
+sys.path.insert(0, "../Constants")
+import SI
 from consts import *
 import numpy as np
 from matplotlib import pyplot as plt
 
+kb_SI = SI.boltzmann
+kb_eV = kb_SI * 6.242e18;
+h_SI  = SI.planck
+me    = SI.elecMass
 # Simpson method calculate coeff in m^6/s as a polynomial of temperature
 
 # Polynomial coefficients
@@ -123,4 +129,6 @@ def plotHH_Gurachev(ne, kT = 0.2):
     plt.show()
 #plotHH_Gurachev(ne)
 
+def desai(T, ne):
+    return 1.28e5 * T**(-1.8) * 10**(-(3410/T)) * ne**(-0.64);
 

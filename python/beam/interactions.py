@@ -31,6 +31,21 @@ def pulse_plasma(pulse, plasma):
                       plasma.load_num_den, plasma.load_plasma_den)
 
 
+def pulse_multispecies(pulse, multi):
+    """ Propagates a pulse through a gas, ionizing and refracting as it goes.
+    
+    Parameters
+    ----------
+    pulse : Pulse class
+        The laser pulse to propagate through the plasma.
+    plasma : Plasma class
+        The gas to propagate the laser pulse through.
+    """
+    pulse.e = pcalc.multispecies_refraction(pulse.e, pulse.x, pulse.y,
+                      multi.z, pulse.t, pulse.lam, pulse.z[-1], 
+                      pulse.save_field, multi.save_density, multi.load_den)
+
+
 def beam_phase(beam, phase):
     """ Applies a phase mask to a optical beam, either a pulse or laser.
     
@@ -64,6 +79,23 @@ def beam_plasma(beam, plasma):
     beam.e = lcalc.beam_prop(beam.e, beam.x, beam.y, plasma.z, beam.lam, nh,
                              beam.z[-1], beam.fft, beam.ifft, beam.save_field,
                              loadn)
+    
+    
+def beam_index(beam, index):
+    """ Propagate a beam through a region with varying index of refraction. 
+    
+    Parameters
+    ----------
+    beam : Laser class
+        The optical beam to propagate through the region.
+    index : Index class
+        The index of refraction object.
+    nh : double
+        The background index of refraction. 
+    """
+    beam.e = lcalc.beam_prop(beam.e, beam.x, beam.y, index.z, beam.lam, index.loadnh,
+                             beam.z[-1], beam.fft, beam.ifft, beam.save_field,
+                             index.loadn)
 
 
 def electron_plasma(electron, plasma, z, dumpPeriod, n):

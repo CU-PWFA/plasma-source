@@ -12,7 +12,7 @@ Once you have the repository you should install Anaconda3 which will install pyt
 Anaconda will handle setting up your virtual enviornment. cd into the repository directory, it should contain a
 requirements.txt file. Inside of the directory use the following command
 ```
-conda create --name CU-PWFA --file requirements.txt
+conda create --name CU-PWFA
 ```
 This will create a virtual enviornment called "CU-PWFA" with all the modules specified in the requirements.txt file.
 To activate the enviornment:
