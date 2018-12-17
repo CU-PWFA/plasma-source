@@ -197,10 +197,18 @@ def SuperGaussian(p, x):
     return  p[0]*np.exp((-.5*np.square(x-p[2])/np.square(p[1])**p[3]))
 
 #Generic function for Lorentzian
-#  p - parameters: [n0p (density at center*pi*gam), gamma (distribution), x_0 (offset)]
+#  p - parameters: [A (density at center*factors), gamma (distribution), x_0 (offset)]
 #  x - array of distances
 def Lorentz(p, x):
-    return  p[0]/np.pi/p[1]*((np.square(p[1]))/(np.square(x-p[2])+np.square(p[1])))
+    return  p[0]/(2*np.pi)*(p[1]/(np.square(x-p[2])+np.square(0.5*p[1])))
+
+#A doubletanh multiplied by a Gaussian.  Disregards the n_0 for the Gaussian function.
+#  p_tanh - parameters: [a (~top length), b (~ramp length), n_0 (density at center)]
+#  p_gauss - parameters: [n_0 (density at center), sigma (distribution), x_0 (offset)]
+#  x - array of distances
+def DoubleTanh_Gaussian(p_tanh, p_gauss, x):
+    p_gauss[0] = 1
+    return DoubleTanh(p_tanh, x) * Gaussian(p_gauss, x)
     
 #Attempts to fit a given 1D data set to a DoubleTanh Profile.
 #  data - 1D data set for which to fit
