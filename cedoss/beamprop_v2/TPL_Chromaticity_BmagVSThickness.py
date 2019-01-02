@@ -37,7 +37,7 @@ position_error = 0
 
 gammab = PProp.def_gamma
 tpl_n = 10.
-betastar = .05 #0.00213065326633
+betastar = .10 #0.00213065326633
 
 delta = 0.01
 
@@ -115,12 +115,12 @@ for k in range(len(len_arr)):
     betam_arr[k] = PProp.GetBetaMin(beam, m)
 
 
-#font = {'family' : 'normal',
-#        'weight' : 'bold',
-#        'size'   : 15}
-#
-#plt.rc('font', **font)
-lwid = 3.0
+font = {'family' : 'DejaVu Sans',
+        'weight' : 'normal',
+        'size'   : 12}
+
+plt.rc('font', **font)
+lwid = 2.0
 
 kl = 1/tpl_f_arr
 bw_arr = betastar * kl
@@ -146,10 +146,11 @@ projbetathick_arr = np.zeros(len(len_arr))
 for x in range(len(len_arr)):
     projbetathick_arr[x] = W2.ProjBeta_Thick(k, len_arr[x]*1e-6, betastar, 0, delta)
 
-plt.title("Emittance Growth vs Lens Thickness")
-plt.plot(len_arr*1e-6*np.sqrt(k), bmag_w2_arr, label = "Thin Calculated")#,linewidth = lwid)
-plt.plot(len_arr*1e-6*np.sqrt(k), bmag_w2_arr_thick, label = "Thick Calculated")#,linewidth = lwid)
-plt.plot(len_arr*1e-6*np.sqrt(k), emit_arr, label = "Beam Propagation")#,linewidth = lwid)
+plt.figure(figsize=(3.4*1.5, 2*1.5))
+#plt.title("Emittance Growth vs Lens Thickness")
+plt.plot(len_arr*1e-6*np.sqrt(k), emit_arr, 'r-', label = "Beam Propagation",linewidth = lwid)
+plt.plot(len_arr*1e-6*np.sqrt(k), bmag_w2_arr, 'g-.', label = "Thin Calculated",linewidth = lwid)
+plt.plot(len_arr*1e-6*np.sqrt(k), bmag_w2_arr_thick, 'b--', label = "Thick Calculated",linewidth = lwid)
 plt.ylabel(r'$\epsilon_f/\epsilon_0$')
 plt.xlabel(r'$\mathrm{Lens \ Thickness \ }\sqrt{K}l $')
 plt.grid(); plt.legend(); plt.show()
@@ -168,12 +169,12 @@ print("Minimum possible beta: ",betamin_arr[minloc]*1e6," um")
 print("L = ",len_arr[minloc]," um")
 print("B-mag = ",emit_arr[minloc])
 
-plt.plot(len_arr, np.sqrt(projbeta_arr*3e-6/gammab)*1e9, label="Thin Calculated "+r'$\sigma_r$')#, linewidth = lwid)
-plt.plot(len_arr, np.sqrt(projbetathick_arr*3e-6/gammab)*1e9, label="Thick Calculated "+r'$\sigma_r$')#, linewidth = lwid)
-plt.plot(len_arr, sigm_arr*1e9, label="Propagated "+r'$\sigma_r$')#, linewidth = lwid)
-plt.ylabel(r'$\sigma_r\mathrm{\ [nm]}$')
-plt.xlabel(r'$\mathrm{Lens \ Thickness \ [\mu m]}$')
-plt.grid(); plt.legend(); plt.show()
+#plt.plot(len_arr, np.sqrt(projbeta_arr*3e-6/gammab)*1e9, label="Thin Calculated "+r'$\sigma_r$')#, linewidth = lwid)
+#plt.plot(len_arr, np.sqrt(projbetathick_arr*3e-6/gammab)*1e9, label="Thick Calculated "+r'$\sigma_r$')#, linewidth = lwid)
+#plt.plot(len_arr, sigm_arr*1e9, label="Propagated "+r'$\sigma_r$')#, linewidth = lwid)
+#plt.ylabel(r'$\sigma_r\mathrm{\ [nm]}$')
+#plt.xlabel(r'$\mathrm{Lens \ Thickness \ [\mu m]}$')
+#plt.grid(); plt.legend(); plt.show()
 
 b0_arr = betastar
 a0_arr = 0
@@ -181,20 +182,21 @@ p_arr = np.sqrt(1+np.square(b0_arr*sigmaE/tpl_f_arr))
 sigp_arr = np.sqrt(b0_arr*3e-6/gammab)*p_arr/np.sqrt(np.square(p_arr)+np.square(a0_arr+b0_arr/tpl_f_arr))
 
 ##Nice plot of sigma r vs sqrt(k)l
-plt.title("Beam spot size vs lens thickness")
-plt.semilogy(len_arr*1e-6*np.sqrt(k), np.sqrt(projbeta_arr*3e-6/gammab)*1e9, label="Thin Calculated "+r'$\sigma_r$')
-plt.semilogy(len_arr*1e-6*np.sqrt(k), np.sqrt(projbetathick_arr*3e-6/gammab)*1e9, label="Thick Calculated "+r'$\sigma_r$')#, linewidth = lwid)
-plt.semilogy(len_arr*1e-6*np.sqrt(k), sigm_arr*1e9, label="Propagated "+r'$\sigma_r$')
-plt.semilogy(len_arr*1e-6*np.sqrt(k), np.sqrt(Foc.Calc_BetaStar_DeltaOff(betastar, tpl_f_arr, 0)*3e-6/gammab)*1e9, label="Thin Ideal "+r'$\sigma_r$')
+plt.figure(figsize=(3.4*1.5, 2*1.5))
+#plt.title("Beam spot size vs lens thickness")
+plt.semilogy(len_arr*1e-6*np.sqrt(k), sigm_arr*1e9, 'r-', label="Beam Propagation", linewidth = lwid)
+plt.semilogy(len_arr*1e-6*np.sqrt(k), np.sqrt(projbeta_arr*3e-6/gammab)*1e9, 'g-.', label="Thin Calculated", linewidth = lwid)
+plt.semilogy(len_arr*1e-6*np.sqrt(k), np.sqrt(projbetathick_arr*3e-6/gammab)*1e9, 'b--', label="Thick Calculated", linewidth = lwid)
+plt.semilogy(len_arr*1e-6*np.sqrt(k), np.sqrt(Foc.Calc_BetaStar_DeltaOff(betastar, tpl_f_arr, 0)*3e-6/gammab)*1e9, 'k:', label="Ideal", linewidth = lwid)
 #plt.plot(len_arr*1e-6*np.sqrt(k), np.sqrt(Foc.Calc_ThickBetaStar_DeltaOff_UnNormalized(k,len_arr*1e-6,betastar, 0)*3e-6/gammab)*1e9, label="Thick Ideal "+r'$\sigma_r$')
-plt.semilogy(len_arr*1e-6*np.sqrt(k), sigp_arr*1e9, 'k--',label="Chen 1989 "+r'$\sigma_r$')
+#plt.semilogy(len_arr*1e-6*np.sqrt(k), sigp_arr*1e9, 'k--',label="Chen 1989 "+r'$\sigma_r$')
 plt.ylabel(r'$\sigma_r\mathrm{\ [nm]}$')
 plt.xlabel(r'$\mathrm{Lens \ Thickness \ }\sqrt{K}l $')
 plt.grid(); plt.legend(); plt.show()
 
-plt.plot(len_arr, projbeta_arr, 'b-')
-plt.plot(len_arr, projbeta_arr2, 'r--')
-plt.show()
+#plt.plot(len_arr, projbeta_arr, 'b-')
+#plt.plot(len_arr, projbeta_arr2, 'r--')
+#plt.show()
 """#Was testing new thick waist val and loc eqns
 k = Foc.Calc_K(tpl_n*1e17, gammab)*100*100
 plt.title("Thick Waist Location vs Simulations")

@@ -19,6 +19,8 @@ from scipy.ndimage.interpolation import zoom
 plt.rcParams['animation.ffmpeg_path'] = '/home/robert/anaconda3/envs/CU-PWFA/bin/ffmpeg'
 import matplotlib.animation as animation
 from scipy import constants
+import scipy.constants as const
+import matplotlib.colors as colors
 
 
 def get_filename(path, simName, name, dump):
@@ -136,11 +138,12 @@ def drive_witness_density(params):
 
     plt.figure(figsize=(16, 9))
     gs = gridspec.GridSpec(2, 2, width_ratios=[24, 1])
+    
     # Create the two colormaps
     cmapD = plt.cm.get_cmap('bone')
     cmapW = alpha_colormap_cutoff(plt.cm.get_cmap('pink'),
                                   params['alphaCutoff'], False)
-
+        
     # Create the axis grid spaces
     colorAx1 = plt.subplot(gs[0, 1])
     colorAx2 = plt.subplot(gs[1, 1])
@@ -255,6 +258,69 @@ def single_drive_density(params):
     plt.tight_layout()
     plt.savefig(path+'SingleDriveDensity_'+str(ind)+'.pdf', format='pdf')
     plt.savefig(path+'SingleDriveDensity_'+str(ind)+'.png', format='png')
+    plt.show()
+
+def drive_witness_density_new(params):
+    e = const.physical_constants['elementary charge'][0]
+
+    path = params['path']
+    simName = params['simName']
+    ind = params['dumpInd']
+    zf = params['zoom']
+    drive = params['drive']
+    plasma = params['plasma']
+    
+    # Load in plasma density
+    rho, rhoAttrs = load.load_field(path, simName, 'rhoPlasma')
+    Nx, Ny, Nz = analyze.get_shape(rho[ind])
+    rhoXY = -np.transpose(rho[ind][:, :, int(Nz+1)/2, 0]/e/1e6)+2 #+2 makes it greater than 0 for log scale
+    #x = np.linspace(0, 250, Nx)
+    #y = np.linspace(0, 250, Ny)
+    
+    #Load in drive beam density
+    rho, rhoAttrs = load.load_field(path, simName, 'rhoDrive')
+    Nx, Ny, Nz = analyze.get_shape(rho[ind])
+    rhoBXY = -np.transpose(rho[ind][:, :, int(Nz+1)/2, 0]/e/1e6)
+    
+    #Load in witness beam density
+    rho, rhoAttrs = load.load_field(path, simName, 'rhoWitness')
+    Nx, Ny, Nz = analyze.get_shape(rho[ind])
+    rhoWXY = -np.transpose(rho[ind][:, :, int(Nz+1)/2, 0]/e/1e6)
+    
+    def alpha_colormap(cmap, cutoff, flip=True):
+        N = cmap.N
+        cmapt = cmap(np.arange(N))
+        alpha = np.ones(N)
+        if flip:
+            temp = alpha[:int(cutoff*N)]
+            M = len(temp)
+            alpha[:int(cutoff*N)] = np.linspace(0, 1, M)
+        else:
+            alpha[int((1-cutoff)*N):] = 0.0
+        cmapt[:, -1] = alpha
+        cmapt = colors.ListedColormap(cmapt)
+        return cmapt
+    
+    # Plot the plasma density
+    fig = plt.figure(figsize=(10, 7.5), dpi=100, frameon=False)
+    ax = plt.Axes(fig, [0., 0., 1., 1.])
+    ax.set_axis_off()
+    fig.add_axes(ax)
+    
+    # Plot the drive beam
+    ax.imshow(rhoBXY, interpolation='gaussian', extent=[-125, 125, -125, 125], cmap='copper')
+    
+    # Plot the witness beam
+    #cmapW = alpha_colormap(plt.cm.get_cmap('nipy_spectral'), 0.1, True)
+    cmapW = alpha_colormap(plt.cm.get_cmap('rainbow'), 0.1, True)
+    ax.imshow(rhoWXY, interpolation='gaussian', extent=[-125, 125, -125, 125], cmap=cmapW)
+    
+    # Plot the plasma density
+    cmapP = alpha_colormap(plt.cm.get_cmap('inferno'), 0.2, True)
+    ax.imshow(rhoXY, interpolation='gaussian', aspect='auto', extent=[-125, 125, -125, 125],
+               norm=colors.LogNorm(vmin=1e16, vmax=2e18), cmap=cmapP)
+    
+    plt.savefig(path+'Title_Wake.png')
     plt.show()
 
 def drive_witness_animation(params):

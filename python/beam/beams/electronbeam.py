@@ -13,6 +13,7 @@ from vsim import analyze as Vanalyze
 import matplotlib.pyplot as plt
 from scipy.stats import norm
 from scipy import optimize
+import scipy.integrate as Int
 
 class ElectronBeam(beam.Beam):
     """ An electron beam class that stores a collection of macroparticles.
@@ -350,6 +351,9 @@ class ElectronBeam(beam.Beam):
         plt.ylim(bottom = 0.1)
         plt.ylim(top = max(right[0])*1.2)
         plt.legend(); plt.show()
+        
+        GaussPlusGauss_Percent(p)
+        
         return
 
 class GaussianElectronBeam(ElectronBeam):
@@ -655,3 +659,26 @@ def FitDataSomething(data, axis, function, guess = [0.,0.,0.]):
     plt.legend(); plt.grid(); plt.show()
     """
     return p1
+
+#Given parameters for the Gauss + Gauss fit, what percentage is particles are in each Gaussian
+def GaussPlusGauss_Percent(p):
+    pi = [np.abs(p[0]), np.abs(p[2])]
+    po = [np.abs(p[1]), np.abs(p[3])]
+    inner = Int.quad(lambda x: Gauss(pi, x), -5*pi[0], 5*pi[0])[0]
+    outer = Int.quad(lambda x: Gauss(po, x), -5*po[0], 5*po[0])[0]
+    print(inner, outer)
+    print("Inner: ",inner/(inner+outer)*100,"%")
+    print("Outer: ",outer/(inner+outer)*100,"%")
+    return    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    

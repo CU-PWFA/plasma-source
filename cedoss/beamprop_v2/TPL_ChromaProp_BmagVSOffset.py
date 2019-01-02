@@ -145,25 +145,25 @@ for x in range(len(d_arr)):
     #projbetathick_arr[x] = W2.ProjBeta_Thick(k, l, betastar, d_arr[x], delta)
     projbetathick_arr[x] = W2.ProjBeta_Thick_Gauss(k, l, betastar, d_arr[x], sigmaE)
 
-plt.title("B-mag vs Lens-Waist Separation for L = "+str(tpl_l)+r'$\ \mu m$')
-plt.plot(d_arr*1e2, emit_arr, 'r-', label = "Beam Propagation")
-plt.plot(d_arr*1e2, bmag_w2_arr, 'g--', label = "Analytic Thin")
-plt.plot(d_arr*1e2, bmag_w2_arr_thick, 'b--', label = "Analytic Thick")
-plt.ylabel("B-mag")
-plt.xlabel("Lens-Waist Separation d [cm]")
-plt.grid(); plt.legend(); plt.show()
+#plt.title("B-mag vs Lens-Waist Separation for L = "+str(tpl_l)+r'$\ \mu m$')
+#plt.plot(d_arr*1e2, emit_arr, 'r-', label = "Beam Propagation")
+#plt.plot(d_arr*1e2, bmag_w2_arr, 'g--', label = "Analytic Thin")
+#plt.plot(d_arr*1e2, bmag_w2_arr_thick, 'b--', label = "Analytic Thick")
+#plt.ylabel("B-mag")
+#plt.xlabel("Lens-Waist Separation d [cm]")
+#plt.grid(); plt.legend(); plt.show()
 
-plt.title("Minimum "+r'$\beta$'+" vs Lens-Waist Separation for L = "+str(tpl_l)+r'$\ \mu m$')
+#plt.title("Minimum "+r'$\beta$'+" vs Lens-Waist Separation for L = "+str(tpl_l)+r'$\ \mu m$')
 #plt.plot(d_arr*1e2, betamin_arr*1e6, label="Measured")
-plt.plot(d_arr*1e2, betam_arr*1e6, label="Statistical")
-plt.plot(d_arr*1e2, Foc.Calc_BetaStar_DeltaOff(betastar, tpl_f, d_arr)*1e6, label="Ideal Calculated")
-plt.plot(d_arr*1e2, projbeta_arr*1e6, label="Calculated "+r'$\beta_{pro}$')
-plt.plot(d_arr*1e2, projbetathick_arr*1e6, label="Thick Calculated "+r'$\beta_{pro}$')
-plt.plot(d_arr*1e2, betapromin_arr*1e6, label="Propagated "+r'$\beta_{pro}$')
-plt.ylabel(r'$\beta_{min}\mathrm{\ [\mu m]}$')
-plt.xlabel("Lens-Waist Separation d [cm]")
+#plt.plot(d_arr*1e2, betam_arr*1e6, label="Statistical")
+#plt.plot(d_arr*1e2, Foc.Calc_BetaStar_DeltaOff(betastar, tpl_f, d_arr)*1e6, label="Ideal Calculated")
+#plt.plot(d_arr*1e2, projbeta_arr*1e6, label="Calculated "+r'$\beta_{pro}$')
+#plt.plot(d_arr*1e2, projbetathick_arr*1e6, label="Thick Calculated "+r'$\beta_{pro}$')
+#plt.plot(d_arr*1e2, betapromin_arr*1e6, label="Propagated "+r'$\beta_{pro}$')
+#plt.ylabel(r'$\beta_{min}\mathrm{\ [\mu m]}$')
+#plt.xlabel("Lens-Waist Separation d [cm]")
 #plt.ylim([.1*min(betamin_arr*1e6), 1*max(betamin_arr*1e6)])
-plt.grid(); plt.legend(); plt.show()
+#plt.grid(); plt.legend(); plt.show()
 
 minloc = np.argmin(betamin_arr)
 print("Minimum possible beta: ",betamin_arr[minloc]*1e6," um")
@@ -175,12 +175,20 @@ a0_arr = -d_arr/betastar
 p_arr = np.sqrt(1+np.square(b0_arr*sigmaE/tpl_f))
 sigp_arr = np.sqrt(b0_arr*3e-6/gammab)*p_arr/np.sqrt(np.square(p_arr)+np.square(a0_arr+b0_arr/tpl_f))
 
+font = {'family' : 'DejaVu Sans',
+        'weight' : 'normal',
+        'size'   : 10}
+
+plt.rc('font', **font)
+lwid = 2.0
+
 ##Nice plot of sigma r vs sqrt(k)d
-plt.title("Beam spot size vs lens-waist separation")
+plt.figure(figsize=(3.4*1.5, 2*1.5))
+#plt.title("Beam spot size vs lens-waist separation")
+plt.plot(d_arr*np.sqrt(k), sigm_arr*1e9, 'r-', label="Propagated "+r'$\sigma_r$')
 #plt.plot(d_arr*np.sqrt(k), np.sqrt(projbeta_arr*3e-6/gammab)*1e9, label="Thin Calculated "+r'$\sigma_r$')
 plt.plot(d_arr*np.sqrt(k), np.sqrt(projbetathick_arr*3e-6/gammab)*1e9, 'b--', label="Thick Calculated "+r'$\sigma_r$')
-plt.plot(d_arr*np.sqrt(k), sigm_arr*1e9, 'r-', label="Propagated "+r'$\sigma_r$')
-plt.plot(d_arr*np.sqrt(k), np.sqrt(Foc.Calc_BetaStar_DeltaOff(betastar, tpl_f, d_arr)*3e-6/gammab)*1e9, 'g-', label="Ideal "+r'$\sigma_r$')
+plt.plot(d_arr*np.sqrt(k), np.sqrt(Foc.Calc_BetaStar_DeltaOff(betastar, tpl_f, d_arr)*3e-6/gammab)*1e9, 'k:', label="Ideal "+r'$\sigma_r$')
 #plt.plot(d_arr*np.sqrt(k), np.sqrt(Foc.Calc_ThickBetaStar_DeltaOff_UnNormalized(k,tpl_l*1e-6,betastar, d_arr)*3e-6/gammab)*1e9, label="Thick Ideal "+r'$\sigma_r$')
 #plt.plot(d_arr*np.sqrt(k), sigp_arr*1e9, 'k--',label="Chen 1989 "+r'$\sigma_r$')
 plt.ylabel(r'$\sigma_r\mathrm{\ [nm]}$')

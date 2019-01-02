@@ -14,19 +14,19 @@ import numpy as np
 import timeit
 
 path = '/home/chris/Desktop/BeamProp/vorpaltest'
-filename = '/home/chris/Desktop/SimulationRepo/TestCases/3D/SingleBunch/1e18/50um/ThinPlasmaLens3D_Single_ElectronBeam_10.h5'
+filename = '/media/chris/New Volume/VSimRuns/NERSCResults/3D/TwoBunch/1e18/200um/ThinPlasmaLens3D_WitnessBeam_10.h5'
 
 debug = 1
 
 dump = 20
 cores = 4
-threshold = 0.01
+threshold = 0.001
 
 #beam = PProp.VorpalBeam(path, filename, threshold, minz=-8e-6, maxz = -7e-6, debug=debug)
 beam = PProp.VorpalBeam(path, filename, threshold, debug=debug)
 print("N: ",beam.N)
 
-z_arr = np.linspace(0, 0.025, 1000 + 1)
+z_arr = np.linspace(0, 0.006, 1000 + 1)
 n_arr = np.zeros(len(z_arr))#+1e-9
 
 argon_params = PProp.ReturnDefaultPlasmaParams(path)
@@ -39,12 +39,12 @@ z_fine = np.copy(z_arr)*1e6
 PProp.PropBeamPlasma(beam, argon, z_fine, dump, cores, debug)
 
 m = int(len(z_fine)/dump)
-PProp.PlotEmittance(beam,z_fine,m)
+#PProp.PlotEmittance(beam,z_fine,m)
 sig_arr, s_arr = PProp.PlotSigmar(beam,z_fine,m)
 #print("Bmag: ",PProp.GetBmag(beam,m))
 
 minloc = np.argmin(sig_arr)
 print("index: ", minloc, "|  size [um]: ", sig_arr[minloc])
-beam.plot_phase_at(minloc)
+#beam.plot_phase_at(minloc)
 
 beam.plot_hist_at(minloc)

@@ -190,6 +190,97 @@ def get_normemittance(data):
     return e * gamma
 
 
+def find_length(rhoX, x):
+    """ Finds the start and end of the wake, the difference is the length.
+    
+    Parameters
+    ----------
+    rhoX : array-like
+        A 1D array of the plasma density along axis.
+    x : array-like
+        X positions for each of the elements in rhoX, result will share units.
+        
+    Returns
+    -------
+    start : double
+        The start of the wake.
+    end : double 
+        The end of the wake.
+    """
+    Nx = len(x)
+    eps = 1e6
+    for i in range(Nx-1, -1, -1):
+        if rhoX[i] >= eps and rhoX[i-1] < eps:
+            start = x[i-1]
+        if rhoX[i] <= eps and rhoX[i-1] > eps:
+            end = x[i]
+            return start, end
+   
+     
+def find_width(rhoY, y):
+    """ Finds the bottom and top of the wake at a given x position.
+    
+    Parameters
+    ----------
+    rhoY : array-like
+        A 1D array of the plasma density transverse to the propagation.
+    y : array-like
+        y positions for each of the elements in rhoX, result will share units.
+        
+    Returns
+    -------
+    start : double
+        The start of the wake.
+    end : double 
+        The end of the wake.
+    """
+    Ny = len(y)
+    eps = 1e6
+    start = None
+    for i in range(int(Ny/4), int(3*Ny/4)):
+        if rhoY[i] >= eps and rhoY[i+1] < eps:
+            start = y[i+1]
+        if rhoY[i] <= eps and rhoY[i+1] > eps:
+            end = y[i]
+            if start is None:
+                return None, None
+            else:
+                return start, end
+    return None, None
+
+
+def find_wake_width(rhoXY, y):
+    """ Finds the maximum width of the wake for all x positions.
+    
+    Parameters
+    ----------
+    rhoXY : array-like
+        A 2D array of the plasma density in a transverse slice.
+    y : array-like
+        y positions for each of the elements in rhoX, result will share units.
+        
+    Returns
+    -------
+    start : double
+        The start of the wake.
+    end : double 
+        The end of the wake.
+    """
+    Nx, Ny = np.shape(rhoXY)
+    beg = 0
+    end = Nx
+    widthArr = np.zeros(end-beg, dtype='double')
+    for j in range(beg, end):
+        rhoYj = rhoXY[j, :]
+        width = find_width(rhoYj, y)
+        if width[0] is not None:
+            widthArr[j-beg] = width[1]-width[0]
+        else:
+            widthArr[j-beg] = 0
+    rhoY = rhoXY[np.argmax(widthArr)+beg, :]
+    return find_width(rhoY, y)
+
+
 def get_shape(data):
     """ Returns the grid size of a field data object
     

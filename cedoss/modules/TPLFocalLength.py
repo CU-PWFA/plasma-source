@@ -95,13 +95,13 @@ def Calc_ThickBetaStar_DeltaOff(l, b, d):
     return b/den
 
 if __name__ == '__main__':
-    beta_i = .05
-    beta_f = 8.88e-5
-    n0=1e18
+    beta_i = .10
+    beta_f = .003326
+    n0=5e17
     gam_set = gam_def
     
-    tpl_l = 200 #um
-    print("betaf",Calc_ThickBetaStar_DeltaOff_UnNormalized(Calc_K(n0,gam_set), tpl_l*1e-4, beta_i*1e2, 0))
+    #tpl_l = 200 #um
+    #print("betaf",Calc_ThickBetaStar_DeltaOff_UnNormalized(Calc_K(n0,gam_set), tpl_l*1e-4, beta_i*1e2, 0))
     
     focal = Calc_Target_Focal(beta_i,beta_f)
     #focal = 0.015
