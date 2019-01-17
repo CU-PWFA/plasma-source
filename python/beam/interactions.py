@@ -70,13 +70,15 @@ def beam_plasma(beam, plasma):
         The plasma to propagate the laser pulse through.
     """
     nh = 1.0 + plasma.n0*plasma.atom['alpha']*5.0e-8
+    def loadnh(ind):
+        return nh
     def loadn(ind):
         ne = plasma.load_plasma_den(ind)
         nplasma = -beam.lam**2 * 4.47869e-5
         ngas = plasma.atom['alpha']*5.0e-8
         dn = nplasma - ngas
         return dn * ne
-    beam.e = lcalc.beam_prop(beam.e, beam.x, beam.y, plasma.z, beam.lam, nh,
+    beam.e = lcalc.beam_prop(beam.e, beam.x, beam.y, plasma.z, beam.lam, loadnh,
                              beam.z[-1], beam.fft, beam.ifft, beam.save_field,
                              loadn)
     
