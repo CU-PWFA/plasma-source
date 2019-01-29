@@ -31,8 +31,8 @@ sys.path.insert(0, "../")
 from modules import ThreeDimensionAnalysis as ThrDim
 
 def_startloc = 0.80
-def_lenflat = 0.50
-def_nset = 10#0.5#1203.7 for gas cell
+def_lenflat = 0.10 #0.50
+def_nset = 0.5 #1203.7 for gas cell
 def_betastar = 0.10
 def_betaoffs = -0.387
 def_gamma = 19569.5 #10 GeV beam
@@ -49,7 +49,7 @@ def ReturnDefaultElectronParams(path, beta_star=def_betastar, beta_offset=def_be
         'name' : 'TestBeam',
         'path' : path,
         'load' : False,
-        'N' : 1000,
+        'N' : 10000,         #10000 for normal, 1000000 for production
         'gamma' : gamma,
         'emittance' : emit,
         'betax' : beta_init,
@@ -66,9 +66,24 @@ def GaussianBeam(electronParams, debug = 0):
     if debug == 1: beam.plot_current_phase();
     return beam
 
+def VorpalBeam(path, filename, threshold, minz=-np.inf, maxz = np.inf, debug = 0):
+    vorpalParams = {
+            'N' : 1,
+            'load' : False,
+            'name' : 'VorpalBeam',
+            'path' : path,
+            'filename' : filename,
+            'thresh' : threshold,
+            'minz' : minz,
+            'maxz' : maxz
+    }
+    beam = electronbeam.VorpalElectronBeam(vorpalParams)
+    if debug ==1: beam.plot_current_phase();
+    return beam
+
 def dgammadz(ne): #Used to have old small n term
     npl0 = def_nset; npl = ne
-    if npl0 == 0:
+    if npl < 1e-18:
         return 0
     else:
         dgds0 = 16.66e9 * np.sqrt(npl0/0.5) / 511e3
@@ -90,7 +105,7 @@ def dgammadz_preRobert(ne):
 def dgammadz_wrong(ne):
     return np.sqrt(ne) * 1.96e-2
 
-def dgammadz_basic(ne):
+def dgammadz_none(ne):
     return 0.0
 
 def ReturnDefaultPlasmaParams(path, plasma_start = def_startloc,
@@ -111,7 +126,7 @@ def ReturnDefaultPlasmaParams(path, plasma_start = def_startloc,
         'Z' : Z,
         'n0' : nset,
         'z0' : plasma_start * 1e6,
-        'l_flattop' : 0.5e6,
+        'l_flattop' : def_lenflat*1e6,
         'sigma_in' : sigma,
         'sigma_out' : sigma,
         'atom' : ionization.Ar,
@@ -383,31 +398,46 @@ def PlotEmittance(beam, z_arr, m):
     en = np.zeros(m, dtype='double')
     s = np.zeros(m, dtype='double')
     for i in range(m):
-        j = int(i * len(z_arr)/m)
+        #j = int(i * len(z_arr)/m)
         en[i] = np.average(beam.get_emittance_n(i))*1e6
-        s[i] = z_arr[j]*1e-4
-    
+        s[i] = beam.get_save_z(i)
+        #s[i] = z_arr[j]*1e-4
     plt.plot(s, en)
     plt.title("Emittance Evolution")
     plt.xlabel("s [cm]")
     plt.ylabel("normalized emittance [mm-mrad]")
     plt.grid(); plt.show()
+    print(en[0])
     return
+
+def GetSigmaMin(beam, m):
+    sig = np.zeros(m, dtype='double')
+    for i in range(m):
+        sig[i] = np.average(beam.get_sigmar(i))
+    return min(sig)
+
+def GetBetaMin(beam, m):
+    sig = np.zeros(m, dtype='double')
+    for i in range(m):
+        sig[i] = np.average(beam.get_sigmar(i))
+    ef = np.average(beam.get_emittance(m))
+    return np.square(min(sig))/ef
 
 def PlotSigmar(beam, z_arr, m):
     sig = np.zeros(m, dtype='double')
     s = np.zeros(m, dtype='double')
     for i in range(m):
-        j = int(i * len(z_arr)/m)
+        #j = int(i * len(z_arr)/m)
         sig[i] = np.average(beam.get_sigmar(i))*1e6
-        s[i] = z_arr[j]*1e-4
-    
+        s[i] = beam.get_save_z(i)*1e2
+        #s[i] = z_arr[j]*1e-4
+        
     plt.plot(s, sig)
     plt.title("Sigmar Evolution")
     plt.xlabel("s [cm]")
     plt.ylabel("sigmar [um]")
     plt.grid(); plt.show()
-    return
+    return sig, s
 
 def PlotGamma(beam, z_arr, m):
     gam = np.zeros(m, dtype='double')
@@ -423,6 +453,9 @@ def PlotGamma(beam, z_arr, m):
     plt.ylabel("gamma")
     plt.grid(); plt.show()
     return
+
+def GetFinalGamma(beam, m):
+    return np.average(beam.get_gamma_n(m))
 
 def PlotEmittance_Compare(beam, beam2, z_arr, m, first, second):
     en = np.zeros(m, dtype='double')
@@ -530,6 +563,40 @@ def PlotContour_General(contour, x_arr, y_arr, x_label, y_label, data_label):
     plt.xlabel(x_label)
 
     return [Bmin_x,Bmin_y]
+
+def Plot_CSEvo_MatchedCompare_NicePlot(beamParams, beamParams_matched, n_arr, z_arr, z_offset = 0, legend_loc=0):
+    beta, alpha, gamma, gb = Calc_CSParams(beamParams, n_arr, z_arr)
+    beta0, alpha0, gamma0, gb0 = Calc_CSParams(beamParams, np.zeros(len(z_arr)), z_arr)
+    betaM, alphaM, gammaM, gbM = Calc_CSParams(beamParams_matched, np.zeros(len(z_arr)), z_arr)
+    
+    z_arr = z_arr - z_offset
+    #print(" ","beta","beta0"); print(" ",beta[740],beta0[740])
+    """
+    font = {'family' : 'normal',
+        'weight' : 'bold',
+        'size'   : 15}
+
+    plt.rc('font', **font)
+    """
+    lwid = 2.0
+    
+    fig, ax1 = plt.subplots()
+    ax1.plot(z_arr*1e2, np.array(beta)*1e2, 'b-', label=r'$\beta$', linewidth = lwid)
+    ax1.plot(z_arr*1e2, np.array(beta0)*1e2, 'b--',label=r'$\beta_{vac}$', linewidth = lwid)
+    ax1.plot(z_arr*1e2, np.array(betaM)*1e2, 'r--',label=r'$\beta_{m,vac}$', linewidth = lwid)
+    ax1.set_ylabel(r'$\beta\,\mathrm{[cm]}$', color = 'b')
+    ax1.tick_params('y', colors = 'b')
+    ax1.set_xlabel('z [cm]')
+    
+    ax2 = ax1.twinx()
+    ax2.plot(z_arr*1e2, n_arr/max(n_arr), 'g-', linewidth = lwid)
+    ax2.set_ylabel(r'$n/n_0$',color = 'g')
+    ax2.tick_params('y', colors = 'g')
+    ax1.set_xlim([-45, 5])
+    ax1.set_ylim([0, 20])
+    ax2.set_ylim([0, 1.1])
+    fig.set_size_inches(3.4*1.5,2.5*1.5)
+    ax1.grid(); ax1.legend(); plt.show()
 
 ###############################################################################
 

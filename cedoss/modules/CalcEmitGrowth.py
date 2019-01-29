@@ -9,6 +9,8 @@ Functions to calculate analytic approximations for emittance growth
 """
 
 import numpy as np
+import scipy.integrate as Int
+
 
 def ThinW2_Norm(bn, dn):
     return np.square(np.square(bn)+np.square(dn))/np.square(bn)
@@ -17,6 +19,9 @@ def ThinW2(kl, b, d):
     return np.square(kl)*(np.square(np.square(b)+np.square(d))/np.square(b))
 
 def CalcEmit(w2, sigmaE):
+    return np.sqrt(1+w2*np.square(sigmaE))
+
+def CalcEmit_OLD(w2, sigmaE):
     return 1 + 1/2*w2*np.square(sigmaE)
 
 def ThickW2_UnNormalized(k, l, b, d):
@@ -39,6 +44,54 @@ def ProjBeta(b, d, delta):
     second = 2*delta/(delta**2-1)*(b**6*(delta**2-2)+(delta**2-2)*(d-1)**2*d**4+b**2*(d-1)*(3*d-1)*(delta**2-1+(delta**2-2)*d**2)+b**4*(-3+4*d-6*d**2+delta**2*(3+d*(3*d-2))))
     third = -4*(b**2+(d-1)*d)*(b**2-d*(b**2+d**2)+(b**2+d**2)**2)*np.arctanh(delta)
     return (second + third) / first
+
+def ProjBetaCS_UnNormalized(k, l, b0, a0, g0, delta):
+    return ProjBetaCS(l*np.sqrt(k), b0*np.sqrt(k), a0, g0/np.sqrt(k), delta)/np.sqrt(k)
+
+def ProjBetaCS(l, b, a, g, delta):
+    first = 2*delta*(g+l*(2*a+b*l))**2
+    second = 2*delta/(delta**2-1)*((g+4*a*l)*(delta**2-1)+b*l**2*(a**2*(1-2*delta**2)+3*b*g*(-1+delta**2))+b**2*l**3*(2*a+b*l)*(-2+delta**2))
+    third = -4*l*(a+b*l)*(1+a*b*l+b**2*l**2)*np.arctanh(delta)
+    #print(first,second,third)
+    #print((second + third) / first)
+    return (second + third) / first
+
+def ProjBeta_Thick(k, l, b, d, delta):
+    rk = np.sqrt(k)
+    rkl = rk*l
+    srkl = np.sin(rkl)
+    crkl = np.cos(rkl)
+    
+    numterm = -d*rk*crkl**2 - crkl*srkl + b**2*k*crkl*srkl + d**2*k*crkl*srkl + d*rk*srkl**2
+    denterm = rk*(crkl**2-2*d*rk*crkl*srkl+b**2*k*srkl**2+d**2*k*srkl**2)
+    
+    t11 = numterm / denterm
+    t21 = -t11*np.sqrt(k)
+    t12 = 1/rk
+    
+    return Int.quad(lambda x: 1/b*(t11*np.cos(rkl/np.sqrt(x))+t12*np.sin(rkl/np.sqrt(x))/(1/np.sqrt(x)))**2+
+                    (b+d**2/b)*(np.cos(rkl/np.sqrt(x))+t21*(1/np.sqrt(x))*np.sin(rkl/np.sqrt(x)))**2 + 
+                    2*d/b * (t11*np.cos(rkl/np.sqrt(x))+t12*np.sin(rkl/np.sqrt(x))/(1/np.sqrt(x))) * 
+                    (np.cos(rkl/np.sqrt(x))+t21*(1/np.sqrt(x))*np.sin(rkl/np.sqrt(x))), 1-delta, 1+delta)[0]/(2*delta)
+
+def ProjBeta_Thick_Gauss(k, l, b, d, sigE):
+    rk = np.sqrt(k)
+    rkl = rk*l
+    srkl = np.sin(rkl)
+    crkl = np.cos(rkl)
+    
+    numterm = -d*rk*crkl**2 - crkl*srkl + b**2*k*crkl*srkl + d**2*k*crkl*srkl + d*rk*srkl**2
+    denterm = rk*(crkl**2-2*d*rk*crkl*srkl+b**2*k*srkl**2+d**2*k*srkl**2)
+    
+    t11 = numterm / denterm
+    t21 = -t11*np.sqrt(k)
+    t12 = 1/rk
+    
+    return Int.quad(lambda x: (1/b*(t11*np.cos(rkl/np.sqrt(1+x))+t12*np.sin(rkl/np.sqrt(1+x))/(1/np.sqrt(1+x)))**2+
+                    (b+d**2/b)*(np.cos(rkl/np.sqrt(1+x))+t21*(1/np.sqrt(1+x))*np.sin(rkl/np.sqrt(1+x)))**2 + 
+                    2*d/b * (t11*np.cos(rkl/np.sqrt(1+x))+t12*np.sin(rkl/np.sqrt(1+x))/(1/np.sqrt(1+x))) * 
+                    (np.cos(rkl/np.sqrt(1+x))+t21*(1/np.sqrt(1+x))*np.sin(rkl/np.sqrt(1+x))))*np.exp(-np.square(x)/(2*np.square(sigE)))
+                    /(np.sqrt(2*np.pi)*sigE), -10*sigE, 10*sigE)[0]
 
 #This approach used an unnecesary assumption
 """

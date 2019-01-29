@@ -61,12 +61,12 @@ class Phase(element.Element):
         self.y = np.linspace(-Y/2, Y/2, self.Ny, False, dtype='double')
         
     def initialize_phase(self, phi=None):
-        """ Create the array to store the electric field values in. 
+        """ Create the array to store the phase in. 
         
         Parameters
         ----------
-        e : array-like, optional
-            The array of field values to initialize the field to.
+        phi : array-like, optional
+            The array of phase to initialize the mask.
         """
         if phi is None:
             self.phi = np.zeros((self.Nx, self.Ny), dtype='complex128')
@@ -86,6 +86,82 @@ class Phase(element.Element):
     def save_phase(self):
         """ Save the phase mask to file. """
         np.save(self.filePre + '_phase.npy', self.phi)
+        
+        
+class Intensity(element.Element):
+    """ A class that represents some type of transmission mask on a laser beam.
+    
+    This class is meant to serve as a base class for more complex transmission masks
+    such as such as apertures.
+    
+    Parameters
+    ----------
+    Nx : int
+        Number of grid points in the x direction, must match beam.
+    Ny : int
+        Number of grid points in the y direction, must match beam.
+    X : int
+        Width of the grid in the x direction, the grid goes from [-X/2, X/2).
+        This must match the beam parameters.
+    Y : int
+        Width of the grid in the y direction, the grid goes from [-Y/2, Y/2).
+        This must match the beam parameters.
+    path : string
+        The path for the calculation. This class will create a folder inside
+        the path to store all output data in.
+    name : string
+        The name of the beam, used for naming files and folders.
+    """
+    keys = ['Nx',
+            'Ny',
+            'X',
+            'Y',
+            'path',
+            'name',
+            'lam']
+    
+    # Initialization functions
+    #--------------------------------------------------------------------------
+    
+    def __init__(self, params):
+        super().__init__(params)
+        self.create_grid()
+        self.initialize_t()
+        self.save_initial()
+    
+    def create_grid(self):
+        """ Create an x-y rectangular grid. """
+        X = self.X
+        Y = self.Y
+        self.x = np.linspace(-X/2, X/2, self.Nx, False, dtype='double')
+        self.y = np.linspace(-Y/2, Y/2, self.Ny, False, dtype='double')
+        
+    def initialize_t(self, t=None):
+        """ Create the array to store the mask in. 
+        
+        Parameters
+        ----------
+        t : array-like, optional
+            The array of transmission fraction to initialize the mask.
+        """
+        if t is None:
+            self.t = np.zeros((self.Nx, self.Ny), dtype='double')
+        else:
+            self.t = t
+        self.save_t()
+    
+    #File managment
+    #--------------------------------------------------------------------------
+    
+    def save_initial(self):
+        """ Save the initial params object and the grid. """
+        super().save_initial()
+        np.save(self.filePre + '_x.npy', self.x)
+        np.save(self.filePre + '_y.npy', self.y)
+    
+    def save_t(self):
+        """ Save the transmission mask to file. """
+        np.save(self.filePre + '_t.npy', self.t)
 
 
 class SphericalLens(Phase):
@@ -113,7 +189,7 @@ class AxiconLens(Phase):
     Parameters
     ----------
     beta : double
-        The deflection angle of the axicon.
+        The deflection angle of the axicon in deg.
     """
     
     def __init__(self, params):
@@ -125,6 +201,7 @@ class AxiconLens(Phase):
         r = np.sqrt(self.x[:, None]**2+self.y[None, :]**2)
         phi = -self.k * np.radians(self.beta) * r
         super().initialize_phase(phi)
+
 
 class Axilens(Phase):
     """ A phase mask that simulates a thin axilens.
@@ -153,3 +230,25 @@ class Axilens(Phase):
         dz = self.dz
         phi = -self.k*R**2 * np.log(f0+dz*r**2/R**2) / (2*dz)
         super().initialize_phase(phi)
+
+
+class Aperture(Intensity):
+    """ A transmission mask formed from a circular aperture.
+    
+    Parameters
+    ----------
+    r : double
+        The radius of the aperture.
+    """
+    
+    def __init__(self, params):
+        self.keys.extend(
+                ['r'])
+        super().__init__(params)
+    
+    def initialize_t(self):
+        t = np.zeros((self.Nx, self.Ny), dtype='double')
+        r2 = self.x[:, None]**2+self.y[None, :]**2
+        sel = r2 < self.r**2
+        t[sel] = 1.0
+        super().initialize_t(t)

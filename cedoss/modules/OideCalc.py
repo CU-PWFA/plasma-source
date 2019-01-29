@@ -32,13 +32,17 @@ def Get_KLls_WRONNNGNG(lens_width, focal_length):
     ls = focal_length - 1/2*lens_width
     return [K,L,ls]
 
-def Get_ls(lens_width, focal_length):
+def Get_ls_OLDER(lens_width, focal_length):
     print("Update to Get_ls_corrected please")
     return focal_length - 1/2*lens_width
 
 #Where delta is offset from waist to lens
-def Get_ls_corrected(lens_width, focal, beta_i, delta=0):
+def Get_ls(lens_width, focal, beta_i, delta=0):
     focal_length = Foc.Calc_WaistPos_DeltaOff(beta_i, focal, delta)
+    return focal_length
+
+def Get_ls_thick(tpl_k, tpl_l, beta_i, d):
+    focal_length = Foc.Calc_ThickWaistPos_DeltaOff_UnNormalized(tpl_k, tpl_l, beta_i, d)
     return focal_length
 
 def Inner_F(lens, focs, x):

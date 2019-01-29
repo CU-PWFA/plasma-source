@@ -91,7 +91,30 @@ plt.xlabel(r'$\mathrm{Lens \ Thickness \ [\mu m]}$')
 plt.ylabel(r'$\mathrm{Waist \ \beta^* \ [cm]}$')
 plt.grid(); plt.legend(); plt.show()
 
-#Now for chromaticity
+
+kval = np.sqrt(Foc.Calc_K(tpl_n*1e17, gammab)) #in cm
+normax = thick_arr*1e-4*kval
+figA, (ax1, ax2) = plt.subplots(2, sharex=True, sharey=False, figsize = (3.4*1.5,4*1.5))
+
+ax1.semilogy(normax, waist_arr*100*kval, 'b-', label = "Waist Locations")
+ax1.semilogy(normax, focus2_arr*100*kval, 'r--', label = "Thin Lens Eqn")
+ax1.set_ylabel(r'$z_{w}\sqrt{K}$')
+ax1.legend(); ax1.grid()
+
+ax2.semilogy(normax, betas_arr*100*kval, 'b-', label = "Waist Values")
+ax2.semilogy(normax, betap_arr*100*kval, 'r--', label = "Thin Lens Eqn")
+ax2.set_ylabel(r'$\beta^*\sqrt{K}$')
+ax2.legend(); ax2.grid()
+
+ax2.set_xlabel(r'$L\sqrt{K}$')
+ax2.set_xlim([0,1.1])
+
+figA.tight_layout()
+figA.subplots_adjust(hspace=0)
+figA.show()
+
+"""
+#Now for chromaticity, though old formalism
 perbeta_arr = np.zeros(num)
 perdbeta_arr = np.zeros(num)
 e_spec = np.array([0, -0.01, 0.01]) + 1.0
@@ -154,3 +177,4 @@ plt.plot(focus_arr*100, perdbeta_arr, label = r'$\Delta \partial \beta$')
 plt.xlabel(r'$\mathrm{Focal \ Length \ [cm]}$')
 plt.ylabel(r'$\mathrm{Percent \ Range \ [\%]}$')
 plt.grid(); plt.legend(); plt.show()
+"""

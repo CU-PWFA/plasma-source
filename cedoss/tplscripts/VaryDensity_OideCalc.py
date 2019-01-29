@@ -13,13 +13,15 @@ from modules import TPLFocalLength as Foc
 from modules import OideCalc as Oide
 import numpy as np
 import matplotlib.pyplot as plt
+from modules import CalcEmitGrowth as W2
 
 gam = Foc.gam_def
 emit = 7e-6 *100 #cm-rad
 beta_i = 10. #cm
 
-L_set = 20e-6 * 100 # set to 0 to calculate from L*k_beta = 0.1
-den_arr = np.logspace(18.8, 19.5, 50)
+L_set = 100e-6 * 100 # set to 0 to calculate from L*k_beta = 0.1
+den_arr = np.logspace(18.4, 19.1, 50)
+delta=0.01
 
 #L_set = 0 # set to 0 to calculate from L*k_beta = 0.1
 #den_arr = np.logspace(18, 20, 50)
@@ -61,6 +63,20 @@ for i in range(len(den_arr)):
     len_arr[i] = L
     focal_arr[i] = focal
     
+projbeta_arr = np.zeros(len(den_arr))
+bmag_w2_arr = np.zeros(len(den_arr))
+sigmaE = np.sqrt(1/3) * delta
+
+k_arr = 1/(len_arr*focal_arr)
+
+for x in range(len(projbeta_arr)):
+    projbeta_arr[x] = W2.ProjBeta_Thick(k_arr[x], len_arr[x], beta_i, 0, delta)
+    w2 = W2.ThickW2_UnNormalized(k_arr[x], len_arr[x], beta_i, 0)
+    bmag_w2_arr[x] = W2.CalcEmit(w2, sigmaE)
+
+
+sigc_arr = np.sqrt(projbeta_arr*emit*bmag_w2_arr/gam)
+    
 plt.loglog(den_arr, Fval_arr)
 plt.title("Dimensionless F function vs TPL density")
 plt.xlabel(r'$n_0 \mathrm{\,[cm^{-3}]}$')
@@ -78,19 +94,8 @@ plt.grid(); plt.legend(); plt.show()
 plt.semilogx(den_arr, sigo_arr*1e4, label="Oide")
 plt.semilogx(den_arr, sigi_arr*1e4, label="Ideal")
 plt.semilogx(den_arr, sigm_arr*1e4, label="Minimum")
+plt.semilogx(den_arr, sigc_arr*1e4, label="Chromaticity")
 plt.title("Beam sizes vs TPL density")
 plt.xlabel(r'$n_0 \mathrm{\,[cm^{-3}]}$')
 plt.ylabel(r'$\sigma^* \mathrm{\,[\mu m]}$')
-plt.grid(); plt.legend(); plt.show()
-
-plt.semilogx(den_arr, focal_arr, label=r'$f$')
-plt.title("Focal length vs TPL density")
-plt.xlabel(r'$n_0 \mathrm{\,[cm^{-3}]}$')
-plt.ylabel(r'$f \mathrm{\,[cm]}$')
-plt.grid(); plt.legend(); plt.show()
-
-plt.semilogx(den_arr, len_arr*1e4, label=r'$L$')
-plt.title("TPL thickness vs TPL density")
-plt.xlabel(r'$n_0 \mathrm{\,[cm^{-3}]}$')
-plt.ylabel(r'$L \mathrm{\,[\mu m]}$')
 plt.grid(); plt.legend(); plt.show()

@@ -20,7 +20,7 @@ path = '/home/chris/Desktop/BeamProp/testGaussian'
 gamma = PProp.def_gamma
 
 sighw = 0.08 * 1e6
-z0 = sighw/1e6*5
+z0 = sighw/1e6*6
 """#More traditional way to frame the setup
 vacwaist_flattop = -0.1806 #Distance from vacuum waist to start of flattop
 matwaist_flattop = -0.2006 #Distance from matched waist to flattop
@@ -31,11 +31,11 @@ z_mat = 0.10 #Distance from vacuum waist to goal matched waist
 matwaist_flattop = -0.2006 #Distance from matched waist to flattop
 vacwaist_flattop = matwaist_flattop - z_mat #Distance from vacuum waist to start of flattop
 
-betastar = .061608 #Vacuum waist value
+betastar = .10 #Vacuum waist value
 
 tpl_n = 0.5
-tpl_l = 351.13250510448523
-separ = 0.05
+tpl_l = 257.398072683
+separ = 0.0414759246906
 
 argon_params = PProp.ReturnDefaultPlasmaParams(path, sigma_hw = sighw, plasma_start = z0, scaledown = 10)
 argon = PProp.GaussianRampPlasma(argon_params, debug)
@@ -61,6 +61,16 @@ beam_params = PProp.ReturnDefaultElectronParams(path, beta_star=betastar,
 beam = PProp.GaussianBeam(beam_params, debug)
 argon = PProp.CustomPlasma_ThinPlasmaLens(argon_params, n, tpl_offset*1e6, tpl_n, tpl_l, debug)
 
+beta_matched = 0.061608
+beam_params_matched = PProp.ReturnDefaultElectronParams(path, beta_star=beta_matched,
+                                               beta_offset=matwaist_flattop, plasma_start=z0)
+PProp.Plot_CSEvo_MatchedCompare_NicePlot(beam_params, beam_params_matched, n, z, z0, legend_loc = 10)
+
+k = Foc.Calc_K(tpl_n*1e17, gamma)
+print(np.sqrt(k)*tpl_l*1e-4)
+
+#Below propagates and plots emittance and gamma
+"""
 z_fine = np.copy(z)*1e6
 PProp.PropBeamPlasma(beam, argon, z_fine, dump, cores, debug)
 
@@ -79,3 +89,4 @@ beta_matched = 0.061608
 beam_params_matched = PProp.ReturnDefaultElectronParams(path, beta_star=beta_matched,
                                                beta_offset=matwaist_flattop, plasma_start=z0)
 PProp.Plot_CSEvo_MatchedCompare(beam_params, beam_params_matched, n, z, z0, legend_loc = 10)
+"""
