@@ -57,6 +57,19 @@ def beam_phase(beam, phase):
         The phase mask to apply to the beam.
     """
     beam.set_field(beam.e * np.exp(1j*phase.phi))
+    
+    
+def beam_intensity(beam, intensity):
+    """ Applies a transmission mask to a optical beam, either a pulse or laser.
+    
+    Parameters
+    ----------
+    beam : Pulse or Laser class
+        The optical beam the apply the phase mask to.
+    intensity : Intensity class
+        The intensity mask to apply to the beam.
+    """
+    beam.set_field(beam.e * intensity.t)
 
 
 def beam_plasma(beam, plasma):
