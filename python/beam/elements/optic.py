@@ -49,9 +49,10 @@ class Phase(element.Element):
     def __init__(self, params):
         super().__init__(params)
         self.k = 2*np.pi/self.lam
-        self.create_grid()
-        self.initialize_phase()
-        self.save_initial()
+        if self.load is False:
+            self.create_grid()
+            self.initialize_phase()
+            self.save_initial()        
     
     def create_grid(self):
         """ Create an x-y rectangular grid. """
@@ -73,6 +74,11 @@ class Phase(element.Element):
         else:
             self.phi = phi
         self.save_phase()
+        
+    def load_element(self):
+        """ Load the phase mask. """
+        self.create_grid()
+        self.load_phase()
     
     #File managment
     #--------------------------------------------------------------------------
@@ -86,6 +92,10 @@ class Phase(element.Element):
     def save_phase(self):
         """ Save the phase mask to file. """
         np.save(self.filePre + '_phase.npy', self.phi)
+        
+    def load_phase(self):
+        """ Load the phase of the mask. """
+        self.phi = np.load(self.filePre + '_phase.npy')
         
         
 class Intensity(element.Element):
