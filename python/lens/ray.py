@@ -221,7 +221,7 @@ def lens_design(Iin, rin, Iout, rout, L):
     N = np.size(rout)
     r = np.zeros(N)
     phi = np.zeros(N)
-    Iin = interp1d(rin, Iin, bounds_error=False, fill_value=0.0)
+    Iin = interp1d(rin, Iin, bounds_error=False, fill_value='extrapolate')
     # Calculate r and phi incrementally
     sinnew = rout[0]/np.sqrt(rout[0]**2 + L**2)
     for i in range(1, N):
