@@ -204,9 +204,9 @@ def intensity_from_density(ion, frac):
     if ion['type'] == 'gaussian':
         def f(I, t):
             return gaussian_envelope(I, t, tau).real
-        N = 1000
+        N = 5000
         # All species we consider are fully ionized by 20X10^14 W/cm^2
-        I = np.linspace(0, 20, N)
+        I = np.linspace(0, 30, N)
         t = np.linspace(-3*tau, 3*tau, N)
     # Calculate the interpolating function
     g = adk.intensity_func(atom['EI'], I, t, f,
