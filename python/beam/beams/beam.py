@@ -10,6 +10,7 @@ import os
 import glob
 import numpy as np
 from scipy.interpolate import interp1d
+from scipy.interpolate import interp2d
 from scipy.integrate import simps
 
 
@@ -108,5 +109,14 @@ class Beam:
         """ Create a 2D field from a radial slice of a cylindircal field. """
         dataOfR = interp1d(r, data, bounds_error=False, fill_value=0.0)
         return dataOfR(np.sqrt(x[:, None]**2 + y[None, :]**2))
+    
+    def rescale_field(self, beam1, beam2):
+        """ Rescale a laser beam from one grid size to another laser field. """
+        e_r = interp2d(beam1.x, beam1.y, beam1.e.real, 'cubic', bounds_error=False, fill_value=0.0)
+        e_i = interp2d(beam1.x, beam1.y, beam1.e.imag, 'cubic', bounds_error=False, fill_value=0.0)
+        E_r = e_r(beam2.x, beam2.y)
+        E_i = e_i(beam2.x, beam2.y)
+        E = E_r + 1j*E_i
+        return E
     
     
