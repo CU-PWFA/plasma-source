@@ -60,6 +60,56 @@ def plasma_gaussian_ramps(z0, dz, sigmaIn, sigmaOut, N, zf=0):
     return z, frac
 
 
+def plasma_linear_ramps(z0, dz, sigmaIn, sigmaOut, N, zf=0):
+    """ Creates a plasma density with Gaussian ends.
+
+    Returns a plasma profile with a flattop and Gaussian ramps on either side.
+
+    Parameters
+    ----------
+    z0 : double
+        The distance at which the uniform fully ionized plasma starts.
+    dz : double
+        The length of the fully ionized plasma.
+    sigmaIn : double
+        The length of the input ramp, halfwidth for linear.
+    sigmaOut : double
+        The length of the output ramp, halfwidth for linear.
+    N : int
+        Number of grid points in z.
+    zf : double, optional
+        The end of the grid in z.
+
+    Returns
+    -------
+    z : array-like
+        Array of distances along the optical axis the intensity is returned at.
+    I : array-like
+        Intensity profile given at each point in z.
+    """
+    # Create the z grid
+    d1 = 0.0
+    d2 = z0
+    d3 = z0 + dz
+    if zf is not 0:
+        d4 = zf
+    else:
+        d4 = d3+2*sigmaOut
+    Z = d4 - d1
+    z = np.linspace(d1, d1+Z, N)
+    # Create the density profile
+    frac = np.zeros(N)
+    # 0.999 prevents going outside of the interpolating functions range
+    peak = 0.999
+    sel = np.array(z <= d2) * np.array(z >= d2-2*sigmaIn)
+    frac[sel] = peak*(z[sel]-d2)/(2*sigmaIn) + peak
+    sel = np.array(z > d2) * np.array(z < d3)
+    frac[sel] = peak
+    sel = np.array(z >= d3) * np.array(z <= d3+2*sigmaOut)
+    frac[sel] = peak*(-(z[sel]-d3)/(2*sigmaOut)) + peak
+    return z, frac
+
+
 def intensity_gaussian_ramps(z0, dz, sigmaIn, sigmaOut, ion, N, zf=0):
     """ Creates an intensity profile for a uniform plasma with Gaussian ends.
 

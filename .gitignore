@@ -229,3 +229,4 @@ pip-log.txt
 *.pdf
 *.png
 *.so
+*.eps

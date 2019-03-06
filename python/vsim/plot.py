@@ -19,6 +19,8 @@ from scipy.ndimage.interpolation import zoom
 plt.rcParams['animation.ffmpeg_path'] = '/home/robert/anaconda3/envs/CU-PWFA/bin/ffmpeg'
 import matplotlib.animation as animation
 from scipy import constants
+import scipy.constants as const
+import matplotlib.colors as colors
 
 
 def get_filename(path, simName, name, dump):
@@ -121,15 +123,27 @@ def drive_witness_density(params):
         plasmaZ = pData[:, 0] * 1e3
         plasmaX = pData[:, 1] * 1e6
     else:
-        print('Only 2D simulations are currently supported.')
+        dData2D = dData[:,:,int(dData.shape[2]/2)].reshape((dData.shape[0],dData.shape[1]))
+        driveData = zoom(np.flipud(np.transpose(dData2D)), zf)
+        wData2D = wData[:,:,int(wData.shape[2]/2)].reshape((wData.shape[0],wData.shape[1]))
+        witnessData = zoom(np.flipud(np.transpose(wData2D)), zf)
+        plasmaZ = pData[:, 0] * 1e3
+        plasmaX = pData[:, 1] * 1e6
+        
+        #Now only plot plasma e's within 2um of the center
+        plasmaY = pData[:, 2]
+        ycenter = np.array(np.where(np.abs(plasmaY) < 2e-6)[0])
+        plasmaZ = plasmaZ[ycenter]
+        plasmaX = plasmaX[ycenter]
 
     plt.figure(figsize=(16, 9))
     gs = gridspec.GridSpec(2, 2, width_ratios=[24, 1])
+    
     # Create the two colormaps
     cmapD = plt.cm.get_cmap('bone')
     cmapW = alpha_colormap_cutoff(plt.cm.get_cmap('pink'),
                                   params['alphaCutoff'], False)
-
+        
     # Create the axis grid spaces
     colorAx1 = plt.subplot(gs[0, 1])
     colorAx2 = plt.subplot(gs[1, 1])
@@ -158,6 +172,156 @@ def drive_witness_density(params):
     plt.savefig(path+'DriveWitnessDensity_'+str(ind)+'.png', format='png')
     plt.show()
 
+def single_drive_density(params):
+    """ Makes a plot of the drive beam desnity with electrons.
+
+    Shows the charge density of both the drive and witness beams in different
+    colors. Shows the electrons as small dots to visualize the wake shape.
+
+    Parameters
+    ----------
+    params : dictionary
+        Params should have the following items:
+            drive : string
+                The field name for the drive beam charge density.
+            plasma : string
+                The species name of the plasma electrons.
+            dumpInd : int
+                The dump index to plot the beams at.
+            path : string
+                The path to the VSim output folder.
+            simName : strign
+                The simulation name, the first part of every simulation file.
+            zoom : float
+                Increase in the number of pixels, spline interpolation used.
+            alphaCutoff : float
+                Must be between 0-1, start with 0.05, if you can't see the
+                drive beam, increase
+    """
+    # Grad items we use alot from the params
+    path = params['path']
+    simName = params['simName']
+    ind = params['dumpInd']
+    zf = params['zoom']
+    drive = params['drive']
+    plasma = params['plasma']
+    # First load in all the necessary data
+    dFile = get_filename(path, simName, drive, ind)
+    dData = load.get_field_data(dFile, drive)
+    dAttrs = load.get_field_attrs(dFile, drive)
+
+    pFile = get_filename(path, simName, plasma, ind)
+    pData = load.get_species_data(pFile, plasma)
+    pAttrs = load.get_species_attrs(pFile, plasma)
+    
+    # Up the resolution and convert units
+    if pAttrs['dim'] == 2:
+        driveData = zoom(np.flipud(np.transpose(dData[:, :, 0])), zf)
+        plasmaZ = pData[:, 0] * 1e3
+        plasmaX = pData[:, 1] * 1e6
+    else:
+        dData2D = dData[:,:,int(dData.shape[2]/2)].reshape((dData.shape[0],dData.shape[1]))
+        driveData = zoom(np.flipud(np.transpose(dData2D)), zf)
+        plasmaZ = pData[:, 0] * 1e3
+        plasmaX = pData[:, 1] * 1e6
+        
+        #Now only plot plasma e's within 2um of the center
+        plasmaY = pData[:, 2]
+        ycenter = np.array(np.where(np.abs(plasmaY) < 2e-6)[0])
+        plasmaZ = plasmaZ[ycenter]
+        plasmaX = plasmaX[ycenter]
+
+    plt.figure(figsize=(16, 9))
+    gs = gridspec.GridSpec(2, 2, width_ratios=[24, 1])
+    # Create the two colormaps
+    cmapD = plt.cm.get_cmap('bone')
+
+    # Create the axis grid spaces
+    colorAx1 = plt.subplot(gs[0, 1])
+    # Convert units
+    extent = np.array(dAttrs['bounds'])
+    extent[:2] *= 1e3
+    extent[2:] *= 1e6
+
+    # Create the actual plot
+    plt.subplot(gs[:, 0])
+    plt.imshow(driveData, aspect='auto', extent=extent, cmap=cmapD)
+    cb1 = plt.colorbar(cax=colorAx1)
+    cb1.set_label(r'Drive beam - Charge density ($C/m^3$)')
+    # Plasma electrons
+    plt.plot(plasmaZ, plasmaX, 'bo', markersize=0.25)
+    plt.xlabel(r'z ($mm$)')
+    plt.ylabel(r'x ($\mu m$)')
+    plt.title('Drive and witness beam charge density with electron wake')
+
+    # Save the figure and display it
+    plt.tight_layout()
+    plt.savefig(path+'SingleDriveDensity_'+str(ind)+'.pdf', format='pdf')
+    plt.savefig(path+'SingleDriveDensity_'+str(ind)+'.png', format='png')
+    plt.show()
+
+def drive_witness_density_new(params):
+    e = const.physical_constants['elementary charge'][0]
+
+    path = params['path']
+    simName = params['simName']
+    ind = params['dumpInd']
+    zf = params['zoom']
+    drive = params['drive']
+    plasma = params['plasma']
+    
+    # Load in plasma density
+    rho, rhoAttrs = load.load_field(path, simName, 'rhoPlasma')
+    Nx, Ny, Nz = analyze.get_shape(rho[ind])
+    rhoXY = -np.transpose(rho[ind][:, :, int(Nz+1)/2, 0]/e/1e6)+2 #+2 makes it greater than 0 for log scale
+    #x = np.linspace(0, 250, Nx)
+    #y = np.linspace(0, 250, Ny)
+    
+    #Load in drive beam density
+    rho, rhoAttrs = load.load_field(path, simName, 'rhoDrive')
+    Nx, Ny, Nz = analyze.get_shape(rho[ind])
+    rhoBXY = -np.transpose(rho[ind][:, :, int(Nz+1)/2, 0]/e/1e6)
+    
+    #Load in witness beam density
+    rho, rhoAttrs = load.load_field(path, simName, 'rhoWitness')
+    Nx, Ny, Nz = analyze.get_shape(rho[ind])
+    rhoWXY = -np.transpose(rho[ind][:, :, int(Nz+1)/2, 0]/e/1e6)
+    
+    def alpha_colormap(cmap, cutoff, flip=True):
+        N = cmap.N
+        cmapt = cmap(np.arange(N))
+        alpha = np.ones(N)
+        if flip:
+            temp = alpha[:int(cutoff*N)]
+            M = len(temp)
+            alpha[:int(cutoff*N)] = np.linspace(0, 1, M)
+        else:
+            alpha[int((1-cutoff)*N):] = 0.0
+        cmapt[:, -1] = alpha
+        cmapt = colors.ListedColormap(cmapt)
+        return cmapt
+    
+    # Plot the plasma density
+    fig = plt.figure(figsize=(10, 7.5), dpi=100, frameon=False)
+    ax = plt.Axes(fig, [0., 0., 1., 1.])
+    ax.set_axis_off()
+    fig.add_axes(ax)
+    
+    # Plot the drive beam
+    ax.imshow(rhoBXY, interpolation='gaussian', extent=[-125, 125, -125, 125], cmap='copper')
+    
+    # Plot the witness beam
+    #cmapW = alpha_colormap(plt.cm.get_cmap('nipy_spectral'), 0.1, True)
+    cmapW = alpha_colormap(plt.cm.get_cmap('rainbow'), 0.1, True)
+    ax.imshow(rhoWXY, interpolation='gaussian', extent=[-125, 125, -125, 125], cmap=cmapW)
+    
+    # Plot the plasma density
+    cmapP = alpha_colormap(plt.cm.get_cmap('inferno'), 0.2, True)
+    ax.imshow(rhoXY, interpolation='gaussian', aspect='auto', extent=[-125, 125, -125, 125],
+               norm=colors.LogNorm(vmin=1e16, vmax=2e18), cmap=cmapP)
+    
+    plt.savefig(path+'Title_Wake.png')
+    plt.show()
 
 def drive_witness_animation(params):
     """ Creates an animation of the electron wake and beam density evolution.

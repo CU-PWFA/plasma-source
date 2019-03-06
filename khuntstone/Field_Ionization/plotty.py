@@ -3,7 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 global plasmaDict
-plt.style.use('Presentation')
+#plt.style.use('Presentation')
+#plt.style.use('fivethirtyeight')
 # Dictionary of plasmas and their attributes 
 plasmaDict = {'Ar+' : {'Vi' : 15.75962, 'Name' :  'Ar$^{+}$', 'Z' : 1},
 		   'Ar2+': {'Vi' : 27.62967, 'Name' : 'Ar$^{2+}$', 'Z' : 2},
@@ -16,7 +17,7 @@ plasmaDict = {'Ar+' : {'Vi' : 15.75962, 'Name' :  'Ar$^{+}$', 'Z' : 1},
 
 def plot_plasma_frac(plasma_frac, pos, beamParams, gasName, ind):
 	beta_s = beamParams['beta_s'][ind]
-	name = plasmaDict['gasName']['Name']
+	name = plasmaDict[gasName]['Name']
 	title = 'Ionization Fraction of ' + name + ' $\\beta$ = %.2f' % beta_s
 	plt.figure(figsize = (5,3), dpi = 150)
 	plt.plot(pos['r'][ind]*1e6, plasma_frac[ind])
@@ -145,3 +146,4 @@ def plot_2D_plasma(W, pos, beamParams, gasName, ind = 0, \
 	cbar = plt.colorbar(mappable = img, ax = ax1)
 	cbar.ax.tick_params()
 	plt.show()
+	return n_rz

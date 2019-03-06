@@ -195,7 +195,7 @@ def gaussian_frac(EI, E, tau, Z, l=0, m=0):
 
 
 def intensity_func(EI, E, t, f, Z, l=0, m=0, envelope=False):
-    """ Creates an interpolating fuction from ionization fraction to field.
+    """ Creates an interpolating function from ionization fraction to field.
 
     Creates an inperpolating function that takes an ionization fraction and
     returns the E necessary to ionize that fraction of the gas. The user has

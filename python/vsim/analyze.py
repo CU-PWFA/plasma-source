@@ -8,7 +8,7 @@ Created on Tue Aug  8 16:05:19 2017
 
 import scipy.constants as const
 import numpy as np
-
+import sys
 
 def get_ptc_gamma(data):
     """ Calculates the relativistic factor for each particle in the beam.
@@ -24,8 +24,9 @@ def get_ptc_gamma(data):
     gamma : array-like
         The gamma of each particle in the beam.
     """
-    ux = get_ux(data)
-    uy = get_uy(data)
+    dim = int(data.attrs['numSpatialDims'])
+    ux = get_ux(data,dim)
+    uy = get_uy(data,dim)
     u2 = ux**2 + uy**2
     gamma = 1/np.sqrt(1 - u2/(const.c**2 + u2))
     return gamma
@@ -50,6 +51,27 @@ def get_gamma(data):
     gammaAvg = np.average(gamma, weights=weights)
     return gammaAvg
 
+def get_gamma_rms(data):
+    """ Calculates the relativistic factor from the data object for the beam.
+
+    Parameters
+    ----------
+    data : HDF5 dataset
+        The data set for the beam of interest, use load.get_species_data to
+        load the dataset object from a file.
+
+    Returns
+    -------
+    gammaAvg : double
+        The average gamma of all the particles in the beam.
+    """
+    weights = get_weights(data)
+    gamma = get_ptc_gamma(data)
+    
+    average = np.average(gamma, weights=weights)
+    variance = np.average((gamma-average)**2, weights=weights)
+    
+    return np.sqrt(variance)/average*100
 
 def get_ptc_energy(data, mass):
     """ Calculates the energy of each particle from the data object for a beam.
@@ -108,10 +130,12 @@ def get_emittance(data):
     -------
     e : double
         The emittance of the beam in mm*mrad.
-    """
-    y = get_y(data)
-    ux = get_ux(data)
-    uy = get_uy(data)
+    """      
+    dim = int(data.attrs['numSpatialDims'])
+    
+    y = get_y(data,dim)
+    ux = get_ux(data,dim)
+    uy = get_uy(data,dim)
     weights = get_weights(data)
     yp = uy / ux
     dy = y - np.average(y, weights=weights)
@@ -164,6 +188,97 @@ def get_normemittance(data):
     e = get_emittance(data)
     gamma = get_gamma(data)
     return e * gamma
+
+
+def find_length(rhoX, x):
+    """ Finds the start and end of the wake, the difference is the length.
+    
+    Parameters
+    ----------
+    rhoX : array-like
+        A 1D array of the plasma density along axis.
+    x : array-like
+        X positions for each of the elements in rhoX, result will share units.
+        
+    Returns
+    -------
+    start : double
+        The start of the wake.
+    end : double 
+        The end of the wake.
+    """
+    Nx = len(x)
+    eps = 1e6
+    for i in range(Nx-1, -1, -1):
+        if rhoX[i] >= eps and rhoX[i-1] < eps:
+            start = x[i-1]
+        if rhoX[i] <= eps and rhoX[i-1] > eps:
+            end = x[i]
+            return start, end
+   
+     
+def find_width(rhoY, y):
+    """ Finds the bottom and top of the wake at a given x position.
+    
+    Parameters
+    ----------
+    rhoY : array-like
+        A 1D array of the plasma density transverse to the propagation.
+    y : array-like
+        y positions for each of the elements in rhoX, result will share units.
+        
+    Returns
+    -------
+    start : double
+        The start of the wake.
+    end : double 
+        The end of the wake.
+    """
+    Ny = len(y)
+    eps = 1e6
+    start = None
+    for i in range(int(Ny/4), int(3*Ny/4)):
+        if rhoY[i] >= eps and rhoY[i+1] < eps:
+            start = y[i+1]
+        if rhoY[i] <= eps and rhoY[i+1] > eps:
+            end = y[i]
+            if start is None:
+                return None, None
+            else:
+                return start, end
+    return None, None
+
+
+def find_wake_width(rhoXY, y):
+    """ Finds the maximum width of the wake for all x positions.
+    
+    Parameters
+    ----------
+    rhoXY : array-like
+        A 2D array of the plasma density in a transverse slice.
+    y : array-like
+        y positions for each of the elements in rhoX, result will share units.
+        
+    Returns
+    -------
+    start : double
+        The start of the wake.
+    end : double 
+        The end of the wake.
+    """
+    Nx, Ny = np.shape(rhoXY)
+    beg = 0
+    end = Nx
+    widthArr = np.zeros(end-beg, dtype='double')
+    for j in range(beg, end):
+        rhoYj = rhoXY[j, :]
+        width = find_width(rhoYj, y)
+        if width[0] is not None:
+            widthArr[j-beg] = width[1]-width[0]
+        else:
+            widthArr[j-beg] = 0
+    rhoY = rhoXY[np.argmax(widthArr)+beg, :]
+    return find_width(rhoY, y)
 
 
 def get_shape(data):
@@ -240,28 +355,62 @@ def get_density_temp(data, mass, attrs, mesh):
     return den ,temp
 
 
-def get_x(data):
+def get_x(data, dim=2):
     """ Get the array of x positions from the data object.
     """
-    return data[:, 0]
+    if dim == 2:
+        ind = 0
+    elif dim == 3:
+        ind = 0
+    return data[:, ind]
 
 
-def get_y(data):
+def get_y(data, dim=2):
     """ Get the array of y positions from the data object.
     """
-    return data[:, 1]
+    if dim == 2:
+        ind = 1
+    elif dim == 3:
+        ind = 1
+    return data[:, ind]
 
+def get_z(data, dim=2):
+    """ Get the array of y positions from the data object.
+    """
+    if dim == 2:
+        print("z Coord. not in 2D!")
+        sys.exit()
+    elif dim == 3:
+        ind = 2
+    return data[:, ind]
 
-def get_ux(data):
+def get_ux(data, dim=2):
     """ Get the array of x velocities from the data object.
     """
-    return data[:, 2]
+    if dim == 2:
+        ind = 2
+    elif dim == 3:
+        ind = 3
+    return data[:, ind]
 
 
-def get_uy(data):
+def get_uy(data, dim=2):
     """ Get the array of y velocities from the data object.
     """
-    return data[:, 3]
+    if dim == 2:
+        ind = 3
+    elif dim == 3:
+        ind = 4
+    return data[:, ind]
+
+def get_uz(data, dim=3):
+    """ Get the array of y velocities from the data object.
+    """
+    if dim == 2:
+        ind = 4
+    elif dim == 3:
+        ind = 5
+    return data[:, ind]
 
 
 def get_weights(data):

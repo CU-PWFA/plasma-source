@@ -196,7 +196,7 @@ class Plasma(element.Element):
         else:
             for i in range(0, Nz-1):
                 ne[i, :] = self.load_plasma_density(i)[0]
-        plt.figure(figsize=(10, 6))
+        plt.figure(figsize=(7, 4), dpi=150)
         im = self.plot_long_density(ne, lim)
         plt.show(im)
     
