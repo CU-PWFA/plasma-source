@@ -16,15 +16,32 @@ conda create --name CU-PWFA
 ```
 This will create a virtual enviornment called "CU-PWFA" with all the modules specified in the requirements.txt file.
 To activate the enviornment:
+```
+conda activate CU-PWFA
+```
 
-(Mac, Linux):
+### Update the virtual enviornment
+
+The point of the enviornment is that it contains all the packages and libraries needed to run the code in the repository. When
+installing the plasma source code on a new computer the required packages need to be downloaded by updating the enviornment.
+Whenever you update your local repository using the pull command, check to see if the requirement.txt file changed. If it changed
+you need to update your enviornment using
 ```
-source activate CU-PWFA
+conda env update -f requirements.txt
 ```
-(Windows)
+
+When you install a new package into your enviornment you need to add it to the master package list. Then everyone
+else can use the master list to update their enviornment by installing the package.
+
+To save your current enviornment to file, first activate the enviornment:
 ```
-activate CU-PWFA
+conda activate CU-PWFA
 ```
+Next, use the command:
+```
+conda env export > requirements.txt
+```
+
 
 ### Setup Spyder and IPython
 
@@ -38,25 +55,6 @@ python -m ipykernel install --user --name=CU-PWFA
 ```
 Now when you create an Jupyter-Notebook it should give you the option to use the CU-PWFA kernel.
 
-### Update the virtual enviornment
-
-When you install a new package into your enviornment you need to add it to the master package list. Then everyone
-else can use the master list to update their enviornment by installing the package.
-
-To save your current enviornment to file, first activate the enviornment:
-```
-source activate CU-PWFA
-```
-Next, use the command:
-```
-conda env export > requirements.txt
-```
-
-Whenever you update your local repository using the pull command, check to see if the requirement.txt file changed. If it changed
-you need to update your enviornment using
-```
-conda env update -f requirements.txt
-```
 
 ### VSim enviornment
 
