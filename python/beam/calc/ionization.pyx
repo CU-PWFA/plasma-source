@@ -12,6 +12,7 @@ Created on Mon Sep 25 16:45:42 2017
 import numpy as np
 cimport numpy as np
 from cython.parallel import prange
+from libc.stdlib cimport abs
 
 # Load necessary C functions
 cdef extern from "complex.h" nogil:
