@@ -228,6 +228,116 @@ class ElectronBeam(beam.Beam):
         prop['x_phase'] = np.arctan2(2*prop['x_alpha'], 
                           prop['x_gamma']-prop['x_beta'])/2
         return prop
+    
+    def get_CS_at(self, ind, weights=None):
+        """ Find the CS parameters and beam parameters at a given index.
+        
+        Returns
+        -------
+        beam : dictionary
+            eps_x, eps_y : double
+                Geometric emittance in x and y.
+            beta_x, beta_y : double
+                Beta function in x and y.
+            alpha_x, alpha_y : double
+                Alpha function in x and y.
+            gamma_x, gamma_y : double
+                Gamma function in x and y.
+            gamma_b : double
+                Relativistic gamma of the beam.
+            cen_x, cen_y : double
+                The transverse beam center in x and y. 
+        """
+        beam = {}
+        
+        ptcls = self.load_ptcls(ind)[0]
+        x = self.get_x(ptcls)
+        xp = self.get_xp(ptcls)
+        y = self.get_y(ptcls)
+        yp = self.get_yp(ptcls)
+        gamma = np.average(self.get_gamma(ptcls), weights=weights)
+        # Calculate the differences from the average
+        cen_x = np.average(x, weights=weights)
+        dx = x - cen_x
+        dxp = xp - np.average(xp, weights=weights)
+        cen_y = np.average(y, weights=weights)
+        dy = y - cen_y
+        dyp = yp - np.average(yp, weights=weights)
+        # Calculate the RMS sizes and the correlation
+        sigmax2 = np.average(dx**2, weights=weights)
+        sigmaxp2 = np.average(dxp**2, weights=weights)
+        sigmaxxp = np.average(dx*dxp, weights=weights)
+        sigmay2 = np.average(dy**2, weights=weights)
+        sigmayp2 = np.average(dyp**2, weights=weights)
+        sigmayyp = np.average(dy*dyp, weights=weights)
+        # Calculate the emittance
+        ex = np.sqrt(sigmax2*sigmaxp2 - sigmaxxp**2)
+        ey = np.sqrt(sigmay2*sigmayp2 - sigmayyp**2)
+        beam['eps_x']   = ex
+        beam['eps_y']   = ey
+        beam['beta_x']  = sigmax2/ex
+        beam['beta_y']  = sigmay2/ey
+        beam['alpha_x'] = sigmaxxp/ex
+        beam['alpha_y'] = sigmayyp/ey
+        beam['gamma_x'] = sigmaxp2/ex
+        beam['gamma_y'] = sigmayp2/ey
+        beam['gamma_b'] = gamma
+        beam['cen_x']   = cen_x
+        beam['cen_y']   = cen_y
+        return beam
+    
+    def get_CS(self, weights=None):
+        """ Return arrays of the CS parameters in each direction.
+        
+        Returns
+        -------
+        beam : dictionary
+            eps_x, eps_y : array of double
+                Geometric emittance in x and y.
+            beta_x, beta_y : array of double
+                Beta function in x and y.
+            alpha_x, alpha_y : array of double
+                Alpha function in x and y.
+            gamma_x, gamma_y : array of double
+                Gamma function in x and y.
+            gamma_b : array of double
+                Relativistic gamma of the beam.
+            cen_x, cen_y : double
+                The transverse beam center in x and y. 
+        """
+        z = self.z
+        N = len(z)
+        beam = {}
+        keys = ['eps_x', 'eps_y', 'beta_x', 'beta_y', 'alpha_x', 'alpha_y',
+                'gamma_x', 'gamma_y', 'gamma_b', 'cen_x', 'cen_y']
+        for key in keys:
+            beam[key] = np.zeros(N, dtype='double')
+        for i in range(N):
+            step = self.get_CS_at(i, weights)
+            for key, item in step.items():
+                beam[key][i] = item
+        return beam
+    
+    def get_ptcl(self, ind):
+        """ Load the 6D phase space for a single particle in the beam.
+        
+        Parameters
+        ----------
+        ind : int
+            The index of the beam particle.
+        
+        Returns
+        -------
+        ptcl : array of double
+            An array with 6 rows describing the particles full phase space.
+        """
+        z = self.z
+        N = len(z)
+        ptcl = np.zeros((6, N), dtype='double')
+        for i in range(N):
+            step = self.load_ptcls(i)[0][ind, :]
+            ptcl[:, i] = step[:6]
+        return ptcl
         
     # Visualization functions
     #--------------------------------------------------------------------------
@@ -380,6 +490,7 @@ class GaussianElectronBeam(ElectronBeam):
     """
     
     def __init__(self, params):
+        self.keys = self.keys.copy()
         self.keys.extend(
                 ['gamma',
                  'emittance',
@@ -390,15 +501,24 @@ class GaussianElectronBeam(ElectronBeam):
                  'sigmaz',
                  'dE'])
         super().__init__(params)
-    
-    def initialize_particles(self):
-        """ Initialize the particles in a 6D distribution. """
+        
+    def action_angle_distribution(self):
+        """ Initialize particles in action-angle coordinates. 
+        
+        Returns
+        -------
+        ux : array of double
+            Particle positions in ux.
+        vx : array of double
+            Particle positions in vx.
+        uy : array of double
+            Particle positions in uy.
+        vy : array of double
+            Particle positions in vy.
+        """
         N = self.N
         gamma = self.gamma
         emittance = self.emittance
-        betax = self.betax
-        betay = self.betay
-        ptcls = np.zeros((N, 6), dtype='double')
         # Calculate arrays of random numbers
         x1r = np.random.uniform(0, 1, N)
         x2r = np.random.uniform(0, 1, N)
@@ -413,14 +533,36 @@ class GaussianElectronBeam(ElectronBeam):
         vx = -np.sqrt(2*Jx)*np.sin(phix)
         uy = np.sqrt(2*Jy)*np.cos(phiy)
         vy = -np.sqrt(2*Jy)*np.sin(phiy)
+        return ux, vx, uy, vy
+    
+    def initialize_particles(self, offset_x=0.0, offset_y=0.0):
+        """ Initialize the particles in a 6D distribution. """
+        N = self.N
+        gamma = self.gamma
+        betax = self.betax
+        betay = self.betay
+        ptcls = np.zeros((N, 6), dtype='double')
+        ux, vx, uy, vy = self.action_angle_distribution()
         # Calculate the coordinates
-        ptcls[:, 0] = ux*np.sqrt(betax)
+        ptcls[:, 0] = ux*np.sqrt(betax) + offset_x
         ptcls[:, 1] = (vx-self.alphax*ux) / np.sqrt(betax)
-        ptcls[:, 2] = uy*np.sqrt(betay)
+        ptcls[:, 2] = uy*np.sqrt(betay) + offset_y
         ptcls[:, 3] = (vy-self.alphay*uy) / np.sqrt(betay)
         ptcls[:, 4] = np.random.normal(0.0, self.sigmaz, N)
         ptcls[:, 5] = gamma * (1 + self.dE*np.random.uniform(-1, 1, N))
         super().initialize_particles(ptcls) 
+
+class OffsetGaussianElectronBeam(GaussianElectronBeam):
+    def __init__(self, params):
+        self.keys = self.keys.copy()
+        self.keys.extend(
+                ['offset_x',
+                 'offset_y'])
+        super().__init__(params)
+        
+    def initialize_particles(self):
+        """ Initialize the particles in a 6D distribution. """
+        super().initialize_particles(self.offset_x, self.offset_y) 
 
 class VorpalElectronBeam(ElectronBeam):
     """ A electron beam imported from VSim, includes weights. 
@@ -434,6 +576,7 @@ class VorpalElectronBeam(ElectronBeam):
     """
     
     def __init__(self, params):
+        self.keys = self.keys.copy()
         self.keys.extend([
                 'filename',
                 'thresh',
