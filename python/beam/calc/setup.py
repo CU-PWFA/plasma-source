@@ -38,11 +38,10 @@ else:
                   sources=['beam/calc/*.pyx'], #Compile entire module
                   #sources=['beam/calc/ionization.pyx'],
                   #sources=['beam/calc/laser.pyx'], #Compile specific files
-                  libraries=["m", "fftw3"],
+                  libraries=["m"],
                   include_dirs=[numpy.get_include(), 
                                 os.path.join(venv.sys.base_prefix, 'include')],
-                  extra_compile_args = ['-march=native', '-fopenmp', '-O3',
-                                        '-lfftw3'],
+                  extra_compile_args = ['-march=native', '-fopenmp', '-O3'],
                   extra_link_args=['-fopenmp'],
                   define_macros=[('CYTHON_TRACE', '1')]
         )
