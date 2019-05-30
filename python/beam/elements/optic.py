@@ -188,7 +188,7 @@ class SphericalLens(Phase):
                 ['f'])
         super().__init__(params)
     
-    def initialize_field(self):
+    def initialize_phase(self):
         phi = -self.k * (self.x[:, None]**2+self.y[None, :]**2) / (2*self.f)
         super().initialize_phase(phi)
         

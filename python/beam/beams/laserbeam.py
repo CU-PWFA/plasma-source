@@ -248,10 +248,11 @@ class GaussianLaser(Laser):
     """
     
     def __init__(self, params):
-        self.keys = self.keys.extend(
+        self.keys = self.keys.copy()
+        self.keys.extend(
                 ['E0',
                  'waist',
-                 'z0'])[:]
+                 'z0'])
         super().__init__(params)
     
     def initialize_field(self):
@@ -301,12 +302,13 @@ class GeneralGaussianLaser(Laser):
     """
     
     def __init__(self, params):
-        self.keys = self.keys.extend(
+        self.keys = self.keys.copy()
+        self.keys.extend(
                 ['E0',
                  'waist',
                  'z0',
                  'theta',
-                 'dx'])[:]
+                 'dx'])
         super().__init__(params)
     
     def initialize_field(self):
@@ -352,10 +354,11 @@ class SuperGaussianLaser(Laser):
     """
     
     def __init__(self, params):
-        self.keys = self.keys.extend(
+        self.keys = self.keys.copy()
+        self.keys.extend(
                 ['E0',
                  'waist',
-                 'order'])[:]
+                 'order'])
         super().__init__(params)
     
     def initialize_field(self):
@@ -390,12 +393,13 @@ class GeneralSuperGaussianLaser(Laser):
     """
     
     def __init__(self, params):
-        self.keys = self.keys.extend(
+        self.keys = self.keys.copy()
+        self.keys.extend(
                 ['E0',
                  'waist',
                  'order',
                  'theta',
-                 'dx'])[:]
+                 'dx'])
         super().__init__(params)
     
     def initialize_field(self):
@@ -434,10 +438,11 @@ class RadialLaser(Laser):
     """
     
     def __init__(self, params):
-        self.keys = self.keys.extend(
+        self.keys = self.keys.copy()
+        self.keys.extend(
                 ['order',
                  'r',
-                 'E'])[:]
+                 'E'])
         super().__init__(params)
     
     def initialize_field(self):
