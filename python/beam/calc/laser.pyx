@@ -17,8 +17,8 @@ from cython.parallel import prange
 
 # Load necessary C functions
 cdef extern from "complex.h" nogil:
-    double complex cexp(double complex)
-    double complex csqrt(double complex)
+    double complex exp(double complex)
+    double complex sqrt(double complex)
 
 
 def fourier_prop(double complex[:, :] E, double[:] x, double[:] y, double[:] z,
@@ -80,7 +80,7 @@ def fourier_prop(double complex[:, :] E, double[:] x, double[:] y, double[:] z,
         with nogil:
             for j in prange(Nx):
                 for k in range(Ny):
-                    e[j, k] = eb[j, k] * cexp(ikz[j, k]*z[i])
+                    e[j, k] = eb[j, k] * exp(ikz[j, k]*z[i])
         e = ifft(e)
         save(e, z[i]+z0)
     return e
@@ -115,7 +115,7 @@ def beam_prop(double complex[:, :] E, double[:] x, double[:] y, double[:] z,
         with nogil:
             for j in prange(Nx):
                 for k in range(Ny):
-                    E[j, k] *= cexp(arg*nih[j, k])
+                    E[j, k] *= exp(arg*nih[j, k])
         save(E, z[i]+z0)
         dz = z[i+1] - z[i]
     return E
@@ -155,7 +155,7 @@ cpdef double complex[:, :] fourier_step(double complex[:, :] E,
     with nogil:
         for i in prange(Nx):
             for j in range(Ny):
-                e[i, j] *= cexp(ikz[i, j]*dz)
+                e[i, j] *= exp(ikz[i, j]*dz)
     e = ifft(e)
     return e
 
@@ -195,7 +195,7 @@ cpdef double complex[:, :] ikz_RS(double[:] fx, double[:] fy, double lam,
             fy2[i] = fy[i] * fy[i]
         for i in prange(Nx):
             for j in range(Ny):
-                ikz[i, j] = pre * csqrt(f2 - fx2[i] - fy2[j])
+                ikz[i, j] = pre * sqrt(f2 - fx2[i] - fy2[j])
     return ikz
 
 
@@ -240,9 +240,9 @@ cpdef double complex[:] fresnel_axis(double complex[:] E, double[:] r,
             raise ValueError('z must not equal 0, abs(z) should be several \
                              times larger than the maximum value of r')
         else:
-            pre = k * cexp(1j*k*z[i]) / (1j*z[i])
+            pre = k * exp(1j*k*z[i]) / (1j*z[i])
             for j in range(Nr):
-                arg[j] = E[j] * cexp(1j*k*r[j]*r[j]/(2*z[i])) * r[j]
+                arg[j] = E[j] * exp(1j*k*r[j]*r[j]/(2*z[i])) * r[j]
             e[i] = pre * integrate.simps(arg, r)
     return e
             
