@@ -15,6 +15,7 @@ sys.path.insert(0, "../")
 from modules import ThreeDimensionAnalysis as ThrDim
 from modules import TPLFocalLength as Foc
 import numpy as np
+import matplotlib.pyplot as plt
 
 #'cuts' will plot density along axis and small variations
 #'max_corrector' will shift the beam axis to the maximum density
@@ -27,19 +28,24 @@ calc_focal = 1
 #'getfit' will fit the y and z axes to tanh profiles
 #'fityx' uses getfit to add a Gaussian fit to the x axis
 #'infinite_approx' compares getfit with simply assuming an infinite slab
+focalfit = 1
 getfit = 1
 fityx = 0
 infinite_approx = 0
 
 #size of window in micrometers
 resize=1
-y_window = 100
-z_window = 800
+y_window = 1800
+z_window = 200
+
+n0_lens = 5e16
 
 #Locate the desired data by specifying the folder and directory within
 
 #folder = '/home/chris/Desktop/FourierPlots/ArBackground/'
-folder = '/home/chris/Desktop/FourierPlots/ArVarySpot_Calc/'
+folder = '/home/chris/Desktop/FourierPlots/ArGasJet_442um_5e16cm-3_new/'
+#folder = '/home/chris/Desktop/FourierPlots/H_597um_1e12cm-3/'
+#folder = '/home/chris/Desktop/FourierPlots/H_996um_5e16cm-3/'
 
 directory = 'case_1/'
 #directory = 'Ar1_Big/'
@@ -110,32 +116,54 @@ if cuts == 1:
     ThrDim.VarianceCut(den_plane_zx,z,x_off,3,1,x_step,label,True)
     
     den_plane_yz=den[round(len(x)/2)+x_off,:,:]
-    label=['Density along beam axis (Vary Jet Distance)',
-           'Radius from axis (microns)',
-           'ni (e17 cm^-3)',
-           'Offset in z(microns)']
-    ThrDim.VarianceCut(den_plane_yz,y,z_off,5,10,z_step,label)
-    ThrDim.VarianceCut(den_plane_yz,y,z_off,5,-10,z_step,label)
+    #label=['Density along beam axis (Vary Jet Distance)',
+    #       'Radius from axis (microns)',
+    #       'ni (e17 cm^-3)',
+    #       'Offset in z(microns)']
+    #ThrDim.VarianceCut(den_plane_yz,y,z_off,5,2,z_step,label)
+    #ThrDim.VarianceCut(den_plane_yz,y,z_off,5,-2,z_step,label)
     
     label=['Density along beam axis (Vary Jet Distance)',
            'Radius from axis (microns)',
            'ni (e17 cm^-3)',
            'Offset in +/- z(microns)']
-    ThrDim.VarianceCut(den_plane_yz,y,z_off,10,5,z_step,label,True)
+    ThrDim.VarianceCut(den_plane_yz,y,z_off,5,1,z_step,label,True)
     
     den_plane_yx=np.transpose(den[:,:,round(len(z)/2)+z_off])
+    """#For the plus and minus individually
     label=['Density along beam axis (Vary Laser Distance)',
            'Radius from axis (microns)',
            'ni (e17 cm^-3)',
            'Offset in x(microns)']
     ThrDim.VarianceCut(den_plane_yx,y,x_off,5,2,x_step,label)
     ThrDim.VarianceCut(den_plane_yx,y,x_off,5,-2,x_step,label)
+    """
     
     label=['Density along beam axis (Vary Laser Distance)',
            'Radius from axis (microns)',
            'ni (e17 cm^-3)',
            'Offset in +/- x(microns)']
     ThrDim.VarianceCut(den_plane_yx,y,x_off,4,1,x_step,label,True)
+
+
+if focalfit == 1:
+    den_vs_y=den[round(len(x)/2)+x_off,:,round(len(z)/2)]
+    
+    plt.plot(y, den_vs_y)
+    plt.title("Density along beam axis")
+    plt.xlabel(r'$\mathrm{Beam \ Axis \ [\mu m]}$')
+    plt.ylabel(r'$\mathrm{Density \ [10^{17}cm^{-3}]}$')
+    plt.grid(); plt.show()
+    
+    focal = Foc.Calc_Focus(den_vs_y,y)
+    thick = Foc.Calc_Square_Lens(n0_lens, focal, Foc.gam_def)
+    print(thick,"um equivalent thickness")
+    
+    for plus in range(5):
+        den_vs_y = den[round(len(x)/2)+x_off,:,round(len(z)/2) + plus]
+        focal = Foc.Calc_Focus(den_vs_y,y)
+        thick = Foc.Calc_Square_Lens(n0_lens, focal, Foc.gam_def)
+        print(thick,"um equivalent thickness at z= ", plus*z_step)
     
 #Fit the data to tanh in y, an elliptical tanh in yz, and Gaussian in x
 if getfit == 1:
@@ -150,6 +178,7 @@ if getfit == 1:
     #Calculate our guess by roughly estimating the length of the narrow waist
     dd = list(den_vs_y)
     Ltop = np.abs(y[dd.index(next(d for d in dd if d > 0))])
+    print(Ltop)
     guess = [Ltop, Ltop/6., max(den_vs_y)]
     
     #Get the tanh paramters for the y axis by fitting den_vs_y
@@ -157,7 +186,7 @@ if getfit == 1:
     
     #Get the tanh parameters for the z axis by fitting den_vs_z
     den_vs_z=den[round(len(x)/2)+x_off,round(len(y)/2),:]
-    fitz = ThrDim.FitDataDoubleTanh(den_vs_z,z,[guess[0]*10.0,guess[1]*10.,guess[2]],"Density vs z")
+    fitz = ThrDim.FitDataDoubleTanh(den_vs_z,z,[guess[0]/10.0,guess[1]*10.,guess[2]],"Density vs z")
     
     #Assume an elliptical tanh, plot the simulated and approximate yz planes
     # and take variance cuts through the 2D plane of their differences
@@ -165,10 +194,10 @@ if getfit == 1:
     #p1 = ThrDim.Fit2DimTanh(den_plane_yz,y,z,[fity[0],fity[1],fity[2],fity[0]/fitz[0]])
     difyz = ThrDim.Plot2DimDataTanh(den_plane_yz,y,z,fity,fitz,
                                     '(microns)','Plasma Density','e17(cm^-3)')
-    ThrDim.VarianceCut(np.transpose(difyz),y,0,6,5,z[1]-z[0],
+    ThrDim.VarianceCut(np.transpose(difyz),y,0,5,5,z[1]-z[0],
                 ['Plasma density difference along beam','Distance from axis (microns)',
                  'Density Difference e17(cm^-3)','Offset in z(microns)'],True)
-
+        
     #Fit the x axis to a Gaussian and investigate the differences if we
     # multiply the tanh of the y axis to the Gaussian of the x axis
     if fityx == 1:

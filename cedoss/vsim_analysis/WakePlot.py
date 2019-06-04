@@ -20,10 +20,10 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from scipy.constants import physical_constants
 
-path = '/home/chris/Desktop/emittance_preservation/simulations/ThinPlasmaLens50um/'
-simName = 'ThinPlasmaLens2D'
+path = '/home/chris/Desktop/CoriRun1/'
+simName = 'ThinPlasmaLens3DGaussSlab'
 species = 'electrons'
-dump = 1
+dump = 4
 fileName = plot.get_filename(path, simName, species, dump)
 mass = physical_constants['electron mass energy equivalent in MeV'][0]*1e6 # in eV
 kB = physical_constants['Boltzmann constant in eV/K'][0]

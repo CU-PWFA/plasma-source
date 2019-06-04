@@ -275,10 +275,10 @@ def Prop_EPhase(q_y, q_z, offset, lmba, E0, w0):
     Rz=Prop_RadiusList(q_z)
     
     xrange=Prop_GetRange(q_y)
-    waist=wy.index(min(wy))
+    waist=wz.index(min(wz))
     plane=waist-offset
     xi=xrange[plane]
-    
+    print(xi)
     zRy=Gauss_zR(min(wy),lmba)
     zRz=Gauss_zR(min(wz),lmba)
     

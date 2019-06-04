@@ -24,31 +24,31 @@ from modules import ThreeDimensionAnalysis as ThrDim
 directory = '/home/chris/Desktop/CSVFiles/'
 #filename = '3DLES_Wide_Axial.csv'
 #filename = 'p2g8_box0.csv'
-filename = 'ArBox_Big0.csv'
+filename = 'WedgeRAS_R2_3DLowDen0.csv'
 path = directory + filename
 
-save_data = 1
+save_data = 0
 
-rx=3e2
-ry=15e2
-rz=1.5e4
+rx=60e2
+ry=24e2
+rz=8e4
 
 min_x = -rx/2; min_y = -ry/2; min_z = -rz/2
 max_x =  rx/2; max_y =  ry/2; max_z =  rz/2
 
-reducer = 0
+reducer = 1
 nx = 2**(9-reducer)
 ny = 2**(9-reducer)
 nz = 2**(8-reducer)
 
-bgr = 1e16 / 1e17
+bgr = 1e13 / 1e17
 
 grid_x, grid_y, grid_z = np.mgrid[min_x:max_x:nx*1j, min_y:max_y:ny*1j, min_z:max_z:nz*1j]
 
 variable = 'Density'
-xaxis = 'Points:2'
+xaxis = 'Points:0'
 yaxis = 'Points:1'
-zaxis = 'Points:0'
+zaxis = 'Points:2'
 
 arr=[]
 x=[]; y=[]; z=[]
@@ -71,7 +71,7 @@ grid_z = griddata(points, values, (grid_x, grid_y, grid_z), method='linear', fil
 
 if save_data == 1:
     sfolder = '/home/chris/Desktop/FourierPlots/ArJets/'
-    sdirectory = 'Ar1_Big/'
+    sdirectory = 'WedgeRAS_R2/'
     spath = sfolder + sdirectory
     if not os.path.exists(spath):
         os.makedirs(spath)

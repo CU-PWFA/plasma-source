@@ -39,12 +39,12 @@ for i in range(len(kb_arr)):
         bmag_norm[i*jlen+j] = bmag
 
 plt.scatter(norm_arr, bmag_norm, s=1)
-plt.plot([0,150],[1.01,1.01],ls='--' , color='orange')
+plt.plot([0,200],[1.01,1.01],ls='--' , color='orange')
 plt.title('B-mag vs Normalized ' + r'$\beta^*$')
 plt.ylabel("B-mag")
 plt.xlabel(r'$\widetilde{\beta^*}$')
 plt.ylim(0.98,1.1)
-plt.xlim(0, 150)
+plt.xlim(0, 200)
 plt.grid(); plt.show()
 tol_arr = np.zeros(count)
 count = 0
@@ -56,3 +56,18 @@ for k in range(len(bmag_norm)):
 print("Tolerances for B-mag < 1.01:")
 print(" Min: ", min(tol_arr))
 print(" Max: ", max(tol_arr))
+
+font = {'family' : 'DejaVu Sans',
+        'weight' : 'normal',
+        'size'   : 16}
+
+plt.rc('font', **font)
+
+plt.scatter(norm_arr, bmag_norm, s=1)
+plt.plot([0,200],[1.01,1.01],ls='--' , color='orange')
+plt.ylabel(r'$B_m$')
+plt.xlabel(r'$\widetilde{\beta}_v^*$')
+plt.ylim(0.99,1.1)
+plt.xlim(0, 200)
+plt.grid()
+plt.savefig("emp_tolerance.eps", bbox_inches='tight', format='eps')

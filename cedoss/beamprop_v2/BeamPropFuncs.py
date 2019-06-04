@@ -109,7 +109,7 @@ def dgammadz_none(ne):
     return 0.0
 
 def ReturnDefaultPlasmaParams(path, plasma_start = def_startloc,
-                              nset = def_nset, sigma_hw = def_sigma_hw, scaledown = 10):
+                              nset = def_nset, sigma_hw = def_sigma_hw, scaledown = 1):
     Nx = 1;  Ny = 1
     Z = (2*plasma_start + def_lenflat)*1e6
     Nz = int((Z/scaledown)+1)
@@ -193,6 +193,22 @@ def GaussianRampPlasma_ThinPlasmaLens(plasmaParams, tpl_offset, tpl_n, tpl_l, de
     if debug == 1: argon.plot_long_density_center();
     return argon
 
+#### FOR A STUDY ON EMPIRICAL MATCHING, DIFFERENT RAMPS ####
+
+def GaussianExitRamp(plasmaParams, sig_hw, debug = 0):
+    Nz = plasmaParams['Nz']
+    z_arr = np.linspace(0, plasmaParams['Z'], Nz)
+    nez = np.ones(Nz, dtype='double')*plasmaParams['n0']
+    sig = sig_hw/np.sqrt(2*np.log(2))
+    nez = nez*np.exp(-1*np.square(z_arr)/(2*np.square(sig)))
+    
+    argon = plasma.Plasma(plasmaParams)
+    n = plasmaParams['n0']*np.ones(Nz, dtype='double')
+    argon.initialize_plasma(n, nez)
+    
+    if debug == 1: argon.plot_long_density_center();
+    return argon
+
 ################## CUSTOM OPTIONS ##########################
 
 def CustomPlasma(plasmaParams, nez, debug = 0):
@@ -220,6 +236,35 @@ def CustomPlasma_ThinPlasmaLens(plasmaParams, nez, tpl_offset, tpl_n, tpl_l, deb
     
     for i in lens_loc:
         nez[i] = tpl_n
+    
+    argon = plasma.Plasma(plasmaParams)
+    n = plasmaParams['n0']*np.ones(Nz, dtype='double')
+    argon.initialize_plasma(n, nez)
+    if debug == 1: argon.plot_long_density_center();
+    return argon
+
+#fit_tanh = [a,b,n0] - see ThreeDimensionAnalysis for more details
+#fit_lorentz = [A,gam,x0] - see ThreeDimensionAnalysis for more details
+def CustomPlasma_ThinPlasmaLens_TanhLorentz(plasmaParams, nez, tpl_offset, fit_tanh, fit_lorentz, debug = 0):
+    tpl_l = 2*fit_tanh[0] + 6*fit_tanh[1]
+    Nz = plasmaParams['Nz']
+    
+    tpl_z = plasmaParams['z0'] + tpl_offset
+    dz = plasmaParams['Z']/(plasmaParams['Nz']-1)
+    
+    tpl_left = tpl_z-.5*tpl_l
+    tpl_right = tpl_z+.5*tpl_l
+    tpl_1 = int(np.floor(tpl_left/dz))
+    tpl_2 = int(np.ceil(tpl_right/dz))
+    if debug==1: print(tpl_1,tpl_2);
+    lens_loc = np.array(range(tpl_2 - tpl_1 - 1)) + tpl_1 + 1
+    
+    z_tpl = np.linspace(-.5 * tpl_l, .5 * tpl_l, len(lens_loc))
+    n_tpl = ThrDim.DoubleTanh_Lorentzian(fit_tanh, fit_lorentz, z_tpl)
+    j=0
+    for i in lens_loc:
+        nez[i] = n_tpl[j]
+        j+=1
     
     argon = plasma.Plasma(plasmaParams)
     n = plasmaParams['n0']*np.ones(Nz, dtype='double')
@@ -336,12 +381,20 @@ def Calc_Proj_CSParams(beamParams, n_arr, z_arr, delta):
         
     return gb_arr, beta_arr, alpha_arr, gamma_arr, bmag_arr, beta_pro_arr
 
-def Plot_CSEvo(beamParams, n_arr, z_arr, z_offset = 0, legend_loc=0):
+def Plot_CSEvo(beamParams, n_arr, z_arr, z_offset = 0, legend_loc=0, subset = False):
     beta, alpha, gamma, gb = Calc_CSParams(beamParams, n_arr, z_arr)
     beta0, alpha0, gamma0, gb0 = Calc_CSParams(beamParams, np.zeros(len(z_arr)), z_arr)
     
     z_arr = z_arr - z_offset
     #print(" ","beta","beta0"); print(" ",beta[740],beta0[740])
+    
+    if subset is not False:
+        #subset = [start, end]
+        z_arr = z_arr[subset[0]:subset[1]]
+        n_arr = n_arr[subset[0]:subset[1]]
+        beta = beta[subset[0]:subset[1]]
+        beta0 = beta0[subset[0]:subset[1]]
+        
     fig, ax1 = plt.subplots()
     plt.title("Beta function evolution at "+r'$n_0=$'+str(max(n_arr))+r'$\,\mathrm{\times 10^{17}cm^{-3}}$')
     ax1.plot(z_arr*1e2, np.array(beta)*1e2, 'b-', label=r'$\beta$')
@@ -356,6 +409,8 @@ def Plot_CSEvo(beamParams, n_arr, z_arr, z_offset = 0, legend_loc=0):
     ax2.set_ylabel(r'$n/n_0$',color = 'g')
     ax2.tick_params('y', colors = 'g')
     ax1.grid(); ax1.legend(loc=legend_loc); plt.show()
+    
+    return beta,alpha,gamma,gb
     
 def Plot_CSEvo_MatchedCompare(beamParams, beamParams_matched, n_arr, z_arr, z_offset = 0, legend_loc=0):
     beta, alpha, gamma, gb = Calc_CSParams(beamParams, n_arr, z_arr)
@@ -379,6 +434,46 @@ def Plot_CSEvo_MatchedCompare(beamParams, beamParams_matched, n_arr, z_arr, z_of
     ax2.set_ylabel(r'$n/n_0$',color = 'g')
     ax2.tick_params('y', colors = 'g')
     ax1.grid(); ax1.legend(loc=legend_loc); plt.show()
+
+def Plot_CSEvo_FinalCompare(beamParams, n_arr, z_arr, z_offset = 0, legend_loc=0, subset = False, plot = 1):
+    beta, alpha, gamma, gb = Calc_CSParams(beamParams, n_arr, z_arr)
+    
+    beamParams0 = beamParams.copy()
+    betastar_fin = 1/gamma[-1]
+    waist_fin = alpha[-1]*betastar_fin + z_arr[-1]
+    alpha_fin = waist_fin/betastar_fin
+    beta_fin = betastar_fin + waist_fin**2/betastar_fin
+    beamParams0['alphax'] = alpha_fin;  beamParams0['alphay'] = alpha_fin
+    beamParams0['betax'] = beta_fin;  beamParams0['betay'] = beta_fin
+    beta0, alpha0, gamma0, gb0 = Calc_CSParams(beamParams0, np.zeros(len(z_arr)), z_arr)
+    
+    z_arr = z_arr - z_offset
+    #print(" ","beta","beta0"); print(" ",beta[740],beta0[740])
+    
+    if subset is not False:
+        #subset = [start, end]
+        z_arr = z_arr[subset[0]:subset[1]]
+        n_arr = n_arr[subset[0]:subset[1]]
+        beta = beta[subset[0]:subset[1]]
+        beta0 = beta0[subset[0]:subset[1]]
+    
+    if plot == 1:
+        fig, ax1 = plt.subplots()
+        plt.title("Beta function evolution at "+r'$n_0=$'+str(max(n_arr))+r'$\,\mathrm{\times 10^{17}cm^{-3}}$')
+        ax1.plot(z_arr*1e2, np.array(beta)*1e2, 'b-', label=r'$\beta$')
+        ax1.plot(z_arr*1e2, np.array(beta0)*1e2, 'b--',label=r'$\beta_{vac}$')
+        ax1.set_ylabel(r'$\beta\,\mathrm{[cm]}$', color = 'b')
+        ax1.tick_params('y', colors = 'b')
+        ax1.set_xlabel('z [cm]')
+        ax1.set_ylim([-0.05,20.05])
+        
+        ax2 = ax1.twinx()
+        ax2.plot(z_arr*1e2, n_arr/max(n_arr), 'g-')
+        ax2.set_ylabel(r'$n/n_0$',color = 'g')
+        ax2.tick_params('y', colors = 'g')
+        ax1.grid(); ax1.legend(loc=legend_loc); plt.show()
+    
+    return beta,alpha,gamma,gb
 
 def PropBeamPlasma(beam, plasma, z_arr, dumpPeriod, cores=4, debug = 0):
     m = int(len(z_arr)/dumpPeriod) -1
@@ -452,6 +547,7 @@ def PlotGamma(beam, z_arr, m):
     plt.xlabel("s [cm]")
     plt.ylabel("gamma")
     plt.grid(); plt.show()
+    print(gam[-1])
     return
 
 def GetFinalGamma(beam, m):

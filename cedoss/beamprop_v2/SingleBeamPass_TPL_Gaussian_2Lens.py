@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Fri Jun  1 10:49:04 2018
+Created on Tue May 21 11:13:08 2019
 
-Dedicated script for the two example cases in TPL paper 1
+For the 442um lens, entrance and exit tpl to get beta 5 cm into 2.5 cm and back
+to 5 cm
 
 @author: chris
 """
@@ -18,36 +19,16 @@ from modules import TPLFocalLength as Foc
 debug = 1
 path = '/home/chris/Desktop/BeamProp/testGaussian'
 gamma = PProp.def_gamma
-
-case = 20
-if case == 1:
-    sighw = 0.08 * 1e6
-    tpl_n = 0.5
-    tpl_l = 174.5
-    zvac = -0.2006
-    betastar = .10
-if case == 2:
-    sighw = 0.01 * 1e6
-    tpl_n = 0.5
-    tpl_l = 607.5
-    zvac = -0.01372
-    betastar = .10
-
-if case == 11:
-    tpl_n = 0.5
-    tpl_l = 0
-    sighw = 0.08 * 1e6
-    zvac = -0.2006
-    betastar = .061608
     
-if case == 20: #442.1um to match 5cm beta into a ramp that requires 2.5cm beta
-    tpl_n = 0.5
-    tpl_l = 442.1
-    sighw = 0.0273 * 1e6
-    zvac = -0.054
-    betastar = 0.05
-
+tpl_n = 0.5
+tpl_l = 442.1
+sighw = 0.0273 * 1e6
+zvac = -0.054
+betastar = 0.05
 z0 = sighw/1e6*5
+
+tpl_l2 = tpl_l
+zvac2 = 0.10 + 0.054 + 0.024999999987206204 - 0.0007 #+ 0.5*tpl_l2*1e-6
 
 argon_params = PProp.ReturnDefaultPlasmaParams(path, sigma_hw = sighw, plasma_start = z0, scaledown = 10)
 argon = PProp.GaussianRampPlasma(argon_params, debug)
@@ -73,7 +54,8 @@ beam_params = PProp.ReturnDefaultElectronParams(path, beta_star=betastar,
                                                beta_offset=waist_loc, plasma_start=z0)
 beam = PProp.GaussianBeam(beam_params, debug)
 argon = PProp.CustomPlasma_ThinPlasmaLens(argon_params, n, tpl_offset*1e6, tpl_n, tpl_l, debug)
-
+argon = PProp.CustomPlasma_ThinPlasmaLens(argon_params, n, zvac2*1e6, tpl_n, tpl_l2, debug)
+""" If you want to turn off the actaul beam prop
 z_fine = np.copy(z)*1e6
 PProp.PropBeamPlasma(beam, argon, z_fine, dump, cores, debug)
 
@@ -83,7 +65,10 @@ PProp.PlotEmittance(beam,z_fine,m)
 PProp.PlotGamma(beam,z_fine,m)
 
 print("Bmag BP: ",PProp.GetBmag(beam,m))
+#"""
 bmagc = PProp.Calc_Bmag(beam_params,n[:endindex], z[:endindex])
 print("Bmag CS: ",bmagc)
 
-PProp.Plot_CSEvo(beam_params, n, z, z0, legend_loc = 10)
+betaf, alphaf, gammaf, gbf = PProp.Plot_CSEvo(beam_params, n, z, z0, legend_loc = 10)
+
+print(1/gammaf[-1])

@@ -10,35 +10,38 @@ For estimating a 3D TPL run
 
 import numpy as np
 
-dens = 1e18 #cm^-3
+dens = 5e16 #cm^-3
 gbC = 19569.5
 ppc_p = 1
 
-z_start = -50e-6
+z_start = -500e-6
 z_waist = 0
-z_end = 700e-6
+z_end = 400e-6
 L_sim = z_end - z_start #m
 
 specie = ["drive", "witness"]
-witness_delay = 30. #um
+witness_delay = 140. #um
 drive_window = 26. #um
-lrms = [5.2, 5.2] #um
-sigrms = [5.2, 3.9] #um
+lrms = [5.2, 10.4] #um
+sigrms = [5.1, 3.9] #um
 emit_n = [5.3, 3.] #um-rad
 ppc = [8,8] #and plasma is 1
 
 #Transverse Domain
-umtrans = 150 #um
+umtrans = 250 #um
 #k_b0 = 1.33e-4*np.sqrt(dens/gbC)
 #sigmar_m = [0,0]
 #for i in range(len(specie)):
 #    sigmar_m[i] = np.sqrt(emit_n[i]/1e6/gbC/k_b0)
-dx = min(sigrms)/10
+dx = min(sigrms)/5
 Nx = np.ceil(umtrans/dx)
 
 #Longitudinal Domain
 
-umlong = 5*lrms[1] + witness_delay + drive_window#+5*lrms[0]
+#umlong = 5*lrms[1] + witness_delay + drive_window#+5*lrms[0]
+#or
+umlong = 218
+
 #dz = min(lrms)/5/1e6
 dz = dx
 Nz = np.ceil(umlong/dz)
@@ -80,10 +83,14 @@ size_per_dump = size_E + size_rho + size_drive + size_witness
 num_dumps = 10 #np.ceil(L_sim/(1/(k_b0)/5))
 GBsize = num_dumps * size_per_dump
 
+Ncells = Nx*Nx*Nz
+Nprocs = Ncells/29000
+
 print("Transverse    ","Nx: ",str(Nx)," dx: ",str(dx))
 print("Longitudinal  ","Nz: ",str(Nz)," dz: ",str(dz))
 print("Time          ","Nt: ",str(Nt)," dt: ",str(dt))
 print("Sim Length    ","L:  ",str(L_sim), " Dumps: ",str(num_dumps))
+print("# Cells, Procs","N:",str(Ncells)," Pr:",str(Nprocs))
 print("Storage       ","GB per dump: ",str(size_per_dump))
 print("              ","Total TB: ",str(GBsize/1000))
 print("MPP Hours: ",str(MPP))

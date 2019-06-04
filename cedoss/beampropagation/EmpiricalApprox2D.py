@@ -17,8 +17,8 @@ debug = 1
 
 gamma_set = 19569.5
 
-kb_arr = np.linspace(50, 350, num = 201)
-beta_arr = np.linspace(0.05, 0.65, num = 201)
+kb_arr = np.linspace(50, 1800, num = 201)
+beta_arr = np.linspace(0.05, 0.85, num = 201)
 bmag_image = np.zeros((len(kb_arr),len(beta_arr)))
 
 nparts = 0
