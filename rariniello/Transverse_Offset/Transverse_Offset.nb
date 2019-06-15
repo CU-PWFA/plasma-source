@@ -10,10 +10,10 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[       158,          7]
-NotebookDataLength[      6809,        207]
-NotebookOptionsPosition[      6123,        178]
-NotebookOutlinePosition[      6462,        193]
-CellTagsIndexPosition[      6419,        190]
+NotebookDataLength[     11354,        331]
+NotebookOptionsPosition[     10471,        296]
+NotebookOutlinePosition[     10810,        311]
+CellTagsIndexPosition[     10767,        308]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
@@ -145,34 +145,152 @@ Cell[BoxData[
   RowBox[{"\[CapitalPhi]m", "-", "\[CapitalPhi]M"}]]], "Output",
  CellChangeTimes->{3.769354820832224*^9, 3.769354935261382*^9, 
   3.7693549668421097`*^9}]
+}, Open  ]]
 }, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Second moment of the distribution", "Subsubsection",
+ CellChangeTimes->{{3.769523444871901*^9, 3.7695234502637787`*^9}}],
+
+Cell["\<\
+For the second moment, we need to account for the shape and rotation of each \
+energy slice distribution. Independent of the initial distribution, the \
+rotation in the integral can be handled by making a change of coordinates. \
+Then it becomes a simple matter of integrating over the different energy \
+slices.\
+\>", "Text",
+ CellChangeTimes->{{3.76952347370343*^9, 3.7695235105433493`*^9}, {
+  3.76952354820749*^9, 3.7695236270305557`*^9}, {3.769523667510778*^9, 
+  3.769523686750552*^9}}],
 
 Cell[CellGroupData[{
 
 Cell[BoxData[
  RowBox[{
-  SubsuperscriptBox["\[Integral]", "\[CapitalPhi]m", "\[CapitalPhi]M"], 
+  SubscriptBox["y2", "rms"], "=", 
   RowBox[{
-   SuperscriptBox[
-    RowBox[{"Sin", "[", "\[CapitalPhi]", "]"}], "2"], " ", 
-   RowBox[{"\[DifferentialD]", "\[CapitalPhi]"}]}]}]], "Input",
+   FractionBox["1", 
+    RowBox[{"\[CapitalPhi]M", "-", "\[CapitalPhi]m"}]], 
+   RowBox[{
+    SubsuperscriptBox["\[Integral]", "\[CapitalPhi]m", "\[CapitalPhi]M"], 
+    RowBox[{
+     SubsuperscriptBox["\[Integral]", 
+      RowBox[{"-", "\[Infinity]"}], "\[Infinity]"], " ", 
+     RowBox[{
+      SubsuperscriptBox["\[Integral]", 
+       RowBox[{"-", "\[Infinity]"}], "\[Infinity]"], 
+      RowBox[{
+       SuperscriptBox[
+        RowBox[{"(", 
+         RowBox[{
+          RowBox[{"y0", " ", 
+           RowBox[{"Cos", "[", "\[CapitalPhi]", "]"}]}], "-", 
+          RowBox[{"y0p", " ", 
+           RowBox[{"Sin", "[", "\[CapitalPhi]", "]"}]}]}], ")"}], "2"], " ", 
+       RowBox[{"f", "[", 
+        RowBox[{"y0", ",", " ", "y0p"}], "]"}], " ", 
+       RowBox[{"\[DifferentialD]", "y0"}], " ", 
+       RowBox[{"\[DifferentialD]", "y0p"}], " ", 
+       RowBox[{"\[DifferentialD]", "\[CapitalPhi]"}]}]}]}]}]}]}]], "Input",
  CellChangeTimes->{{3.769440027722597*^9, 3.769440054743001*^9}, {
-  3.769440639950774*^9, 3.769440640341838*^9}}],
+  3.769440639950774*^9, 3.769440640341838*^9}, {3.7695233749786663`*^9, 
+  3.769523380361305*^9}, {3.769523712320602*^9, 3.769523730206904*^9}, {
+  3.769523800462536*^9, 3.769523802670133*^9}, {3.769523902453588*^9, 
+  3.769523942893034*^9}, {3.769524088972822*^9, 3.769524312521881*^9}, {
+  3.769524397691318*^9, 3.769524398722452*^9}, {3.769524438307149*^9, 
+  3.769524443730564*^9}, {3.769525387058969*^9, 3.7695253885838957`*^9}}],
+
+Cell[BoxData[
+ FractionBox[
+  RowBox[{
+   SubsuperscriptBox["\[Integral]", 
+    RowBox[{"-", "\[Infinity]"}], "\[Infinity]"], 
+   RowBox[{
+    SubsuperscriptBox["\[Integral]", 
+     RowBox[{"-", "\[Infinity]"}], "\[Infinity]"], 
+    RowBox[{
+     RowBox[{
+      RowBox[{"f", "[", 
+       RowBox[{"y0", ",", "y0p"}], "]"}], " ", 
+      RowBox[{"(", 
+       RowBox[{
+        RowBox[{
+         RowBox[{"-", "2"}], " ", 
+         RowBox[{"(", 
+          RowBox[{
+           SuperscriptBox["y0", "2"], "+", 
+           SuperscriptBox["y0p", "2"]}], ")"}], " ", 
+         RowBox[{"(", 
+          RowBox[{"\[CapitalPhi]m", "-", "\[CapitalPhi]M"}], ")"}]}], "-", 
+        RowBox[{"2", " ", "y0", " ", "y0p", " ", 
+         RowBox[{"Cos", "[", 
+          RowBox[{"2", " ", "\[CapitalPhi]m"}], "]"}]}], "+", 
+        RowBox[{"2", " ", "y0", " ", "y0p", " ", 
+         RowBox[{"Cos", "[", 
+          RowBox[{"2", " ", "\[CapitalPhi]M"}], "]"}]}], "-", 
+        RowBox[{
+         RowBox[{"(", 
+          RowBox[{"y0", "-", "y0p"}], ")"}], " ", 
+         RowBox[{"(", 
+          RowBox[{"y0", "+", "y0p"}], ")"}], " ", 
+         RowBox[{"(", 
+          RowBox[{
+           RowBox[{"Sin", "[", 
+            RowBox[{"2", " ", "\[CapitalPhi]m"}], "]"}], "-", 
+           RowBox[{"Sin", "[", 
+            RowBox[{"2", " ", "\[CapitalPhi]M"}], "]"}]}], ")"}]}]}], ")"}]}], 
+     RowBox[{"\[DifferentialD]", "y0"}], 
+     RowBox[{"\[DifferentialD]", "y0p"}]}]}]}], 
+  RowBox[{"4", " ", 
+   RowBox[{"(", 
+    RowBox[{
+     RowBox[{"-", "\[CapitalPhi]m"}], "+", "\[CapitalPhi]M"}], 
+    ")"}]}]]], "Output",
+ CellChangeTimes->{{3.769524290869611*^9, 3.769524313329783*^9}, 
+   3.769524406351344*^9, 3.769524454550254*^9, 3.769525391899209*^9}]
+}, Open  ]],
 
 Cell[BoxData[
  RowBox[{
-  FractionBox["1", "2"], " ", 
-  RowBox[{"(", 
+  SubscriptBox["y2", "rms"], "=", 
+  RowBox[{
    RowBox[{
-    RowBox[{"-", "\[CapitalPhi]m"}], "+", "\[CapitalPhi]M", "+", 
-    RowBox[{
-     RowBox[{"Cos", "[", "\[CapitalPhi]m", "]"}], " ", 
-     RowBox[{"Sin", "[", "\[CapitalPhi]m", "]"}]}], "-", 
-    RowBox[{
-     RowBox[{"Cos", "[", "\[CapitalPhi]M", "]"}], " ", 
-     RowBox[{"Sin", "[", "\[CapitalPhi]M", "]"}]}]}], ")"}]}]], "Output",
- CellChangeTimes->{3.7694400599149313`*^9, 3.7694406414664907`*^9}]
-}, Open  ]]
+    FractionBox["1", "2"], " ", 
+    RowBox[{"(", 
+     RowBox[{
+      SubscriptBox["\[Sigma]", "yy"], "+", 
+      SubscriptBox["\[Sigma]", "ypyp"]}], ")"}]}], "+", 
+   RowBox[{
+    RowBox[{"Sinc", "[", 
+     RowBox[{"\[CapitalPhi]M", "-", "\[CapitalPhi]m"}], "]"}], " ", 
+    RowBox[{"(", 
+     RowBox[{
+      RowBox[{
+       SubscriptBox["\[Sigma]", "yyp"], " ", 
+       RowBox[{"Sin", "[", 
+        RowBox[{
+         SubscriptBox["\[CapitalPhi]", "M"], "+", 
+         SubscriptBox["\[CapitalPhi]", "m"]}], "]"}]}], "+", 
+      RowBox[{
+       FractionBox["1", "2"], " ", 
+       RowBox[{"(", 
+        RowBox[{
+         SubscriptBox["\[Sigma]", "yy"], "-", 
+         SubscriptBox["\[Sigma]", "ypyp"]}], ")"}], " ", 
+       RowBox[{"Cos", "[", 
+        RowBox[{
+         SubscriptBox["\[CapitalPhi]", "M"], "+", 
+         SubscriptBox["\[CapitalPhi]", "m"]}], "]"}]}]}], 
+     ")"}]}]}]}]], "Input",
+ CellChangeTimes->{{3.769524409987317*^9, 3.7695244140253153`*^9}, {
+  3.7695271517258577`*^9, 3.769527333798174*^9}, {3.76952740030192*^9, 
+  3.7695274173340178`*^9}}],
+
+Cell["\<\
+The actual rms size of the distribution is given by the central moment.\
+\>", "Text",
+ CellChangeTimes->{{3.7695274207082663`*^9, 3.769527441508287*^9}}]
 }, Open  ]]
 }, Open  ]]
 },
@@ -202,11 +320,17 @@ Cell[CellGroupData[{
 Cell[1713, 52, 2317, 63, 184, "Input"],
 Cell[4033, 117, 587, 14, 50, "Output"],
 Cell[4623, 133, 569, 13, 50, "Output"]
+}, Open  ]]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[5229, 151, 365, 8, 51, "Input"],
-Cell[5597, 161, 486, 12, 82, "Output"]
-}, Open  ]]
+Cell[5241, 152, 126, 1, 35, "Subsubsection"],
+Cell[5370, 155, 502, 9, 55, "Text"],
+Cell[CellGroupData[{
+Cell[5897, 168, 1489, 33, 53, "Input"],
+Cell[7389, 203, 1722, 47, 60, "Output"]
+}, Open  ]],
+Cell[9126, 253, 1151, 34, 53, "Input"],
+Cell[10280, 289, 163, 3, 33, "Text"]
 }, Open  ]]
 }, Open  ]]
 }
