@@ -19,14 +19,19 @@ debug = 1
 path = '/home/chris/Desktop/BeamProp/testGaussian'
 gamma = PProp.def_gamma
 
-case = 1
+case = 2
 if case == 1:
     sighw = 0.00001
     tpl_n = 0.5
     tpl_l = 995
     zvac = -0.02084 - .5*tpl_l*1e-6
     betastar = .10
-
+if case == 2:
+    sighw = 0.00001
+    tpl_n = 1.0
+    tpl_l = 596
+    zvac = -0.01770015 - .5*tpl_l*1e-6
+    betastar = .10
 z0 = 0.1
 
 argon_params = PProp.ReturnDefaultPlasmaParams(path, sigma_hw = sighw, plasma_start = z0, scaledown = 10)

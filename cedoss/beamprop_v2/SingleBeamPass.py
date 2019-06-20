@@ -23,13 +23,14 @@ tpl_n = 0.5
 #tpl_l = 267
 tpl_l = 0
 
-sighw = 0.14 * 1e6
+#sighw = 0.14 * 1e6  #use with default params
+sighw = 0.0273 * 1e6  #use with beta = 2.5 cm and offset = -5.4 cm
 
 dump = 1000
 cores = 4
 
 #Make beam and bulk plasma just as in single_pass
-beam_params = PProp.ReturnDefaultElectronParams(path)
+beam_params = PProp.ReturnDefaultElectronParams(path, beta_star = 0.025, beta_offset = -0.054)
 beam = PProp.GaussianBeam(beam_params, debug)
 
 argon_params = PProp.ReturnDefaultPlasmaParams(path, sigma_hw = sighw)

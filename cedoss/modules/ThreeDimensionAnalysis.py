@@ -209,6 +209,22 @@ def Lorentz(p, x):
 def DoubleTanh_Gaussian(p_tanh, p_gauss, x):
     p_gauss[0] = 1
     return DoubleTanh(p_tanh, x) * Gaussian(p_gauss, x)
+
+#A doubletanh multiplied by a Lorentzian.  Disregards the n_0 for the DoubleTanh function.
+#  p_tanh - parameters: [a (~top length), b (~ramp length), n_0 (density at center)]
+#  p_lorentz - parameters: [A (density at center*factors), gamma (distribution), x_0 (offset)]
+#  x - array of distances
+def DoubleTanh_Lorentzian(p_tanh, p_lorentz, x):
+    p_tanh[2] = 1
+    return DoubleTanh(p_tanh, x) * Lorentz(p_lorentz, x)
+
+#Basic exponential fit to f(x)=ae^(bx)+c, where p=[a,b,c]
+def Exponential(p, x):
+    return p[0]*np.exp(-p[1]*x)+p[2]
+
+#Lorentz, but with p[3] as constant offset in value
+def LorentzOffset(p, x):
+    return p[0]/(2*np.pi)*(p[1]/(np.square(x-p[2])+np.square(0.5*p[1])))+p[3]
     
 #Attempts to fit a given 1D data set to a DoubleTanh Profile.
 #  data - 1D data set for which to fit
@@ -277,12 +293,20 @@ def FitDataLorentz(data, axis, guess = [0.,0.,0.], datlabel = 'Simulation'):
     print()
     return p1
 
+def FitDataExponential(data, axis, guess = [0.,0.,0.], datlabel = 'Simulation'):
+    p1 = FitDataSomething(data, axis, Exponential, guess, datlabel)
+    print("a = " + str(p1[0]))
+    print("b = " + str(p1[1]))
+    print("c = " + str(p1[2]))
+    print()
+    return p1
+
 #Generic function to fit data to a function and plot results.  See above functions
 def FitDataSomething(data, axis, function, guess = [0.,0.,0.], datlabel = 'Simulation'):
     errfunc = lambda p, x, y: function(p, x) - y
     p0 = guess
     p1, success = optimize.leastsq(errfunc,p0[:], args=(axis, data))
-    plt.plot(axis, data, label=datlabel)
+    plt.semilogy(axis, data, label=datlabel)
     plt.plot(axis, function(p1,axis), label="Fitted "+ function.__name__ +" profile")
     plt.title("Comparison of data with "+ function.__name__ +" profile")
     plt.xlabel("Distance from axis (microns)")

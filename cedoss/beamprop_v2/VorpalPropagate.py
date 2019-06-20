@@ -16,6 +16,9 @@ import timeit
 path = '/home/chris/Desktop/BeamProp/vorpaltest'
 filename = '/media/chris/New Volume/VSimRuns/NERSCResults/3D/TwoBunch/1e18/200um/ThinPlasmaLens3D_WitnessBeam_10.h5'
 
+filename = '/home/chris/Desktop/SimulationRepo/emittance_preservation/simulations/ThinPlasmaLens3D_Gauss_Slab/ThinPlasmaLens3DGaussSlab_WitnessBeam_10.h5'
+filename = '/home/chris/Desktop/CoriRun2/ThinPlasmaLens3DGaussSlab_WitnessBeam_10.h5'
+
 debug = 1
 
 dump = 20

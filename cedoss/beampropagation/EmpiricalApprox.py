@@ -8,9 +8,14 @@ Created on Tue Feb 27 11:39:45 2018
 import numpy as np
 
 n_gam_fac = 56476779.72
-cs = [0.329, 1.54, -0.0170]
-cz = [-3.33, -4.47, 0.0897]
-kb0 = 212.5
+#cs = [0.329, 1.54, -0.0170]
+#cz = [-3.33, -4.47, 0.0897]
+#kb0 = 212.5
+
+#After new analysis
+cs = [0.416, 1.49, -0.0145]
+cz = [-3.12, -4.34, 0.0840]
+kb0 = 212.59
 
 def CalcApprox(gamma_set, beta_set, kb_set):
     n_calc = n_gam_fac*kb_set**2*gamma_set

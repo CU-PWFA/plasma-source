@@ -47,7 +47,7 @@ def rate_static(EI, E, Z, l=0, m=0):
     N = 1.51927 * (2*l+1) * factorial(l+abs(m)) \
         / (np.power(2, abs(m)) * factorial(abs(m)) * factorial(l-abs(m)))
     # Only calculate the ionization rate when z is nonzero
-    Enz = np.array(E > 0)
+    Enz = np.array(E > 1e-12)
     if np.size(Enz) > 0:
         w[Enz] = N * Cn2 * EI \
             * np.power(20.4927*E0/E[Enz], 2*n-abs(m)-1) \

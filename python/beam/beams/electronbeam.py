@@ -535,7 +535,7 @@ class GaussianElectronBeam(ElectronBeam):
         vy = -np.sqrt(2*Jy)*np.sin(phiy)
         return ux, vx, uy, vy
     
-    def initialize_particles(self, offset_x=0.0, offset_y=0.0):
+    def initialize_particles(self, offset_x=0.0, offset_y=0.0, offset_xp=0.0, offset_yp=0.0):
         """ Initialize the particles in a 6D distribution. """
         N = self.N
         gamma = self.gamma
@@ -545,9 +545,9 @@ class GaussianElectronBeam(ElectronBeam):
         ux, vx, uy, vy = self.action_angle_distribution()
         # Calculate the coordinates
         ptcls[:, 0] = ux*np.sqrt(betax) + offset_x
-        ptcls[:, 1] = (vx-self.alphax*ux) / np.sqrt(betax)
+        ptcls[:, 1] = (vx-self.alphax*ux) / np.sqrt(betax) + offset_xp
         ptcls[:, 2] = uy*np.sqrt(betay) + offset_y
-        ptcls[:, 3] = (vy-self.alphay*uy) / np.sqrt(betay)
+        ptcls[:, 3] = (vy-self.alphay*uy) / np.sqrt(betay) + offset_yp
         ptcls[:, 4] = np.random.normal(0.0, self.sigmaz, N)
         ptcls[:, 5] = gamma * (1 + self.dE*np.random.uniform(-1, 1, N))
         super().initialize_particles(ptcls) 
@@ -557,12 +557,14 @@ class OffsetGaussianElectronBeam(GaussianElectronBeam):
         self.keys = self.keys.copy()
         self.keys.extend(
                 ['offset_x',
-                 'offset_y'])
+                 'offset_y',
+                 'offset_xp',
+                 'offset_yp'])
         super().__init__(params)
         
     def initialize_particles(self):
         """ Initialize the particles in a 6D distribution. """
-        super().initialize_particles(self.offset_x, self.offset_y) 
+        super().initialize_particles(self.offset_x, self.offset_y, self.offset_xp, self.offset_yp) 
 
 class VorpalElectronBeam(ElectronBeam):
     """ A electron beam imported from VSim, includes weights. 

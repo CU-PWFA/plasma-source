@@ -21,12 +21,12 @@ from modules import FourierRefraction as frefract
 from modules import TPLFocalLength as Foc
 
 c=2.998e8               #Speed of light constant
-P=60e9                  #Laser power in W
+P=60e9                  #Default laser power in W
 n=1.                    #Refractive index
 epsilon0 = 8.854e-12    #Dielectric constant
-wavelength = 785.3e-9   #Laser wavelength in m
+wavelength = 800.0e-9 #785.3e-9   #Laser wavelength in m
 w0 = 5e-3               #Initial spot size in m
-E_ion = 13.6            #Ionization Energy:  13.6 for H, 15.8 for Ar, 
+E_ion = 15.8           #Ionization Energy:  13.6 for H, 15.8 for Ar, 24.6 for He 27.6 for Ar++
 setupTitle = ""         #Name the setup 
 reverse = 0
 
@@ -37,16 +37,352 @@ zi = 7.5e-3             #Offset from small waist to plane we want to save params
 zoom=int(round(zi/l_step))
 
 path = '/home/chris/Desktop/DataLoads/PulseFilesNp/'
-filename = 'pulseParams_rotate.npy'
+filename = 'pulseParams_442um_Ar.npy'
 
-save = 0                #Set to 1 to save anything
-calcdensity = 1         #Set to 1 to calc resulting plasma density w/out refraction
+save = 1                #Set to 1 to save anything
+calcdensity = 0         #Set to 1 to calc resulting plasma density w/out refraction
 calcfocal = 1
 
 foc_dom_fac = 2
 radscl = 1   #Set to larger to increase the beam axis domain
 
-choice=37         #Set to one of the setups below
+choice=53         #Set to one of the setups below
+
+if choice==50:#Ar L=442.1 um  Disregard exact shape, need ~100um wide transverse
+    setupTitle = "Spherical_2Cylindrical_reversed"
+    reverse = 1
+    zi = 20e-2 #5e-2             #Offset from small waist to plane we want to save params at
+    zoom=int(round(zi/l_step))
+    radscl = 3
+    
+    setupTitle = "Spherical_2Cylindrical"
+    
+    f1 = 0.0125 #m
+    L1 = 0.088
+    
+    f2 = -0.0125 #Gets a nice 125 um focus
+    L2 = 0.1127
+    
+    #f1=f2; L1=L2
+
+    P = 420e9
+    
+    #  0.00625 0.0125 0.025 0.050 0.100
+    #  0.015 0.020 0.030 0.040 0.075 0.150
+    q_x = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    q_y = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,.1,l_step)
+    GB.Prop_CylindricalLens(q_y,q_x,.200)
+    GB.Prop_CylindricalLens(q_x,q_y,.200)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L1,l_step) 
+    GB.Prop_CylindricalLens(q_y,q_x,-2*f1)   #Focuses the "Wide" curve in fig1
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L2-L1,l_step) 
+    GB.Prop_CylindricalLens(q_x,q_y,-2*f2)   #Focuses the "Narrow" curve in fig1
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y, 0.5,l_step)
+    
+if choice==51:#Ar L=442.1 um  Similar to 50 but using 4 lenses.  Harder to allign and significantly more power
+    setupTitle = "Spherical_2Cylindrical_reversed"
+    reverse = 1
+    zi = 4e-2 #5e-2             #Offset from small waist to plane we want to save params at
+    zoom=int(round(zi/l_step))
+    radscl = 3
+    
+    setupTitle = "Spherical_2Cylindrical"
+    
+        
+    f1 = 0.0125 #Gets a nice 125 um focus
+    L1 = 0.0477
+    
+    f2 = 0.0125 #m
+    L2 = 0.088
+    
+    Llag = 0.04
+
+    P = 520e9
+    
+    #  0.00625 0.0125 0.025 0.050 0.100
+    #  0.015 0.020 0.030 0.040 0.075 0.150
+    q_x = GB.Prop_Init_q(wavelength, w0, -.10-Llag, 1)
+    q_y = GB.Prop_Init_q(wavelength, w0, -.10-Llag, 1)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,.1,l_step)
+    GB.Prop_CylindricalLens(q_x,q_y,.200)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,Llag,l_step)
+    GB.Prop_CylindricalLens(q_y,q_x,.200)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L1,l_step) 
+    GB.Prop_CylindricalLens(q_x,q_y,-2*f1)   #Focuses the "Narrow" curve in fig1
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L2-L1,l_step) 
+    GB.Prop_CylindricalLens(q_y,q_x,-2*f2)   #Focuses the "Wide" curve in fig1
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y, 0.5,l_step)
+
+if choice==52:#Ar L=442.1 um  This one with a fairly narrow profile
+    setupTitle = "Spherical_2Cylindrical_reversed"
+    reverse = 1
+    zi = 4e-2 #5e-2             #Offset from small waist to plane we want to save params at
+    zoom=int(round(zi/l_step))
+    radscl = 3
+    
+    setupTitle = "Spherical_2Cylindrical"
+    
+    f1 = 0.050 #m
+    L1 = 0.055
+    
+    f2 = 0.0125 #Gets a nice 125 um focus
+    L2 = 0.0878
+    
+    #f1=f2; L1=L2
+
+    P = 185e9
+    
+    #  0.00625 0.0125 0.025 0.050 0.100
+    #  0.015 0.020 0.030 0.040 0.075 0.150
+    q_x = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    q_y = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,.1,l_step)
+    GB.Prop_CylindricalLens(q_y,q_x,.200)
+    GB.Prop_CylindricalLens(q_x,q_y,.200)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L1,l_step) 
+    GB.Prop_CylindricalLens(q_y,q_x,-2*f1)   #Focuses the "Wide" curve in fig1
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L2-L1,l_step) 
+    GB.Prop_CylindricalLens(q_x,q_y,-2*f2)   #Focuses the "Narrow" curve in fig1
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y, 0.5,l_step)
+
+if choice==53:#Ar L=442.1 um  We gonna goldilocks this one
+    setupTitle = "Spherical_2Cylindrical_reversed"
+    reverse = 1
+    zi = 8e-2 #5e-2             #Offset from small waist to plane we want to save params at
+    zoom=int(round(zi/l_step))
+    radscl = 3
+    
+    setupTitle = "Spherical_2Cylindrical"
+    
+    f1 = 0.025 #m
+    L1 = 0.077
+    
+    f2 = 0.010 #Gets a nice 125 um focus
+    L2 = 0.0901
+    
+    #f1=f2; L1=L2
+
+    P = 224e9 #211 for ideal 422um, 226 for refracted 442um in gas jet
+    
+    #  0.00625 0.0125 0.025 0.050 0.100
+    #  0.015 0.020 0.030 0.040 0.075 0.150
+    q_x = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    q_y = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,.1,l_step)
+    GB.Prop_CylindricalLens(q_y,q_x,.200)
+    GB.Prop_CylindricalLens(q_x,q_y,.200)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L1,l_step) 
+    GB.Prop_CylindricalLens(q_y,q_x,-2*f1)   #Focuses the "Wide" curve in fig1
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L2-L1,l_step) 
+    GB.Prop_CylindricalLens(q_x,q_y,-2*f2)   #Focuses the "Narrow" curve in fig1
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y, 0.5,l_step)
+
+if choice==46:#Ar L=996.5 um  This is the gucci one in the paper (UNTIL IT CHANGED)
+    setupTitle = "Spherical_2Cylindrical_reversed"
+    reverse = 1
+    zi = 4e-2 #5e-2             #Offset from small waist to plane we want to save params at
+    zoom=int(round(zi/l_step))
+    radscl = 3
+    
+    setupTitle = "Spherical_2Cylindrical"
+    f1 = 0.0625 #m
+    f2 = 0.0125
+    L1 = 0.045
+    L2 = 0.0875
+
+    P = 347.5e9 #xxxe9 for 1020um (refraction), 326.0e9 for 995um ideal
+    
+    #  0.00625 0.0125 0.025 0.050 0.100
+    #  0.015 0.020 0.030 0.040 0.075 0.150
+    q_x = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    q_y = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,.1,l_step)
+    GB.Prop_CylindricalLens(q_y,q_x,.200)
+    GB.Prop_CylindricalLens(q_x,q_y,.200)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L1,l_step) 
+    GB.Prop_CylindricalLens(q_y,q_x,-2*f1)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L2-L1,l_step) 
+    GB.Prop_CylindricalLens(q_x,q_y,-2*f2)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y, 0.5,l_step)
+
+if choice==44:#Ar L=996.5 um
+    setupTitle = "Spherical_2Cylindrical_reversed"
+    reverse = 1
+    zi = 4e-2 #5e-2             #Offset from small waist to plane we want to save params at
+    zoom=int(round(zi/l_step))
+    radscl = 3
+    
+    setupTitle = "Spherical_2Cylindrical"
+    f1 = 0.075 #m
+    f2 = 0.0125
+    L1 = 0.037
+    L2 = 0.0876
+
+    P = 301.2e9 #320e9 for 1020um (refraction), 301.2e9 for 995um ideal, 409.4 for 1115.8um second lens
+                #440.7e9 for 1142.8um (second lens opt. 2)
+    
+    #  0.00625 0.0125 0.025 0.050 0.100
+    #  0.015 0.020 0.030 0.040 0.075 0.150
+    q_x = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    q_y = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,.1,l_step)
+    GB.Prop_CylindricalLens(q_y,q_x,.200)
+    GB.Prop_CylindricalLens(q_x,q_y,.200)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L1,l_step) 
+    GB.Prop_CylindricalLens(q_y,q_x,-2*f1)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L2-L1,l_step) 
+    GB.Prop_CylindricalLens(q_x,q_y,-2*f2)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y, 0.5,l_step)
+    
+if choice==45:#Ar L=996.5 um  This is the gucci one in the paper
+    setupTitle = "Spherical_2Cylindrical_reversed"
+    reverse = 1
+    zi = 4e-2 #5e-2             #Offset from small waist to plane we want to save params at
+    zoom=int(round(zi/l_step))
+    radscl = 3
+    
+    setupTitle = "Spherical_2Cylindrical"
+    f1 = 0.075 #m
+    f2 = 0.0125
+    L1 = 0.037
+    L2 = 0.0875
+
+    P = 249.4e9 #xxxe9 for 1020um (refraction), 249.4e9 for 995um ideal
+    
+    #  0.00625 0.0125 0.025 0.050 0.100
+    #  0.015 0.020 0.030 0.040 0.075 0.150
+    q_x = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    q_y = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,.1,l_step)
+    GB.Prop_CylindricalLens(q_y,q_x,.200)
+    GB.Prop_CylindricalLens(q_x,q_y,.200)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L1,l_step) 
+    GB.Prop_CylindricalLens(q_y,q_x,-2*f1)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L2-L1,l_step) 
+    GB.Prop_CylindricalLens(q_x,q_y,-2*f2)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y, 0.5,l_step)
+
+if choice==41:
+    setupTitle = "Helium_5e16_FlattopMatch"
+    reverse = 1
+    zi = 4e-2 #5e-2             #Offset from small waist to plane we want to save params at
+    zoom=int(round(zi/l_step))
+    radscl = 4
+    f1 = 0.075 #m
+    f2 = 0.025
+    L1 = 0.037
+    L2 = 0.0755 #76
+
+    P=1050e9
+    #  0.00625 0.0125 0.025 0.050 0.100
+    #  0.015 0.020 0.030 0.040 0.075 0.150
+    q_x = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    q_y = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,.1,l_step)
+    GB.Prop_CylindricalLens(q_y,q_x,.200)
+    GB.Prop_CylindricalLens(q_x,q_y,.200)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L1,l_step) 
+    GB.Prop_CylindricalLens(q_y,q_x,-2*f1)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L2-L1,l_step) 
+    GB.Prop_CylindricalLens(q_x,q_y,-2*f2)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y, 0.5,l_step)
+    
+if choice==42:
+    setupTitle = "Helium_5e16_FlattopMatch"
+    reverse = 1
+    zi = 4e-2 #5e-2             #Offset from small waist to plane we want to save params at
+    zoom=int(round(zi/l_step))
+    radscl = 3
+    f1 = 0.075 #m
+    f2 = 0.0125
+    L1 = 0.037
+    L2 = 0.0877 #76
+
+    P=630e9
+    #  0.00625 0.0125 0.025 0.050 0.100
+    #  0.015 0.020 0.030 0.040 0.075 0.150
+    q_x = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    q_y = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,.1,l_step)
+    GB.Prop_CylindricalLens(q_y,q_x,.200)
+    GB.Prop_CylindricalLens(q_x,q_y,.200)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L1,l_step) 
+    GB.Prop_CylindricalLens(q_y,q_x,-2*f1)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L2-L1,l_step) 
+    GB.Prop_CylindricalLens(q_x,q_y,-2*f2)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y, 0.5,l_step)
+    
+if choice==43:#Ar L=996.5 um
+    setupTitle = "Spherical_2Cylindrical_reversed"
+    reverse = 1
+    zi = 4e-2 #5e-2             #Offset from small waist to plane we want to save params at
+    zoom=int(round(zi/l_step))
+    radscl = 3
+    
+    setupTitle = "Spherical_2Cylindrical"
+    f1 = 0.075 #m
+    f2 = 0.0125
+    L1 = 0.037
+    L2 = 0.0875
+
+    P = 261e9
+    
+    #  0.00625 0.0125 0.025 0.050 0.100
+    #  0.015 0.020 0.030 0.040 0.075 0.150
+    q_x = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    q_y = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,.1,l_step)
+    GB.Prop_CylindricalLens(q_y,q_x,.200)
+    GB.Prop_CylindricalLens(q_x,q_y,.200)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L1,l_step) 
+    GB.Prop_CylindricalLens(q_y,q_x,-2*f1)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L2-L1,l_step) 
+    GB.Prop_CylindricalLens(q_x,q_y,-2*f2)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y, 0.5,l_step)
+
+
 
 if choice==38:#Case 6 but opposite  Gives l = 775 um 
     setupTitle = "Spherical_2Cylindrical_reversed"
@@ -59,7 +395,7 @@ if choice==38:#Case 6 but opposite  Gives l = 775 um
     f1 = 0.075 #m
     f2 = 0.0125
     L1 = 0.037
-    L2 = 0.088
+    L2 = 0.0885
     P=50e9
     #  0.00625 0.0125 0.025 0.050 0.100
     #  0.015 0.020 0.030 0.040 0.075 0.150
@@ -81,7 +417,7 @@ if choice==38:#Case 6 but opposite  Gives l = 775 um
 if choice==37:#Gives l = 775 um 
     setupTitle = "Spherical_2Cylindrical_reversed"
     reverse = 1
-    zi = 5e-2             #Offset from small waist to plane we want to save params at
+    zi = 2e-2 #5e-2             #Offset from small waist to plane we want to save params at
     zoom=int(round(zi/l_step))
     radscl = 3
     
@@ -90,7 +426,40 @@ if choice==37:#Gives l = 775 um
     f2 = 0.025
     L1 = 0.037
     L2 = 0.076
-    P=83e9 #83 GW for 597 um, 218 GW for 996 um
+    P=220e9 #Hydrogen:  83 GW for 597 um, 218 GW for 996 um
+    #P=1620e9 #Helium:  1620 GW for 997 um
+    #P = 300e9
+    
+    #  0.00625 0.0125 0.025 0.050 0.100
+    #  0.015 0.020 0.030 0.040 0.075 0.150
+    q_x = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    q_y = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,.1,l_step)
+    GB.Prop_CylindricalLens(q_y,q_x,.200)
+    GB.Prop_CylindricalLens(q_x,q_y,.200)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L1,l_step) 
+    GB.Prop_CylindricalLens(q_y,q_x,-2*f1)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L2-L1,l_step) 
+    GB.Prop_CylindricalLens(q_x,q_y,-2*f2)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y, 0.5,l_step)
+    
+if choice==371:#Gives l = 775 um 
+    setupTitle = "Spherical_2Cylindrical_reversed"
+    reverse = 1
+    zi = 1e-2 #5e-2             #Offset from small waist to plane we want to save params at
+    zoom=int(round(zi/l_step))
+    radscl = 3
+    
+    setupTitle = "Spherical_2Cylindrical"
+    f1 = 0.075 #m
+    f2 = 0.025
+    L1 = 0.037
+    L2 = 0.076
+    P=94.6e9 #83 GW for 597 um, 218 GW for 996 um
     #  0.00625 0.0125 0.025 0.050 0.100
     #  0.015 0.020 0.030 0.040 0.075 0.150
     q_x = GB.Prop_Init_q(wavelength, w0, -.1, 1)
@@ -422,6 +791,7 @@ if calcfocal == 1:
     #wz_center = wy[int(len(wy)/2)]
     #wy_center = wx[int(len(wx)/2)]
     print("center change: ",int(len(wy)/2), " to " ,wmult_min)
+    print(xrange[int(len(wy)/2)]," to ",xrange[wmult_min])
     wz_center = wy[wmult_min]
     wy_center = wx[wmult_min]
     

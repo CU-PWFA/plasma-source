@@ -10,14 +10,17 @@ import sys
 import numpy as np
 from gdsCAD import *
 from scipy.interpolate import interp1d
+import datetime
 
 
-def main(fileName, layers, min_feature=2):
+def main(fileName, layers, min_feature, name, author):
     """ Convert a numpy array of radius and phase values to a mask.
     
     Wraps and discretizes the phase in the input file and generates a gds file
     with the appropriate mask writing for phase information. Radius should be
-    in um and phase in rad.
+    in um and phase in rad. This code will create alignment masks for 3 layers.
+    The title block and wafer outline is on layer 10 and should be written to
+    the mask for every layer.
     
     Note: one day this should be switched to gdspy which is actively maintained
     and works with python 3. It also doesn't require modifying the source code
@@ -31,6 +34,10 @@ def main(fileName, layers, min_feature=2):
         The number of discrete phase steps, the GDS will have Nlayers=layers/2.
     min_feature : float
         The minimum feature size in um, small features will be converted.
+    name : string
+        The name of the layout, should be less than 10 characters.
+    author : string
+        The author of the layout, should be less than 10 characters.
     """
     print("Converting the array in "+fileName+" to a GDS file")
     data = np.load(fileName)
@@ -127,6 +134,45 @@ def main(fileName, layers, min_feature=2):
                 top.add(ring)
                 depth = depth % etch
     
+    # Add alignment marks for 3 layers
+    dx = 500
+    align = core.Cell("Align")
+    align.add(templates.AlignmentMarks(('A', 'C'), (4, 1)), origin=(-1.5*dx, dx))
+    align.add(templates.AlignmentMarks(('A', 'C'), (2, 1)), origin=(-1.5*dx, 0))
+    align.add(templates.AlignmentMarks('A', 1), origin=(-1.5*dx, -dx))
+    align.add(templates.AlignmentMarks(('A', 'C'), (4, 2)), origin=(0, dx))
+    align.add(templates.AlignmentMarks('A', 2), origin=(0, 0))
+    align.add(templates.AlignmentMarks('A', 4), origin=(1.5*dx, dx))
+    
+    top.add(align, origin=(18000, 0))
+    top.add(align, origin=(-18000, 0))
+    top.add(align, origin=(18000+1.5*dx, 0), magnification=0.2)
+    top.add(align, origin=(1.5*dx-18000, 0), magnification=0.2)
+    
+    # Add the wafer size
+    top.add(shapes.Disk((0, 0), 25400, inner_radius=24400, layer=10, number_of_points=500))
+    height = 20000
+    width = 3200
+    d = 25400-width/2
+    top.add(shapes.Rectangle((d+width/2, height/2), (d-width/2, -height/2,), layer=10))
+    top.add(shapes.Rectangle((-d+width/2, height/2), (-d-width/2, -height/2,), layer=10))
+    
+    # Add a title block with layer info
+    height = 6500
+    width = 18000
+    base = 25400
+    base_x = 36000
+    top.add(shapes.Box((-base_x, -base), (-base_x+width, -base+height), 50, layer=10))
+    top.add(shapes.Label("Layout: "+name, 1000, position=(-base_x+1000, -base+5000), layer=10))
+    top.add(shapes.Label("Author: "+author, 1000, position=(-base_x+1000, -base+3500), layer=10))
+    top.add(shapes.Label("Layer:  ", 1000, position=(-base_x+1000, -base+2000), layer=10))
+    top.add(shapes.Label("        1", 1000, position=(-base_x+1000, -base+2000), layer=1))
+    top.add(shapes.Label("        2", 1000, position=(-base_x+1000, -base+2000), layer=2))
+    top.add(shapes.Label("        4", 1000, position=(-base_x+1000, -base+2000), layer=4))
+    d = datetime.datetime.today()
+    top.add(shapes.Label("Date:   "+str(d.month)+'/'+str(d.day)+'/'+str(d.year), 1000, 
+                         position=(-base_x+1000, -base+500), layer=10))
+    
     # Add the top-cell to a layout and save
     layout = core.Layout("LAYOUT")
     layout.add(top)
@@ -136,10 +182,12 @@ def main(fileName, layers, min_feature=2):
     
 if __name__ == "__main__":
     args = sys.argv
-    if len(args) == 4:
+    if len(args) == 6:
         fileName = args[1] # .npy file with the array in it
         layers = int(args[2]) # Number of layers to discretize the phase into
         min_feature = float(args[3])
-        main(fileName, layers, min_feature)
+        name = args[4]
+        author = args[5]
+        main(fileName, layers, min_feature, name, author)
     else:
-        print("Usage: python numpyArrayToGDS.py <fileName> <layers> <min_feature[um]>")
+        print("Usage: python numpyArrayToGDS.py <fileName> <layers> <min_feature[um]> <name> <author>")

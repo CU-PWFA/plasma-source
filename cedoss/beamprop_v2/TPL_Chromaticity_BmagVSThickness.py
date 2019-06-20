@@ -22,7 +22,7 @@ debug = 0
 zmult=1
 
 num = 101
-len_arr = np.linspace(200, 1200, num)
+len_arr = np.linspace(500, 7000, num) #original is 200 to 1200 for 1e18 cm-3
 emit_arr = np.zeros(num)
 betamin_arr = np.zeros(num)
 tpl_f_arr = np.zeros(num)
@@ -36,13 +36,13 @@ betam_arr = np.zeros(num)
 position_error = 0
 
 gammab = PProp.def_gamma
-tpl_n = 10.
+tpl_n = .5
 betastar = .10 #0.00213065326633
 
 delta = 0.01
 
 for k in range(len(len_arr)):
-    if k%10 == 0: print(k/len(len_arr)*100,"%");
+    if k%2 == 0: print(k/len(len_arr)*100,"%");
     
     tpl_l = len_arr[k]
     tpl_f = Foc.Calc_Focus_Square_CM_UM(tpl_n*1e17, tpl_l, gammab)/100
@@ -153,6 +153,8 @@ plt.plot(len_arr*1e-6*np.sqrt(k), bmag_w2_arr, 'g-.', label = "Thin Calculated",
 plt.plot(len_arr*1e-6*np.sqrt(k), bmag_w2_arr_thick, 'b--', label = "Thick Calculated",linewidth = lwid)
 plt.ylabel(r'$\epsilon_f/\epsilon_0$')
 plt.xlabel(r'$\mathrm{Lens \ Thickness \ }\sqrt{K}l $')
+plt.ylim(1.0,1.01)
+plt.xlim(0.1, 1.5)
 plt.grid(); plt.legend(); plt.show()
 
 #plt.title("Minimum "+r'$\beta$'+" vs Lens Thickness")
