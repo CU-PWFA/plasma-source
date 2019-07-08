@@ -17,6 +17,8 @@ from beam import interactions
 from beam.beams import laserpulse
 from beam.elements import plasma
 import matplotlib.colors as colors
+plt.rcParams['animation.ffmpeg_path'] = '/home/robert/anaconda3/envs/CU-PWFA/bin/ffmpeg'
+import matplotlib.animation as animation
 
 
 def calculate_tran_field(z, I, R, width, lam, dk=None, xlim=None, rlim=None):
@@ -261,7 +263,7 @@ def domain_test(X, Nx, Z, Nz, beam0, pulseParams, z_target, I_target, start, yli
         
     plt.twinx()
     plt.plot((z_target-start)/1e4, I_target, 'w-', label='Target')
-    plt.plot(np.array(beam1.z[:-1])/1e4, I[:, int(Nx/2)], 'r--', label='Simulated')
+    plt.plot(np.array(beam1.z[:-1])/1e4, I[:, int(Nx/2)], 'c--', label='Simulated')
     plt.legend(loc=8)
     plt.xlim(0, Z/1e4)
     plt.show()
@@ -337,6 +339,17 @@ def plasma_refraction(X, Nx, Z, Nz, beam0, pulseParams, species, n, start, m_e):
     return pulse, I, ne
 
 def plot_laser_plasma(I, ne, ext):
+    """ Plot the laser intensity at z=0 and the final plasma density.
+    
+    Parameters
+    ----------
+    I : array of doubles
+        The x-z slice of the intensity array.
+    ne : array of doubles
+        The x-z slice of the plasma density array.
+    ext : array of doubles
+        The extent of the image for imshow extent.
+    """
     plt.figure(figsize=(16, 4), dpi=150)
     plt.subplot(121)
     plt.imshow(np.flipud(np.transpose(I)), aspect='auto', extent=ext, cmap='viridis')
@@ -355,7 +368,101 @@ def plot_laser_plasma(I, ne, ext):
     plt.ylim(-500, 500)
     plt.tight_layout()
     plt.show()
+
+def plot_pulse(pulse, ind, ylim=None, log=False):
+    """ Plot the pulse intensity in t-x space.
     
-def pulse_evolution():
-    pass
+    Parameters
+    ----------
+    pulse : Pulse object
+        The laser pulse to plot the evolution for.
+    ind : int
+        The z index to plot the pulse at.
+    ylim : optional, array or tuple
+        The y limits of the plot.
+    log : optional, bool
+        Plot the intensity on a log scale.
+    """
+    Nt = pulse.Nt
+    T = pulse.T
+    Nx = pulse.Nx
+    X = pulse.X
+    e = np.zeros((Nt, Nx), dtype='complex128')
+    e[:, :] = pulse.load_field(ind)[0]
+    I = ionization.intensity_from_field(e)
+    I_max = np.amax(I)
+    
+    ext = [-T/2, T/2, -X/2, X/2]
+    plt.figure(figsize=(4, 2), dpi=150)
+    if log:
+        norm = colors.LogNorm(vmin=I_max*1e-4, vmax=I_max)
+        plt.imshow(np.fliplr(np.flipud(np.transpose(I))), aspect='auto', extent=ext, cmap='viridis', norm=norm)
+    else:
+        plt.imshow(np.fliplr(np.flipud(np.transpose(I))), aspect='auto', extent=ext, cmap='viridis')
+    cb = plt.colorbar(format="%0.2f")
+    cb.set_label(r'Laser Intensity ($10^{14} W/cm^2$)')
+    plt.xlabel('t (fs)')
+    plt.ylabel(r'x ($\mathrm{\mu m}$)')
+    if ylim is not None:
+        plt.ylim(ylim)
+    plt.show()
+    
+def pulse_evolution(pulse, name, ylim=None, log=False):
+    """ Create an animation of the pulse evolution.
+    
+    Parameters
+    ----------
+    pulse : Pulse object
+        The laser pulse to plot the evolution for.
+    name : string
+        Filename of the animation.
+    ylim : optional, array or tuple
+        The y limits of the plot.
+    log : optional, bool
+        Plot the intensity on a log scale.
+    """
+    Nt = pulse.Nt
+    T = pulse.T
+    Nx = pulse.Nx
+    X = pulse.X
+    Nz = len(pulse.z)
+    e = np.zeros((Nt, Nx), dtype='complex128')
+    e[:, :] = pulse.load_field(0)[0]
+    I = ionization.intensity_from_field(e)
+    I_max = np.amax(I)
+    
+    ext = [-T/2, T/2, -X/2, X/2]
+    fig = plt.figure(figsize=(4, 2), dpi=150)
+    if log:
+        norm = colors.LogNorm(vmin=I_max*1e-4, vmax=I_max)
+        im = plt.imshow(np.fliplr(np.flipud(np.transpose(I))), aspect='auto', extent=ext, cmap='viridis', norm=norm)
+    else:
+        im = plt.imshow(np.fliplr(np.flipud(np.transpose(I))), aspect='auto', extent=ext, cmap='viridis')
+    cb = plt.colorbar(format="%0.2f")
+    cb.set_label(r'Laser Intensity ($10^{14} W/cm^2$)')
+    plt.xlabel('t (fs)')
+    plt.ylabel(r'x ($\mathrm{\mu m}$)')
+    if ylim is not None:
+        plt.ylim(ylim)
+    plt.tight_layout()
+    i = 1
+    
+    def updatefig(*args):
+        nonlocal i
+        e[:, :] = pulse.load_field(i)[0]
+        I = ionization.intensity_from_field(e)
+        I = np.fliplr(np.flipud(np.transpose(I)))
+        im.set_array(I)
+        if log==False:
+            im.autoscale()
+        i += 1
+        # If we run over, loop
+        if i == Nz+1:
+            i = 0
+        if i % 30 == 0:
+            print("Frame", i, "completed")
+        return im,
+    ani = animation.FuncAnimation(fig, updatefig, blit=True, frames=Nz-3)
+    ani.save(pulse.path+name+'.mp4', fps=30)
+    plt.clf()
     
