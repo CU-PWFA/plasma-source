@@ -88,6 +88,8 @@ If everything works each file should be successfully compiled. The package needs
 On windows it is a bit more complicated, you need a compiler so download the Visual Studio build tools and then use the same command
 as above. In windows the code is compiled to c++ because the visual studio compiler doesn't follwo the complex specification in C.
 
+On windows precompiled binaries for fftw will also need to be downloaded, follow the instructions on the pyfftw website.
+
 
 ### VSim environment
 
