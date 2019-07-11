@@ -56,6 +56,11 @@ Arp = {'EI': 27.62965,
        'Z': 2,
        'l': 1,
        'm': 0}
+Li = {'EI': 5.3917,
+      'Z': 1,
+      'l': 0,
+      'm': 0,
+      'alpha': 24.33}
 
 
 def keldysh(EI, I, wavelength):

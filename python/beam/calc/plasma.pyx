@@ -106,3 +106,24 @@ cpdef double plasma_index(double n, double lam):
         Wavelength of the incident light in um.
     """
     return 1.0 - n * lam*lam * 4.47869e-5
+
+cpdef double energy_loss(double n_i, double n_f, double EI, double dz, double dt):
+    """ Calculate the decrease in field strength from ionization energy loss.
+    
+    Parameters
+    ----------
+    n_i : double
+        Plasma density at the beginning of the step in 10^17 cm^-3.
+    n_f : double
+        Plasma density at the end of the step in 10^17 cm^-3.
+    EI : double
+        Ionization energy of the atom in eV.
+    dz : double
+        Length of the cell in um.
+    dt : double
+        Length of the time slice in seconds.
+    """
+    double energy = (n_f - n_i)*EI*dz*1.602e-6
+    double dE = sqrt(energy/t/1.32721e11)
+    return dE
+    
