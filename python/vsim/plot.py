@@ -273,7 +273,8 @@ def drive_witness_density_new(params):
     # Load in plasma density
     rho, rhoAttrs = load.load_field(path, simName, 'rhoPlasma')
     Nx, Ny, Nz = analyze.get_shape(rho[ind])
-    rhoXY = -np.transpose(rho[ind][:, :, int(Nz+1)/2, 0]/e/1e6)+2 #+2 makes it greater than 0 for log scale
+    #rhoXY = -np.transpose(rho[ind][:, :, int(Nz+1)/2, 0]/e/1e6)+2 #+2 makes it greater than 0 for log scale
+    rhoXY = -np.transpose(rho[ind][:, int(Nz+1)/2, :, 0]/e/1e6)+2
     #x = np.linspace(0, 250, Nx)
     #y = np.linspace(0, 250, Ny)
     

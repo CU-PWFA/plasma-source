@@ -32,7 +32,7 @@ from modules import ThreeDimensionAnalysis as ThrDim
 
 def_startloc = 0.80
 def_lenflat = 0.10 #0.50
-def_nset = 0.5 #1203.7 for gas cell
+def_nset = 0.3 #1203.7 for gas cell
 def_betastar = 0.10
 def_betaoffs = -0.387
 def_gamma = 19569.5 #10 GeV beam
@@ -49,7 +49,7 @@ def ReturnDefaultElectronParams(path, beta_star=def_betastar, beta_offset=def_be
         'name' : 'TestBeam',
         'path' : path,
         'load' : False,
-        'N' : 10000,         #10000 for normal, 1000000 for production
+        'N' : 1000000,         #10000 for normal, 1000000 for production
         'gamma' : gamma,
         'emittance' : emit,
         'betax' : beta_init,
@@ -236,6 +236,34 @@ def CustomPlasma_ThinPlasmaLens(plasmaParams, nez, tpl_offset, tpl_n, tpl_l, deb
     
     for i in lens_loc:
         nez[i] = tpl_n
+    
+    argon = plasma.Plasma(plasmaParams)
+    n = plasmaParams['n0']*np.ones(Nz, dtype='double')
+    argon.initialize_plasma(n, nez)
+    if debug == 1: argon.plot_long_density_center();
+    return argon
+
+#fit_tanh = [a,b,n0] - see ThreeDimensionAnalysis for more details
+def CustomPlasma_ThinPlasmaLens_Tanh(plasmaParams, nez, tpl_offset, fit_tanh, debug = 0):
+    tpl_l = 2*fit_tanh[0] + 6*fit_tanh[1]
+    Nz = plasmaParams['Nz']
+    
+    tpl_z = plasmaParams['z0'] + tpl_offset
+    dz = plasmaParams['Z']/(plasmaParams['Nz']-1)
+    
+    tpl_left = tpl_z-.5*tpl_l
+    tpl_right = tpl_z+.5*tpl_l
+    tpl_1 = int(np.floor(tpl_left/dz))
+    tpl_2 = int(np.ceil(tpl_right/dz))
+    if debug==1: print(tpl_1,tpl_2);
+    lens_loc = np.array(range(tpl_2 - tpl_1 - 1)) + tpl_1 + 1
+    
+    z_tpl = np.linspace(-.5 * tpl_l, .5 * tpl_l, len(lens_loc))
+    n_tpl = ThrDim.DoubleTanh(fit_tanh, z_tpl)
+    j=0
+    for i in lens_loc:
+        nez[i] = n_tpl[j]
+        j+=1
     
     argon = plasma.Plasma(plasmaParams)
     n = plasmaParams['n0']*np.ones(Nz, dtype='double')
@@ -520,18 +548,24 @@ def GetBetaMin(beam, m):
 
 def PlotSigmar(beam, z_arr, m):
     sig = np.zeros(m, dtype='double')
+    sigx = np.zeros(m, dtype='double')
+    sigy = np.zeros(m, dtype='double')
     s = np.zeros(m, dtype='double')
     for i in range(m):
         #j = int(i * len(z_arr)/m)
         sig[i] = np.average(beam.get_sigmar(i))*1e6
+        sigx[i] = beam.get_sigmar(i)[0]*1e6
+        sigy[i] = beam.get_sigmar(i)[1]*1e6
         s[i] = beam.get_save_z(i)*1e2
         #s[i] = z_arr[j]*1e-4
         
-    plt.plot(s, sig)
+    plt.plot(s, sig, label='average')
+    plt.plot(s, sigx, label='x')
+    plt.plot(s, sigy, label='y')
     plt.title("Sigmar Evolution")
     plt.xlabel("s [cm]")
     plt.ylabel("sigmar [um]")
-    plt.grid(); plt.show()
+    plt.grid(); plt.legend(); plt.show()
     return sig, s
 
 def PlotGamma(beam, z_arr, m):

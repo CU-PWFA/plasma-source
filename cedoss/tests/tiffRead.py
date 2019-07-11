@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 
 folder = '/home/chris/Desktop/'
 
-imagefile = folder + 'day_21/1805210001/Cam02_1805210001_0001.tiff'
+imagefile = folder + 'June172019Data/4mbar June 17 2019/SID4 11h13m09s018ms.tif'
 #imagefile = folder + 'CameraPics/Cam01_1805170002_0001.tiff'
 image = plt.imread(imagefile)
 

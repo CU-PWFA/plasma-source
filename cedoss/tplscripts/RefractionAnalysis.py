@@ -21,31 +21,36 @@ import matplotlib.pyplot as plt
 #'max_corrector' will shift the beam axis to the maximum density
 #  poor for most cases-only interesting at high densities ~10e19
 cuts=1
-max_corrector=0
+max_corrector=1
 enforce_xoff=0#-31#for p2g8
 calc_focal = 1
+center_jet = 1 #set to 1 to not max correct on the jet axis
 
 #'getfit' will fit the y and z axes to tanh profiles
 #'fityx' uses getfit to add a Gaussian fit to the x axis
 #'infinite_approx' compares getfit with simply assuming an infinite slab
 focalfit = 1
 getfit = 1
+slanted = 1
 fityx = 0
 infinite_approx = 0
 
 #size of window in micrometers
 resize=1
 y_window = 1800
-z_window = 200
+z_window = 300
 
-n0_lens = 5e16
+n0_lens = 3e16
 
 #Locate the desired data by specifying the folder and directory within
 
 #folder = '/home/chris/Desktop/FourierPlots/ArBackground/'
-folder = '/home/chris/Desktop/FourierPlots/ArGasJet_442um_5e16cm-3_new/'
 #folder = '/home/chris/Desktop/FourierPlots/H_597um_1e12cm-3/'
 #folder = '/home/chris/Desktop/FourierPlots/H_996um_5e16cm-3/'
+folder = '/home/chris/Desktop/FourierPlots/ArGasJet_442um_5e16cm-3_new/'#El paper uno
+#folder = '/home/chris/Desktop/FourierPlots/ArGasJet_442_5e16cm-3_Wider/'#El paper uno pero muy widero
+folder = '/home/chris/Desktop/FourierPlots/ArGasJet_737um_3e16cm-3/'
+#folder = '/home/chris/Desktop/FourierPlots/HeFilamen_442um_1e19cm-3/'
 
 directory = 'case_1/'
 #directory = 'Ar1_Big/'
@@ -93,6 +98,8 @@ if max_corrector == 1:
     x_off=maximum[0]; y_off=maximum[1]; z_off=maximum[2]
     if (enforce_xoff != 0):
         x_off = + enforce_xoff
+    if center_jet == 1:
+        z_off = 0
     print('-Corrected beam position to maximum of '+str(maximum[3])+' e17cm^-3')
     print('-Corrected x plane at '+str(x[x_off + round(len(den[:,0,0])/2)])+' microns')
     print('-Corrected y plane at '+str(y[y_off + round(len(den[0,:,0])/2)])+' microns')
@@ -188,12 +195,18 @@ if getfit == 1:
     den_vs_z=den[round(len(x)/2)+x_off,round(len(y)/2),:]
     fitz = ThrDim.FitDataDoubleTanh(den_vs_z,z,[guess[0]/10.0,guess[1]*10.,guess[2]],"Density vs z")
     
+    if slanted == 1:
+        fitz_sl = ThrDim.FitDataSomething(den_vs_z,z,ThrDim.DoubleTanhSlant,[fitz[0],fitz[1],fitz[2],-0.01])
+    
     #Assume an elliptical tanh, plot the simulated and approximate yz planes
     # and take variance cuts through the 2D plane of their differences
     den_plane_yz=den[round(len(x)/2)+x_off,:,:]
     #p1 = ThrDim.Fit2DimTanh(den_plane_yz,y,z,[fity[0],fity[1],fity[2],fity[0]/fitz[0]])
+    slant = 0
+    if slanted == 1:
+        slant = fitz_sl[3]
     difyz = ThrDim.Plot2DimDataTanh(den_plane_yz,y,z,fity,fitz,
-                                    '(microns)','Plasma Density','e17(cm^-3)')
+                                    '(microns)','Plasma Density','e17(cm^-3)',slant)
     ThrDim.VarianceCut(np.transpose(difyz),y,0,5,5,z[1]-z[0],
                 ['Plasma density difference along beam','Distance from axis (microns)',
                  'Density Difference e17(cm^-3)','Offset in z(microns)'],True)

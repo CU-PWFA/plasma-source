@@ -19,7 +19,7 @@ import numpy as np
 debug = 0
 path = '/home/chris/Desktop/BeamProp/testGaussian'
 gamma = PProp.def_gamma
-n_0 = 0.5 #e17 cm^-3
+n_0 = 0.3 #e17 cm^-3
 """Also check that n = this in BeamPropFuncs"""
 
 z0=0
