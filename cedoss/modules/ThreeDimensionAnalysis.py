@@ -178,6 +178,20 @@ def DoubleTanhAbs(p, x):
     return ((.5 + .5*np.tanh((x+abs(p[0]))/abs(p[1]))) *
             (.5 - .5*np.tanh((x-abs(p[0]))/abs(p[1])))) * p[2]
     
+#DoubleTanh with a vertical offset
+#  p - parameters: [a (~top length), b (~ramp length), n_0 (density at center)]
+#  x - array of distances
+def DoubleTanhOffset(p, x):
+    return (((.5 + .5*np.tanh((x+p[0])/p[1])) * 
+            (.5 - .5*np.tanh((x-p[0])/p[1])))+p[3]/p[2]) * p[2]
+    
+#Doubletanh with a flattop slant (for axial gas jet profiles)
+#  p - parameters: [a (~top length), b (~ramp length), n_0 (density at center)]
+#  x - array of distances
+def DoubleTanhSlant(p, x):
+    return ((.5 + .5*np.tanh((x+p[0])/p[1])) * 
+            (.5 - .5*np.tanh((x-p[0])/p[1]))) * p[2] * (p[3]*x+1)
+    
 #Finds the effective distance for an ellipse, y^2 * (scl*z)^2
 #  y,z - array of distances in the elliptical plane
 #  scl - scaling factor between the narrow and wide waists
@@ -189,6 +203,12 @@ def EllipDist(y, z, scl):
 #  x - array of distances
 def Gaussian(p, x):
     return  p[0]*np.exp(-.5*np.square(x-p[2])/np.square(p[1]))
+
+#Generic function for Gaussian
+#  p - parameters: [n_0 (density at center), sigma (distribution), x_0 (offset)]
+#  x - array of distances
+def GaussianOffset(p, x):
+    return  p[0]*(np.exp(-.5*np.square(x-p[2])/np.square(p[1]))+p[3]/p[0])
 
 #Generic function for a Super Gaussian
 #  p - parameters: [n_0 (density at center), sigma (distribution), x_0 (offset), p (power)]
@@ -220,7 +240,7 @@ def DoubleTanh_Lorentzian(p_tanh, p_lorentz, x):
 
 #Basic exponential fit to f(x)=ae^(bx)+c, where p=[a,b,c]
 def Exponential(p, x):
-    return p[0]*np.exp(-p[1]*x)+p[2]
+    return p[0]*np.exp(p[1]*x)+p[2]
 
 #Lorentz, but with p[3] as constant offset in value
 def LorentzOffset(p, x):
@@ -302,18 +322,22 @@ def FitDataExponential(data, axis, guess = [0.,0.,0.], datlabel = 'Simulation'):
     return p1
 
 #Generic function to fit data to a function and plot results.  See above functions
-def FitDataSomething(data, axis, function, guess = [0.,0.,0.], datlabel = 'Simulation'):
+def FitDataSomething(data, axis, function, guess = [0.,0.,0.], datlabel = 'Simulation',log=False,supress=False):
     errfunc = lambda p, x, y: function(p, x) - y
     p0 = guess
     p1, success = optimize.leastsq(errfunc,p0[:], args=(axis, data))
-    plt.semilogy(axis, data, label=datlabel)
-    plt.plot(axis, function(p1,axis), label="Fitted "+ function.__name__ +" profile")
-    plt.title("Comparison of data with "+ function.__name__ +" profile")
-    plt.xlabel("Distance from axis (microns)")
-    plt.ylabel("Density (10^17 cm^-3)")
-    plt.legend()
-    plt.grid()
-    plt.show()
+    if supress==False:
+        if log==True:
+            plt.semilogy(axis, data, label=datlabel)
+        else:
+            plt.plot(axis, data, label=datlabel)
+        plt.plot(axis, function(p1,axis), label="Fitted "+ function.__name__ +" profile")
+        plt.title("Comparison of data with "+ function.__name__ +" profile")
+        plt.xlabel("Distance from axis (microns)")
+        plt.ylabel("Density (10^17 cm^-3)")
+        plt.legend()
+        plt.grid()
+        plt.show()
     return p1
 
 #Plots 2D images of a 2D data from simulation and an analytical comparison given
@@ -328,9 +352,10 @@ def FitDataSomething(data, axis, function, guess = [0.,0.,0.], datlabel = 'Simul
 #  label - string of what is plotted in the 2D plane
 #  label_units - string of the units of label, what is plotted in the 2D plane
 #Returns the 2D array of the difference between data and analytical
-def Plot2DimDataTanh(data, yrange, zrange, py, pz, units='',label='',label_units=''):
+def Plot2DimDataTanh(data, yrange, zrange, py, pz, units='',label='',label_units='', slant=0):
     
     p1 = [py[0],py[1],py[2],py[0]/pz[0]]
+        
     yaxis=np.reshape(yrange, (len(yrange), 1))
     zaxis=np.reshape(zrange, (1, len(zrange)))
 
@@ -339,7 +364,7 @@ def Plot2DimDataTanh(data, yrange, zrange, py, pz, units='',label='',label_units
     print("n_0 = " + str(p1[2]))
     print("scl = " + str(p1[3]))
     
-    approx = DoubleTanh(p1,EllipDist(yaxis,zaxis,p1[3]))
+    approx = DoubleTanh(p1,EllipDist(yaxis,zaxis,p1[3]))*(slant*zaxis+1)
     
     plt.set_cmap('plasma')
     gridSize = (2,3)

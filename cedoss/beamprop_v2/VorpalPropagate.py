@@ -14,10 +14,7 @@ import numpy as np
 import timeit
 
 path = '/home/chris/Desktop/BeamProp/vorpaltest'
-filename = '/media/chris/New Volume/VSimRuns/NERSCResults/3D/TwoBunch/1e18/200um/ThinPlasmaLens3D_WitnessBeam_10.h5'
-
-filename = '/home/chris/Desktop/SimulationRepo/emittance_preservation/simulations/ThinPlasmaLens3D_Gauss_Slab/ThinPlasmaLens3DGaussSlab_WitnessBeam_10.h5'
-filename = '/home/chris/Desktop/CoriRun2/ThinPlasmaLens3DGaussSlab_WitnessBeam_10.h5'
+filename = '/home/chris/Desktop/FACETII_NERSC_Run3/PTPLDoubleTanh_WitnessBeam_8.h5'
 
 debug = 1
 
@@ -29,7 +26,7 @@ threshold = 0.001
 beam = PProp.VorpalBeam(path, filename, threshold, debug=debug)
 print("N: ",beam.N)
 
-z_arr = np.linspace(0, 0.006, 1000 + 1)
+z_arr = np.linspace(0, 0.06, 1000 + 1)
 n_arr = np.zeros(len(z_arr))#+1e-9
 
 argon_params = PProp.ReturnDefaultPlasmaParams(path)

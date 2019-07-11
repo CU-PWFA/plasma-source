@@ -14,15 +14,17 @@ import numpy as np
 import timeit
 
 path = '/home/chris/Desktop/BeamProp/vorpaltest'
-filename = '/home/chris/Desktop/SimulationRepo/TestCases/3D/200um/ThinPlasmaLens3D_Single_ElectronBeam_0.h5'
+filename = '/home/chris/Desktop/FACETII_NERSC_Run3/PTPLDoubleTanh_WitnessBeam_8.h5'
+
+filename = '/home/chris/Desktop/restartcompare/PTPLDoubleTanh_WitnessBeam_20.h5'
 
 debug = 1
 
 dump = 20
 cores = 4
-threshold = 0.5
+threshold = 0.0001
 
-beam = PProp.VorpalBeam(path, filename, threshold, debug)
+beam = PProp.VorpalBeam(path, filename, threshold, debug=debug)
 print("N: ",beam.N)
 
 print("Full emittance: ",np.average(beam.get_emittance_n(0)))

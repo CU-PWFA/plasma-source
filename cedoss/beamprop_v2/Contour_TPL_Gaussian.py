@@ -17,7 +17,7 @@ debug = 0
 path = '/home/chris/Desktop/BeamProp/testGaussian'
 gamma = PProp.def_gamma
 
-case = 20
+case = 30
 if case == 1:
     sighw = 0.08 * 1e6
     tpl_n = 0.5
@@ -40,6 +40,12 @@ if case == 20: #442.1um to match 5cm beta into a ramp that requires 2.5cm beta
     zvac = -0.054
     betastar = 0.05
     z0 = sighw/1e6*6
+if case == 30: #736.9um to match 5cm beta into a ramp that requires 2.5cm beta in 3e16
+    tpl_n = 0.3
+    tpl_l = 736.9
+    sighw = 0.02542 * 1e6
+    zvac = -0.0455# -0.0246
+    betastar = 0.05
 
 argon_params = PProp.ReturnDefaultPlasmaParams(path, sigma_hw = sighw, plasma_start = z0, scaledown = 1)
 argon = PProp.GaussianRampPlasma(argon_params, debug)
@@ -61,7 +67,7 @@ offset_arr = np.linspace(-0.01, 0.01, 201)
 length_arr = np.linspace(tpl_l - 70., tpl_l + 90, 201)
 #"""
 offset_arr = np.linspace(-0.01, 0.01, 201)
-length_arr = np.linspace(tpl_l - 160., tpl_l + 180, 201)
+length_arr = np.linspace(tpl_l - 260., tpl_l + 300, 201)
 bmag_image = np.zeros((len(offset_arr),len(length_arr)))
 
 for i in range(len(offset_arr)):

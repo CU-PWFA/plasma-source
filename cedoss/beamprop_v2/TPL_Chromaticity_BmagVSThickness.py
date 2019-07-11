@@ -17,7 +17,7 @@ sys.path.insert(0, "../")
 from modules import TPLFocalLength as Foc
 from modules import CalcEmitGrowth as W2
 
-path = '/home/chris/Desktop/BeamProp/Placeholder'
+path = '/media/chris/New Volume/BeamProp/Placeholder'
 debug = 0
 zmult=1
 
@@ -36,8 +36,8 @@ betam_arr = np.zeros(num)
 position_error = 0
 
 gammab = PProp.def_gamma
-tpl_n = .5
-betastar = .10 #0.00213065326633
+tpl_n = .3
+betastar = .05 #0.00213065326633
 
 delta = 0.01
 
@@ -72,7 +72,7 @@ for k in range(len(len_arr)):
     argon = PProp.NoPlasma_ThinPlasmaLens(argon_params, n_arr, tpl_offset*1e6 + position_error + tpl_l/2, tpl_n, tpl_l, debug)
     
     ###############################################################################
-    
+    """
     maxbetacomp = np.zeros(len(z_arr))
     center = -1.
     betacent = np.zeros(3)
@@ -94,6 +94,7 @@ for k in range(len(len_arr)):
     betamin_arr[k] = min(maxbetacomp)
     centloc_arr[k] = centloc[0]-tpl_l*1e-6
     centbet_arr[k] = betacent[0]
+    """
     ###############################################################################
     
     beam_params = PProp.ReturnDefaultElectronParams(path, beta_star=betastar, beta_offset=waist_loc,
@@ -153,8 +154,8 @@ plt.plot(len_arr*1e-6*np.sqrt(k), bmag_w2_arr, 'g-.', label = "Thin Calculated",
 plt.plot(len_arr*1e-6*np.sqrt(k), bmag_w2_arr_thick, 'b--', label = "Thick Calculated",linewidth = lwid)
 plt.ylabel(r'$\epsilon_f/\epsilon_0$')
 plt.xlabel(r'$\mathrm{Lens \ Thickness \ }\sqrt{K}l $')
-plt.ylim(1.0,1.01)
-plt.xlim(0.1, 1.5)
+plt.ylim(1.0,1.0015)#1.0,1.01 for 1e18
+plt.xlim(0.1, 1.1)#0.1, 1.5 for 1e18
 plt.grid(); plt.legend(); plt.show()
 
 #plt.title("Minimum "+r'$\beta$'+" vs Lens Thickness")

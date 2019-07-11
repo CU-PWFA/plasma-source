@@ -17,7 +17,7 @@ import sys
 debug = 1
 path = '/home/chris/Desktop/BeamProp/testGaussian'
 
-sighw = 0.02734 * 1e6
+sighw = 0.025415 * 1e6
 z0 = sighw/1e6*10
 argon_params = PProp.ReturnDefaultPlasmaParams(path, sigma_hw = sighw, plasma_start = z0, scaledown = 100)
 argon = PProp.GaussianRampPlasma(argon_params, debug)
@@ -31,8 +31,8 @@ cores = 4
 ramp_end = argon_params['z0']/1e6
 endindex = np.nonzero(z>ramp_end)[0][0]
 
-beta_arr = np.linspace(0.024, 0.026, 200)
-waist_arr = np.linspace(-0.06,-0.048, 200)
+beta_arr = np.linspace(0.0245, 0.0255, 201)
+waist_arr = np.linspace(-0.075,-0.025, 201)
 
 bmag_image = np.zeros((len(beta_arr),len(waist_arr)))
 for i in range(len(beta_arr)):
@@ -49,4 +49,4 @@ for i in range(len(beta_arr)):
         #bmag = PProp.Calc_Bmag(beam_params,n, z)
         bmag_image[i][j] = bmag
 
-minloc = PProp.PlotContour(bmag_image, beta_arr, waist_arr, r'$\beta^*$ [m]', r'$z_{v}$ [m]')
+minloc = PProp.PlotContour(bmag_image, beta_arr, waist_arr, r'$\beta^*$ [m]', r'$z_{v}$ [m]',simple=True)

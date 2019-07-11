@@ -33,14 +33,14 @@ a = 3.31743175609e+16 #cm-3
 b = 0.00049976694808  #um-1
 c = 2.39194210599e+14 #cm-3
 f0 = a*np.exp(-b*5000)+c
-n0 = 5e16/1e17
+n0 = 3e16/1e17
 ## sig(y) = sa + sb y + sc y**2     From ApproxGasJet_SigVSAxial.py
 sa = 2986.91262632; sb = 0.550205150854; sc = -5.09030500347e-06
 
 folder = '/home/chris/Desktop/DataLoads/DensityFilesNp/'
-directory = 'gasjet_Ar_60x24x1600/'
+directory = 'gasjet_Ar3e16_60x24x3200/'
 
-xsize = 60e2; ysize = 24e2; zsize = 16e4 #um
+xsize = 60e2; ysize = 24e2; zsize = 32e4 #um
 nx = 2**(9-reducer)
 ny = 2**(9-reducer)
 nz = 2**(8-reducer)

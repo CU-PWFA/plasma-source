@@ -97,7 +97,7 @@ def Calc_ThickBetaStar_DeltaOff(l, b, d):
 if __name__ == '__main__':
     beta_i = .05
     beta_f = .025
-    n0=5e16
+    n0=3e16
     gam_set = gam_def
     
     #tpl_l = 200 #um

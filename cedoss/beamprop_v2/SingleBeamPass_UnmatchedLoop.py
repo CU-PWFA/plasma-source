@@ -20,7 +20,7 @@ debug = 0
 path = '/home/chris/Desktop/BeamProp/testGaussian'
 gamma = PProp.def_gamma
 
-case = 20
+case = 30
 if case == 1:
     sighw = 0.08 * 1e6
     tpl_n = 0.5
@@ -46,6 +46,13 @@ if case == 20: #442.1um to match 5cm beta into a ramp that requires 2.5cm beta
     tpl_l = 442.1
     sighw = 0.0273 * 1e6
     zvac = -0.054
+    betastar = 0.05
+    
+if case == 30: #736.9um to match 5cm beta into a ramp that requires 2.5cm beta in 3e16
+    tpl_n = 0.3
+    tpl_l = 736.9
+    sighw = 0.02542 * 1e6
+    zvac = -0.0455# -0.0246
     betastar = 0.05
 
 tpl_l=0

@@ -3,6 +3,9 @@
 """
 Created on Mon Oct  8 11:59:08 2018
 
+To get all the good stuff, get 'electron' 'rhoWitness' 'rhoDrive for all the dumps
+then just the final 'WitnessBeam' and 'DriveBeam' dump.
+
 @author: chris
 """
 
@@ -38,15 +41,17 @@ params = {'drive' : 'rhoDrive',
 plot.drive_witness_density_new(params)
 """
 #"""
-path = '/home/chris/Desktop/CoriRun2/'
+path = '/home/chris/Desktop/FACETII_NERSC_Run3/'
+#path = '/home/chris/Desktop/SimulationRepo/emittance_preservation/simulations/PTPL_FacetIIBeams/'
 params = {'drive' : 'rhoDrive',
           'witness' : 'rhoWitness',
           'plasma' : 'electrons',
-          'dumpInd' : 5,
+          'dumpInd' : 8,
           'path' : path,
-          'simName' : 'ThinPlasmaLens3DGaussSlab',
+          'simName' : 'PTPLDoubleTanh',
           'zoom' : 4.0,
-          'alphaCutoff' : 0.05
+          'alphaCutoff' : 0.01
           }
 plot.drive_witness_density_new(params)
+
 #"""
