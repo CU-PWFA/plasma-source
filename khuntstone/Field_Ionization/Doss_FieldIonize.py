@@ -27,7 +27,10 @@ np_arr = np.zeros(nlen)
 for i in range(len(q_arr)):
     beamParams = eb.get_beam()
     beamParams['charge'] = q_arr[i]
-    beamParams['sigma_z'] = 36e-6
+    #beamParams['sigma_z'] = 36e-6
+    beamParams['emitt'] = 120e-06
+    beamParams['sigma_r'] = np.sqrt(beamParams['emitt']*beamParams['beta_s']/beamParams['gamma'])
+    
     pos = eb.get_pos(beamParams, nxi = 5)
     
     Er, rPeak, EPeak = eb.rad_E_field(pos, beamParams)
@@ -64,10 +67,11 @@ for i in range(len(q_arr)):
     nrz = pl.plot_2D_plasma(W_Ar1, pos, beamParams, 'Singly ionized argon', ind = 0)
     nrzmax = np.amax(nrz)
     np_arr[i] = nrzmax
-    
+
 plt.plot(q_arr*1e9, np_arr)
 plt.xlabel(r'Charge [$nC$]')
 plt.ylabel("Peak Ionization Frac.")
+plt.title("Arogn Peak Ion. with 120 "+r'$\mu m$'+" emittance")
 plt.grid(); plt.show()
 
 den_arr = np.zeros(nlen)
@@ -77,6 +81,7 @@ sigr = beamParams['sigma_r']
 den_arr = q_arr/e/np.power(2*np.pi,3/2)/(sigz*sigr*sigr)/np.power(100,3)
 
 plt.plot(den_arr, np_arr)
-plt.xlabel(r'Density [$cm^{-3}$]')
+plt.title("Argon Peak Ion. with 120 "+r'$\mu m$'+" emittance")
+plt.xlabel(r'Beam Density [$cm^{-3}$]')
 plt.ylabel("Peak Ionization Frac.")
 plt.grid(); plt.show()

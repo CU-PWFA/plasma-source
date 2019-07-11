@@ -362,6 +362,10 @@ class ElectronBeam(beam.Beam):
     def plot_phase(self, ptcls, z, xlim=None, ylim=None, weights = None):
         """ Create an x-y plot of the particles. """        
         #If weights aren't given, just initialize an array of 1's
+        
+        #zf = self.get_z(ptcls)
+        #weights = zf
+        
         if weights is None:
             weights = np.zeros(self.N)+1
         else:
@@ -369,8 +373,7 @@ class ElectronBeam(beam.Beam):
             weights = weights[sort]
             ptcls = ptcls[sort]
             
-        #zf = self.get_z(ptcls)
-        #weights = zf
+
             
         fig = plt.figure(figsize=(10, 4), dpi=150)
         plt.subplot(121)
@@ -407,7 +410,8 @@ class ElectronBeam(beam.Beam):
             weights = weights[sort]
             ptcls = ptcls[sort]
         
-        sigma = self.get_sigmar(ind)[0]
+        sigmax = self.get_sigmar(ind)[0]
+        sigmay = self.get_sigmar(ind)[1]
         #There used to be many different fits, but now only the Gauss+Gauss remains.
         # If you want to implement more, use the general procudure below with
         # functions at the bottom of this script.
@@ -416,8 +420,8 @@ class ElectronBeam(beam.Beam):
         plt.subplot(121)
         left = plt.hist(ptcls[:,0]*1e6, bins = 50, weights = weights, log=True)        
         x = np.linspace(min(ptcls[:,0]),max(ptcls[:,0]),100)
-        fx = max(left[0])*np.exp(-1*np.square(x)/2/np.square(sigma))
-        plt.plot(x*1e6, fx, label=r'$\sigma_x=$'+str(sigma*1e6)+r'$\ \mu m$')
+        fx = max(left[0])*np.exp(-1*np.square(x)/2/np.square(sigmax))
+        plt.plot(x*1e6, fx, label=r'$\sigma_x=$'+str(sigmax*1e6)+r'$\ \mu m$')
         plt.xlabel(r'$x\mathrm{\ [\mu m]}$')
         plt.ylabel('Counts')
         plt.ylim(bottom = 0.1)
@@ -426,8 +430,28 @@ class ElectronBeam(beam.Beam):
         
         plt.subplot(122)
         right = plt.hist(ptcls[:,0]*1e6, bins = 50, weights = weights, log=False)
-        plt.plot(x*1e6, fx, label=r'$\sigma_x=$'+str(sigma*1e6)+r'$\ \mu m$')
+        plt.plot(x*1e6, fx, label=r'$\sigma_x=$'+str(sigmax*1e6)+r'$\ \mu m$')
         plt.xlabel(r'$x\mathrm{\ [\mu m]}$')
+        plt.ylim(bottom = 0.1)
+        plt.ylim(top = max(right[0])*1.2)
+        plt.legend(); plt.show()
+        
+        plt.figure(figsize=(10, 4), dpi=150)
+        plt.subplot(121)
+        left = plt.hist(ptcls[:,2]*1e6, bins = 50, weights = weights, log=True)        
+        y = np.linspace(min(ptcls[:,2]),max(ptcls[:,2]),100)
+        fy = max(left[0])*np.exp(-1*np.square(y)/2/np.square(sigmay))
+        plt.plot(x*1e6, fy, label=r'$\sigma_y=$'+str(sigmay*1e6)+r'$\ \mu m$')
+        plt.xlabel(r'$y\mathrm{\ [\mu m]}$')
+        plt.ylabel('Counts')
+        plt.ylim(bottom = 0.1)
+        plt.ylim(top = max(left[0])*6)
+        plt.legend()
+        
+        plt.subplot(122)
+        right = plt.hist(ptcls[:,0]*1e6, bins = 50, weights = weights, log=False)
+        plt.plot(x*1e6, fx, label=r'$\sigma_y=$'+str(sigmay*1e6)+r'$\ \mu m$')
+        plt.xlabel(r'$y\mathrm{\ [\mu m]}$')
         plt.ylim(bottom = 0.1)
         plt.ylim(top = max(right[0])*1.2)
         plt.legend(); plt.show()
@@ -436,7 +460,7 @@ class ElectronBeam(beam.Beam):
         wdata = np.array(left[0])
         rdata = np.array(left[1])*1e-6
         rdata = rdata[0:-1]+.5*(rdata[1]-rdata[0])
-        p = FitDataSomething(wdata, rdata, GaussPlusGauss, [sigma, sigma*3, max(left[0]), max(left[0])/100])
+        p = FitDataSomething(wdata, rdata, GaussPlusGauss, [sigmax, sigmax*3, max(left[0]), max(left[0])/100])
         print("G+G: ",p)
         
         plt.figure(figsize=(10, 4), dpi=150)
