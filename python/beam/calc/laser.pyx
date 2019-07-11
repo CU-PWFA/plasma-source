@@ -17,7 +17,7 @@ from cython.parallel import prange
 
 # Load necessary C functions
 cdef extern from "complex.h" nogil:
-    double complex exp(double complex)
+    double complex cexp(double complex)
     double complex sqrt(double complex)
 
 
@@ -80,10 +80,84 @@ def fourier_prop(double complex[:, :] E, double[:] x, double[:] y, double[:] z,
         with nogil:
             for j in prange(Nx):
                 for k in range(Ny):
-                    e[j, k] = eb[j, k] * exp(ikz[j, k]*z[i])
+                    e[j, k] = eb[j, k] * cexp(ikz[j, k]*z[i])
         e = ifft(e)
         save(e, z[i]+z0)
     return e
+
+
+def pulse_prop(double complex[:, :, :] E, double[:] x, double[:] y, 
+               double[:] z, double[:] t, double lam, double n, double z0, 
+               fft, ifft, save):
+    """
+    Propagates an electromagnetic pulse from a 2D boundary to an array of z.
+
+    Uses the Rayleigh-Sommerfeld transfer function to propagate slices of a
+    pulse from a 2D boundary. The calculation assumes a
+    homogeneous index of refraction in the region of propagation. 
+
+    Parameters
+    ----------
+    E : double complex[:, :, :]
+        Array of E field values at points (t, x, y) along the boundary.
+    x : double[:]
+        Array of transverse locations in x on the boundary. Elements must be
+        evenly spaced for fft.
+    y : double[:]
+        Array of transverse locations in y on the boundary. Elements must be
+        evenly spaced for fft.
+    z : double[:]
+        Array of z distances from the boundary to calculate the field at. Does
+        not need to be evenly spaced.
+    t : double[:]
+        Array of t slices for the pulse. Does not need to be evenly spaced.
+    lam : double
+        Wavelength of the electromagnetic wave in vacuum.
+    n : double, optional
+        Index of refraction of the medium the wave is propagating through.
+    z0 : double
+        Position of the beam at the start of the function.
+    fft : function
+        The fft scheme, an object of the pyfftw.FFTW class.
+    ifft : function
+        The ifft scheme, an object of the pyfftw.FFTW class.
+    save : function
+        A function used to save the data, will be called with 
+        'save(e, z[i], i)'. Will be called for each element of z.
+
+    Returns
+    -------
+    e : double complex[:, :, :]
+        The electric field at position (z, x, y).
+    """
+    cdef int i, j, k, l
+    cdef int Nx = len(x)
+    cdef int Ny = len(y)
+    cdef int Nz = len(z)
+    cdef int Nt = len(t)
+    cdef double dx = x[1] - x[0]
+    cdef double dy = y[1] - y[0]
+    # Store the Fourier transform of the electric field on the boundary
+    cdef double complex[:, :] e = np.zeros((Nx, Ny), dtype='complex128')
+    cdef double complex[:, :, :] eb = np.zeros((Nt, Nx, Ny), dtype='complex128')
+    for i in range(Nt):
+        e = fft(E[i, :, :])
+        eb[i, :, :] = e
+    # Pre-calculate the spatial frequencies
+    cdef double[:] fx = fftfreq(Nx, dx)
+    cdef double[:] fy = fftfreq(Ny, dy)
+    cdef double complex[:, :] ikz = ikz_RS(fx, fy, lam, n)
+    # Fourier transform, multiply by the transfer function, inverse Fourier
+    for i in range(Nz):
+        for j in range(Nt):
+            with nogil:
+                for k in prange(Nx):
+                    for l in range(Ny):
+                        e[k, l] = eb[j, k, l] * cexp(ikz[k, l]*z[i])
+            e = ifft(e)
+            E[j, :, :] = e
+        save(E, z[i]+z0)
+    return E
 
 
 def beam_prop(double complex[:, :] E, double[:] x, double[:] y, double[:] z,
@@ -115,7 +189,7 @@ def beam_prop(double complex[:, :] E, double[:] x, double[:] y, double[:] z,
         with nogil:
             for j in prange(Nx):
                 for k in range(Ny):
-                    E[j, k] *= exp(arg*nih[j, k])
+                    E[j, k] *= cexp(arg*nih[j, k])
         save(E, z[i]+z0)
         dz = z[i+1] - z[i]
     return E
@@ -155,7 +229,7 @@ cpdef double complex[:, :] fourier_step(double complex[:, :] E,
     with nogil:
         for i in prange(Nx):
             for j in range(Ny):
-                e[i, j] *= exp(ikz[i, j]*dz)
+                e[i, j] *= cexp(ikz[i, j]*dz)
     e = ifft(e)
     return e
 
@@ -240,9 +314,9 @@ cpdef double complex[:] fresnel_axis(double complex[:] E, double[:] r,
             raise ValueError('z must not equal 0, abs(z) should be several \
                              times larger than the maximum value of r')
         else:
-            pre = k * exp(1j*k*z[i]) / (1j*z[i])
+            pre = k * cexp(1j*k*z[i]) / (1j*z[i])
             for j in range(Nr):
-                arg[j] = E[j] * exp(1j*k*r[j]*r[j]/(2*z[i])) * r[j]
+                arg[j] = E[j] * cexp(1j*k*r[j]*r[j]/(2*z[i])) * r[j]
             e[i] = pre * integrate.simps(arg, r)
     return e
             

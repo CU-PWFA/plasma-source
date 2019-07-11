@@ -122,7 +122,7 @@ class Pulse(beam.Beam):
     def load_beam(self):
         """ Load the beam, specifically load the z grid and saveInd. """
         self.create_grid()
-        self.z = np.load(self.filePre + '_z.npy')
+        self.z = np.load(self.filePre + '_z.npy').tolist()
         self.saveInd = len(self.z)
         e, temp = self.load_field(self.saveInd - 1)
         if not self.cyl:
@@ -199,6 +199,10 @@ class Pulse(beam.Beam):
         """
         z = np.array(z, ndmin=1, dtype='double')
         # TODO implement this function - maybe include dispersion?
+        self.e = laser.pulse_prop(self.e, self.x, self.y, z, self.t, self.lam, n, 
+                                    self.z[-1], self.fft, self.ifft,
+                                    self.save_field)
+        self.e = np.array(self.e, dtype='complex128')
     
     # Visualization functions
     #--------------------------------------------------------------------------
@@ -248,7 +252,8 @@ class Pulse(beam.Beam):
     
     def plot_current_long_intensity(self):
         """ Plots the current intensity at the in the x-t plane. """
-        im = self.plot_long_intensity(self.e[:, :, int(self.Ny/2)], self.z[-1])
+        e = np.array(self.e[:, :, int(self.Ny/2)])
+        im = self.plot_long_intensity(e, self.z[-1])
         plt.show(im)
         
     def plot_long_intensity_at(self, ind):

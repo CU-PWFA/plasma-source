@@ -21,7 +21,7 @@ plt.rcParams['animation.ffmpeg_path'] = '/home/robert/anaconda3/envs/CU-PWFA/bin
 import matplotlib.animation as animation
 
 
-def calculate_tran_field(z, I, R, width, lam, dk=None, xlim=None, rlim=None):
+def calculate_tran_field(z, I, R, width, lam, path, dk=None, xlim=None, rlim=None):
     """ Calculate the transverse field from an desired on-axis intensity.
     
     Parameters
@@ -93,6 +93,7 @@ def calculate_tran_field(z, I, R, width, lam, dk=None, xlim=None, rlim=None):
     if xlim is not None:
         plt.xlim(xlim)
     plt.show()
+    
     # Plot the transverse phase and intensity
     #--------------------------------------------------------------------------
     # Radial dependence of the phase and and intensity after the beam shaping optics
@@ -109,8 +110,11 @@ def calculate_tran_field(z, I, R, width, lam, dk=None, xlim=None, rlim=None):
     plt.xlabel(r'r (mm)')
     plt.ylabel(r'$\phi$ (radians)')
     plt.xlim(rlim)
+    plt.tight_layout()
     plt.show()
     
+    np.save(path+'r.npy', r)
+    np.save(path+'e.npy', E)
     return r, E
 
 def propagate_to_start(r, E, Z, X, Nx, path, lam, tau, threads, xlim=None):
@@ -260,9 +264,10 @@ def domain_test(X, Nx, Z, Nz, beam0, pulseParams, z_target, I_target, start, yli
     plt.ylabel(r'x ($\mathrm{\mu m}$)')
     if ylim is not None:
         plt.ylim(ylim)
-        
+    
+    dz = z[1]-z[0]
     plt.twinx()
-    plt.plot((z_target-start)/1e4, I_target, 'w-', label='Target')
+    plt.plot((z_target-start-dz)/1e4, I_target, 'w-', label='Target')
     plt.plot(np.array(beam1.z[:-1])/1e4, I[:, int(Nx/2)], 'c--', label='Simulated')
     plt.legend(loc=8)
     plt.xlim(0, Z/1e4)

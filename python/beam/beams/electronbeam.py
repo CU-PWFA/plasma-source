@@ -259,10 +259,12 @@ class ElectronBeam(beam.Beam):
         # Calculate the differences from the average
         cen_x = np.average(x, weights=weights)
         dx = x - cen_x
-        dxp = xp - np.average(xp, weights=weights)
+        cen_xp = np.average(xp, weights=weights)
+        dxp = xp - cen_xp
         cen_y = np.average(y, weights=weights)
         dy = y - cen_y
-        dyp = yp - np.average(yp, weights=weights)
+        cen_yp = np.average(yp, weights=weights)
+        dyp = yp - cen_yp
         # Calculate the RMS sizes and the correlation
         sigmax2 = np.average(dx**2, weights=weights)
         sigmaxp2 = np.average(dxp**2, weights=weights)
@@ -284,6 +286,8 @@ class ElectronBeam(beam.Beam):
         beam['gamma_b'] = gamma
         beam['cen_x']   = cen_x
         beam['cen_y']   = cen_y
+        beam['cen_xp']   = cen_xp
+        beam['cen_yp']   = cen_yp
         return beam
     
     def get_CS(self, weights=None):
@@ -309,7 +313,8 @@ class ElectronBeam(beam.Beam):
         N = len(z)
         beam = {}
         keys = ['eps_x', 'eps_y', 'beta_x', 'beta_y', 'alpha_x', 'alpha_y',
-                'gamma_x', 'gamma_y', 'gamma_b', 'cen_x', 'cen_y']
+                'gamma_x', 'gamma_y', 'gamma_b', 'cen_x', 'cen_y', 'cen_xp',
+                'cen_yp']
         for key in keys:
             beam[key] = np.zeros(N, dtype='double')
         for i in range(N):
