@@ -123,7 +123,7 @@ cpdef double energy_loss(double n_i, double n_f, double EI, double dz, double dt
     dt : double
         Length of the time slice in seconds.
     """
-    double energy = (n_f - n_i)*EI*dz*1.602e-6
-    double dE = sqrt(energy/t/1.32721e11)
+    cdef double energy = (n_f - n_i)*EI*dz*1.602e-6
+    cdef double dE = sqrt(energy/dt/1.32721e11)
     return dE
     
