@@ -103,6 +103,7 @@ if choice==50:#Ar L=442.1 um  Disregard exact shape, need ~100um wide transverse
 
     #P = 426e9 #For a 5e16 cm-3 442.2um lens
     P = 747e9 #For a 3e16 cm-3 736.9um lens
+    #P = 718e9
     
     #  0.00625 0.0125 0.025 0.050 0.100
     #  0.015 0.020 0.030 0.040 0.075 0.150
@@ -753,8 +754,8 @@ if reverse == 1:
     plt.plot(zrange_tot,wtoty,label="Wide Waist Spot Size")
 plt.plot(zrange_tot,wtotx,label="Narrow Waist Spot Size")
 plt.title("Spot size from q parameter")
-plt.ylabel("Spot Size (m)")
-plt.xlabel("Laser Axis (z)")
+plt.ylabel(r'Spot Size [$m$]')
+plt.xlabel(r'Laser Axis (x) [$m$]')
 if reverse != 1:
     plt.plot(zrange_tot,wtoty,label="Wide Waist Spot Size")
 plt.legend()
@@ -778,7 +779,7 @@ if reverse == 1:
 plt.plot(xrange,wx*1e6,label="Beam Axis Waist (x)")
 plt.title("Spot size from q parameter")
 plt.ylabel("Spot Size (um)")
-plt.xlabel("Laser Axis (z)")
+plt.xlabel("Laser Axis (x)")
 plt.plot(xrange,wy*1e6,label="Transverse Waist (y)")
 plt.legend()
 plt.grid(); plt.show()

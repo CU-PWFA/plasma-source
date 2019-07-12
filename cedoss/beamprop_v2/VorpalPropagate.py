@@ -14,7 +14,7 @@ import numpy as np
 import timeit
 
 path = '/home/chris/Desktop/BeamProp/vorpaltest'
-filename = '/home/chris/Desktop/FACETII_NERSC_Run3/PTPLDoubleTanh_WitnessBeam_8.h5'
+filename = '/home/chris/Desktop/FACETII_NERSC_Run4/PTPLDoubleTanh_WitnessBeam_10.h5'
 
 debug = 1
 

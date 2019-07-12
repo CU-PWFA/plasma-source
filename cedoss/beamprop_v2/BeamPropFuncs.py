@@ -32,7 +32,7 @@ from modules import ThreeDimensionAnalysis as ThrDim
 
 def_startloc = 0.80
 def_lenflat = 0.10 #0.50
-def_nset = 0.3 #1203.7 for gas cell
+def_nset = 0.34 #1203.7 for gas cell
 def_betastar = 0.10
 def_betaoffs = -0.387
 def_gamma = 19569.5 #10 GeV beam
@@ -49,7 +49,7 @@ def ReturnDefaultElectronParams(path, beta_star=def_betastar, beta_offset=def_be
         'name' : 'TestBeam',
         'path' : path,
         'load' : False,
-        'N' : 1000000,         #10000 for normal, 1000000 for production
+        'N' : 10000,         #10000 for normal, 1000000 for production
         'gamma' : gamma,
         'emittance' : emit,
         'betax' : beta_init,
@@ -223,9 +223,11 @@ def CustomPlasma(plasmaParams, nez, debug = 0):
 def CustomPlasma_ThinPlasmaLens(plasmaParams, nez, tpl_offset, tpl_n, tpl_l, debug = 0):
     #tpl_l = int(tpl_l)
     Nz = plasmaParams['Nz']
-    
-    tpl_z = plasmaParams['z0'] + tpl_offset
     dz = plasmaParams['Z']/(plasmaParams['Nz']-1)
+    tpl_z = (plasmaParams['z0'] + tpl_offset)
+    print("dz",dz)
+    print("tpl_z",tpl_z)
+    
     
     tpl_left = tpl_z-.5*tpl_l
     tpl_right = tpl_z+.5*tpl_l
@@ -367,6 +369,9 @@ def Calc_CSParams(beamParams, n_arr, z_arr):
 def Calc_Bmag(beamParams, n_arr, z_arr):
     ne0 = max(n_arr)
     beta, alpha, gamma, gb = Calc_CSParams(beamParams, n_arr, z_arr)
+    #plt.plot(z_arr,beta)
+    #plt.ylim(0,0.2)
+    #plt.show()
     kp = 5.95074e4 * np.sqrt(ne0)
     kb = kp/np.sqrt(2*gb[-1])
     Bmag = 0.5*(beta[-1]*kb+gamma[-1]/kb)
@@ -423,14 +428,14 @@ def Plot_CSEvo(beamParams, n_arr, z_arr, z_offset = 0, legend_loc=0, subset = Fa
         beta = beta[subset[0]:subset[1]]
         beta0 = beta0[subset[0]:subset[1]]
         
-    fig, ax1 = plt.subplots()
+    fig, ax1 = plt.subplots(figsize=(13,5))
     plt.title("Beta function evolution at "+r'$n_0=$'+str(max(n_arr))+r'$\,\mathrm{\times 10^{17}cm^{-3}}$')
-    ax1.plot(z_arr*1e2, np.array(beta)*1e2, 'b-', label=r'$\beta$')
+    ax1.semilogy(z_arr*1e2, np.array(beta)*1e2, 'b-', label=r'$\beta$')
     ax1.plot(z_arr*1e2, np.array(beta0)*1e2, 'b--',label=r'$\beta_{vac}$')
     ax1.set_ylabel(r'$\beta\,\mathrm{[cm]}$', color = 'b')
     ax1.tick_params('y', colors = 'b')
     ax1.set_xlabel('z [cm]')
-    ax1.set_ylim([-0.05,20.05])
+    ax1.set_ylim([-0.05,1400.05])
     
     ax2 = ax1.twinx()
     ax2.plot(z_arr*1e2, n_arr/max(n_arr), 'g-')
@@ -447,15 +452,15 @@ def Plot_CSEvo_MatchedCompare(beamParams, beamParams_matched, n_arr, z_arr, z_of
     
     z_arr = z_arr - z_offset
     #print(" ","beta","beta0"); print(" ",beta[740],beta0[740])
-    fig, ax1 = plt.subplots()
+    fig, ax1 = plt.subplots(figsize=(13,5))
     plt.title("Beta function evolution at "+r'$n_0=$'+str(max(n_arr))+r'$\,\mathrm{\times 10^{17}cm^{-3}}$')
-    ax1.plot(z_arr*1e2, np.array(beta)*1e2, 'b-', label=r'$\beta$')
+    ax1.semilogy(z_arr*1e2, np.array(beta)*1e2, 'b-', label=r'$\beta$')
     ax1.plot(z_arr*1e2, np.array(beta0)*1e2, 'b--',label=r'$\beta_{vac}$')
     ax1.plot(z_arr*1e2, np.array(betaM)*1e2, 'r--',label=r'$\beta_{m,vac}$')
     ax1.set_ylabel(r'$\beta\,\mathrm{[cm]}$', color = 'b')
     ax1.tick_params('y', colors = 'b')
     ax1.set_xlabel('z [cm]')
-    ax1.set_ylim([-0.05,20.05])
+    ax1.set_ylim([-0.05,1400.05])
     
     ax2 = ax1.twinx()
     ax2.plot(z_arr*1e2, n_arr/max(n_arr), 'g-')

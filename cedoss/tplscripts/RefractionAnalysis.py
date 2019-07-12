@@ -37,7 +37,7 @@ infinite_approx = 0
 
 #size of window in micrometers
 resize=1
-y_window = 1800
+y_window = 1500
 z_window = 300
 
 n0_lens = 3e16
@@ -131,10 +131,10 @@ if cuts == 1:
     #ThrDim.VarianceCut(den_plane_yz,y,z_off,5,-2,z_step,label)
     
     label=['Density along beam axis (Vary Jet Distance)',
-           'Radius from axis (microns)',
-           'ni (e17 cm^-3)',
-           'Offset in +/- z(microns)']
-    ThrDim.VarianceCut(den_plane_yz,y,z_off,5,1,z_step,label,True)
+           r'Beam Axis (z) [$\mu m$]',
+           r'n(z) [$10^{17} cm^{-3}$]',
+           r'Offset in $\pm$ y[$\mu m$]']
+    ThrDim.VarianceCut(den_plane_yz,y,z_off,5,2,z_step,label,True)
     
     den_plane_yx=np.transpose(den[:,:,round(len(z)/2)+z_off])
     """#For the plus and minus individually

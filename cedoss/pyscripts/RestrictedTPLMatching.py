@@ -16,6 +16,7 @@ from modules import TPLFocalLength as Foc
 bi = .10 #initial beta
 bf = .061608 #final beta / matching condition
 zm = 0.10 #distance from inital waist to final waist - set by facility and matching condition
+tpl_n = 0.1
 
 if bi == bf:
     print("Using bi = bf case:")
@@ -26,7 +27,6 @@ if bi == bf:
     print("d  = ",d,"m")
     
     gamma = Foc.gam_def
-    tpl_n = 0.5
     
     tpl_l = Foc.Calc_Square_Lens(tpl_n*1e17, 1/kl*100, gamma)
     print("L  = ",tpl_l,"um")
@@ -45,7 +45,7 @@ else:
     print("d  = ",d,"m")
     
     gamma = Foc.gam_def
-    tpl_n = 0.5
+
     
     tpl_l = Foc.Calc_Square_Lens(tpl_n*1e17, 1/kl*100, gamma)
     print("L  = ",tpl_l,"um")
