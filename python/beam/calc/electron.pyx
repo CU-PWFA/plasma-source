@@ -208,6 +208,10 @@ def cs_propagation(double[:] z, double[:] ne, double beta0, double alpha0,
         gb[i+1] += dgamma
     return beta, alpha, gamma, gb
 
+#cdef double dgammadz(double ne, double ne0, double dgdz0):
+#    cdef double eta = ne/ne0
+#    return dgdz0 * (2*eta - sqrt(eta))
+
 cdef double dgammadz(double ne, double ne0, double dgdz0):
     cdef double eta = ne/ne0
-    return dgdz0 * (2*eta - sqrt(eta))
+    return dgdz0 * eta**0.71
