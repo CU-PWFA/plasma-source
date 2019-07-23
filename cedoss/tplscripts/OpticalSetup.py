@@ -26,7 +26,7 @@ n=1.                    #Refractive index
 epsilon0 = 8.854e-12    #Dielectric constant
 wavelength = 800.0e-9 #785.3e-9   #Laser wavelength in m
 w0 = 5e-3               #Initial spot size in m
-E_ion = 15.8           #Ionization Energy:  13.6 for H, 15.8 for Ar, 24.6 for He 27.6 for Ar++
+E_ion = 24.6           #Ionization Energy:  13.6 for H, 15.8 for Ar, 24.6 for He 27.6 for Ar++
 setupTitle = ""         #Name the setup 
 reverse = 0
 
@@ -46,7 +46,79 @@ calcfocal = 1
 foc_dom_fac = 2
 radscl = 1   #Set to larger to increase the beam axis domain
 
-choice=50         #Set to one of the setups below
+choice=61         #Set to one of the setups below
+
+if choice==62:#He L=19.01 um  Shooting into 
+    setupTitle = "Spherical_2Cylindrical_reversed"
+    reverse = 1
+    zi = 8e-2 #8e-2             #Offset from small waist to plane we want to save params at
+    zoom=int(round(zi/l_step))
+    radscl = 1
+    
+    setupTitle = "Spherical_2Cylindrical"
+    
+    f1 = 0.025 #m
+    L1 = 0.075
+    
+    f2 = 0.025
+    L2 = 0.077
+    
+    #f1=f2; L1=L2
+
+    P = 1560e9 #481 for 19 um in He
+    
+    #  0.00625 0.0125 0.025 0.050 0.100
+    #  0.015 0.020 0.030 0.040 0.075 0.150
+    q_x = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    q_y = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,.1,l_step)
+    GB.Prop_CylindricalLens(q_y,q_x,.200)
+    GB.Prop_CylindricalLens(q_x,q_y,.200)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L1,l_step) 
+    GB.Prop_CylindricalLens(q_x,q_y,-2*f1)   #Focuses the "Wide" curve in fig1
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L2-L1,l_step) 
+    GB.Prop_CylindricalLens(q_y,q_x,-2*f2)   #Focuses the "Narrow" curve in fig1
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y, 0.5,l_step)
+
+if choice==61:#He L=19.01 um  Shooting into 
+    setupTitle = "Spherical_2Cylindrical_reversed"
+    reverse = 0
+    zi = 8e-2 #8e-2             #Offset from small waist to plane we want to save params at
+    zoom=int(round(zi/l_step))
+    radscl = 0.2
+    
+    setupTitle = "Spherical_2Cylindrical"
+    
+    f1 = 0.025 #m
+    L1 = 0.077
+    
+    f2 = 0.010 #Gets a nice 125 um focus
+    L2 = 0.0901
+    
+    #f1=f2; L1=L2
+
+    P = 341.5e9 #481 for 19 um in He, #241.5e9 for 2.87 um in He
+    
+    #  0.00625 0.0125 0.025 0.050 0.100
+    #  0.015 0.020 0.030 0.040 0.075 0.150
+    q_x = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    q_y = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,.1,l_step)
+    GB.Prop_CylindricalLens(q_y,q_x,.200)
+    GB.Prop_CylindricalLens(q_x,q_y,.200)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L1,l_step) 
+    GB.Prop_CylindricalLens(q_y,q_x,-2*f1)   #Focuses the "Wide" curve in fig1
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L2-L1,l_step) 
+    GB.Prop_CylindricalLens(q_x,q_y,-2*f2)   #Focuses the "Narrow" curve in fig1
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y, 0.5,l_step)
 
 if choice==53:#Ar L=442.1 um  We gonna goldilocks this one
     setupTitle = "Spherical_2Cylindrical_reversed"

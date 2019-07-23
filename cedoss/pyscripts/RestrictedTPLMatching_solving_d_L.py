@@ -19,10 +19,16 @@ import sys
 sys.path.insert(0, "../")
 from modules import TPLFocalLength as Foc
 
+"""#These params are from the E300 Meeting example
 k = 9047.683978841857
 bf = 0.04214
 bi = 0.10
 zw = 0.7041
+"""
+k = 151096.322446659
+bf = 0.04214
+bi = 0.10
+zw = 0.6009
 
 print("First solution")
 l = (bi*k*zw-np.sqrt(bf*bi*k**2*(bf**2-bf*bi+zw**2)))/(bi*k**2*(bf**2+zw**2))
