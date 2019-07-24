@@ -17,6 +17,7 @@ from beam import interactions
 from beam.beams import laserpulse
 from beam.elements import plasma
 import matplotlib.colors as colors
+import matplotlib.gridspec as gridspec
 plt.rcParams['animation.ffmpeg_path'] = '/home/robert/anaconda3/envs/CU-PWFA/bin/ffmpeg'
 import matplotlib.animation as animation
 
@@ -374,6 +375,86 @@ def plot_laser_plasma(I, ne, ext):
     plt.tight_layout()
     plt.show()
 
+def plot_plasma_density(pulse, ne, ne0, ext, lines=[20, 40, 60], name=None):
+    """ Plot the plasma desnity with line outs.
+
+    Parameters
+    ----------
+    pusle : Pulse Object
+        The laser pulse object that created the plasma (used for bounds).
+    ne : array of doubles
+        The x-z slice of the plasma density array.
+    ne0 : double
+        Flattop plasma density measured in 1e17 cm^-3.
+    ext : array of doubles
+        The extent of the image for imshow extent.
+    lines : array of doubles
+        The locations of the transverse lineouts in cm.
+    name : string, optional
+        Name and path for the image to be saved to.
+    """
+    orange = '#EE7733'
+    fig = plt.figure(figsize=(10, 7), dpi=150)
+    gs = gridspec.GridSpec(4, 2, height_ratios=(1.5, 0.5, 3, 1), width_ratios=(40, 1),
+                           hspace=0)
+    ax1 = plt.subplot(gs[2, 0])
+    ne_im = np.flipud(np.transpose(ne/1e16))
+    im = plt.imshow(ne_im, aspect='auto', extent=ext, cmap='plasma',
+                    interpolation='Spline16')
+    plt.ylabel(r'$x$ ($\mathrm{\mu m}$)')
+    plt.ylim(-500, 500)
+    grey2 = '#AAAAAA'
+    linewidth = 0.8
+    for i in lines:
+        plt.plot([i, i], [-500, 500], '-', c=grey2, linewidth=0.8)
+
+    ax2 = plt.subplot(gs[2, 1])
+    cb = plt.colorbar(im, cax=ax2)
+    cb.set_label(r'$n_e$ ($10^{16}\mathrm{cm^{-3}}$)')
+
+    ax3 = plt.subplot(gs[3, 0], sharex=ax1)
+    plt.plot(np.array(pulse.z)/1e4, ne[:, int(pulse.Nx/2)]/1e16, c=orange)
+    plt.xlim(0, 80)
+    plt.ylim(0, 4)
+    plt.xlabel(r'$z$ (cm)')
+    plt.ylabel(r'$n_e$')
+    plt.grid(True)
+
+    plt.tight_layout()
+    plt.setp([a.get_xticklabels() for a in fig.axes[:-1]], visible=False)
+
+    Nz = np.shape(ne)[0]
+    Z = ext[1]
+    gs2 = gridspec.GridSpecFromSubplotSpec(1, 3, wspace=0.0, subplot_spec=gs[0, 0])
+    ax01 = plt.subplot(gs2[0, 2])
+    plt.plot(ne[int(Nz*lines[2]/Z), :]/1e16, pulse.x, c=orange)
+    plt.plot([ne0*10, ne0*10], [-500, 500], '-', c=grey2, linewidth=linewidth)
+    plt.grid(True, axis='y')
+    plt.xlim(0, 1.1*ne0*10)
+    plt.xlabel(r'$n_e$')
+
+    ax02 = plt.subplot(gs2[0, 1], sharey=ax01)
+    plt.plot(ne[int(Nz*lines[1]/Z), :]/1e16, pulse.x, c=orange)
+    plt.plot([ne0*10, ne0*10], [-500, 500], '-', c=grey2, linewidth=linewidth)
+    plt.grid(True, axis='y')
+    plt.xlim(0, 1.1*ne0*10)
+    plt.xlabel(r'$n_e$')
+
+    ax03 = plt.subplot(gs2[0, 0], sharey=ax02)
+    plt.plot(ne[int(Nz*lines[0]/Z), :]/1e16, pulse.x, c=orange)
+    plt.plot([ne0*10, ne0*10], [-500, 500], '-', c=grey2, linewidth=linewidth)
+    plt.grid(True, axis='y')
+    plt.xlim(0, 1.1*ne0*10)
+    plt.xlabel(r'$n_e$')
+    plt.ylim(-350, 350)
+    plt.ylabel(r'$x$ ($\mathrm{\mu m}$)')
+    plt.yticks([-200, 0, 200])
+
+    plt.setp([a.get_yticklabels() for a in fig.axes[3:-1]], visible=False)
+    if name is not None:
+        plt.savefig(name+'.png')
+    plt.show()
+    
 def plot_pulse(pulse, ind, ylim=None, log=False):
     """ Plot the pulse intensity in t-x space.
     
