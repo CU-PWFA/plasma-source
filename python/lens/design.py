@@ -165,7 +165,7 @@ def propagate_to_start(r, E, Z, X, Nx, path, lam, tau, threads, xlim=None):
         'lam' : lam,
         'path' : path,
         'load' : False,
-        'threads' : 4,
+        'threads' : threads,
         'cyl' : True,
         'tau' : tau,
         'name' : 'To_Start',
@@ -711,7 +711,7 @@ def create_lens_A(ri, Ei, r, E, L, path, lam, X, Nx):
     print('Maximum phase change in one pixel %0.2f rad/um' % dphi)
     return rA, phiA, lensA, multi
 
-def propagate_to_lens_B(r0, E0, L, path, lam, lensA, tau):
+def propagate_to_lens_B(r0, E0, L, path, lam, lensA, tau, threads):
     """ Create the phase profile for lens A.
 
     Parameters
@@ -730,6 +730,8 @@ def propagate_to_lens_B(r0, E0, L, path, lam, lensA, tau):
         Lens object for the beam propagation code.
     tau : double
         The RMS pulse length in fs.
+    threads : int
+        The number of threads to run the calculation on.
     
     Returns
     -------
@@ -746,7 +748,7 @@ def propagate_to_lens_B(r0, E0, L, path, lam, lensA, tau):
                   'lam' : lam,
                   'path' : path,
                   'name' : 'Beam0_A_to_B',
-                  'threads' : 4,
+                  'threads' : threads,
                   'cyl' : True,
                   'load' : False}
     
