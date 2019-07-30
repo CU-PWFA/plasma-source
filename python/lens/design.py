@@ -122,7 +122,7 @@ def calculate_tran_field(z, I, R, width, lam, path, dk=None, xlim=None, rlim=Non
     np.save(path+'e.npy', E)
     return r, E
 
-def propagate_to_start(r, E, Z, X, Nx, path, lam, tau, threads, xlim=None):
+def propagate_to_start(r, E, Z, X, Nx, path, lam, tau, threads, xlim=None, plot=True):
     """ Create a beam from a transverse field and propogate to the plasma.
     
     Parameters
@@ -147,6 +147,8 @@ def propagate_to_start(r, E, Z, X, Nx, path, lam, tau, threads, xlim=None):
         Bounds for the transverse intensity plot after propagation
     threads : int
         The number of threads to run the calculation on.
+    plot : bool
+        Show plots or not.
         
     Returns
     -------
@@ -176,42 +178,44 @@ def propagate_to_start(r, E, Z, X, Nx, path, lam, tau, threads, xlim=None):
     
     # Plot the initial transverse intensity
     #--------------------------------------------------------------------------
-    e = beam.e
-    I = beam.intensity_from_field(e)
-    I = beam.prep_data(I)
-    plt.figure(figsize=(8, 3), dpi=150)
-    plt.subplot(121)
-    plt.imshow(I, aspect='auto', extent=[-X/2e3, X/2e3, -X/2e3, X/2e3])
-    cb = plt.colorbar()
-    cb.set_label(r'Intensity ($10^{14} W/cm^2$)')
-    plt.set_cmap('viridis')
-    plt.xlabel(r'x (mm)')
-    plt.ylabel(r'y (mm)')
-    plt.title('Peak transverse intensity at z=0.0cm')
+    if plot:
+        e = beam.e
+        I = beam.intensity_from_field(e)
+        I = beam.prep_data(I)
+        plt.figure(figsize=(8, 3), dpi=150)
+        plt.subplot(121)
+        plt.imshow(I, aspect='auto', extent=[-X/2e3, X/2e3, -X/2e3, X/2e3])
+        cb = plt.colorbar()
+        cb.set_label(r'Intensity ($10^{14} W/cm^2$)')
+        plt.set_cmap('viridis')
+        plt.xlabel(r'x (mm)')
+        plt.ylabel(r'y (mm)')
+        plt.title('Peak transverse intensity at z=0.0cm')
     
     # Plot the initial transverse intensity
     #--------------------------------------------------------------------------
     beam.propagate(Z, 1.0)
-    e = beam.e
-    I = beam.intensity_from_field(e)
-    I = beam.prep_data(I)
-    plt.subplot(122)
-    plt.imshow(I, aspect='auto', extent=[-X/2e3, X/2e3, -X/2e3, X/2e3])
-    cb = plt.colorbar()
-    cb.set_label(r'Intensity ($10^{14} W/cm^2$)')
-    plt.set_cmap('viridis')
-    plt.xlabel(r'x (mm)')
-    plt.ylabel(r'y (mm)')
-    plt.title('Peak transverse intensity at z=%0.1fcm' % (Z/1e4))
-    if xlim is not None:
-        plt.xlim(xlim)
-        plt.ylim(xlim)
-    plt.tight_layout()
-    plt.show()
+    if plot:
+        e = beam.e
+        I = beam.intensity_from_field(e)
+        I = beam.prep_data(I)
+        plt.subplot(122)
+        plt.imshow(I, aspect='auto', extent=[-X/2e3, X/2e3, -X/2e3, X/2e3])
+        cb = plt.colorbar()
+        cb.set_label(r'Intensity ($10^{14} W/cm^2$)')
+        plt.set_cmap('viridis')
+        plt.xlabel(r'x (mm)')
+        plt.ylabel(r'y (mm)')
+        plt.title('Peak transverse intensity at z=%0.1fcm' % (Z/1e4))
+        if xlim is not None:
+            plt.xlim(xlim)
+            plt.ylim(xlim)
+        plt.tight_layout()
+        plt.show()
     
     return beam, pulseParams
 
-def domain_test(X, Nx, Z, Nz, beam0, pulseParams, z_target, I_target, start, ylim=None, log=False):
+def domain_test(X, Nx, Z, Nz, beam0, pulseParams, z_target, I_target, start, ylim=None, log=False, plot=True):
     """ Propagate the beam to see if the domain is large enough.
     
     Parameters
@@ -237,7 +241,14 @@ def domain_test(X, Nx, Z, Nz, beam0, pulseParams, z_target, I_target, start, yli
     ylim : optional, array or tuple
         The y limits of the plot.
     log : optional, bool
-        Plot the intensity on a log scale
+        Plot the intensity on a log scale.
+    plot : bool
+        Show plots or not.
+        
+    Returns
+    -------
+    I : array of doubles
+        The x-z intensity from the simulation.
     """
     z = np.linspace(0, Z, Nz)
     pulseParams['name'] = 'Test_Beam'
@@ -255,28 +266,30 @@ def domain_test(X, Nx, Z, Nz, beam0, pulseParams, z_target, I_target, start, yli
         e1[i, :] = beam1.load_field(i+1)[0]
     I = ionization.intensity_from_field(e1)
     I_max = np.amax(I)
+    if plot:
+        ext = [0, Z/1e4, -X/2, X/2]
+        plt.figure(figsize=(8, 2), dpi=150)
+        if log:
+            norm = colors.LogNorm(vmin=I_max*1e-4, vmax=I_max)
+            plt.imshow(np.flipud(np.transpose(I)), aspect='auto', extent=ext, cmap='viridis', norm=norm)
+        else:
+            plt.imshow(np.flipud(np.transpose(I)), aspect='auto', extent=ext, cmap='viridis')
+        cb = plt.colorbar()
+        cb.set_label(r'Laser Intensity ($10^{14} W/cm^2$)')
+        plt.xlabel('z (cm)')
+        plt.ylabel(r'x ($\mathrm{\mu m}$)')
+        if ylim is not None:
+            plt.ylim(ylim)
+
+        dz = z[1]-z[0]
+        plt.twinx()
+        plt.plot((z_target-start-dz)/1e4, I_target, 'w-', label='Target')
+        plt.plot(np.array(beam1.z[:-1])/1e4, I[:, int(Nx/2)], 'c--', label='Simulated')
+        plt.legend(loc=8)
+        plt.xlim(0, Z/1e4)
+        plt.show()
     
-    ext = [0, Z/1e4, -X/2, X/2]
-    plt.figure(figsize=(8, 2), dpi=150)
-    if log:
-        norm = colors.LogNorm(vmin=I_max*1e-4, vmax=I_max)
-        plt.imshow(np.flipud(np.transpose(I)), aspect='auto', extent=ext, cmap='viridis', norm=norm)
-    else:
-        plt.imshow(np.flipud(np.transpose(I)), aspect='auto', extent=ext, cmap='viridis')
-    cb = plt.colorbar()
-    cb.set_label(r'Laser Intensity ($10^{14} W/cm^2$)')
-    plt.xlabel('z (cm)')
-    plt.ylabel(r'x ($\mathrm{\mu m}$)')
-    if ylim is not None:
-        plt.ylim(ylim)
-    
-    dz = z[1]-z[0]
-    plt.twinx()
-    plt.plot((z_target-start-dz)/1e4, I_target, 'w-', label='Target')
-    plt.plot(np.array(beam1.z[:-1])/1e4, I[:, int(Nx/2)], 'c--', label='Simulated')
-    plt.legend(loc=8)
-    plt.xlim(0, Z/1e4)
-    plt.show()
+    return I
     
 def plasma_refraction(X, Nx, Z, Nz, beam0, pulseParams, species, n, start, m_e):
     """ Propagate the laser pulse through the gas profile.
@@ -711,7 +724,7 @@ def create_lens_A(ri, Ei, r, E, L, path, lam, X, Nx):
     print('Maximum phase change in one pixel %0.2f rad/um' % dphi)
     return rA, phiA, lensA, multi
 
-def propagate_to_lens_B(r0, E0, L, path, lam, lensA, tau, threads):
+def propagate_to_lens_B(r0, E0, L, path, lam, lensA, tau, threads, plot=True):
     """ Create the phase profile for lens A.
 
     Parameters
@@ -732,6 +745,8 @@ def propagate_to_lens_B(r0, E0, L, path, lam, lensA, tau, threads):
         The RMS pulse length in fs.
     threads : int
         The number of threads to run the calculation on.
+    plot : bool
+        Show plots or not.
     
     Returns
     -------
@@ -761,36 +776,38 @@ def propagate_to_lens_B(r0, E0, L, path, lam, lensA, tau, threads):
     
     # Plot the initial transverse intensity
     #--------------------------------------------------------------------------
-    e = beam.e
-    I = beam.intensity_from_field(e)
-    I = beam.prep_data(I)*1e4
-    plt.figure(figsize=(8, 3), dpi=150)
-    plt.subplot(121)
-    plt.imshow(I, aspect='auto', extent=[-XA/2e3, XA/2e3, -XA/2e3, XA/2e3])
-    cb = plt.colorbar()
-    cb.set_label(r'Intensity ($10^{10} W/cm^2$)')
-    plt.set_cmap('viridis')
-    plt.xlabel(r'x (mm)')
-    plt.ylabel(r'y (mm)')
-    plt.title('Peak transverse intensity at Optic A')
+    if plot:
+        e = beam.e
+        I = beam.intensity_from_field(e)
+        I = beam.prep_data(I)*1e4
+        plt.figure(figsize=(8, 3), dpi=150)
+        plt.subplot(121)
+        plt.imshow(I, aspect='auto', extent=[-XA/2e3, XA/2e3, -XA/2e3, XA/2e3])
+        cb = plt.colorbar()
+        cb.set_label(r'Intensity ($10^{10} W/cm^2$)')
+        plt.set_cmap('viridis')
+        plt.xlabel(r'x (mm)')
+        plt.ylabel(r'y (mm)')
+        plt.title('Peak transverse intensity at Optic A')
     
     # Propagate to the second lens and plot the intensity
     #--------------------------------------------------------------------------
     interactions.beam_phase(beam, lensA)
     beam.propagate(L, 1.0)
-    e = beam.e
-    I = beam.intensity_from_field(e)
-    I = beam.prep_data(I)*1e4
-    plt.subplot(122)
-    plt.imshow(I, aspect='auto', extent=[-XA/2e3, XA/2e3, -XA/2e3, XA/2e3])
-    cb = plt.colorbar()
-    cb.set_label(r'Intensity ($10^{10} W/cm^2$)')
-    plt.set_cmap('viridis')
-    plt.xlabel(r'x (mm)')
-    plt.ylabel(r'y (mm)')
-    plt.title('Peak transverse intensity at Optic B')
-    plt.tight_layout()
-    plt.show()
+    if plot:
+        e = beam.e
+        I = beam.intensity_from_field(e)
+        I = beam.prep_data(I)*1e4
+        plt.subplot(122)
+        plt.imshow(I, aspect='auto', extent=[-XA/2e3, XA/2e3, -XA/2e3, XA/2e3])
+        cb = plt.colorbar()
+        cb.set_label(r'Intensity ($10^{10} W/cm^2$)')
+        plt.set_cmap('viridis')
+        plt.xlabel(r'x (mm)')
+        plt.ylabel(r'y (mm)')
+        plt.title('Peak transverse intensity at Optic B')
+        plt.tight_layout()
+        plt.show()
     
     return beam
 
@@ -878,7 +895,7 @@ def plot_phase(rA, phiA, rB, phiB, xlimB):
     plt.xlim(xlimB)
     plt.show()
     
-def field_after_lens_B(beam0, rB, phiB, r, E, rlim=None):
+def field_after_lens_B(beam0, rB, phiB, r, E, rlim=None, plot=True):
     """ Calculate the radial field after the beam shaping optics.
     
     Parameters
@@ -894,7 +911,9 @@ def field_after_lens_B(beam0, rB, phiB, r, E, rlim=None):
     E : array of doubles or complex
         Target electric field at the second lens.
     rlim : optional, tuple or array
-        The limits for the transverse field plot
+        The limits for the transverse field plot.
+    plot : bool
+        Show plots or not.
     
     Returns
     -------
@@ -911,20 +930,21 @@ def field_after_lens_B(beam0, rB, phiB, r, E, rlim=None):
     
     if rlim is None:
         rlim = [0, np.amax(r)/1e3]
-    plt.figure(figsize=(8, 2), dpi=150)
-    plt.subplot(121)
-    plt.plot(r/1e3, ionization.intensity_from_field(E)/1e-4)
-    plt.plot(r/1e3, ionization.intensity_from_field(e1)/1e-4, 'm--')
-    plt.xlabel(r'r (mm)')
-    plt.ylabel(r'I ($\mathrm{10^{10}W/cm^2}$)')
-    plt.xlim(rlim)
-    plt.subplot(122)
-    plt.plot(r/1e3, np.unwrap(np.angle(E)))
-    plt.plot(r/1e3, np.unwrap(np.angle(e1))-np.unwrap(np.angle(e1))[0], 'm--')
-    plt.xlabel(r'r (mm)')
-    plt.ylabel(r'$\phi$ (radians)')
-    plt.xlim(rlim)
-    plt.show()
+    if plot:
+        plt.figure(figsize=(8, 2), dpi=150)
+        plt.subplot(121)
+        plt.plot(r/1e3, ionization.intensity_from_field(E)/1e-4)
+        plt.plot(r/1e3, ionization.intensity_from_field(e1)/1e-4, 'm--')
+        plt.xlabel(r'r (mm)')
+        plt.ylabel(r'I ($\mathrm{10^{10}W/cm^2}$)')
+        plt.xlim(rlim)
+        plt.subplot(122)
+        plt.plot(r/1e3, np.unwrap(np.angle(E)))
+        plt.plot(r/1e3, np.unwrap(np.angle(e1))-np.unwrap(np.angle(e1))[0], 'm--')
+        plt.xlabel(r'r (mm)')
+        plt.ylabel(r'$\phi$ (radians)')
+        plt.xlim(rlim)
+        plt.show()
     return r, e1
 
     
