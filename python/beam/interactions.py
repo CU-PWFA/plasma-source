@@ -31,6 +31,23 @@ def pulse_plasma(pulse, plasma):
                       plasma.load_num_den, plasma.load_plasma_den)
 
 
+def pulse_plasma_energy(pulse, plasma):
+    """ Propagates a pulse through a gas, ionizing and refracting as it goes.
+    
+    Parameters
+    ----------
+    pulse : Pulse class
+        The laser pulse to propagate through the plasma.
+    plasma : Plasma class
+        The gas to propagate the laser pulse through.
+    """
+    pulse.e = pcalc.plasma_refraction_energy(pulse.e, pulse.x, pulse.y,
+                      plasma.z, pulse.t, pulse.lam, plasma.n0, pulse.z[-1],
+                      pulse.fft, pulse.ifft, pulse.save_field, 
+                      plasma.save_plasma_density, plasma.atom, 
+                      plasma.load_num_den, plasma.load_plasma_den)
+
+
 def pulse_multispecies(pulse, multi):
     """ Propagates a pulse through a gas, ionizing and refracting as it goes.
     
