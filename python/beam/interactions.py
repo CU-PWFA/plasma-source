@@ -24,11 +24,11 @@ def pulse_plasma(pulse, plasma):
     plasma : Plasma class
         The gas to propagate the laser pulse through.
     """
-    pulse.e = pcalc.plasma_refraction(pulse.e, pulse.x, pulse.y,
+    pulse.e = np.array(pcalc.plasma_refraction(pulse.e, pulse.x, pulse.y,
                       plasma.z, pulse.t, pulse.lam, plasma.n0, pulse.z[-1],
                       pulse.fft, pulse.ifft, pulse.save_field, 
                       plasma.save_plasma_density, plasma.atom, 
-                      plasma.load_num_den, plasma.load_plasma_den)
+                      plasma.load_num_den, plasma.load_plasma_den))
 
 
 def pulse_plasma_energy(pulse, plasma):
@@ -41,11 +41,11 @@ def pulse_plasma_energy(pulse, plasma):
     plasma : Plasma class
         The gas to propagate the laser pulse through.
     """
-    pulse.e = pcalc.plasma_refraction_energy(pulse.e, pulse.x, pulse.y,
+    pulse.e = np.array(pcalc.plasma_refraction_energy(pulse.e, pulse.x, pulse.y,
                       plasma.z, pulse.t, pulse.lam, plasma.n0, pulse.z[-1],
                       pulse.fft, pulse.ifft, pulse.save_field, 
                       plasma.save_plasma_density, plasma.atom, 
-                      plasma.load_num_den, plasma.load_plasma_den)
+                      plasma.load_num_den, plasma.load_plasma_den))
 
 
 def pulse_multispecies(pulse, multi):

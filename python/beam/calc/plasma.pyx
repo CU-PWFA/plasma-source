@@ -199,7 +199,9 @@ cdef double energy_loss(double n_i, double n_f, double EI, double dz, double dt,
         Current electric field of the pulse.
     """
     cdef double a
-    a = 1.207e-2*EI*(n_f-n_i)*dz / (dt*cabs(E0)**2)
+    cdef double absE
+    absE = cabs(E0)
+    a = 1.207e-2*EI*(n_f-n_i)*dz / (dt*absE*absE)
     if a < 1:
         return sqrt(1-a)
     else:

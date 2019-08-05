@@ -182,6 +182,24 @@ class Plasma(element.Element):
             y = self.y
             ne = self.reconstruct_from_cyl(x, ne, x, y)
         return ne
+    
+    # Physics functions
+    #--------------------------------------------------------------------------
+    
+    def get_plasma_number(self):
+        """ Calculate the total number of plasma electrons ionized. """
+        num = 0.0
+        for i in range(len(self.z)):
+            ne = self.load_plasma_den(i)
+            num += np.sum(ne)
+        dx = self.x[1] - self.x[0]
+        dy = self.y[1] - self.y[0]
+        dz = self.z[1] - self.z[0]
+        return num*dx*dy*dz*1e5
+    
+    def get_ionization_energy(self):
+        """ Calculate the energy required just to ionize the plasma in joules. """
+        return self.get_plasma_number()*self.atom['EI']*1.602e-19
         
     # Visualization functions
     #--------------------------------------------------------------------------
