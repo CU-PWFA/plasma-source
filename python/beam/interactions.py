@@ -28,7 +28,8 @@ def pulse_plasma(pulse, plasma):
                       plasma.z, pulse.t, pulse.lam, plasma.n0, pulse.z[-1],
                       pulse.fft, pulse.ifft, pulse.save_field, 
                       plasma.save_plasma_density, plasma.atom, 
-                      plasma.load_num_den, plasma.load_plasma_den))
+                      plasma.load_num_den, plasma.load_plasma_den,
+                      pulse.threads))
 
 
 def pulse_plasma_energy(pulse, plasma):
@@ -45,7 +46,8 @@ def pulse_plasma_energy(pulse, plasma):
                       plasma.z, pulse.t, pulse.lam, plasma.n0, pulse.z[-1],
                       pulse.fft, pulse.ifft, pulse.save_field, 
                       plasma.save_plasma_density, plasma.atom, 
-                      plasma.load_num_den, plasma.load_plasma_den))
+                      plasma.load_num_den, plasma.load_plasma_den,
+                      pulse.threads))
 
 
 def pulse_multispecies(pulse, multi):

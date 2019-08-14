@@ -30,7 +30,8 @@ cdef extern from "math.h" nogil:
 
 def plasma_refraction(double complex[:, :, :] E, double[:] x, double[:] y,
                       double[:] z, double[:] t, double lam, double n0, 
-                      double z0, fft, ifft, saveE, saven, atom, loadn, loadne):
+                      double z0, fft, ifft, saveE, saven, atom, loadn, loadne,
+                      int num_threads):
     """ Propagate a laser pulse through a plasma accounting for refraction.
 
     Propogates a laser pulse through a region of partially ionized gas. This
@@ -79,7 +80,7 @@ def plasma_refraction(double complex[:, :, :] E, double[:] x, double[:] y,
             # Propagate the beam through
             e = laser.fourier_step(E[j, :, :], ikz, dz, fft, ifft)
             with nogil:
-                for k in prange(Nx):
+                for k in prange(Nx, num_threads=num_threads):
                     for l in range(Ny):
                         e[k, l] *= cexp(arg*ne[k, l])
                         # Ionize the gas
@@ -97,7 +98,8 @@ def plasma_refraction(double complex[:, :, :] E, double[:] x, double[:] y,
 
 def plasma_refraction_energy(double complex[:, :, :] E, double[:] x, double[:] y,
                       double[:] z, double[:] t, double lam, double n0, 
-                      double z0, fft, ifft, saveE, saven, atom, loadn, loadne):
+                      double z0, fft, ifft, saveE, saven, atom, loadn, loadne,
+                      int num_threads):
     """ Propagate a laser pulse through a plasma accounting for refraction.
 
     Propogates a laser pulse through a region of partially ionized gas. This
@@ -148,7 +150,7 @@ def plasma_refraction_energy(double complex[:, :, :] E, double[:] x, double[:] y
             # Propagate the beam through
             e = laser.fourier_step(E[j, :, :], ikz, dz, fft, ifft)
             with nogil:
-                for k in prange(Nx):
+                for k in prange(Nx, num_threads=num_threads):
                     for l in range(Ny):
                         e[k, l] *= cexp(arg*ne[k, l])
                         # Ionize the gas
