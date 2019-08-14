@@ -14,7 +14,7 @@ import beam.calc.laser as lcalc
 import beam.calc.electron as ecalc
 
 
-def pulse_plasma(pulse, plasma):
+def pulse_plasma(pulse, plasma, temp=0.0):
     """ Propagates a pulse through a gas, ionizing and refracting as it goes.
     
     Parameters
@@ -29,7 +29,7 @@ def pulse_plasma(pulse, plasma):
                       pulse.fft, pulse.ifft, pulse.save_field, 
                       plasma.save_plasma_density, plasma.atom, 
                       plasma.load_num_den, plasma.load_plasma_den,
-                      pulse.threads))
+                      pulse.threads, temp))
 
 
 def pulse_plasma_energy(pulse, plasma):
