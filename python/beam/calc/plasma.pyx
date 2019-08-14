@@ -37,7 +37,41 @@ def plasma_refraction(double complex[:, :, :] E, double[:] x, double[:] y,
     function accounts for refraction from the plasma. It determines the plasma
     density by calculating the ionization that has resulted from each temporal
     piece of the pulse. The results are stored in a file, only the central x-z
-    plane is recorded. Note that z=0 
+    plane is recorded. Note that the z array is effectively shifted so z[0]=0.
+    
+    Parameters
+    ----------
+    E : array of complex
+        Electric field in t, x, and y.
+    x : array of double
+        X grid.
+    y : array of double
+        Y grid.
+    z : array of double
+        The z array to propagate through, step sizes can be variable.
+    t : array of double
+        T grid.
+    lam : double
+        Wavelength of the laser in um.
+    n0 : double
+        Background gas density for the diffraction step.
+    z0 : double
+        Initial z value to correctly set z in the save files.
+    fft : fft object
+        Pyfftw fft object.
+    ifft : ifft object
+        Pyfftw ifft object.
+    saveE : func
+        The function should take two arguments, the field and the z position.
+    saven : func
+        The function should take two arguments, a transverse plasma density slice,
+        and an index.
+    atom : ionization.atom object
+        The object with the ionization parameters for the object.
+    loadn : func
+        Function that loads the initial gas density in 10^17 cm^-3 when passed an index.
+    loadne : func
+        Function that loads the initial plasma density in 10^17 cm^-3 when passed an index.
     """
     cdef int i, j, k, l
     # TODO abstract this into its own function
@@ -97,14 +131,54 @@ def plasma_refraction(double complex[:, :, :] E, double[:] x, double[:] y,
 
 def plasma_refraction_energy(double complex[:, :, :] E, double[:] x, double[:] y,
                       double[:] z, double[:] t, double lam, double n0, 
-                      double z0, fft, ifft, saveE, saven, atom, loadn, loadne):
+                      double z0, fft, ifft, saveE, saven, atom, 
+                      loadn, loadne, double temp=0.0):
     """ Propagate a laser pulse through a plasma accounting for refraction.
 
     Propogates a laser pulse through a region of partially ionized gas. This
     function accounts for refraction from the plasma. It determines the plasma
     density by calculating the ionization that has resulted from each temporal
     piece of the pulse. The results are stored in a file, only the central x-z
-    plane is recorded. Note that z=0 
+    plane is recorded. Note that the z array is effectively shifted so z[0]=0.
+    Energy is also taken out of the pulse for ionization and heating. The energy
+    is removed in the cell the energy.
+    
+    Parameters
+    ----------
+    E : array of complex
+        Electric field in t, x, and y.
+    x : array of double
+        X grid.
+    y : array of double
+        Y grid.
+    z : array of double
+        The z array to propagate through, step sizes can be variable.
+    t : array of double
+        T grid.
+    lam : double
+        Wavelength of the laser in um.
+    n0 : double
+        Background gas density for the diffraction step.
+    z0 : double
+        Initial z value to correctly set z in the save files.
+    fft : fft object
+        Pyfftw fft object.
+    ifft : ifft object
+        Pyfftw ifft object.
+    saveE : func
+        The function should take two arguments, the field and the z position.
+    saven : func
+        The function should take two arguments, a transverse plasma density slice,
+        and an index.
+    atom : ionization.atom object
+        The object with the ionization parameters for the object.
+    loadn : func
+        Function that loads the initial gas density in 10^17 cm^-3 when passed an index.
+    loadne : func
+        Function that loads the initial plasma density in 10^17 cm^-3 when passed an index.
+    temp : double, optional
+        The final temperature of the plasma in eV for energy loss. Currently taken
+        out of the field locally.
     """
     cdef int i, j, k, l
     # TODO abstract this into its own function
@@ -156,7 +230,7 @@ def plasma_refraction_energy(double complex[:, :, :] E, double[:] x, double[:] y
                         rate = adk_rate_linear(EI, Eavg, Z, ll, m)
                         ne_new = n[k, l]-(n[k, l]-ne[k, l])*exp(-rate*dt)
                         # Remove energy from the laser
-                        dE = energy_loss(ne[k, l], ne_new, EI, dz, dt, e[k, l])
+                        dE = energy_loss(ne[k, l], ne_new, EI+temp, dz, dt, e[k, l])
                         ne[k, l] = ne_new
                         e[k, l] *= dE
             E[j, :, :] = e
