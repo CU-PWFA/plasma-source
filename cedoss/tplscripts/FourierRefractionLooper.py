@@ -27,10 +27,10 @@ constant_density = .5
 
 #DONT FORGET TO CHECK THE DIRECTORY AND ITS STUFF!
 # initDensity only knows its shape, not dimensions
-denfile = '/home/chris/Desktop/DataLoads/DensityFilesNp/gasjet_Ar3e16_60x24x3200/gasdensity.npy'#60x24x800 for 996um case
-pulsefile = '/home/chris/Desktop/DataLoads/PulseFilesNp/pulseParams_737um_Ar.npy'
+denfile = '/home/chris/Desktop/DataLoads/DensityFilesNp/gasjet_Ar3e16_60x24x400/gasdensity.npy'#60x24x800 for 996um case
+pulsefile = '/home/chris/Desktop/DataLoads/PulseFilesNp/pulseParams_737um_Ar_zoom.npy'
 
-path = '/home/chris/Desktop/FourierPlots/ArGasJet_737um_3e16cm-3/'
+path = '/home/chris/Desktop/FourierPlots/ArGasJet_737um_3e16cm-3_zoom/'
 """
 params_orig = {'Nx' : 2**(9-reducer)  * (1+double_x),
                'Ny' : 2**(9-reducer),
@@ -53,7 +53,7 @@ params_orig = frefract.GetDefaultParams(reducer,double_x)
 
 params_orig['X']=60e2
 params_orig['Y']=24e2
-params_orig['Z']=32e4#8e4 for 442 um case.  In Optical setup make zi is half this value
+params_orig['Z']=4e4#32e4#8e4 for 442 um case.  In Optical setup make zi is half this value
 params_orig['EI']=15.8
 params_orig['lam']=0.800
 #Below is for Filamentation

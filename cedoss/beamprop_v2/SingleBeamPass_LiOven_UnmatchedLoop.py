@@ -17,7 +17,7 @@ from lens import profile
 debug = 0
 path = '/home/chris/Desktop/BeamProp/testGaussian'
 
-case = 11
+case = 2
 if case == 1:#Ideal Matching
     tpl_l = 0
     tpl_offset = 0
@@ -91,4 +91,11 @@ for i in range(len(waist_arr)):
     bmag_arr[i] = PProp.Calc_Bmag(beam_params,n[:endindex], z[:endindex])
 plt.plot(waist_arr,bmag_arr)
 plt.show()
-print(min(bmag_arr))
+print("min bmag:",min(bmag_arr))
+
+waistloc = waist_arr[np.argmin(bmag_arr)] + relset
+beam_params = PProp.ReturnDefaultElectronParams(path, beta_star=betastar,
+                                                           beta_offset=waistloc, plasma_start=0)
+beam_params_matched = PProp.ReturnDefaultElectronParams(path, beta_star=0.04214,
+                                                       beta_offset=0.0357+relset, plasma_start=0)
+PProp.Plot_CSEvo_MatchedCompare(beam_params, beam_params_matched,n, z, 0, legend_loc = 0)

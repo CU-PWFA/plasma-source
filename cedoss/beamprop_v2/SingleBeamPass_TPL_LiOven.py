@@ -20,7 +20,7 @@ from lens import profile
 debug = 1
 path = '/home/chris/Desktop/BeamProp/testGaussian'
 
-case = 3
+case = 2
 if case == 1:#Ideal Matching
     tpl_l = 0
     tpl_offset = 0
@@ -48,7 +48,7 @@ if case == 3:#10cm with lens far downstream
 
 argon_params = PProp.ReturnDefaultPlasmaParams(path, plasma_start = 0., scaledown = 1)
 
-leftext = 1.7#1 #m
+leftext = 0.7#1 #m
 ovenext = 0.5
 dz = .1 #um
 zarr = np.arange((-ovenext-leftext)*1e6, ovenext*1e6+dz, dz)

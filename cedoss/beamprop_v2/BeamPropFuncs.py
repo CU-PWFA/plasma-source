@@ -37,11 +37,12 @@ def_betastar = 0.10
 def_betaoffs = -0.387
 def_gamma = 19569.5 #10 GeV beam
 def_emit = 3e-6 #New value as of July 2018
-
+def_deltaE = 0.0025
 def_sigma_hw = 14.0e4
 
 def ReturnDefaultElectronParams(path, beta_star=def_betastar, beta_offset=def_betaoffs,
-                                plasma_start=def_startloc, gamma=def_gamma, emit=def_emit):
+                                plasma_start=def_startloc, gamma=def_gamma, emit=def_emit,
+                                deltaE = def_deltaE):
     beta_init = beta_star + np.square(plasma_start + beta_offset)/beta_star
     alpha_init = (plasma_start + beta_offset)/beta_star
     
@@ -57,7 +58,7 @@ def ReturnDefaultElectronParams(path, beta_star=def_betastar, beta_offset=def_be
         'alphax' : alpha_init,
         'alphay' : alpha_init,
         'sigmaz' : 5e-6,
-        'dE' : 0.01
+        'dE' : deltaE
     }
     return electronParams
 
@@ -225,10 +226,7 @@ def CustomPlasma_ThinPlasmaLens(plasmaParams, nez, tpl_offset, tpl_n, tpl_l, deb
     Nz = plasmaParams['Nz']
     dz = plasmaParams['Z']/(plasmaParams['Nz']-1)
     tpl_z = (plasmaParams['z0'] + tpl_offset)
-    print("dz",dz)
-    print("tpl_z",tpl_z)
-    
-    
+
     tpl_left = tpl_z-.5*tpl_l
     tpl_right = tpl_z+.5*tpl_l
     tpl_1 = int(np.floor(tpl_left/dz))
@@ -264,7 +262,8 @@ def CustomPlasma_ThinPlasmaLens_Tanh(plasmaParams, nez, tpl_offset, fit_tanh, de
     n_tpl = ThrDim.DoubleTanh(fit_tanh, z_tpl)
     j=0
     for i in lens_loc:
-        nez[i] = n_tpl[j]
+        if nez[i] < n_tpl[j]:
+            nez[i] = n_tpl[j]
         j+=1
     
     argon = plasma.Plasma(plasmaParams)
@@ -428,20 +427,28 @@ def Plot_CSEvo(beamParams, n_arr, z_arr, z_offset = 0, legend_loc=0, subset = Fa
         beta = beta[subset[0]:subset[1]]
         beta0 = beta0[subset[0]:subset[1]]
         
-    fig, ax1 = plt.subplots(figsize=(13,5))
-    plt.title("Beta function evolution at "+r'$n_0=$'+str(max(n_arr))+r'$\,\mathrm{\times 10^{17}cm^{-3}}$')
-    ax1.semilogy(z_arr*1e2, np.array(beta)*1e2, 'b-', label=r'$\beta$')
+    fig, ax1 = plt.subplots(figsize=(7,5))
+    #plt.title("Beta function evolution at "+r'$n_0=$'+str(max(n_arr))+r'$\,\mathrm{\times 10^{17}cm^{-3}}$')
+    ax1.plot(z_arr*1e2, np.array(beta)*1e2, 'b-', label=r'$\beta$')
     ax1.plot(z_arr*1e2, np.array(beta0)*1e2, 'b--',label=r'$\beta_{vac}$')
     ax1.set_ylabel(r'$\beta\,\mathrm{[cm]}$', color = 'b')
     ax1.tick_params('y', colors = 'b')
     ax1.set_xlabel('z [cm]')
-    ax1.set_ylim([-0.05,1400.05])
+    ax1.set_ylim([-0.05,20.05])
+    #ax1.set_ylim([4.8,5.4])
     
     ax2 = ax1.twinx()
     ax2.plot(z_arr*1e2, n_arr/max(n_arr), 'g-')
+    #ax2.semilogy(z_arr*1e2, n_arr/max(n_arr), 'g-')
     ax2.set_ylabel(r'$n/n_0$',color = 'g')
     ax2.tick_params('y', colors = 'g')
-    ax1.grid(); ax1.legend(loc=legend_loc); plt.show()
+    ###
+    #ax1.set_xlim([-8.5,-6.9])
+    #ax2.set_xlim([-8.5,-6.9])
+    #ax2.set_ylim([1e-4,2])
+    ###
+    ax1.grid(); ax1.legend(loc=legend_loc); plt.tight_layout()
+    plt.show()
     
     return beta,alpha,gamma,gb
     
@@ -628,8 +635,12 @@ def PlotSigmar_Compare(beam, beam2, z_arr, m, first, second):
     plt.grid(); plt.legend(); plt.show()
     return
 
-def PlotContour(contour, x_arr, y_arr, x_label, y_label, simple = False):
+def PlotContour(contour, x_arr, y_arr, x_label, y_label, simple = False, swapx = 0, swapy = 0):
         # find location of min(B)
+        
+    y_arr = y_arr-swapy
+    x_arr = x_arr-swapx
+    
     i_Bmin_x = np.argmin(np.min(contour,1))
     i_Bmin_y = np.argmin(np.min(contour,0))
     Bmin_x = x_arr[i_Bmin_x]
@@ -652,23 +663,30 @@ def PlotContour(contour, x_arr, y_arr, x_label, y_label, simple = False):
     cbar.ax.set_ylabel(r'$log_{10}(B_m)$')
     plt.ylabel(y_label)
     plt.xlabel(x_label)
+    plt.show()
 #    plt.title(r'beam matching for %s ramp'%shape_up)
 
     # thin line contour map of B
+    
+    plt.figure(figsize=(7,5))
+    plt.rcParams.update({'font.size': 12})
+    
     levels = np.array([1.01,1.05,1.1,1.2,1.5,2.0,3.0,4.0,5.0])
     labels = np.array([1.01,1.05,1.1,1.2,1.5,2.0,3.0,4.0,5.0])
     fig, axes = plt.subplots(1,1, sharey=True)
     CS = plt.contour(X,Y,contour,levels,cmap=plt.get_cmap('Vega20b'))
-    plt.clabel(CS,labels,fontsize=9,inline=1,fmt='%1.2f')
+    plt.clabel(CS,labels,fontsize=10,inline=1,fmt='%1.2f')
     if simple:
         plt.grid()
     else:
         cbar = plt.colorbar()
-    plt.scatter(Bmin_x,Bmin_y,color='k')
+    plt.scatter(Bmin_x-swapx,Bmin_y-swapy,color='k')
     cbar.ax.set_ylabel(r'$B_m$')
     cbar.set_ticks(levels)
     plt.ylabel(y_label)
     plt.xlabel(x_label)
+    plt.tight_layout()
+    plt.show()
 #    plt.title(r'beam matching for %s ramp'%shape_up)
 
     return [Bmin_x,Bmin_y]

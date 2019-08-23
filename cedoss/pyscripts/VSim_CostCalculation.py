@@ -18,16 +18,16 @@ harder to calculate, such as setup, dumping, and overall processor speed.
 import numpy as np
 
 Nmal = 8
-Nlong = 360;  Llong = 202*1e-6
-Ntran = 518;  Ltran = 300*1e-6
+Nlong = 184;  Llong = 680*1e-6
+Ntran = 200;  Ltran = 800*1e-6
 
 SimEnd = 0.06*1e-2;  SimStart = -0.07*1e-2;  waistloc = 0
 Ndumps = 10;
 
-DriveSigR = 5.1 *1e-6;  DriveSigZ = 5.2 *1e-6;  DriveEmit = 5.3 *1e-6
-WitnsSigR = 3.9 *1e-6;  WitnsSigZ = 12. *1e-6;  WitnsEmit = 3.0 *1e-6
+DriveSigR = 37 *1e-6;  DriveSigZ = 68 *1e-6;  DriveEmit = 3.5 *1e-6
+WitnsSigR = 1e99*3.9 *1e-6;  WitnsSigZ = 0*12. *1e-6;  WitnsEmit = 0*3.0 *1e-6
 
-gbC = 19569.5
+gbC = 25440
 
 ## Constants
 

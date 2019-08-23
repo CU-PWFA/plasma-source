@@ -37,9 +37,9 @@ zi = 7.5e-3             #Offset from small waist to plane we want to save params
 zoom=int(round(zi/l_step))
 
 path = '/home/chris/Desktop/DataLoads/PulseFilesNp/'
-filename = 'pulseParams_737um_Ar.npy'
+filename = 'pulseParams_737um_Ar_zoom.npy'
 
-save = 0                #Set to 1 to save anything
+save = 1                #Set to 1 to save anything
 calcdensity = 0         #Set to 1 to calc resulting plasma density w/out refraction
 calcfocal = 1
 
@@ -84,10 +84,10 @@ if choice==53:#Ar L=442.1 um  We gonna goldilocks this one
     
     GB.Prop_Cylindrical_FreeSpace(q_x,q_y, 0.5,l_step)
 
-if choice==50:#Ar L=442.1 um  Disregard exact shape, need ~100um wide transverse
+if choice==50:#Ar L=737 um in Ar  Disregard exact shape, need ~100um wide transverse
     setupTitle = "Spherical_2Cylindrical_reversed"
     reverse = 1
-    zi = 16e-2 #5e-2             #Offset from small waist to plane we want to save params at
+    zi = 2e-2#16e-2 #5e-2             #Offset from small waist to plane we want to save params at
     zoom=int(round(zi/l_step))
     radscl = 3
     

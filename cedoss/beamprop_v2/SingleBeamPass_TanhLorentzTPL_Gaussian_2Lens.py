@@ -20,7 +20,7 @@ sys.path.insert(0, "../")
 from modules import TPLFocalLength as Foc
 
 debug = 1
-path = '/media/chris/New Volume/BeamProp/testGaussian'
+path = '/home/chris/Desktop/BeamProp/testGaussian'
 gamma = PProp.def_gamma
 
 tpl_n = 0.3
@@ -28,7 +28,7 @@ tpl_l = 736.9
 sighw = 0.02542 * 1e6
 zvac = -0.0455
 betastar = 0.05
-zvac2 = 0.10 + 0.0455 + 0.0246 + 0.00003 #+ 0.5*tpl_l2*1e-6
+zvac2 = 0.10 + 0.0455 + 0.0246 - 0.00002 #+ 0.5*tpl_l2*1e-6
     
 a = 376.409454963
 b = 68.0148653818
@@ -62,8 +62,10 @@ focal = Foc.Calc_Focus_Square_SI(tpl_n*1e17, tpl_l/1e6, gamma)
 #focal = 1 #set this to bypass case 11 being weird with l=0
 beta_f = Foc.Calc_BetaStar(betastar, focal)
 tpl_f = focal*(1-beta_f/betastar)
-waist_loc = zvac - tpl_f
-tpl_offset = waist_loc
+
+tpl_f = Foc.Calc_ThickWaistPos_DeltaOff_UnNormalized(Foc.Calc_K(tpl_n*1e17, gamma) ,tpl_l*1e-4, betastar*100, 0)/100
+waist_loc = zvac - tpl_f - tpl_l*1e-6
+tpl_offset = waist_loc + 1/2*tpl_l*1e-6
 
 #Make beam and bulk plasma just as in single_pass
 beam_params = PProp.ReturnDefaultElectronParams(path, beta_star=betastar,
