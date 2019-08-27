@@ -39,9 +39,9 @@ zoom=int(round(zi/l_step))
 path = '/home/chris/Desktop/DataLoads/PulseFilesNp/'
 filename = 'pulseParams_737um_Ar_zoom.npy'
 
-save = 1                #Set to 1 to save anything
+save = 0                #Set to 1 to save anything
 calcdensity = 0         #Set to 1 to calc resulting plasma density w/out refraction
-calcfocal = 1
+calcfocal = 0
 
 foc_dom_fac = 2
 radscl = 1   #Set to larger to increase the beam axis domain
@@ -750,6 +750,8 @@ wtotx=GB.Prop_SpotList(q_x,wavelength)
 wtoty=GB.Prop_SpotList(q_y,wavelength)
 
 #Plots spot size
+fig, ax1 = plt.subplots(figsize=(7,5))
+#plt.rcParams.update({'font.size': 12})
 if reverse == 1:
     plt.plot(zrange_tot,wtoty,label="Wide Waist Spot Size")
 plt.plot(zrange_tot,wtotx,label="Narrow Waist Spot Size")

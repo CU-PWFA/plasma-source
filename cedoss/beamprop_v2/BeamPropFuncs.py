@@ -460,7 +460,8 @@ def Plot_CSEvo_MatchedCompare(beamParams, beamParams_matched, n_arr, z_arr, z_of
     z_arr = z_arr - z_offset
     #print(" ","beta","beta0"); print(" ",beta[740],beta0[740])
     fig, ax1 = plt.subplots(figsize=(13,5))
-    plt.title("Beta function evolution at "+r'$n_0=$'+str(max(n_arr))+r'$\,\mathrm{\times 10^{17}cm^{-3}}$')
+    plt.rcParams.update({'font.size': 12})
+    #plt.title("Beta function evolution at "+r'$n_0=$'+str(max(n_arr))+r'$\,\mathrm{\times 10^{17}cm^{-3}}$')
     ax1.semilogy(z_arr*1e2, np.array(beta)*1e2, 'b-', label=r'$\beta$')
     ax1.plot(z_arr*1e2, np.array(beta0)*1e2, 'b--',label=r'$\beta_{vac}$')
     ax1.plot(z_arr*1e2, np.array(betaM)*1e2, 'r--',label=r'$\beta_{m,vac}$')

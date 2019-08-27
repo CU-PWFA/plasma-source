@@ -82,7 +82,8 @@ endindex = np.argmax(n)
 bmag = PProp.Calc_Bmag(beam_params,n[:endindex], z[:endindex])
         #bmag = PProp.Calc_Bmag(beam_params,n, z)
 print("bmag",bmag)
+
 if case == 1:
     PProp.Plot_CSEvo(beam_params, n, z, 0, legend_loc = 0)
 else:
-    PProp.Plot_CSEvo_MatchedCompare(beam_params, beam_params_matched,n, z, 0, legend_loc = 0)
+    PProp.Plot_CSEvo_MatchedCompare(beam_params, beam_params_matched,n, z, 0, legend_loc = 6)
