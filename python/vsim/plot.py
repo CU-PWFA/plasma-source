@@ -273,8 +273,8 @@ def drive_witness_density_new(params):
     # Load in plasma density
     rho, rhoAttrs = load.load_field(path, simName, 'rhoPlasma')
     Nx, Ny, Nz = analyze.get_shape(rho[ind])
-    #rhoXY = -np.transpose(rho[ind][:, :, int(Nz+1)/2, 0]/e/1e6)+2 #+2 makes it greater than 0 for log scale
-    rhoXY = -np.transpose(rho[ind][:, int(Nz+1)/2, :, 0]/e/1e6)+2
+    rhoXY = -np.transpose(rho[ind][:, :, int(Nz+1)/2, 0]/e/1e6)+2 #for one transverse dim
+    #rhoXY = -np.transpose(rho[ind][:, int(Nz+1)/2, :, 0]/e/1e6)+2 #for the other tran dim
     #x = np.linspace(0, 250, Nx)
     #y = np.linspace(0, 250, Ny)
     
@@ -319,7 +319,7 @@ def drive_witness_density_new(params):
     # Plot the plasma density
     cmapP = alpha_colormap(plt.cm.get_cmap('inferno'), 0.2, True)
     ax.imshow(rhoXY, interpolation='gaussian', aspect='auto', extent=[-125, 125, -125, 125],
-               norm=colors.LogNorm(vmin=1e16, vmax=2e18), cmap=cmapP)
+               norm=colors.LogNorm(vmin=3.5e15, vmax=2e16), cmap=cmapP)#1e16,2e18
     
     plt.savefig(path+'Title_Wake.png')
     plt.show()
