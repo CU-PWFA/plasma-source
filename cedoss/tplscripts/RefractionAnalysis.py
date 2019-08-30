@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 #'max_corrector' will shift the beam axis to the maximum density
 #  poor for most cases-only interesting at high densities ~10e19
 cuts=1
-max_corrector=1
+max_corrector=0
 enforce_xoff=0#-31#for p2g8
 calc_focal = 1
 center_jet = 1 #set to 1 to not max correct on the jet axis
@@ -37,8 +37,6 @@ infinite_approx = 0
 
 #size of window in micrometers
 resize=1
-y_window = 1500
-z_window = 300
 
 n0_lens = 3e16
 
@@ -49,9 +47,16 @@ n0_lens = 3e16
 #folder = '/home/chris/Desktop/FourierPlots/H_996um_5e16cm-3/'
 #folder = '/home/chris/Desktop/FourierPlots/ArGasJet_442um_5e16cm-3_new/'
 #folder = '/home/chris/Desktop/FourierPlots/ArGasJet_442_5e16cm-3_Wider/'
+"""
 #folder = '/home/chris/Desktop/FourierPlots/ArGasJet_737um_3e16cm-3/' #Case in Paper 1
 folder = '/home/chris/Desktop/FourierPlots/ArGasJet_737um_3e16cm-3_zoom/'
-#folder = '/home/chris/Desktop/FourierPlots/HeFilamen_442um_1e19cm-3/'
+y_window = 1500
+z_window = 300
+"""
+
+folder = '/home/chris/Desktop/FourierPlots/ArGas_labtest1/'
+y_window = 200
+z_window = 700
 
 directory = 'case_1/'
 #directory = 'Ar1_Big/'

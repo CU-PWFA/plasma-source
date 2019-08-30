@@ -20,17 +20,17 @@ free_space = 0
 double_x = 0
 
 #Set to some integer to lower grid resolution by a power
-reducer = 0
+reducer = 2
 
-load_density = 1
-constant_density = .5
+load_density = 0
+constant_density = .3
 
 #DONT FORGET TO CHECK THE DIRECTORY AND ITS STUFF!
 # initDensity only knows its shape, not dimensions
 denfile = '/home/chris/Desktop/DataLoads/DensityFilesNp/gasjet_Ar3e16_60x24x400/gasdensity.npy'#60x24x800 for 996um case
-pulsefile = '/home/chris/Desktop/DataLoads/PulseFilesNp/pulseParams_737um_Ar_zoom.npy'
+pulsefile = '/home/chris/Desktop/DataLoads/PulseFilesNp/pulseParams_labtest1b.npy'
 
-path = '/home/chris/Desktop/FourierPlots/ArGasJet_737um_3e16cm-3_zoom/'
+path = '/home/chris/Desktop/FourierPlots/ArGas_labtest2/'
 """
 params_orig = {'Nx' : 2**(9-reducer)  * (1+double_x),
                'Ny' : 2**(9-reducer),
@@ -51,17 +51,19 @@ params_orig = {'Nx' : 2**(9-reducer)  * (1+double_x),
 """
 params_orig = frefract.GetDefaultParams(reducer,double_x)
 
+params_orig['X']=30e2
+params_orig['Y']=60e2
+params_orig['Z']=16e4
+params_orig['EI']=15.8
+params_orig['lam']=0.800
+"""
+#Below is for paper1 stuff
 params_orig['X']=60e2
 params_orig['Y']=24e2
 params_orig['Z']=4e4#32e4#8e4 for 442 um case.  In Optical setup make zi is half this value
 params_orig['EI']=15.8
 params_orig['lam']=0.800
-#Below is for Filamentation
-#params_orig['X']=60e2
-#params_orig['Y']=24e2
-#params_orig['Z']=20e4#8e4 for 996 um case.  In Optical setup make zi is half this value
-#params_orig['EI']=24.6
-#params_orig['lam']=0.800
+"""
 
 var_loop = [1]#, 2, 3, 5, 8, 10, 15, 20]
 for case in var_loop:
