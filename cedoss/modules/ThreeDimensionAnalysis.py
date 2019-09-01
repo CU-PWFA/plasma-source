@@ -100,6 +100,31 @@ def VarianceCut(data,axis,offset,number,spacing,unit,plot=['Title','x','f(x)','L
     plt.grid()
     plt.show()
 
+def VarianceCut_Prod(data,axis,offset,number,spacing,unit,plot=['Title','x','f(x)','Legend'],both=False):
+    center = round(len(data[0,:])/2)+offset
+    
+    plt.figure(figsize=(10,6))
+    plt.rcParams.update({'font.size': 16})
+    cmap = plt.get_cmap('jet_r')
+    for i in np.arange(number):
+        data_cut = data[:,center+i*spacing]
+        col = cmap(float(i)/number)
+        if i == 0:
+            plt.plot(axis,data_cut,c=col, label='0.00')
+        else:
+            plt.plot(axis,data_cut,c=col, label=r'$+$'+'%s' % float('%.3g' % (i*spacing*unit)))
+        if both & (i>0):
+            data_cut = data[:,center-i*spacing]
+            plt.plot(axis,data_cut,'--',c=col, label=r'$-$'+'%s' % float('%.3g' % (i*spacing*unit)))
+    #plt.title(plot[0])
+    plt.xlabel(plot[1])
+    plt.ylabel(plot[2])
+    plt.legend(title=plot[3])
+    plt.grid()
+    plt.tight_layout()
+
+    plt.show()
+
 #Takes a 3D array, and plots the 2D planes cut along the 3 axes
 #  data - 3D array in [laser,beam,jet]
 #  x,y,z - axes in x,y,z
@@ -158,6 +183,34 @@ def ImageCut(data,x,y,z,x_off=0,y_off=0,z_off=0,zoom=1,units='',label='',label_u
     plt.title(label+'; z='+str(zrange_z[round(len(z)/2)+z_off])+' '+units)
     
     plt.tight_layout()
+    plt.show()
+    
+def ImageCut_xy_Production(data,x,y,z,x_off=0,y_off=0,z_off=0,zoom=1,units='',label='',label_units='',color=0):
+    xrange_z=[i*zoom for i in x]
+    yrange_z=[i*zoom for i in y]
+    zrange_z=[i*zoom for i in z]
+
+    #data_yz=np.transpose(data[round(len(x)/2)+x_off,:,:])
+    data_xz=np.transpose(data[round(len(x)*1/4):round(len(x)*3/4),round(len(y)/2)+y_off,:])*10
+    #data_xy=np.transpose(data[:,:,round(len(z)/2)+z_off])
+    
+    if color == 1:
+        plt.set_cmap('plasma')
+    else:
+        plt.set_cmap('viridis')
+        
+    plt.figure(figsize=(66.6,2))
+    plt.rcParams.update({'font.size': 16})
+    plt.imshow(data_xz, interpolation="none", origin="lower",
+               extent=[xrange_z[0]/2,xrange_z[-1]/2,zrange_z[0],zrange_z[-1]],
+               aspect='equal')
+    CB=plt.colorbar(orientation = 'horizontal', pad =  .4)
+    CB.set_label(label+' '+label_units)
+    #plt.xlabel('x '+units+' - Laser')
+    plt.ylabel('z '+units+' - Jet')
+    plt.title(label+'; y='+str(yrange_z[round(len(y)/2)+y_off])+' '+units)
+    #plt.savefig('demo.png', transparent=True,bbox_inches='tight')
+    #plt.savefig('/home/chris/Desktop/fig_strip.png',transparent=True,bbox_inches='tight')
     plt.show()
     
 """

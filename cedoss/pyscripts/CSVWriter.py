@@ -33,11 +33,12 @@ x = np.linspace(-Z/2, Z/2, Nz, False)
 with open(directory+csvfilename,'w') as wrt:#csvfile:
     #wrt = csv.writer(csvfile)
     wrt.write("Density,x,y,z\n")
-    for i in range(len(x))[int(len(x)/3):int(len(x)*2/3)]:
+    for i in range(len(x)):#[int(len(x)/3):int(len(x)*2/3)]:
         xi = x[i]
         for j in range(len(y)):
             yj = y[j]
             for k in range(len(z)):
                 arri = arr[i,j,k]
-                row = str(arri)+","+str(xi)+","+str(yj)+","+str(z[k])+"\n"
-                wrt.write(row)
+                if arri > 0.01:
+                    row = str(arri)+","+str(xi)+","+str(yj)+","+str(z[k])+"\n"
+                    wrt.write(row)

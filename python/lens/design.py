@@ -8,15 +8,20 @@ Created on Tue Jul  2 14:04:21 2019
 
 import numpy as np
 from numpy.fft import fft, ifft, fftfreq, fftshift
+from scipy.integrate import simps
+from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 from ionization import ionization
 from lens import bessel
+from lens import ray
 from propagation import laser
 from beam.beams import laserbeam
 from beam import interactions
 from beam.beams import laserpulse
 from beam.elements import plasma
+from beam.elements import optic
 import matplotlib.colors as colors
+import matplotlib.gridspec as gridspec
 plt.rcParams['animation.ffmpeg_path'] = '/home/robert/anaconda3/envs/CU-PWFA/bin/ffmpeg'
 import matplotlib.animation as animation
 
@@ -117,7 +122,7 @@ def calculate_tran_field(z, I, R, width, lam, path, dk=None, xlim=None, rlim=Non
     np.save(path+'e.npy', E)
     return r, E
 
-def propagate_to_start(r, E, Z, X, Nx, path, lam, tau, threads, xlim=None):
+def propagate_to_start(r, E, Z, X, Nx, path, lam, tau, threads, xlim=None, plot=True):
     """ Create a beam from a transverse field and propogate to the plasma.
     
     Parameters
@@ -142,6 +147,8 @@ def propagate_to_start(r, E, Z, X, Nx, path, lam, tau, threads, xlim=None):
         Bounds for the transverse intensity plot after propagation
     threads : int
         The number of threads to run the calculation on.
+    plot : bool
+        Show plots or not.
         
     Returns
     -------
@@ -160,7 +167,7 @@ def propagate_to_start(r, E, Z, X, Nx, path, lam, tau, threads, xlim=None):
         'lam' : lam,
         'path' : path,
         'load' : False,
-        'threads' : 4,
+        'threads' : threads,
         'cyl' : True,
         'tau' : tau,
         'name' : 'To_Start',
@@ -171,42 +178,44 @@ def propagate_to_start(r, E, Z, X, Nx, path, lam, tau, threads, xlim=None):
     
     # Plot the initial transverse intensity
     #--------------------------------------------------------------------------
-    e = beam.e
-    I = beam.intensity_from_field(e)
-    I = beam.prep_data(I)
-    plt.figure(figsize=(8, 3), dpi=150)
-    plt.subplot(121)
-    plt.imshow(I, aspect='auto', extent=[-X/2e3, X/2e3, -X/2e3, X/2e3])
-    cb = plt.colorbar()
-    cb.set_label(r'Intensity ($10^{14} W/cm^2$)')
-    plt.set_cmap('viridis')
-    plt.xlabel(r'x (mm)')
-    plt.ylabel(r'y (mm)')
-    plt.title('Peak transverse intensity at z=0.0cm')
+    if plot:
+        e = beam.e
+        I = beam.intensity_from_field(e)
+        I = beam.prep_data(I)
+        plt.figure(figsize=(8, 3), dpi=150)
+        plt.subplot(121)
+        plt.imshow(I, aspect='auto', extent=[-X/2e3, X/2e3, -X/2e3, X/2e3])
+        cb = plt.colorbar()
+        cb.set_label(r'Intensity ($10^{14} W/cm^2$)')
+        plt.set_cmap('viridis')
+        plt.xlabel(r'x (mm)')
+        plt.ylabel(r'y (mm)')
+        plt.title('Peak transverse intensity at z=0.0cm')
     
     # Plot the initial transverse intensity
     #--------------------------------------------------------------------------
     beam.propagate(Z, 1.0)
-    e = beam.e
-    I = beam.intensity_from_field(e)
-    I = beam.prep_data(I)
-    plt.subplot(122)
-    plt.imshow(I, aspect='auto', extent=[-X/2e3, X/2e3, -X/2e3, X/2e3])
-    cb = plt.colorbar()
-    cb.set_label(r'Intensity ($10^{14} W/cm^2$)')
-    plt.set_cmap('viridis')
-    plt.xlabel(r'x (mm)')
-    plt.ylabel(r'y (mm)')
-    plt.title('Peak transverse intensity at z=%0.1fcm' % (Z/1e4))
-    if xlim is not None:
-        plt.xlim(xlim)
-        plt.ylim(xlim)
-    plt.tight_layout()
-    plt.show()
+    if plot:
+        e = beam.e
+        I = beam.intensity_from_field(e)
+        I = beam.prep_data(I)
+        plt.subplot(122)
+        plt.imshow(I, aspect='auto', extent=[-X/2e3, X/2e3, -X/2e3, X/2e3])
+        cb = plt.colorbar()
+        cb.set_label(r'Intensity ($10^{14} W/cm^2$)')
+        plt.set_cmap('viridis')
+        plt.xlabel(r'x (mm)')
+        plt.ylabel(r'y (mm)')
+        plt.title('Peak transverse intensity at z=%0.1fcm' % (Z/1e4))
+        if xlim is not None:
+            plt.xlim(xlim)
+            plt.ylim(xlim)
+        plt.tight_layout()
+        plt.show()
     
     return beam, pulseParams
 
-def domain_test(X, Nx, Z, Nz, beam0, pulseParams, z_target, I_target, start, ylim=None, log=False):
+def domain_test(X, Nx, Z, Nz, beam0, pulseParams, z_target, I_target, start, ylim=None, log=False, plot=True):
     """ Propagate the beam to see if the domain is large enough.
     
     Parameters
@@ -232,7 +241,14 @@ def domain_test(X, Nx, Z, Nz, beam0, pulseParams, z_target, I_target, start, yli
     ylim : optional, array or tuple
         The y limits of the plot.
     log : optional, bool
-        Plot the intensity on a log scale
+        Plot the intensity on a log scale.
+    plot : bool
+        Show plots or not.
+        
+    Returns
+    -------
+    I : array of doubles
+        The x-z intensity from the simulation.
     """
     z = np.linspace(0, Z, Nz)
     pulseParams['name'] = 'Test_Beam'
@@ -250,28 +266,30 @@ def domain_test(X, Nx, Z, Nz, beam0, pulseParams, z_target, I_target, start, yli
         e1[i, :] = beam1.load_field(i+1)[0]
     I = ionization.intensity_from_field(e1)
     I_max = np.amax(I)
+    if plot:
+        ext = [0, Z/1e4, -X/2, X/2]
+        plt.figure(figsize=(8, 2), dpi=150)
+        if log:
+            norm = colors.LogNorm(vmin=I_max*1e-4, vmax=I_max)
+            plt.imshow(np.flipud(np.transpose(I)), aspect='auto', extent=ext, cmap='viridis', norm=norm)
+        else:
+            plt.imshow(np.flipud(np.transpose(I)), aspect='auto', extent=ext, cmap='viridis')
+        cb = plt.colorbar()
+        cb.set_label(r'Laser Intensity ($10^{14} W/cm^2$)')
+        plt.xlabel('z (cm)')
+        plt.ylabel(r'x ($\mathrm{\mu m}$)')
+        if ylim is not None:
+            plt.ylim(ylim)
+
+        dz = z[1]-z[0]
+        plt.twinx()
+        plt.plot((z_target-start-dz)/1e4, I_target, 'w-', label='Target')
+        plt.plot(np.array(beam1.z[:-1])/1e4, I[:, int(Nx/2)], 'c--', label='Simulated')
+        plt.legend(loc=8)
+        plt.xlim(0, Z/1e4)
+        plt.show()
     
-    ext = [0, Z/1e4, -X/2, X/2]
-    plt.figure(figsize=(8, 2), dpi=150)
-    if log:
-        norm = colors.LogNorm(vmin=I_max*1e-4, vmax=I_max)
-        plt.imshow(np.flipud(np.transpose(I)), aspect='auto', extent=ext, cmap='viridis', norm=norm)
-    else:
-        plt.imshow(np.flipud(np.transpose(I)), aspect='auto', extent=ext, cmap='viridis')
-    cb = plt.colorbar()
-    cb.set_label(r'Laser Intensity ($10^{14} W/cm^2$)')
-    plt.xlabel('z (cm)')
-    plt.ylabel(r'x ($\mathrm{\mu m}$)')
-    if ylim is not None:
-        plt.ylim(ylim)
-    
-    dz = z[1]-z[0]
-    plt.twinx()
-    plt.plot((z_target-start-dz)/1e4, I_target, 'w-', label='Target')
-    plt.plot(np.array(beam1.z[:-1])/1e4, I[:, int(Nx/2)], 'c--', label='Simulated')
-    plt.legend(loc=8)
-    plt.xlim(0, Z/1e4)
-    plt.show()
+    return I
     
 def plasma_refraction(X, Nx, Z, Nz, beam0, pulseParams, species, n, start, m_e):
     """ Propagate the laser pulse through the gas profile.
@@ -374,6 +392,86 @@ def plot_laser_plasma(I, ne, ext):
     plt.tight_layout()
     plt.show()
 
+def plot_plasma_density(pulse, ne, ne0, ext, lines=[20, 40, 60], name=None):
+    """ Plot the plasma desnity with line outs.
+
+    Parameters
+    ----------
+    pusle : Pulse Object
+        The laser pulse object that created the plasma (used for bounds).
+    ne : array of doubles
+        The x-z slice of the plasma density array.
+    ne0 : double
+        Flattop plasma density measured in 1e17 cm^-3.
+    ext : array of doubles
+        The extent of the image for imshow extent.
+    lines : array of doubles
+        The locations of the transverse lineouts in cm.
+    name : string, optional
+        Name and path for the image to be saved to.
+    """
+    orange = '#EE7733'
+    fig = plt.figure(figsize=(10, 7), dpi=150)
+    gs = gridspec.GridSpec(4, 2, height_ratios=(1.5, 0.5, 3, 1), width_ratios=(40, 1),
+                           hspace=0)
+    ax1 = plt.subplot(gs[2, 0])
+    ne_im = np.flipud(np.transpose(ne/1e16))
+    im = plt.imshow(ne_im, aspect='auto', extent=ext, cmap='plasma',
+                    interpolation='Spline16')
+    plt.ylabel(r'$x$ ($\mathrm{\mu m}$)')
+    plt.ylim(-500, 500)
+    grey2 = '#AAAAAA'
+    linewidth = 0.8
+    for i in lines:
+        plt.plot([i, i], [-500, 500], '-', c=grey2, linewidth=0.8)
+
+    ax2 = plt.subplot(gs[2, 1])
+    cb = plt.colorbar(im, cax=ax2)
+    cb.set_label(r'$n_e$ ($10^{16}\mathrm{cm^{-3}}$)')
+
+    ax3 = plt.subplot(gs[3, 0], sharex=ax1)
+    plt.plot(np.array(pulse.z)/1e4, ne[:, int(pulse.Nx/2)]/1e16, c=orange)
+    plt.xlim(0, 80)
+    plt.ylim(0, 4)
+    plt.xlabel(r'$z$ (cm)')
+    plt.ylabel(r'$n_e$')
+    plt.grid(True)
+
+    plt.tight_layout()
+    plt.setp([a.get_xticklabels() for a in fig.axes[:-1]], visible=False)
+
+    Nz = np.shape(ne)[0]
+    Z = ext[1]
+    gs2 = gridspec.GridSpecFromSubplotSpec(1, 3, wspace=0.0, subplot_spec=gs[0, 0])
+    ax01 = plt.subplot(gs2[0, 2])
+    plt.plot(ne[int(Nz*lines[2]/Z), :]/1e16, pulse.x, c=orange)
+    plt.plot([ne0*10, ne0*10], [-500, 500], '-', c=grey2, linewidth=linewidth)
+    plt.grid(True, axis='y')
+    plt.xlim(0, 1.1*ne0*10)
+    plt.xlabel(r'$n_e$')
+
+    ax02 = plt.subplot(gs2[0, 1], sharey=ax01)
+    plt.plot(ne[int(Nz*lines[1]/Z), :]/1e16, pulse.x, c=orange)
+    plt.plot([ne0*10, ne0*10], [-500, 500], '-', c=grey2, linewidth=linewidth)
+    plt.grid(True, axis='y')
+    plt.xlim(0, 1.1*ne0*10)
+    plt.xlabel(r'$n_e$')
+
+    ax03 = plt.subplot(gs2[0, 0], sharey=ax02)
+    plt.plot(ne[int(Nz*lines[0]/Z), :]/1e16, pulse.x, c=orange)
+    plt.plot([ne0*10, ne0*10], [-500, 500], '-', c=grey2, linewidth=linewidth)
+    plt.grid(True, axis='y')
+    plt.xlim(0, 1.1*ne0*10)
+    plt.xlabel(r'$n_e$')
+    plt.ylim(-350, 350)
+    plt.ylabel(r'$x$ ($\mathrm{\mu m}$)')
+    plt.yticks([-200, 0, 200])
+
+    plt.setp([a.get_yticklabels() for a in fig.axes[3:-1]], visible=False)
+    if name is not None:
+        plt.savefig(name+'.png')
+    plt.show()
+    
 def plot_pulse(pulse, ind, ylim=None, log=False):
     """ Plot the pulse intensity in t-x space.
     
@@ -470,4 +568,383 @@ def pulse_evolution(pulse, name, ylim=None, log=False):
     ani = animation.FuncAnimation(fig, updatefig, blit=True, frames=Nz-3)
     ani.save(pulse.path+name+'.mp4', fps=30)
     plt.clf()
+    
+def load_plasma_design(path, name=None):
+    """ Load the required information from the plasma design notebook.
+    
+    Parameters
+    ----------
+    path : string
+        Path to save the data at.
+    name : string, optional
+        Name of the pulse from the plasma source, defaults to 'Refracted_Beam'.
+    
+    Returns
+    -------
+    plasma : array of doubles
+        Plasma density in the x-z plane.
+    I : array of doubles
+        Target laser intensity.
+    z : array of doubles
+        Z array corresponding to the I array.
+    sim_start : double
+        Z location the refraction simulation starts at.
+    sim_length : double
+        Length of the refraction sim.
+    pulse : Pulse object
+        The laser pulse object from the refraction simulation.
+    """
+    plasma = np.load(path+'plasma.npy')
+    I = np.load(path+'intensity.npy')
+    z = np.load(path+'z.npy')
+    sim_start, sim_length = np.load(path+'sim_size.npy')
+    
+    if name is None:
+        name = 'Refracted_Beam'
+    
+    pulseParams = {
+        'Nt' : 2**6,
+        'Nx' : 2**10,
+        'Ny' : 2**10,
+        'X' : 10e3,
+        'Y' : 10e3,
+        'T' : 90,
+        'lam' : 0.8,
+        'path' : path,
+        'load' : True,
+        'threads' : 4,
+        'cyl' : True,
+        'tau' : 30,
+        'name' : name,
+    }
+    pulse = laserpulse.Pulse(pulseParams)
+    return plasma, I, z, sim_start, sim_length, pulse
+
+def extend_zI(z0, loc, z, I, sim_start, sim_length):
+    """ Insert zeros on the front of the z and I arrays to reach optic B.
+    
+    Parameters
+    ----------
+    z0 : double
+        Distance from optic B to either the start or center of the simulation
+        domain. Start or center is defined by loc.
+    loc : string ['start', 'center']
+        If the distane to the optic is measured from the start or the center.
+    z : array of doubles
+        Original z array for the intensity.
+    I : array of doubles
+        Original intensity array. 
+    sim_start : double
+        Z location the refraction simulation starts at.
+    sim_length : double
+        Length of the refraction sim.
+    
+    Returns
+    -------
+    z_optic : array of doubles
+        Extended z array.
+    I_optic : array of doubles
+        Extended I array.
+    """
+    if loc=='start':
+        z_start = z0-sim_start
+    elif loc=='center':
+        z_start = z0-sim_start-sim_length/2
+    dz = z[1]-z[0]
+    Np = int(z_start/dz)
+    z_optic = np.linspace(0, z[-1]+z_start, len(z)+Np)
+    I_optic = np.append(np.zeros(Np), I)
+    return z_optic, I_optic
+
+def create_lens_A(ri, Ei, r, E, L, path, lam, X, Nx):
+    """ Create the phase profile for lens A.
+
+    Parameters
+    ----------
+    ri : array of doubles
+        Radius array for the initial laser field.
+    Ei : array of doubles or complex
+        Electric field (magnitude or complex) of the incoming laser that will 
+        pass through the lens, will be scaled to have the correct energy.
+    r : array of doubles
+        Radius array for the target laser field.
+    E : array of doubles or complex
+        Target electric field at the second lens.
+    L : double
+        The distance between optic A and optic B.
+    path : string
+        Path to save the data at.
+    lam : double
+        The laser wavelength in um.
+    X : double
+        Transverse domain size in um for lensA object.
+    Nx : int
+        Number of cells in the transverse dimension for lensA object.
+    
+    Returns
+    -------
+    rA : array of doubles
+        Radius for each phase point.
+    phiA : array of doubles
+        Phase delay in radians.
+    lensA : Phase object
+        Lens object for the beam propagation code.
+    multi : double
+        The multiplier for the input field strength.
+    """
+    Ii = ionization.intensity_from_field(Ei)
+    Io = ionization.intensity_from_field(E)
+    Pi = 2*np.pi*simps(ri*Ii*1e-4, ri*1e-4)*100
+    Po = 2*np.pi*simps(r*Io*1e-4, r*1e-4)*100
+    multi = np.sqrt(Po/Pi)
+    Ei *= multi
+    Ii = ionization.intensity_from_field(Ei)
+    
+    # The first lens shapes the intensity on the second one
+    rA, phiA = ray.lens_design(Ii, ri, Io, r, L)
+    phiA *= 2*np.pi/lam
+    
+    # Create the first lens
+    lensParams = {'Nx' : Nx,
+                  'Ny' : Nx,
+                  'X' : X,
+                  'Y' : X,
+                  'path' : path,
+                  'name' : 'LensA',
+                  'lam' : lam,
+                  'load' : False}
+    
+    lensA = optic.Phase(lensParams)
+    phi = lensA.reconstruct_from_cyl(rA, phiA, lensA.x, lensA.y)
+    lensA.initialize_phase(phi)
+    
+    # The phase difference between neighboring cells must be less than pi
+    dphi = np.sort(abs(phi[1:, int(Nx/2+1)]-phi[:-1, int(Nx/2+1)]))[-3]
+    dphi = dphi*(Nx-1)/X
+    print('Maximum phase change in one pixel %0.2f rad/um' % dphi)
+    return rA, phiA, lensA, multi
+
+def propagate_to_lens_B(r0, E0, L, path, lam, lensA, tau, threads, plot=True):
+    """ Create the phase profile for lens A.
+
+    Parameters
+    ----------
+    r0 : array of doubles
+        Radius array for the initial laser field.
+    E0 : array of doubles or complex
+        Electric field (magnitude or complex) of the incoming laser.
+    L : double
+        The distance between optic A and optic B.
+    path : string
+        Path to save the data at.
+    lam : double
+        The laser wavelength in um.
+    lensA : Phase object
+        Lens object for the beam propagation code.
+    tau : double
+        The RMS pulse length in fs.
+    threads : int
+        The number of threads to run the calculation on.
+    plot : bool
+        Show plots or not.
+    
+    Returns
+    -------
+    beam0 : LaserBeam object
+        The laser beam object that propagates through the system.
+    """
+    # Create the initial beam to pass through the lens
+    XA = lensA.X
+    NxA = lensA.Nx
+    beamParams = {'Nx' : NxA,
+                  'Ny' : NxA,
+                  'X' : XA,
+                  'Y' : XA,
+                  'lam' : lam,
+                  'path' : path,
+                  'name' : 'Beam0_A_to_B',
+                  'threads' : threads,
+                  'cyl' : True,
+                  'load' : False}
+    
+    # Super Gaussian for simulation
+    beam = laserbeam.Laser(beamParams)
+    e = beam.reconstruct_from_cyl(r0, E0, beam.x, beam.y)
+    beam.initialize_field(e)
+    I0 = ionization.intensity_from_field(E0)
+    print('Total input energy %0.2fmJ' % (beam.total_cyl_power(r0, I0)*tau))
+    
+    # Plot the initial transverse intensity
+    #--------------------------------------------------------------------------
+    if plot:
+        e = beam.e
+        I = beam.intensity_from_field(e)
+        I = beam.prep_data(I)*1e4
+        plt.figure(figsize=(8, 3), dpi=150)
+        plt.subplot(121)
+        plt.imshow(I, aspect='auto', extent=[-XA/2e3, XA/2e3, -XA/2e3, XA/2e3])
+        cb = plt.colorbar()
+        cb.set_label(r'Intensity ($10^{10} W/cm^2$)')
+        plt.set_cmap('viridis')
+        plt.xlabel(r'x (mm)')
+        plt.ylabel(r'y (mm)')
+        plt.title('Peak transverse intensity at Optic A')
+    
+    # Propagate to the second lens and plot the intensity
+    #--------------------------------------------------------------------------
+    interactions.beam_phase(beam, lensA)
+    beam.propagate(L, 1.0)
+    if plot:
+        e = beam.e
+        I = beam.intensity_from_field(e)
+        I = beam.prep_data(I)*1e4
+        plt.subplot(122)
+        plt.imshow(I, aspect='auto', extent=[-XA/2e3, XA/2e3, -XA/2e3, XA/2e3])
+        cb = plt.colorbar()
+        cb.set_label(r'Intensity ($10^{10} W/cm^2$)')
+        plt.set_cmap('viridis')
+        plt.xlabel(r'x (mm)')
+        plt.ylabel(r'y (mm)')
+        plt.title('Peak transverse intensity at Optic B')
+        plt.tight_layout()
+        plt.show()
+    
+    return beam
+
+def create_lens_B(beam0, r, E, path, lam, X, Nx):
+    """ Create the phase profile for lens B.
+
+    Parameters
+    ----------
+    beam0 : LaserBeam object
+        The laser beam object that propagated through the system.
+    r : array of doubles
+        Radius array for the target laser field.
+    E : array of doubles or complex
+        Target electric field at the second lens.
+    path : string
+        Path to save the data at.
+    lam : double
+        The laser wavelength in um.
+    X : double
+        Transverse domain size in um for lensA object.
+    Nx : int
+        Number of cells in the transverse dimension for lensA object.
+    
+    Returns
+    -------
+    rB : array of doubles
+        Radius for each phase point.
+    phiB : array of doubles
+        Phase delay in radians.
+    lensB : Phase object
+        Lens object for the beam propagation code.
+    """
+    # The second lens (B) removes the phase from the first lens and adds an axicon like phase
+    r0 = -beam0.x[:int(beam0.Nx/2+1)]
+    e0 = beam0.e[:int(beam0.Nx/2+1), int(beam0.Ny/2+1)]
+    phi0 = np.unwrap(np.angle(e0))
+    phi0 = phi0 - phi0[-1]
+    phiB = np.unwrap(np.angle(E)) - beam0.reconstruct_from_cyl(r0, phi0, r, np.zeros(1))[:, 0]
+    
+    # Create the second lens, the domain is smaller for this one
+    lensParams = {'Nx' : Nx,
+                  'Ny' : Nx,
+                  'X' : X,
+                  'Y' : X,
+                  'path' : path,
+                  'name' : 'LensB',
+                  'lam' : lam,
+                  'load' : False}
+    
+    lensB = optic.Phase(lensParams)
+    phi = lensB.reconstruct_from_cyl(r, phiB, lensB.x, lensB.y)
+    lensB.initialize_phase(phi)
+    dphi = np.sort(abs(phi[1:, int(Nx/2+1)]-phi[:-1, int(Nx/2+1)]))[-3]
+    dphi = dphi*(Nx-1)/X
+    print('Maximum phase change in one pixel %0.2f rad/um' % dphi)
+    
+    return r, phiB, lensB
+
+def plot_phase(rA, phiA, rB, phiB, xlimB):
+    """ Plot the phases of the two lenses creating the beam.
+    
+    Parameters
+    ----------
+    rA : array of doubles
+        Radius array for lens A.
+    phiA : array of doubles
+        Phase of lens A in radians.
+    rB : array of doubles
+        Radius array for lensB
+    phiB : array of doubles
+        Phase of lens B in radians.
+    xlimB : array or tuple
+        X limits of the optic B plot.
+    """
+    plt.figure(figsize=(8, 2), dpi=150)
+    plt.subplot(121)
+    plt.plot(rA/1e3, phiA)
+    plt.xlabel(r'r (mm)')
+    plt.ylabel(r'$\phi$ (radians)')
+    plt.xlim(0, np.amax(rA)/1e3)
+    plt.subplot(122)
+    plt.plot(rB/1e3, phiB)
+    plt.xlabel(r'r (mm)')
+    plt.ylabel(r'$\phi$ (radians)')
+    plt.xlim(xlimB)
+    plt.show()
+    
+def field_after_lens_B(beam0, rB, phiB, r, E, rlim=None, plot=True):
+    """ Calculate the radial field after the beam shaping optics.
+    
+    Parameters
+    ----------
+    beam0 : LaserBeam object
+        The laser beam object that propagates through the system.
+    rB : array of doubles
+        Radius for each phase point.
+    phiB : array of doubles
+        Phase delay in radians.
+    r : array of doubles
+        Radius array for the target laser field.
+    E : array of doubles or complex
+        Target electric field at the second lens.
+    rlim : optional, tuple or array
+        The limits for the transverse field plot.
+    plot : bool
+        Show plots or not.
+    
+    Returns
+    -------
+    r1 : array of doubles
+        Radius vector for the electric field.
+    e1 : array of complex
+        Electric field after the beam shaping optics.
+    """
+    r0 = -beam0.x[:int(beam0.Nx/2+1)]
+    e0 = beam0.e[:int(beam0.Nx/2+1), int(beam0.Ny/2+1)]
+    e = interp1d(r0, e0)
+    phi = interp1d(rB, phiB)
+    e1 = e(r)*np.exp(1j*phi(r))
+    
+    if rlim is None:
+        rlim = [0, np.amax(r)/1e3]
+    if plot:
+        plt.figure(figsize=(8, 2), dpi=150)
+        plt.subplot(121)
+        plt.plot(r/1e3, ionization.intensity_from_field(E)/1e-4)
+        plt.plot(r/1e3, ionization.intensity_from_field(e1)/1e-4, 'm--')
+        plt.xlabel(r'r (mm)')
+        plt.ylabel(r'I ($\mathrm{10^{10}W/cm^2}$)')
+        plt.xlim(rlim)
+        plt.subplot(122)
+        plt.plot(r/1e3, np.unwrap(np.angle(E)))
+        plt.plot(r/1e3, np.unwrap(np.angle(e1))-np.unwrap(np.angle(e1))[0], 'm--')
+        plt.xlabel(r'r (mm)')
+        plt.ylabel(r'$\phi$ (radians)')
+        plt.xlim(rlim)
+        plt.show()
+    return r, e1
+
     

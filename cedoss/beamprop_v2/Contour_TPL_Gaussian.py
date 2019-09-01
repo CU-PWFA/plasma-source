@@ -12,7 +12,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 sys.path.insert(0, "../")
 from modules import TPLFocalLength as Foc
-
 debug = 0
 path = '/home/chris/Desktop/BeamProp/testGaussian'
 gamma = PProp.def_gamma
@@ -42,10 +41,18 @@ if case == 20: #442.1um to match 5cm beta into a ramp that requires 2.5cm beta
     z0 = sighw/1e6*6
 if case == 30: #736.9um to match 5cm beta into a ramp that requires 2.5cm beta in 3e16
     tpl_n = 0.3
-    tpl_l = 736.9
-    sighw = 0.02542 * 1e6
-    zvac = -0.0455# -0.0246
+    tpl_l = 736.8569
+    sighw = 0.025415 * 1e6
+    zvac = -0.04546# -0.0246
     betastar = 0.05
+    z0 = sighw/1e6*6
+if case == 31: #736.9um to match 5cm beta into a ramp that requires 2.5cm beta in 3e16
+    tpl_n = 0.3
+    tpl_l = 744.187
+    sighw = 0.025415 * 1e6
+    zvac = -0.04546# -0.0246
+    betastar = 0.05
+    z0 = sighw/1e6*6
 
 argon_params = PProp.ReturnDefaultPlasmaParams(path, sigma_hw = sighw, plasma_start = z0, scaledown = 1)
 argon = PProp.GaussianRampPlasma(argon_params, debug)
@@ -61,20 +68,24 @@ focal = Foc.Calc_Focus_Square_SI(tpl_n*1e17, tpl_l/1e6, gamma)
 beta_f = Foc.Calc_BetaStar(betastar, focal)
 tpl_f = focal*(1-beta_f/betastar)
 
-waist_loc = zvac - tpl_f
-"""For the full 1.01 contour line
-offset_arr = np.linspace(-0.01, 0.01, 201)
-length_arr = np.linspace(tpl_l - 70., tpl_l + 90, 201)
-#"""
-offset_arr = np.linspace(-0.01, 0.01, 201)
-length_arr = np.linspace(tpl_l - 260., tpl_l + 300, 201)
+print("thin",tpl_f)
+#tpl_f = Foc.Calc_ThickWaistPos_DeltaOff_UnNormalized(Foc.Calc_K(tpl_n*1e17, gamma) ,tpl_l*1e-4, betastar*100, 0)/100
+print("thick",tpl_f)
+
+waist_loc = zvac - tpl_f - tpl_l*1e-6
+#For the full 1.01 contour line
+#offset_arr = np.linspace(-0.01, 0.01, 201)
+#length_arr = np.linspace(tpl_l - 70., tpl_l + 90, 201)
+
+offset_arr = np.linspace(-0.01+.0003, 0.01+.0003, 201)
+length_arr = np.linspace(tpl_l - 245., tpl_l + 315, 201)
 bmag_image = np.zeros((len(offset_arr),len(length_arr)))
 
 for i in range(len(offset_arr)):
     if i%10 == 0: print(i/len(offset_arr)*100,"%");
     for j in range(len(length_arr)):
         n = np.copy(n_arr); z = np.copy(z_arr)
-        tpl_offset = waist_loc + offset_arr[i]
+        tpl_offset = waist_loc + offset_arr[i] + 1/2*tpl_l*1e-6
         tpl_l_set = length_arr[j]
         
         #Make beam and bulk plasma just as in single_pass
@@ -84,4 +95,12 @@ for i in range(len(offset_arr)):
         
         bmag_image[i][j] = PProp.Calc_Bmag(beam_params,n[:endindex], z[:endindex])
         #print("Bmag CS: ",bmagc)
-minloc = PProp.PlotContour(bmag_image, offset_arr*100, length_arr, r'$\Delta z_{TPL}$ [cm]', r'$TPL_{\rm L}$ [um]', simple=True)
+"""
+bmag_image = np.load("/home/chris/Desktop/file.npy")
+tpl_l = 736.8569
+offset_arr = np.linspace(-0.01+.0003, 0.01+.0003, 201)
+length_arr = np.linspace(tpl_l - 245., tpl_l + 315, 201)
+
+np.save("/home/chris/Desktop/file.npy", bmag_image)
+"""
+minloc = PProp.PlotContour(bmag_image, offset_arr*100, length_arr-tpl_l, r'$\Delta z_{TPL}$ [cm]', r'$\Delta L_{TPL}\mathrm{\ [\mu m]}$', simple=True, swapx = 0.03, swapy = 23.8)

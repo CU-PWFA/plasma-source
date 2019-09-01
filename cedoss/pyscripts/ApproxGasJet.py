@@ -38,9 +38,9 @@ n0 = 3e16/1e17
 sa = 2986.91262632; sb = 0.550205150854; sc = -5.09030500347e-06
 
 folder = '/home/chris/Desktop/DataLoads/DensityFilesNp/'
-directory = 'gasjet_Ar3e16_60x24x3200/'
+directory = 'gasjet_Ar3e16_60x24x400/'
 
-xsize = 60e2; ysize = 24e2; zsize = 32e4 #um
+xsize = 60e2; ysize = 24e2; zsize = 4e4#32e4 #um
 nx = 2**(9-reducer)
 ny = 2**(9-reducer)
 nz = 2**(8-reducer)

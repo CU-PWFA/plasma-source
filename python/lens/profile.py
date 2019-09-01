@@ -400,7 +400,6 @@ def lithium_oven_profile(z, center, ne0):
     """
     Nz = len(z)
     n = np.zeros(Nz, dtype='double')
-    ne0 = 3.4e16/1e17
     # Error function ramps?
     # Uniform accelerating plasma
     length = 30.8e4

@@ -41,16 +41,16 @@ params = {'drive' : 'rhoDrive',
 plot.drive_witness_density_new(params)
 """
 #"""
-path = '/home/chris/Desktop/FACETII_NERSC_Run3/'
+path = '/home/chris/Desktop/SFQED_NERSC_VaryDen/5e15/'
 #path = '/home/chris/Desktop/SimulationRepo/emittance_preservation/simulations/PTPL_FacetIIBeams/'
 params = {'drive' : 'rhoDrive',
           'witness' : 'rhoWitness',
           'plasma' : 'electrons',
-          'dumpInd' : 8,
+          'dumpInd' : 5,
           'path' : path,
           'simName' : 'PTPLDoubleTanh',
           'zoom' : 4.0,
-          'alphaCutoff' : 0.01
+          'alphaCutoff' : 0.001
           }
 plot.drive_witness_density_new(params)
 

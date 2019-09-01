@@ -252,6 +252,7 @@ class Aperture(Intensity):
     """
     
     def __init__(self, params):
+        self.keys = self.keys.copy()
         self.keys.extend(
                 ['r'])
         super().__init__(params)
@@ -260,5 +261,30 @@ class Aperture(Intensity):
         t = np.zeros((self.Nx, self.Ny), dtype='double')
         r2 = self.x[:, None]**2+self.y[None, :]**2
         sel = r2 < self.r**2
+        t[sel] = 1.0
+        super().initialize_t(t)
+
+
+class Annulus(Intensity):
+    """ A transmission mask formed from an annulus.
+
+    Parameters
+    ----------
+    r_in : double
+        The inner radius of the aperture.
+    r_out : double
+        The outer radius of th aperture.
+    """
+    def __init__(self, params):
+        self.keys = self.keys.copy()
+        self.keys.extend(
+                ['r_in',
+                 'r_out'])
+        super().__init__(params)
+
+    def initialize_t(self):
+        t = np.zeros((self.Nx, self.Ny), dtype='double')
+        r2 = self.x[:, None]**2+self.y[None, :]**2
+        sel = np.logical_and(r2 < self.r_out**2, r2 > self.r_in**2)
         t[sel] = 1.0
         super().initialize_t(t)

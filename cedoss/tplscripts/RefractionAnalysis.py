@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 #'max_corrector' will shift the beam axis to the maximum density
 #  poor for most cases-only interesting at high densities ~10e19
 cuts=1
-max_corrector=1
+max_corrector=0
 enforce_xoff=0#-31#for p2g8
 calc_focal = 1
 center_jet = 1 #set to 1 to not max correct on the jet axis
@@ -37,8 +37,6 @@ infinite_approx = 0
 
 #size of window in micrometers
 resize=1
-y_window = 1500
-z_window = 300
 
 n0_lens = 3e16
 
@@ -47,10 +45,18 @@ n0_lens = 3e16
 #folder = '/home/chris/Desktop/FourierPlots/ArBackground/'
 #folder = '/home/chris/Desktop/FourierPlots/H_597um_1e12cm-3/'
 #folder = '/home/chris/Desktop/FourierPlots/H_996um_5e16cm-3/'
-folder = '/home/chris/Desktop/FourierPlots/ArGasJet_442um_5e16cm-3_new/'#El paper uno
-#folder = '/home/chris/Desktop/FourierPlots/ArGasJet_442_5e16cm-3_Wider/'#El paper uno pero muy widero
-folder = '/home/chris/Desktop/FourierPlots/ArGasJet_737um_3e16cm-3/'
-#folder = '/home/chris/Desktop/FourierPlots/HeFilamen_442um_1e19cm-3/'
+#folder = '/home/chris/Desktop/FourierPlots/ArGasJet_442um_5e16cm-3_new/'
+#folder = '/home/chris/Desktop/FourierPlots/ArGasJet_442_5e16cm-3_Wider/'
+"""
+#folder = '/home/chris/Desktop/FourierPlots/ArGasJet_737um_3e16cm-3/' #Case in Paper 1
+folder = '/home/chris/Desktop/FourierPlots/ArGasJet_737um_3e16cm-3_zoom/'
+y_window = 1500
+z_window = 300
+"""
+
+folder = '/home/chris/Desktop/FourierPlots/ArGas_labtest1/'
+y_window = 200
+z_window = 700
 
 directory = 'case_1/'
 #directory = 'Ar1_Big/'
@@ -109,6 +115,9 @@ if max_corrector == 1:
 ThrDim.ImageCut(den,x,y,z,x_off,y_off,z_off,1e-3,
                 '(mm)','Plasma Density','e17(cm^-3)',1)
 
+ThrDim.ImageCut_xy_Production(den,x,y,z,x_off,y_off,z_off,1e-3,
+                '(mm)',r'$n_p$',r'$\mathrm{\ [10^{16} cm^{-3}}]$',1)
+
 #Perform variance cuts to investigate density profiles on-and off-axis
 if cuts == 1:
     x_step=x[1]-x[0]
@@ -131,10 +140,14 @@ if cuts == 1:
     #ThrDim.VarianceCut(den_plane_yz,y,z_off,5,-2,z_step,label)
     
     label=['Density along beam axis (Vary Jet Distance)',
-           r'Beam Axis (z) [$\mu m$]',
-           r'n(z) [$10^{17} cm^{-3}$]',
-           r'Offset in $\pm$ y[$\mu m$]']
+           r'$z\mathrm{\ [\mu m]}$',
+           r'$n_p \mathrm{\ [10^{17} cm^{-3}}]$',
+           r'$\Delta y\mathrm{\ [\mu m]}$']
     ThrDim.VarianceCut(den_plane_yz,y,z_off,5,2,z_step,label,True)
+    
+    ThrDim.VarianceCut_Prod(den_plane_yz,y,z_off,5,2,z_step,label,True)
+    sys.exit();
+
     
     den_plane_yx=np.transpose(den[:,:,round(len(z)/2)+z_off])
     """#For the plus and minus individually
@@ -166,11 +179,15 @@ if focalfit == 1:
     thick = Foc.Calc_Square_Lens(n0_lens, focal, Foc.gam_def)
     print(thick,"um equivalent thickness")
     
-    for plus in range(5):
+    for plus in range(15):
         den_vs_y = den[round(len(x)/2)+x_off,:,round(len(z)/2) + plus]
         focal = Foc.Calc_Focus(den_vs_y,y)
         thick = Foc.Calc_Square_Lens(n0_lens, focal, Foc.gam_def)
+        den_vs_ym = den[round(len(x)/2)+x_off,:,round(len(z)/2) - plus]
+        focalm = Foc.Calc_Focus(den_vs_ym,y)
+        thickm = Foc.Calc_Square_Lens(n0_lens, focalm, Foc.gam_def)
         print(thick,"um equivalent thickness at z= ", plus*z_step)
+        print(thickm,"um equivalent thickness at z= ", -plus*z_step)
     
 #Fit the data to tanh in y, an elliptical tanh in yz, and Gaussian in x
 if getfit == 1:

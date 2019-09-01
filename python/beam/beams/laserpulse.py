@@ -203,6 +203,15 @@ class Pulse(beam.Beam):
                                     self.z[-1], self.fft, self.ifft,
                                     self.save_field)
         self.e = np.array(self.e, dtype='complex128')
+        
+    def pulse_energy(self):
+        """ Calculate the energy in the pulse in joules. """
+        I = self.intensity_from_field(self.e)
+        dx = self.x[1] - self.x[0]
+        dy = self.y[1] - self.y[0]
+        dt = self.t[1] - self.t[0]
+        return np.sum(I)*dt*dx*dy*1e-9
+        
     
     # Visualization functions
     #--------------------------------------------------------------------------

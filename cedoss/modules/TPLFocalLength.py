@@ -100,8 +100,8 @@ if __name__ == '__main__':
     n0=3e16
     gam_set = gam_def
     
-    #tpl_l = 200 #um
-    #print("betaf",Calc_ThickBetaStar_DeltaOff_UnNormalized(Calc_K(n0,gam_set), tpl_l*1e-4, beta_i*1e2, 0))
+    tpl_l = 736.857+7.33 #um
+    print("betaf",Calc_ThickBetaStar_DeltaOff_UnNormalized(Calc_K(n0,gam_set), tpl_l*1e-4, beta_i*1e2, 0))
     focal = Calc_Target_Focal(beta_i,beta_f)
     #focal = 0.015
     f_len = Calc_Square_Lens(n0, focal*100, gam=gam_set)
