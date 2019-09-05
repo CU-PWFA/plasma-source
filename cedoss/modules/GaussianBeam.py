@@ -275,7 +275,10 @@ def Prop_EPhase(q_y, q_z, offset, lmba, E0, w0):
     Rz=Prop_RadiusList(q_z)
     
     xrange=Prop_GetRange(q_y)
-    waist=wz.index(min(wz))
+    if min(wz) < min(wy):
+        waist=wz.index(min(wz))
+    else:
+        waist=wy.index(min(wy))
     plane=waist-offset
     xi=xrange[plane]
     print(xi)

@@ -15,7 +15,7 @@ from modules import TPLFocalLength as Foc
 debug = 0
 path = '/home/chris/Desktop/BeamProp/testGaussian'
 gamma = PProp.def_gamma
-"""
+
 case = 30
 if case == 1:
     sighw = 0.08 * 1e6
@@ -102,4 +102,5 @@ offset_arr = np.linspace(-0.01+.0003, 0.01+.0003, 201)
 length_arr = np.linspace(tpl_l - 245., tpl_l + 315, 201)
 
 np.save("/home/chris/Desktop/file.npy", bmag_image)
+"""
 minloc = PProp.PlotContour(bmag_image, offset_arr*100, length_arr-tpl_l, r'$\Delta z_{TPL}$ [cm]', r'$\Delta L_{TPL}\mathrm{\ [\mu m]}$', simple=True, swapx = 0.03, swapy = 23.8)

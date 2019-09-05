@@ -18,7 +18,7 @@ sys.path.insert(0, "../../python")
 import numpy as np
 from beam.beams import electronbeam
 from beam.elements import plasma_1d as plasma
-from beam import interactions
+#from beam import interactions
 import beam.calc.electron as ecalc
 from ionization import ionization
 from lens import profile
@@ -460,20 +460,23 @@ def Plot_CSEvo_MatchedCompare(beamParams, beamParams_matched, n_arr, z_arr, z_of
     z_arr = z_arr - z_offset
     #print(" ","beta","beta0"); print(" ",beta[740],beta0[740])
     fig, ax1 = plt.subplots(figsize=(13,5))
-    plt.title("Beta function evolution at "+r'$n_0=$'+str(max(n_arr))+r'$\,\mathrm{\times 10^{17}cm^{-3}}$')
+    plt.rcParams.update({'font.size': 12})
+    #plt.title("Beta function evolution at "+r'$n_0=$'+str(max(n_arr))+r'$\,\mathrm{\times 10^{17}cm^{-3}}$')
     ax1.semilogy(z_arr*1e2, np.array(beta)*1e2, 'b-', label=r'$\beta$')
     ax1.plot(z_arr*1e2, np.array(beta0)*1e2, 'b--',label=r'$\beta_{vac}$')
     ax1.plot(z_arr*1e2, np.array(betaM)*1e2, 'r--',label=r'$\beta_{m,vac}$')
     ax1.set_ylabel(r'$\beta\,\mathrm{[cm]}$', color = 'b')
     ax1.tick_params('y', colors = 'b')
     ax1.set_xlabel('z [cm]')
-    ax1.set_ylim([-0.05,1400.05])
+    ax1.set_ylim([-0.05,2200.05])
     
     ax2 = ax1.twinx()
     ax2.plot(z_arr*1e2, n_arr/max(n_arr), 'g-')
     ax2.set_ylabel(r'$n/n_0$',color = 'g')
     ax2.tick_params('y', colors = 'g')
     ax1.grid(); ax1.legend(loc=legend_loc); plt.show()
+    
+    return beta,alpha,gamma,gb
 
 def Plot_CSEvo_FinalCompare(beamParams, n_arr, z_arr, z_offset = 0, legend_loc=0, subset = False, plot = 1):
     beta, alpha, gamma, gb = Calc_CSParams(beamParams, n_arr, z_arr)

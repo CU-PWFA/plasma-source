@@ -14,6 +14,8 @@ import matplotlib.pyplot as plt
 from scipy.stats import norm
 from scipy import optimize
 import scipy.integrate as Int
+from scipy.optimize import curve_fit
+from scipy.special import gamma
 
 class ElectronBeam(beam.Beam):
     """ An electron beam class that stores a collection of macroparticles.
@@ -174,6 +176,31 @@ class ElectronBeam(beam.Beam):
         #If weights aren't given, just initialize an array of 1's
         if weights is None:
             weights = np.zeros(len(x))+1
+        # Calculate the differences from the average
+        dx = x - np.average(x, weights=weights)
+        dy = y - np.average(y, weights=weights)
+        # Calculate the RMS sizes and the correlation
+        sigmax = np.sqrt(np.average(dx**2, weights=weights))
+        sigmay = np.sqrt(np.average(dy**2, weights=weights))
+        return sigmax, sigmay
+    
+    def get_sigmar_frac(self, ind, weights=None, threshold=1000):
+        """ Caclulate the transverse beam size from a particular save file. """
+        ptcls = self.load_ptcls(ind)[0]
+        #If weights aren't given, just initialize an array of 1's
+        x = self.get_x(ptcls)
+        y = self.get_y(ptcls)
+        if weights is None:
+            weights = np.zeros(len(x))+1
+            
+        total = np.sum(weights)
+        inset = np.where(np.sqrt(np.square(x)+np.square(y)) < threshold)
+        ptcls = ptcls[inset]; weights = weights[inset]
+        print("fraction: ",np.sum(weights)/total*100,"%")
+        
+        x = self.get_x(ptcls)
+        y = self.get_y(ptcls)
+        
         # Calculate the differences from the average
         dx = x - np.average(x, weights=weights)
         dy = y - np.average(y, weights=weights)
@@ -403,6 +430,262 @@ class ElectronBeam(beam.Beam):
         plt.tight_layout()
         return fig, sctx, scty
     
+    def plot_phase_hist_at(self, ind, fitted = False):
+        """ Plots the particles at a particular z distance.  This version uses
+        2D binning to create a nicer image
+        
+        Parameters
+        ----------
+        ind : int
+            The save index to plot the particles at, see the _z file to find z.
+        """
+        ptcls, z = self.load_ptcls(ind)
+        if fitted is False:
+            self.plot_phase_hist(ptcls, z, ind)
+        else:
+            self.plot_phase_hist_fitted(ptcls, z, ind)
+    
+    def plot_phase_hist(self, ptcls, z, ind, xlim=None, ylim=None, weights = None):
+        """ Create an x-y plot of the particles. This version uses 2D binning to
+        create a nicer iamge"""        
+        #If weights aren't given, just initialize an array of 1's 
+        if weights is None:
+            weights = np.zeros(self.N)+1
+        else:
+            sort = np.argsort(weights)
+            weights = weights[sort]
+            ptcls = ptcls[sort]
+    
+        sigmay = self.get_sigmar(ind)[0]
+        sigmax = self.get_sigmar(ind)[1]
+        numbins = 101   #bins in 1d hist
+        binno = 56      #bins in 2d hist
+        xrange = 8
+        yrange = 0.29
+        
+        fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(7.5, 7), dpi = 150)
+        plt.rcParams.update({'font.size': 12})
+        xhist = plt.subplot(221)
+        leftx = plt.hist(ptcls[:,2]*1e6, bins = numbins, weights = weights, color = 'C0', ec='C0')
+        x = np.linspace(min(ptcls[:,2]),max(ptcls[:,2]),100)
+        fx = max(leftx[0])*np.exp(-1*np.square(x)/2/np.square(sigmax))
+        plt.plot(x*1e6, fx, label=r'$\sigma_x=$'+'%s' % float('%.3g' % (sigmax*1e6))+r'$\ \mu m$', color='C1')
+        plt.ylabel('Arb. Units')
+        plt.ylim(bottom = 0.1)
+        plt.ylim(top = max(leftx[0])*1.2)
+        plt.xlim([-xrange, xrange])
+        plt.legend()
+                
+        yhist = plt.subplot(222, sharey = xhist)
+        lefty = plt.hist(ptcls[:,0]*1e6, bins = numbins, weights = weights, color = 'C0', ec='C0')#, log=True)
+        y = np.linspace(min(ptcls[:,0]),max(ptcls[:,0]),100)
+        fy = max(lefty[0])*np.exp(-1*np.square(y)/2/np.square(sigmay))
+        plt.plot(y*1e6, fy, label=r'$\sigma_y=$'+'%s' % float('%.3g' % (sigmay*1e6))+r'$\ \mu m$', color='C1')
+        plt.ylim(bottom = 0.1)
+        plt.ylim(top = max(lefty[0])*1.2)
+        plt.xlim([-xrange, xrange])
+        plt.legend()
+    
+        xphase = plt.subplot(223, sharex = xhist)
+        sctx = plt.hist2d(ptcls[:, 2]*1e6, ptcls[:, 3]*1e3, weights = weights, bins=(binno,binno), cmap=plt.cm.jet, range = [[-xrange,xrange], [-yrange,yrange]], vmax = 100)
+        plt.xlabel(r'$x\mathrm{\ [\mu m]}$')
+        plt.ylabel(r'$x\rq,\,y\rq\mathrm{\ [mrad]}$')
+        if xlim is not None:
+            plt.xlim(xlim)
+        if ylim is not None:
+            plt.ylim(ylim)
+        
+        yphase = plt.subplot(224, sharex = yhist, sharey = xphase)
+        scty = plt.hist2d(ptcls[:, 0]*1e6, ptcls[:, 1]*1e3, weights = weights, bins=(binno,binno), cmap=plt.cm.jet, range = [[-xrange,xrange], [-yrange,yrange]], vmax = 100)
+        plt.xlabel(r'$y\mathrm{\ [\mu m]}$')
+        if xlim is not None:
+            plt.xlim(xlim)
+        if ylim is not None:
+            plt.ylim(ylim)
+            
+        fig.subplots_adjust(hspace=0)
+        fig.subplots_adjust(wspace=0.05)
+        plt.setp([a.get_xticklabels() for a in fig.axes[:-2]], visible=False)
+        plt.setp(fig.axes[1].get_yticklabels(), visible = False)
+        plt.setp(fig.axes[3].get_yticklabels(), visible = False)
+        
+        fig.subplots_adjust(right=0.9)
+        cbar_ax = fig.add_axes([0.91, 0.125, 0.01, 0.376])
+        CB = fig.colorbar(sctx[3], cax=cbar_ax)
+        CB.set_label("Arb. Units")
+
+        fig.text(.15,.84,"(a)")
+        fig.text(.55,.84,"(b)")
+        fig.text(.15,.46,"(c)",color='white')
+        fig.text(.55,.46,"(d)",color='white')
+        
+        #plt.savefig('/home/chris/Desktop/fig_histogram.eps',format='eps',bbox_inches='tight',dpi=100)
+        plt.show()
+
+    def plot_phase_hist_fitted(self, ptcls, z, ind, xlim=None, ylim=None, weights = None):
+        #This version is the same as above, but instead of using the calculated RMS for the
+        #Gaussian curve here we take fits to the data and output all the stats.
+        
+        #If weights aren't given, just initialize an array of 1's 
+        if weights is None:
+            weights = np.zeros(self.N)+1
+        else:
+            sort = np.argsort(weights)
+            weights = weights[sort]
+            ptcls = ptcls[sort]
+    
+        numbins = 101   #bins in 1d hist
+        binno = 56      #bins in 2d hist
+        xrange = 8
+        yrange = 0.29
+        
+        ##Below is same stuff, but now we want to calculate some offsets in the 
+        ## transverse dimensions and do actual fits to find the true sigmas
+        
+        parts_x  = ptcls[:,2]*1e6
+        parts_xp = ptcls[:,3]*1e3
+        parts_y  = ptcls[:,0]*1e6
+        parts_yp = ptcls[:,1]*1e3
+        x0  = np.average(parts_x, weights = weights)
+        xp0 = np.average(parts_xp,weights = weights)
+        y0  = np.average(parts_y, weights = weights)
+        yp0 = np.average(parts_yp,weights = weights)
+        print('x0',x0)
+        print('xp0',xp0)
+        print('y0',y0)
+        print('yp0',yp0); print()
+        sigx = np.sqrt(np.average((parts_x-x0)**2, weights=weights))
+        sigxp = np.sqrt(np.average((parts_xp-xp0)**2, weights=weights))
+        sigy = np.sqrt(np.average((parts_y-y0)**2, weights=weights))
+        sigyp = np.sqrt(np.average((parts_yp-yp0)**2, weights=weights))
+        print('sigx',sigx)
+        print('sigxp',sigxp)
+        print('sigy',sigy)
+        print('sigyp',sigyp); print()
+        sigy_alt = np.sqrt(np.average((parts_y)**2, weights=weights))
+        print('alt sigy',sigy_alt); print()
+        
+        ## Below I am fitting some Gaussian functions
+        leftx = plt.hist(ptcls[:,2]*1e6, bins = numbins, weights = weights, color = 'C0', ec='C0')
+        xhist_data = np.array(leftx[0])
+        xhist_bins = np.array(leftx[1])
+        xbins_cent = (xhist_bins[:-1]+xhist_bins[1:])/2
+        
+        # Define model function to be used to fit to the data above:
+        def gauss(x, *p):
+            A, mu, sigma = p
+            return A*np.exp(-(x-mu)**2/(2.*sigma**2))
+        
+        # p0 is the initial guess for the fitting coefficients (A, mu and sigma above)
+        p0 = [1., 0., 1.]
+        
+        xcoeff, var_matrix = curve_fit(gauss, xbins_cent, xhist_data, p0=p0)
+        
+        # Get the fitted curve
+        hist_fit = gauss(xbins_cent, *xcoeff)
+        
+        plt.plot(xbins_cent, xhist_data, label='Test data')
+        plt.plot(xbins_cent, hist_fit, label='Fitted data')
+        
+        # Finally, lets get the fitting parameters, i.e. the mean and standard deviation:
+        print('x Fitted mean = ', xcoeff[1])
+        print('x Fitted standard deviation = ', xcoeff[2])
+        print('xmax = ', xcoeff[0])
+        plt.title("x data from Gaussian fit")
+        plt.show()
+        
+        lefty = plt.hist(ptcls[:,0]*1e6, bins = numbins, weights = weights, color = 'C0', ec='C0')
+        yhist_data = np.array(lefty[0])
+        yhist_bins = np.array(lefty[1])
+        ybins_cent = (yhist_bins[:-1]+yhist_bins[1:])/2
+        
+        # p0 is the initial guess for the fitting coefficients (A, mu and sigma above)
+        p0 = [1., 0., 1.]
+        
+        ycoeff, var_matrix = curve_fit(gauss, ybins_cent, yhist_data, p0=p0)
+        
+        # Get the fitted curve
+        hist_fit = gauss(ybins_cent, *ycoeff)
+        
+        plt.plot(ybins_cent, yhist_data, label='Test data')
+        plt.plot(ybins_cent, hist_fit, label='Fitted data')
+        
+        # Finally, lets get the fitting parameters, i.e. the mean and standard deviation:
+        print('y Fitted mean = ', ycoeff[1])
+        print('y Fitted standard deviation = ', ycoeff[2])
+        print('ymax = ', ycoeff[0])
+        plt.title("y data from Gaussian fit")
+        plt.show()
+        
+        sigx = np.abs(xcoeff[2])
+        sigy = np.abs(ycoeff[2])
+        x0   = xcoeff[1]
+        y0   = ycoeff[1]
+        peakx= xcoeff[0]
+        peaky= ycoeff[0]
+        
+        ##Ill comment out the lines for just plotting normal sigmas w/out correction
+        
+        fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(7.5, 7), dpi = 150)
+        plt.rcParams.update({'font.size': 12})
+        xhist = plt.subplot(221)
+        leftx = plt.hist(ptcls[:,2]*1e6, bins = numbins, weights = weights, color = 'C0', ec='C0')
+        x = np.linspace(min(ptcls[:,2]),max(ptcls[:,2]),100)
+        
+        fx = peakx*np.exp(-1*np.square(x-x0/1e6)/2/np.square(sigx/1e6))
+        plt.plot(x*1e6, fx, label=r'$\sigma_x=$'+'%s' % float('%.3g' % (sigx))+r'$\ \mu m$', color='C1')
+        plt.ylabel('Arb. Units')
+        plt.ylim(bottom = 0.1)
+        plt.ylim(top = max(leftx[0])*1.2)
+        plt.xlim([-xrange, xrange])
+        plt.legend()
+                
+        yhist = plt.subplot(222, sharey = xhist)
+        lefty = plt.hist(ptcls[:,0]*1e6, bins = numbins, weights = weights, color = 'C0', ec='C0')#, log=True)
+        y = np.linspace(min(ptcls[:,0]),max(ptcls[:,0]),100)
+        fy = peaky*np.exp(-1*np.square(y-y0/1e6)/2/np.square(sigy/1e6))
+        plt.plot(y*1e6, fy, label=r'$\sigma_y=$'+'%s' % float('%.3g' % (sigy))+r'$\ \mu m$', color='C1')
+        plt.ylim(bottom = 0.1)
+        plt.ylim(top = max(lefty[0])*1.2)
+        plt.xlim([-xrange, xrange])
+        plt.legend()
+    
+        xphase = plt.subplot(223, sharex = xhist)
+        sctx = plt.hist2d(ptcls[:, 2]*1e6, ptcls[:, 3]*1e3, weights = weights, bins=(binno,binno), cmap=plt.cm.jet, range = [[-xrange,xrange], [-yrange,yrange]], vmax = 100)
+        plt.xlabel(r'$x\mathrm{\ [\mu m]}$')
+        plt.ylabel(r'$x\rq,\,y\rq\mathrm{\ [mrad]}$')
+        if xlim is not None:
+            plt.xlim(xlim)
+        if ylim is not None:
+            plt.ylim(ylim)
+        
+        yphase = plt.subplot(224, sharex = yhist, sharey = xphase)
+        scty = plt.hist2d(ptcls[:, 0]*1e6, ptcls[:, 1]*1e3, weights = weights, bins=(binno,binno), cmap=plt.cm.jet, range = [[-xrange,xrange], [-yrange,yrange]], vmax = 100)
+        plt.xlabel(r'$y\mathrm{\ [\mu m]}$')
+        if xlim is not None:
+            plt.xlim(xlim)
+        if ylim is not None:
+            plt.ylim(ylim)
+            
+        fig.subplots_adjust(hspace=0)
+        fig.subplots_adjust(wspace=0.05)
+        plt.setp([a.get_xticklabels() for a in fig.axes[:-2]], visible=False)
+        plt.setp(fig.axes[1].get_yticklabels(), visible = False)
+        plt.setp(fig.axes[3].get_yticklabels(), visible = False)
+        
+        fig.subplots_adjust(right=0.9)
+        cbar_ax = fig.add_axes([0.91, 0.125, 0.01, 0.376])
+        CB = fig.colorbar(sctx[3], cax=cbar_ax)
+        CB.set_label("Arb. Units")
+
+        fig.text(.15,.84,"(a)")
+        fig.text(.55,.84,"(b)")
+        fig.text(.15,.46,"(c)",color='white')
+        fig.text(.55,.46,"(d)",color='white')
+        
+        #plt.savefig('/home/chris/Desktop/fig_histogram.eps',format='eps',bbox_inches='tight',dpi=100)
+        plt.show()
+
     def plot_hist_at(self, ind):
         ptcls, z = self.load_ptcls(ind)
         self.plot_hist(ptcls, z, ind)
@@ -415,83 +698,108 @@ class ElectronBeam(beam.Beam):
             weights = weights[sort]
             ptcls = ptcls[sort]
         
-        sigmax = self.get_sigmar(ind)[0]
-        sigmay = self.get_sigmar(ind)[1]
+        sigmay = self.get_sigmar(ind)[0]
+        sigmax = self.get_sigmar(ind)[1]
         #There used to be many different fits, but now only the Gauss+Gauss remains.
         # If you want to implement more, use the general procudure below with
         # functions at the bottom of this script.
         
+        numbins = 101
+
+        ##These two are x and y side by side.
         plt.figure(figsize=(10, 4), dpi=150)
         plt.subplot(121)
-        left = plt.hist(ptcls[:,0]*1e6, bins = 50, weights = weights, log=True)        
-        x = np.linspace(min(ptcls[:,0]),max(ptcls[:,0]),100)
-        fx = max(left[0])*np.exp(-1*np.square(x)/2/np.square(sigmax))
+        xhist = plt.hist(ptcls[:,2]*1e6, bins = numbins, weights = weights, log=True)  
+        x = np.linspace(min(ptcls[:,2]),max(ptcls[:,2]),100)
+        fx = max(xhist[0])*np.exp(-1*np.square(x)/2/np.square(sigmax))
         plt.plot(x*1e6, fx, label=r'$\sigma_x=$'+str(sigmax*1e6)+r'$\ \mu m$')
         plt.xlabel(r'$x\mathrm{\ [\mu m]}$')
         plt.ylabel('Counts')
         plt.ylim(bottom = 0.1)
-        plt.ylim(top = max(left[0])*6)
+        plt.ylim(top = max(xhist[0])*6)
         plt.legend()
         
         plt.subplot(122)
-        right = plt.hist(ptcls[:,0]*1e6, bins = 50, weights = weights, log=False)
-        plt.plot(x*1e6, fx, label=r'$\sigma_x=$'+str(sigmax*1e6)+r'$\ \mu m$')
-        plt.xlabel(r'$x\mathrm{\ [\mu m]}$')
-        plt.ylim(bottom = 0.1)
-        plt.ylim(top = max(right[0])*1.2)
-        plt.legend(); plt.show()
-        
-        plt.figure(figsize=(10, 4), dpi=150)
-        plt.subplot(121)
-        left = plt.hist(ptcls[:,2]*1e6, bins = 50, weights = weights, log=True)        
-        y = np.linspace(min(ptcls[:,2]),max(ptcls[:,2]),100)
-        fy = max(left[0])*np.exp(-1*np.square(y)/2/np.square(sigmay))
-        plt.plot(x*1e6, fy, label=r'$\sigma_y=$'+str(sigmay*1e6)+r'$\ \mu m$')
+        yhist = plt.hist(ptcls[:,0]*1e6, bins = numbins, weights = weights, log=True)
+        y = np.linspace(min(ptcls[:,0]),max(ptcls[:,0]),100)
+        fy = max(yhist[0])*np.exp(-1*np.square(y)/2/np.square(sigmay))
+        plt.plot(y*1e6, fy, label=r'$\sigma_y=$'+str(sigmay*1e6)+r'$\ \mu m$')
         plt.xlabel(r'$y\mathrm{\ [\mu m]}$')
         plt.ylabel('Counts')
         plt.ylim(bottom = 0.1)
-        plt.ylim(top = max(left[0])*6)
-        plt.legend()
-        
-        plt.subplot(122)
-        right = plt.hist(ptcls[:,0]*1e6, bins = 50, weights = weights, log=False)
-        plt.plot(x*1e6, fx, label=r'$\sigma_y=$'+str(sigmay*1e6)+r'$\ \mu m$')
-        plt.xlabel(r'$y\mathrm{\ [\mu m]}$')
-        plt.ylim(bottom = 0.1)
-        plt.ylim(top = max(right[0])*1.2)
+        plt.ylim(top = max(yhist[0])*6)
         plt.legend(); plt.show()
         
         #With the data from left we now want to try a Gauss + Gauss fit
-        wdata = np.array(left[0])
-        rdata = np.array(left[1])*1e-6
+        #At some point I will move this to its own function 
+        
+        xsel = True
+        if xsel is True:
+            histdata = xhist
+            indnum = 2
+            signum = sigmax
+            label = 'x'
+        else:
+            histdata = yhist
+            indnum = 0
+            signum = sigmay
+            label = 'y'
+        
+        wdata = np.array(histdata[0])
+        rdata = np.array(histdata[1])*1e-6
         rdata = rdata[0:-1]+.5*(rdata[1]-rdata[0])
-        p = FitDataSomething(wdata, rdata, GaussPlusGauss, [sigmax, sigmax*3, max(left[0]), max(left[0])/100])
-        print("G+G: ",p)
+        
+        out = 2
+        if out==1:#Gaussian
+            p = FitDataSomething(wdata, rdata, GaussPlusGauss, [signum/2, signum, max(histdata[0]), max(histdata[0])/100])
+            print("G+G: ",p)
+            llabel = "G+G: "+r'$\sigma_1=$'+("%0.2f"%(np.abs(p[0])*1e6))+r'$\ \mu m$'+" & "+r'$\sigma_2=$'+("%0.2f"%(np.abs(p[1])*1e6))+r'$\ \mu m$'
+            fxg = GaussPlusGauss(p,x)
+        elif out==2:#Exponential
+            p = FitDataSomething(wdata, rdata, GaussPlusExp, [signum/2, signum, max(histdata[0]), max(histdata[0])/100])
+            print("G+E: ",p)
+            llabel = "Gauss+Exponential: "+r'$\sigma_{inner}=$'+("%0.2f"%(np.abs(p[0])*1e6))+r'$\ \mu m$'
+            fxg = GaussPlusExp(p,x)
         
         plt.figure(figsize=(10, 4), dpi=150)
         plt.subplot(121)
-        left = plt.hist(ptcls[:,0]*1e6, bins = 50, weights = weights, log=True)
-        fxg = GaussPlusGauss(p,x)
-        plt.plot(x*1e6, fxg, label="G+G: "+r'$\sigma_1=$'+("%0.2f"%(np.abs(p[0])*1e6))+r'$\ \mu m$'+" & "+r'$\sigma_2=$'+("%0.2f"%(np.abs(p[1])*1e6))+r'$\ \mu m$')
+        left = plt.hist(ptcls[:,indnum]*1e6, bins = numbins, weights = weights, log=True)
+        plt.plot(x*1e6, fxg, label=llabel)
         plt.plot(x*1e6, Gauss([p[0],p[2]],x), 'k--')
-        plt.plot(x*1e6, Gauss([p[1],p[3]],x), 'c--')
-        plt.xlabel(r'$x\mathrm{\ [\mu m]}$')
+        if out == 1:
+            plt.plot(x*1e6, Gauss([p[1],p[3]],x), 'c--')
+        elif out == 2:
+            plt.plot(x*1e6, ExpFunc([p[1],p[3]],x), 'c--')
+        plt.xlabel(label+r'$\mathrm{\ [\mu m]}$')
         plt.ylabel('Counts')
         plt.ylim(bottom = 0.1)
         plt.ylim(top = max(left[0])*6)
         plt.legend()
         
         plt.subplot(122)
-        right = plt.hist(ptcls[:,0]*1e6, bins = 50, weights = weights, log=False)
-        plt.plot(x*1e6, fxg, label="G+G: "+r'$\sigma_1=$'+("%0.2f"%(np.abs(p[0])*1e6))+r'$\ \mu m$'+" & "+r'$\sigma_2=$'+("%0.2f"%(np.abs(p[1])*1e6))+r'$\ \mu m$')
+        right = plt.hist(ptcls[:,indnum]*1e6, bins = numbins, weights = weights, log=False)
+        plt.plot(x*1e6, fxg, label=llabel)
         plt.plot(x*1e6, Gauss([p[0],p[2]],x), 'k--')
-        plt.plot(x*1e6, Gauss([p[1],p[3]],x), 'c--')
-        plt.xlabel(r'$x\mathrm{\ [\mu m]}$')
+        if out == 1:
+            plt.plot(x*1e6, Gauss([p[1],p[3]],x), 'c--')
+        elif out == 2:
+            plt.plot(x*1e6, ExpFunc([p[1],p[3]],x), 'c--')
+        plt.xlabel(label+r'$\mathrm{\ [\mu m]}$')
         plt.ylim(bottom = 0.1)
         plt.ylim(top = max(right[0])*1.2)
         plt.legend(); plt.show()
         
-        GaussPlusGauss_Percent(p)
+        if out == 1:
+            GaussPlusGauss_Percent(p)
+        elif out == 2:
+            GaussPlusExp_Percent(p)
+
+        print("wdata len:  ",len(wdata))
+        print("wdata size: ",np.sum(wdata))
+        trunc = 35
+        print("trunc len:  ",len(wdata[trunc:-trunc]))
+        print("trunc perc: ",np.sum(wdata[trunc:-trunc])/np.sum(wdata)*100,"%")
+        print("left and right: ",rdata[trunc],rdata[-trunc])
         
         return
 
@@ -710,6 +1018,11 @@ class VorpalElectronBeam(ElectronBeam):
         weights = self.get_weights(ptcls)
         return super().get_sigmar(ind, weights)
 
+    def get_sigmar_frac(self, ind, threshold):
+        ptcls = self.load_ptcls(ind)[0]
+        weights = self.get_weights(ptcls)
+        return super().get_sigmar_frac(ind, weights, threshold)
+
     def get_sigmarp(self, ind):
         ptcls = self.load_ptcls(ind)[0]
         weights = self.get_weights(ptcls)
@@ -729,6 +1042,23 @@ class VorpalElectronBeam(ElectronBeam):
     def plot_phase(self, ptcls, z, xlim=None, ylim=None):
         weights = self.get_weights(ptcls)
         super().plot_phase(ptcls, z, xlim, ylim, weights)
+        
+    def plot_phase_hist_at(self, ind, fitted = False):
+        ptcls, z = self.load_ptcls(ind)
+        weights = self.get_weights(ptcls)
+        if fitted is False:
+            super().plot_phase_hist(ptcls, z, ind, weights=weights)
+        else:
+            super().plot_phase_hist_fitted(ptcls, z, ind, weights=weights)
+        plt.show()
+    
+    def plot_phase_hist(self, ptcls, z, ind, xlim=None, ylim=None):
+        weights = self.get_weights(ptcls)
+        super().plot_phase_hist(ptcls, z, ind, xlim, ylim, weights)
+        
+    def plot_phase_hist_fitted(self, ptcls, z, ind, xlim=None, ylim=None):
+        weights = self.get_weights(ptcls)
+        super().plot_phase_hist_fitted(ptcls, z, ind, xlim, ylim, weights)
         
     def plot_hist_at(self, ind):
         ptcls, z = self.load_ptcls(ind)
@@ -808,6 +1138,11 @@ def GaussPlusGauss(p, x):
     gauss2 = np.exp(-.5*np.square(x)/np.square(p[1]))
     return p[2]*gauss1 + p[3]*gauss2
 
+def GaussPlusExp(p, x):
+    gauss1 = np.exp(-.5*np.square(x)/np.square(p[0]))
+    exp2 = ExpFunc([p[1],p[3]],x)
+    return p[2]*gauss1 + exp2
+
 def GaussTimesGauss(p, x):
     gauss1 = np.exp(-.5*np.square(x)/np.square(p[0]))
     gauss2 = np.exp(-.5*np.square(x)/np.square(p[1]))
@@ -820,7 +1155,15 @@ def Lorentz(p,x):
 #p[sig,A]
 def Gauss(p, x):
     return p[1]*np.exp(-.5*np.square(x)/np.square(p[0]))
-    
+
+#p[delta,A]
+#def ExpFunc(p, x):
+#    return p[1]*np.exp(-1*np.abs(x)/p[0])
+
+#p[delta,A]
+def ExpFunc(p, x):
+    return p[1]*np.exp(-1*np.abs(x)/p[0])
+
 def FitDataSomething(data, axis, function, guess = [0.,0.,0.]):
     errfunc = lambda p, x, y: function(p, x) - y
     p0 = guess
@@ -840,6 +1183,16 @@ def GaussPlusGauss_Percent(p):
     po = [np.abs(p[1]), np.abs(p[3])]
     inner = Int.quad(lambda x: Gauss(pi, x), -5*pi[0], 5*pi[0])[0]
     outer = Int.quad(lambda x: Gauss(po, x), -5*po[0], 5*po[0])[0]
+    print(inner, outer)
+    print("Inner: ",inner/(inner+outer)*100,"%")
+    print("Outer: ",outer/(inner+outer)*100,"%")
+    return    
+
+def GaussPlusExp_Percent(p):
+    pi = [np.abs(p[0]), np.abs(p[2])]
+    po = [np.abs(p[1]), np.abs(p[3])]
+    inner = Int.quad(lambda x: Gauss(pi, x), -5*pi[0], 5*pi[0])[0]
+    outer = Int.quad(lambda x: ExpFunc(po, x), -5*po[0], 5*po[0])[0]
     print(inner, outer)
     print("Inner: ",inner/(inner+outer)*100,"%")
     print("Outer: ",outer/(inner+outer)*100,"%")
