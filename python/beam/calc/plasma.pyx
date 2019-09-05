@@ -92,7 +92,7 @@ def plasma_refraction(double complex[:, :, :] E, double[:] x, double[:] y,
     # n is total number density, ng + ne
     cdef double[:, :] n = np.zeros((Nx, Ny), dtype='double')
     cdef double[:, :] ne = np.zeros((Nx, Ny), dtype='double')
-    cdef double ngas = atom['alpha'] * 5.0e-8
+    cdef double ngas = atom['alpha'] *  6.283e-07
     cdef double nplasma = plasma_index(1.0, lam) - 1.0
     cdef double nh = 1.0 + ngas*n0
     cdef double dn = nplasma - ngas
@@ -133,7 +133,8 @@ def plasma_refraction(double complex[:, :, :] E, double[:] x, double[:] y,
 def plasma_refraction_energy(double complex[:, :, :] E, double[:] x, double[:] y,
                       double[:] z, double[:] t, double lam, double n0, 
                       double z0, fft, ifft, saveE, saven, atom, 
-                      loadn, loadne, int num_threads, double temp=0.0):
+                      loadn, loadne, int num_threads, double temp=0.0,
+                      double n2=0.0):
     """ Propagate a laser pulse through a plasma accounting for refraction.
 
     Propogates a laser pulse through a region of partially ionized gas. This
@@ -180,6 +181,8 @@ def plasma_refraction_energy(double complex[:, :, :] E, double[:] x, double[:] y
     temp : double, optional
         The final temperature of the plasma in eV for energy loss. Currently taken
         out of the field locally.
+    n2 : double, optional
+        The nonlinear index of refraction at atmospheric pressure. In cm^2/W.
     """
     cdef int i, j, k, l
     # TODO abstract this into its own function
@@ -197,12 +200,16 @@ def plasma_refraction_energy(double complex[:, :, :] E, double[:] x, double[:] y
     cdef int m = atom['m']
     # Plasma density and index of refraction arrays
     # n is total number density, ng + ne
+    # Note, this assumes the plasma density is well below the critical density
     cdef double[:, :] n = np.zeros((Nx, Ny), dtype='double')
     cdef double[:, :] ne = np.zeros((Nx, Ny), dtype='double')
-    cdef double ngas = atom['alpha'] * 5.0e-8
+    cdef double ngas = atom['alpha'] * 6.283e-07
     cdef double nplasma = plasma_index(1.0, lam) - 1.0
     cdef double nh = 1.0 + ngas*n0
     cdef double dn = nplasma - ngas
+    # n2 is measured at atmospheric pressure, calculate it per 1e17cm^-3
+    cdef double dn2 = n2 * 3.99361e-3
+    dn2 = dn2 * 1.32721e11 # Convert so we can multiply be GeV^2 later
     # Pre-calculate the spatial frequencies
     cdef double[:] fx = fftfreq(Nx, dx)
     cdef double[:] fy = fftfreq(Ny, dy)
@@ -213,23 +220,29 @@ def plasma_refraction_energy(double complex[:, :, :] E, double[:] x, double[:] y
     cdef double dz
     cdef double ne_new
     cdef double dE
+    cdef double ng
+    cdef double e_abs
+    cdef double complex arg_kerr
     cdef double complex[:, :] e = np.zeros((Nx, Ny), dtype='complex128')
     for i in range(1, Nz):
         n = loadn(i-1)
         ne = loadne(i-1)
         dz = z[i] - z[i-1]
         arg = 1j*2*np.pi*dz*dn / lam
+        arg_kerr = 1j*2*np.pi*dz*dn2 / lam 
         for j in range(Nt):
             # Propagate the beam through
             e = laser.fourier_step(E[j, :, :], ikz, dz, fft, ifft)
             with nogil:
                 for k in prange(Nx, num_threads=num_threads):
                     for l in range(Ny):
-                        e[k, l] *= cexp(arg*ne[k, l])
+                        ng = n[k, l] - ne[k, l]
+                        e_abs = cabs(e[k, l])
+                        e[k, l] *= cexp(arg*ne[k, l] + arg_kerr*ng*e_abs*e_abs)
                         # Ionize the gas
-                        Eavg = 0.5*(cabs(E[j, k, l]) + cabs(e[k, l]))
+                        Eavg = 0.5*(cabs(E[j, k, l]) + e_abs)
                         rate = adk_rate_linear(EI, Eavg, Z, ll, m)
-                        ne_new = n[k, l]-(n[k, l]-ne[k, l])*exp(-rate*dt)
+                        ne_new = n[k, l]-ng*exp(-rate*dt)
                         # Remove energy from the laser
                         dE = energy_loss(ne[k, l], ne_new, EI+temp, dz, dt, e[k, l])
                         ne[k, l] = ne_new

@@ -14,7 +14,7 @@ import beam.calc.laser as lcalc
 import beam.calc.electron as ecalc
 
 
-def pulse_plasma(pulse, plasma, temp=0.0):
+def pulse_plasma(pulse, plasma):
     """ Propagates a pulse through a gas, ionizing and refracting as it goes.
     
     Parameters
@@ -29,10 +29,10 @@ def pulse_plasma(pulse, plasma, temp=0.0):
                       pulse.fft, pulse.ifft, pulse.save_field, 
                       plasma.save_plasma_density, plasma.atom, 
                       plasma.load_num_den, plasma.load_plasma_den,
-                      pulse.threads, temp))
+                      pulse.threads))
 
 
-def pulse_plasma_energy(pulse, plasma):
+def pulse_plasma_energy(pulse, plasma, temp=0.0, n2=0.0):
     """ Propagates a pulse through a gas, ionizing and refracting as it goes.
     
     Parameters
@@ -41,13 +41,15 @@ def pulse_plasma_energy(pulse, plasma):
         The laser pulse to propagate through the plasma.
     plasma : Plasma class
         The gas to propagate the laser pulse through.
+    temp : double
+        Temperature of the plasma in eV.
     """
     pulse.e = np.array(pcalc.plasma_refraction_energy(pulse.e, pulse.x, pulse.y,
                       plasma.z, pulse.t, pulse.lam, plasma.n0, pulse.z[-1],
                       pulse.fft, pulse.ifft, pulse.save_field, 
                       plasma.save_plasma_density, plasma.atom, 
                       plasma.load_num_den, plasma.load_plasma_den,
-                      pulse.threads))
+                      pulse.threads, temp, n2))
 
 
 def pulse_multispecies(pulse, multi):
