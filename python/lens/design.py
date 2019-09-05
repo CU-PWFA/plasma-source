@@ -291,7 +291,7 @@ def domain_test(X, Nx, Z, Nz, beam0, pulseParams, z_target, I_target, start, yli
     
     return I
     
-def plasma_refraction(X, Nx, Z, Nz, beam0, pulseParams, species, n, start, m_e):
+def plasma_refraction(X, Nx, Z, Nz, beam0, pulseParams, species, n, start, m_e, ne0, name=None, t=0.0, n2=0.0):
     """ Propagate the laser pulse through the gas profile.
     
     Parameters
@@ -314,10 +314,12 @@ def plasma_refraction(X, Nx, Z, Nz, beam0, pulseParams, species, n, start, m_e):
         Function that returns the gas density as a function of z.
     m_e : double
         Multiplier for the intensity.
+    name : string, optional
+        Name for the pulse, defaults to Refracted_Beam.
     """
-    ne0 = 3.4e16/1e17 #This doesn't do anything but we need it or else the plasma
-    # class throws an error, plasma should have the parameter removed
-    pulseParams['name'] = 'Refracted_Beam'
+    if name is None:
+        name = 'Refracted_Beam'
+    pulseParams['name'] = name
     pulseParams['Nx'] = Nx
     pulseParams['Ny'] = Nx
     pulseParams['X'] = X
@@ -341,6 +343,7 @@ def plasma_refraction(X, Nx, Z, Nz, beam0, pulseParams, species, n, start, m_e):
     e = np.sqrt(m_e)*pulse.reconstruct_from_cyl(beam0.x, np.array(beam0.e)[:, int(beam0.Ny/2)], pulse.x, pulse.y)
     e = e[None, :, :]*np.exp(-pulse.t[:, None, None]**2*np.pi/(2*tau**2))
     pulse.initialize_field(e)
+    print('Initial pulse energy %0.2fmJ' % (pulse.pulse_energy()*1e3))
     plasma_source = plasma.Plasma(plasmaParams)
 
     # Initialize gas density
@@ -350,7 +353,8 @@ def plasma_refraction(X, Nx, Z, Nz, beam0, pulseParams, species, n, start, m_e):
         n_gas[:, :, i] = n(plasma_source.z[i]+start)
     plasma_source.initialize_plasma(n_gas, ne)
     # Propagate the laser beam through the oven
-    interactions.pulse_plasma(pulse, plasma_source)
+    interactions.pulse_plasma_energy(pulse, plasma_source)
+    print('Final pulse energy %0.2fmJ' % (pulse.pulse_energy()*1e3))
     e = np.zeros((Nz, Nx), dtype='complex128')
     ne = np.zeros((Nz, Nx))
     for i in range(0, Nz-1):
@@ -392,7 +396,7 @@ def plot_laser_plasma(I, ne, ext):
     plt.tight_layout()
     plt.show()
 
-def plot_plasma_density(pulse, ne, ne0, ext, lines=[20, 40, 60], name=None):
+def plot_plasma_density(pulse, ne, ne0, ext, lines=[20, 40, 60], name=None, xlim=None):
     """ Plot the plasma desnity with line outs.
 
     Parameters
@@ -410,6 +414,8 @@ def plot_plasma_density(pulse, ne, ne0, ext, lines=[20, 40, 60], name=None):
     name : string, optional
         Name and path for the image to be saved to.
     """
+    if xlim is None:
+        xlim = [ext[0], ext[1]]
     orange = '#EE7733'
     fig = plt.figure(figsize=(10, 7), dpi=150)
     gs = gridspec.GridSpec(4, 2, height_ratios=(1.5, 0.5, 3, 1), width_ratios=(40, 1),
@@ -431,7 +437,7 @@ def plot_plasma_density(pulse, ne, ne0, ext, lines=[20, 40, 60], name=None):
 
     ax3 = plt.subplot(gs[3, 0], sharex=ax1)
     plt.plot(np.array(pulse.z)/1e4, ne[:, int(pulse.Nx/2)]/1e16, c=orange)
-    plt.xlim(0, 80)
+    plt.xlim(xlim)
     plt.ylim(0, 4)
     plt.xlabel(r'$z$ (cm)')
     plt.ylabel(r'$n_e$')
@@ -472,7 +478,7 @@ def plot_plasma_density(pulse, ne, ne0, ext, lines=[20, 40, 60], name=None):
         plt.savefig(name+'.png')
     plt.show()
     
-def plot_pulse(pulse, ind, ylim=None, log=False):
+def plot_pulse(pulse, ind, ylim=None, log=False, smooth=False):
     """ Plot the pulse intensity in t-x space.
     
     Parameters
@@ -497,11 +503,15 @@ def plot_pulse(pulse, ind, ylim=None, log=False):
     
     ext = [-T/2, T/2, -X/2, X/2]
     plt.figure(figsize=(4, 2), dpi=150)
+    if smooth == True:
+        interp = 'Spline16'
+    else:
+        interp = None
     if log:
         norm = colors.LogNorm(vmin=I_max*1e-4, vmax=I_max)
-        plt.imshow(np.fliplr(np.flipud(np.transpose(I))), aspect='auto', extent=ext, cmap='viridis', norm=norm)
+        plt.imshow(np.fliplr(np.flipud(np.transpose(I))), aspect='auto', extent=ext, cmap='viridis', norm=norm, interpolation=interp)
     else:
-        plt.imshow(np.fliplr(np.flipud(np.transpose(I))), aspect='auto', extent=ext, cmap='viridis')
+        plt.imshow(np.fliplr(np.flipud(np.transpose(I))), aspect='auto', extent=ext, cmap='viridis', interpolation=interp)
     cb = plt.colorbar(format="%0.2f")
     cb.set_label(r'Laser Intensity ($10^{14} W/cm^2$)')
     plt.xlabel('t (fs)')
@@ -510,7 +520,7 @@ def plot_pulse(pulse, ind, ylim=None, log=False):
         plt.ylim(ylim)
     plt.show()
     
-def pulse_evolution(pulse, name, ylim=None, log=False):
+def pulse_evolution(pulse, name, ylim=None, log=False, smooth=False):
     """ Create an animation of the pulse evolution.
     
     Parameters
@@ -523,6 +533,8 @@ def pulse_evolution(pulse, name, ylim=None, log=False):
         The y limits of the plot.
     log : optional, bool
         Plot the intensity on a log scale.
+    smooth : optional, bool
+        Whether to use a Spline 16 interpolation during rendering.
     """
     Nt = pulse.Nt
     T = pulse.T
@@ -530,17 +542,21 @@ def pulse_evolution(pulse, name, ylim=None, log=False):
     X = pulse.X
     Nz = len(pulse.z)
     e = np.zeros((Nt, Nx), dtype='complex128')
-    e[:, :] = pulse.load_field(0)[0]
+    e[:, :], z = pulse.load_field(0)
     I = ionization.intensity_from_field(e)
     I_max = np.amax(I)
     
     ext = [-T/2, T/2, -X/2, X/2]
-    fig = plt.figure(figsize=(4, 2), dpi=150)
+    fig = plt.figure(figsize=(4, 2), dpi=300)
+    if smooth == True:
+        interp = 'Spline16'
+    else:
+        interp = None
     if log:
         norm = colors.LogNorm(vmin=I_max*1e-4, vmax=I_max)
-        im = plt.imshow(np.fliplr(np.flipud(np.transpose(I))), aspect='auto', extent=ext, cmap='viridis', norm=norm)
+        im = plt.imshow(np.fliplr(np.flipud(np.transpose(I))), aspect='auto', extent=ext, cmap='viridis', norm=norm, interpolation=interp)
     else:
-        im = plt.imshow(np.fliplr(np.flipud(np.transpose(I))), aspect='auto', extent=ext, cmap='viridis')
+        im = plt.imshow(np.fliplr(np.flipud(np.transpose(I))), aspect='auto', extent=ext, cmap='viridis', vmin=0.0, interpolation=interp)
     cb = plt.colorbar(format="%0.2f")
     cb.set_label(r'Laser Intensity ($10^{14} W/cm^2$)')
     plt.xlabel('t (fs)')
@@ -947,4 +963,73 @@ def field_after_lens_B(beam0, rB, phiB, r, E, rlim=None, plot=True):
         plt.show()
     return r, e1
 
+def propagate_down_beampipe(pulse, apertures, diameters, X, Nx, Nz):
+    """ Propagate the pulse through the apertures in the beamline.
     
+    Parameters
+    ----------
+    pulse : LaserPulse object
+        The laser pulse used in calculating the refraction.
+    apertures : array of doubles
+        Distance from the end of the plasma to each aperture in the system.    
+    diameters : array of doubles
+        The diameter of each aperture in the beam pipe.
+    X : double
+        Transverse domain size in um for the pulse.
+    Nx : int
+        Number of cells in the transverse dimension for the pulse.
+    Nz : int
+        Total number of cells to use down the beampipe
+    
+    Returns
+    -------
+    beam_hm : LaserPulse object
+        The pulse that propagates through the beamline.
+    """
+    pulseParams = pulse.params.copy()
+    pulseParams['name'] = 'Beamline_Pulse'
+    pulseParams['Nx'] = Nx
+    pulseParams['Ny'] = Nx
+    pulseParams['X'] = X
+    pulseParams['Y'] = X
+    pulseParams['load'] = False
+    pulse_bl = laserpulse.Pulse(pulseParams)
+    e0 = np.array(pulse.e)
+    e = pulse_bl.e
+    for i in range(pulse.Nt):
+        e[i, :, :] = pulse_bl.reconstruct_from_cyl(pulse.x, e0[i, :, int(pulse.Ny/2)], pulse_bl.x, pulse_bl.y)
+    pulse_bl.initialize_field(e)
+    
+    holeParams = {
+        'Nx' : Nx,
+        'Ny' : Nx,
+        'X' : X,
+        'Y' : X,
+        'path' : pulseParams['path'], 
+        'lam' : pulseParams['lam'],
+        'load' : False
+    }
+    
+    Z = apertures[-1]
+    dz = Z/(Nz-1)
+    N = len(apertures)
+    
+    prev = 0
+    for i in range(N):
+        l = apertures[i]-prev
+        prev = apertures[i]
+        m = int(l/dz)
+        z = np.linspace(0, l, m)
+        pulse_bl.propagate(z, 1.0)
+        holeParams['name'] = 'Aperture_'+str(i)
+        holeParams['r'] = diameters[i]/2
+        hole = optic.Aperture(holeParams)
+        interactions.beam_intensity(pulse_bl, hole)
+    I_bl = np.zeros((Nz, Nx), dtype='double')
+    for i in range(Nz):
+        I_bl[i, :] = np.amax(pulse_bl.intensity_from_field(pulse_bl.load_field(i+1)[0]), axis=0)
+    I_bl = pulse_bl.prep_data(I_bl)
+    return I_bl
+    
+    
+        
