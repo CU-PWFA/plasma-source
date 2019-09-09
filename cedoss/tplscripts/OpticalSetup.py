@@ -26,7 +26,7 @@ n=1.                    #Refractive index
 epsilon0 = 8.854e-12    #Dielectric constant
 wavelength = 800.0e-9 #785.3e-9   #Laser wavelength in m
 w0 = 5e-3               #Initial spot size in m
-E_ion = 24.6           #Ionization Energy:  13.6 for H, 15.8 for Ar, 24.6 for He 27.6 for Ar++
+E_ion = 15.8           #Ionization Energy:  13.6 for H, 15.8 for Ar, 24.6 for He 27.6 for Ar++
 setupTitle = ""         #Name the setup 
 reverse = 0
 
@@ -37,7 +37,7 @@ zi = 7.5e-3             #Offset from small waist to plane we want to save params
 zoom=int(round(zi/l_step))
 
 path = '/home/chris/Desktop/DataLoads/PulseFilesNp/'
-filename = 'pulseParams_737um_Ar.npy'
+filename = 'pulseParams_labtest1b.npy'
 
 save = 0                #Set to 1 to save anything
 calcdensity = 0         #Set to 1 to calc resulting plasma density w/out refraction
@@ -46,26 +46,27 @@ calcfocal = 1
 foc_dom_fac = 2
 radscl = 1   #Set to larger to increase the beam axis domain
 
-choice=61         #Set to one of the setups below
+choice=72         #Set to one of the setups below
 
-if choice==62:#He L=19.01 um  Shooting into 
+if choice==70:#For the 70 series, this one is designed to do simple 2 cyl lenses to find I tolerances
     setupTitle = "Spherical_2Cylindrical_reversed"
+    w0 = 8.66e-3 #calculated from 30mm diameter flattop estimation
     reverse = 1
-    zi = 8e-2 #8e-2             #Offset from small waist to plane we want to save params at
+    zi = 200e-2 #8e-2             #Offset from small waist to plane we want to save params at
     zoom=int(round(zi/l_step))
-    radscl = 1
+    radscl = 2
     
     setupTitle = "Spherical_2Cylindrical"
     
-    f1 = 0.025 #m
-    L1 = 0.075
-    
-    f2 = 0.025
-    L2 = 0.077
-    
-    #f1=f2; L1=L2
+    f1 = 13 #m
+    L1 = 0
 
-    P = 1560e9 #481 for 19 um in He
+    f2 = 4 #m
+    L2 = 9
+
+    Lmax = 18
+
+    P = 350e9
     
     #  0.00625 0.0125 0.025 0.050 0.100
     #  0.015 0.020 0.030 0.040 0.075 0.150
@@ -73,35 +74,34 @@ if choice==62:#He L=19.01 um  Shooting into
     q_y = GB.Prop_Init_q(wavelength, w0, -.1, 1)
     
     GB.Prop_Cylindrical_FreeSpace(q_x,q_y,.1,l_step)
-    GB.Prop_CylindricalLens(q_y,q_x,.200)
-    GB.Prop_CylindricalLens(q_x,q_y,.200)
     
     GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L1,l_step) 
-    GB.Prop_CylindricalLens(q_x,q_y,-2*f1)   #Focuses the "Wide" curve in fig1
+    GB.Prop_CylindricalLens(q_x,q_y,2*f1)
     
     GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L2-L1,l_step) 
-    GB.Prop_CylindricalLens(q_y,q_x,-2*f2)   #Focuses the "Narrow" curve in fig1
+    GB.Prop_CylindricalLens(q_y,q_x,2*f2)
     
-    GB.Prop_Cylindrical_FreeSpace(q_x,q_y, 0.5,l_step)
-
-if choice==61:#He L=19.01 um  Shooting into 
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y, Lmax-L1-L2,l_step)
+    
+if choice==71:#For the 70 series, this one is designed to do simple 2 cyl lenses to find I tolerances
     setupTitle = "Spherical_2Cylindrical_reversed"
-    reverse = 0
-    zi = 8e-2 #8e-2             #Offset from small waist to plane we want to save params at
+    w0 = 8.66e-3 #calculated from 30mm diameter flattop estimation
+    reverse = 1
+    zi = 200e-2 #8e-2             #Offset from small waist to plane we want to save params at
     zoom=int(round(zi/l_step))
-    radscl = 0.2
+    radscl = 2
     
     setupTitle = "Spherical_2Cylindrical"
     
-    f1 = 0.025 #m
-    L1 = 0.077
-    
-    f2 = 0.010 #Gets a nice 125 um focus
-    L2 = 0.0901
-    
-    #f1=f2; L1=L2
+    f1 = 5 #m
+    L1 = 0
 
-    P = 341.5e9 #481 for 19 um in He, #241.5e9 for 2.87 um in He
+    f2 = 4 #m
+    L2 = 0.7
+
+    Lmax = 8
+
+    P = 700e9
     
     #  0.00625 0.0125 0.025 0.050 0.100
     #  0.015 0.020 0.030 0.040 0.075 0.150
@@ -109,16 +109,161 @@ if choice==61:#He L=19.01 um  Shooting into
     q_y = GB.Prop_Init_q(wavelength, w0, -.1, 1)
     
     GB.Prop_Cylindrical_FreeSpace(q_x,q_y,.1,l_step)
-    GB.Prop_CylindricalLens(q_y,q_x,.200)
-    GB.Prop_CylindricalLens(q_x,q_y,.200)
     
     GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L1,l_step) 
-    GB.Prop_CylindricalLens(q_y,q_x,-2*f1)   #Focuses the "Wide" curve in fig1
+    GB.Prop_CylindricalLens(q_x,q_y,2*f1)
     
     GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L2-L1,l_step) 
-    GB.Prop_CylindricalLens(q_x,q_y,-2*f2)   #Focuses the "Narrow" curve in fig1
+    GB.Prop_CylindricalLens(q_y,q_x,2*f2)
     
-    GB.Prop_Cylindrical_FreeSpace(q_x,q_y, 0.5,l_step)
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y, Lmax-L1-L2,l_step)
+    
+if choice==72:#71, but with 3 lenses to minimize space.  0.8 mm spacing between lenses :(
+    setupTitle = "Spherical_2Cylindrical_reversed"
+    w0 = 8.66e-3 #calculated from 30mm diameter flattop estimation
+    reverse = 1
+    zi = 188.07e-2 #8e-2             #Offset from small waist to plane we want to save params at
+    zoom=int(round(zi/l_step))
+    radscl = 2
+    
+    setupTitle = "Spherical_2Cylindrical"
+    
+    f0 = 0.20
+    
+    f1 = -0.1000 #m
+    L1 = 0.105
+
+    f2 = -0.07999 #m
+    L2 = 0.1228
+
+    Lmax = 6
+
+    P = 700e9
+    
+    #  0.00625 0.0125 0.025 0.050 0.100
+    #  0.015 0.020 0.030 0.040 0.075 0.150
+    q_x = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    q_y = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,.1,l_step)
+    GB.Prop_CylindricalLens(q_y,q_x,2*f0)
+    GB.Prop_CylindricalLens(q_x,q_y,2*f0)
+
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L1,l_step) 
+    GB.Prop_CylindricalLens(q_y,q_x,2*f1)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L2-L1,l_step) 
+    GB.Prop_CylindricalLens(q_x,q_y,2*f2)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y, Lmax,l_step)
+
+##The 60 series tried using a long lens in Chamber A of 1.5m and some other lenses in
+##Chamber B to get the asymmetric focus.  However, the 1.5m lens has large intesities
+##well into the tunnel and this makes it impossible to add any more lenses.
+if choice==60:#Test optics for lab characterization
+    setupTitle = "Spherical_2Cylindrical_reversed"
+    w0 = 8.66e-3 #calculated from 30mm diameter flattop estimation
+    reverse = 0
+    zi = 60e-2 #8e-2             #Offset from small waist to plane we want to save params at
+    zoom=int(round(zi/l_step))
+    radscl = 0.3
+    
+    setupTitle = "Spherical_2Cylindrical"
+    
+    f1 = 0.07999 #m
+    L1 = 1.42
+
+    P = 160e9 #211 for ideal 422um, 224 for refracted 442um in gas jet
+    
+    #  0.00625 0.0125 0.025 0.050 0.100
+    #  0.015 0.020 0.030 0.040 0.075 0.150
+    q_x = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    q_y = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,.1,l_step)
+    GB.Prop_CylindricalLens(q_y,q_x,3.00)
+    GB.Prop_CylindricalLens(q_x,q_y,3.00)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L1,l_step) 
+    GB.Prop_CylindricalLens(q_x,q_y,-2*f1)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y, 1.60-L1,l_step)
+    
+if choice==61:#Test optics for lab characterization
+    setupTitle = "Spherical_2Cylindrical_reversed"
+    w0 = 8.66e-3 #calculated from 30mm diameter flattop estimation
+    reverse = 1
+    zi = 7e-2 #8e-2             #Offset from small waist to plane we want to save params at
+    zoom=int(round(zi/l_step))
+    radscl = 2
+    
+    setupTitle = "Spherical_2Cylindrical"
+    
+    f1 = 0.25 #m
+    L1 = 1.34
+    
+    f2 = 0.1
+    L2 = 1.404#1.41
+    
+    Lmax = 2.00
+
+    P = 800e9 #211 for ideal 422um, 224 for refracted 442um in gas jet
+    
+    #  0.00625 0.0125 0.025 0.050 0.100
+    #  0.015 0.020 0.030 0.040 0.075 0.150
+    q_x = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    q_y = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,.1,l_step)
+    GB.Prop_CylindricalLens(q_y,q_x,3.00)
+    GB.Prop_CylindricalLens(q_x,q_y,3.00)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L1,l_step) 
+    GB.Prop_CylindricalLens(q_y,q_x,-2*f1)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L2-L1,l_step) 
+    GB.Prop_CylindricalLens(q_x,q_y,-2*f2)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y, Lmax-L2,l_step)
+    
+if choice==62:#Test optics for lab characterization
+    setupTitle = "Spherical_2Cylindrical_reversed"
+    w0 = 8.66e-3 #calculated from 30mm diameter flattop estimation
+    reverse = 1
+    zi = 25e-2 #8e-2             #Offset from small waist to plane we want to save params at
+    zoom=int(round(zi/l_step))
+    radscl = 2
+    
+    setupTitle = "Spherical_2Cylindrical"
+    
+    f1 = 0.25 #m
+    L1 = 1.34
+    
+    f2 = 0.07999
+    L2 = 1.428#1.43
+    
+    Lmax = 2.40
+
+    P = 350e9 #211 for ideal 422um, 224 for refracted 442um in gas jet
+    
+    #  0.00625 0.0125 0.025 0.050 0.100
+    #  0.015 0.020 0.030 0.040 0.075 0.150
+    q_x = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    q_y = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,.1,l_step)
+    GB.Prop_CylindricalLens(q_y,q_x,3.00)
+    GB.Prop_CylindricalLens(q_x,q_y,3.00)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L1,l_step) 
+    GB.Prop_CylindricalLens(q_y,q_x,-2*f1)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L2-L1,l_step) 
+    GB.Prop_CylindricalLens(q_x,q_y,-2*f2)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y, Lmax-L2,l_step)
+    
+#####################################################################################
 
 if choice==53:#Ar L=442.1 um  We gonna goldilocks this one
     setupTitle = "Spherical_2Cylindrical_reversed"
@@ -156,10 +301,11 @@ if choice==53:#Ar L=442.1 um  We gonna goldilocks this one
     
     GB.Prop_Cylindrical_FreeSpace(q_x,q_y, 0.5,l_step)
 
-if choice==50:#Ar L=442.1 um  Disregard exact shape, need ~100um wide transverse
+##THIS IS THE PAPER ONE!!
+if choice==50:#Ar L=737 um in Ar  Disregard exact shape, need ~100um wide transverse 
     setupTitle = "Spherical_2Cylindrical_reversed"
     reverse = 1
-    zi = 16e-2 #5e-2             #Offset from small waist to plane we want to save params at
+    zi = 2e-2#16e-2 #5e-2             #Offset from small waist to plane we want to save params at
     zoom=int(round(zi/l_step))
     radscl = 3
     
@@ -268,43 +414,6 @@ if choice==52:#Ar L=442.1 um  This one with a fairly narrow profile
     GB.Prop_CylindricalLens(q_x,q_y,-2*f2)   #Focuses the "Narrow" curve in fig1
     
     GB.Prop_Cylindrical_FreeSpace(q_x,q_y, 0.5,l_step)
-
-if choice==60:#Attempting to do the filamentation requriements in He
-    setupTitle = "Spherical_2Cylindrical_reversed"
-    w0 = 20e-3               #Initial spot size in m
-    reverse = 1
-    zi = 200e-2 #8e-2             #Offset from small waist to plane we want to save params at
-    zoom=int(round(zi/l_step))
-    radscl = 30
-    
-    setupTitle = "Spherical_2Cylindrical"
-    
-    f2 = 0.03 #m
-    L2 = 0.07005
-    
-    f1 = 0.03 #Gets a nice 125 um focus
-    L1 = 0.00015
-    
-    #f1=f2; L1=L2
-
-    P = 50000e9 #211 for ideal 422um, 224 for refracted 442um in gas jet
-    
-    #  0.00625 0.0125 0.025 0.050 0.100
-    #  0.015 0.020 0.030 0.040 0.075 0.150
-    q_x = GB.Prop_Init_q(wavelength, w0, -.1, 1)
-    q_y = GB.Prop_Init_q(wavelength, w0, -.1, 1)
-    
-    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,.1,l_step)
-    GB.Prop_CylindricalLens(q_y,q_x,0.200)
-    GB.Prop_CylindricalLens(q_x,q_y,0.200)
-    
-    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L2,l_step) 
-    GB.Prop_CylindricalLens(q_x,q_y,-2*f2)   #Focuses the "Wide" curve in fig1
-    
-    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L1,l_step) 
-    GB.Prop_CylindricalLens(q_y,q_x,-2*f1)   #Focuses the "Narrow" curve in fig1
-    
-    GB.Prop_Cylindrical_FreeSpace(q_x,q_y, 13,l_step)
 
 if choice==46:#Ar L=996.5 um  This is the gucci one in the paper (UNTIL IT CHANGED)
     setupTitle = "Spherical_2Cylindrical_reversed"
@@ -815,13 +924,15 @@ if choice==11:
 I0 = 2*P/np.pi/np.power(w0,2)
 Ei = np.sqrt(2*I0/c/n/epsilon0)*1e-9
 
-
 #Get the total domain of spot sizes
 zrange_tot=GB.Prop_GetRange(q_x)
 wtotx=GB.Prop_SpotList(q_x,wavelength)
 wtoty=GB.Prop_SpotList(q_y,wavelength)
 
 #Plots spot size
+fig, ax1 = plt.subplots(figsize=(14,4))
+#plt.rcParams.update({'font.size': 12})
+plt.subplot(121)
 if reverse == 1:
     plt.plot(zrange_tot,wtoty,label="Wide Waist Spot Size")
 plt.plot(zrange_tot,wtotx,label="Narrow Waist Spot Size")
@@ -831,7 +942,7 @@ plt.xlabel(r'Laser Axis (x) [$m$]')
 if reverse != 1:
     plt.plot(zrange_tot,wtoty,label="Wide Waist Spot Size")
 plt.legend()
-plt.grid(); plt.show()
+plt.grid()#; plt.show()
 
 #Zoom in to a scale of the rayleigh length of wy
 waist=wtotx.index(min(wtotx))
@@ -848,6 +959,7 @@ if reverse == 1:
     wx = wd
 
 #Plots spot size zoomed in around waist
+plt.subplot(122)
 plt.plot(xrange,wx*1e6,label="Beam Axis Waist (x)")
 plt.title("Spot size from q parameter")
 plt.ylabel("Spot Size (um)")
@@ -855,6 +967,10 @@ plt.xlabel("Laser Axis (x)")
 plt.plot(xrange,wy*1e6,label="Transverse Waist (y)")
 plt.legend()
 plt.grid(); plt.show()
+
+print(zoom)
+print(zrange_tot[waist-zoom])
+print(xrange[0])
 
 #Print some diagnostics for minimum spot sizes
 GB.Prop_SpotInfo(q_x,wavelength,'w0x','z(w0x)')
@@ -883,6 +999,11 @@ pulseParams = {'Description' : setupTitle,
                'zi' : zi * scl
                }
 
+I_start=GB.GaussianBeamIntensity_SpotArray_2D(I0/1e4,wx[0],wy[0],w0,0,0)
+print()
+print("Intensity at start: ",I_start," W/cm2")
+print("Change zi to find I at first lens.")
+
 if save == 1:
     #Create the folder if it not already exists
     if not os.path.exists(path):
@@ -908,6 +1029,7 @@ if calcfocal == 1:
     
     
     I = GB.IntensityFromSpotSizes_1D(wy_center,wz_center,y,I0/1e4,w0)
+
     plt.plot(y*1e6,I)
     plt.title("Intensity along beam axis")
     plt.xlabel(r'$\mathrm{Beam\,\,Axis\,\,[\mu m]}$')

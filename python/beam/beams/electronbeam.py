@@ -758,7 +758,7 @@ class ElectronBeam(beam.Beam):
         elif out==2:#Exponential
             p = FitDataSomething(wdata, rdata, GaussPlusExp, [signum/2, signum, max(histdata[0]), max(histdata[0])/100])
             print("G+E: ",p)
-            llabel = "Gauss+Exponential: "+r'$\sigma_{inner}=$'+("%0.2f"%(np.abs(p[0])*1e6))+r'$\ \mu m$'
+            llabel = "Gauss+Exponential: "+r'$\sigma_{Gauss}=$'+("%0.2f"%(np.abs(p[0])*1e6))+r'$\ \mu m$'
             fxg = GaussPlusExp(p,x)
         
         plt.figure(figsize=(10, 4), dpi=150)
@@ -793,13 +793,6 @@ class ElectronBeam(beam.Beam):
             GaussPlusGauss_Percent(p)
         elif out == 2:
             GaussPlusExp_Percent(p)
-
-        print("wdata len:  ",len(wdata))
-        print("wdata size: ",np.sum(wdata))
-        trunc = 35
-        print("trunc len:  ",len(wdata[trunc:-trunc]))
-        print("trunc perc: ",np.sum(wdata[trunc:-trunc])/np.sum(wdata)*100,"%")
-        print("left and right: ",rdata[trunc],rdata[-trunc])
         
         return
 

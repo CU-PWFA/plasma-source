@@ -18,7 +18,7 @@ sys.path.insert(0, "../../python")
 import numpy as np
 from beam.beams import electronbeam
 from beam.elements import plasma_1d as plasma
-#from beam import interactions
+from beam import interactions
 import beam.calc.electron as ecalc
 from ionization import ionization
 from lens import profile
@@ -468,15 +468,13 @@ def Plot_CSEvo_MatchedCompare(beamParams, beamParams_matched, n_arr, z_arr, z_of
     ax1.set_ylabel(r'$\beta\,\mathrm{[cm]}$', color = 'b')
     ax1.tick_params('y', colors = 'b')
     ax1.set_xlabel('z [cm]')
-    ax1.set_ylim([-0.05,2200.05])
+    ax1.set_ylim([-0.05,1400.05])
     
     ax2 = ax1.twinx()
     ax2.plot(z_arr*1e2, n_arr/max(n_arr), 'g-')
     ax2.set_ylabel(r'$n/n_0$',color = 'g')
     ax2.tick_params('y', colors = 'g')
     ax1.grid(); ax1.legend(loc=legend_loc); plt.show()
-    
-    return beta,alpha,gamma,gb
 
 def Plot_CSEvo_FinalCompare(beamParams, n_arr, z_arr, z_offset = 0, legend_loc=0, subset = False, plot = 1):
     beta, alpha, gamma, gb = Calc_CSParams(beamParams, n_arr, z_arr)
