@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #cython: boundscheck=False, wraparound=False, nonecheck=False
 #cython: overflowcheck=False, cdivision=True
-#cython: linetrace=True, binding=True
+#cython: linetrace=False, binding=True
 """
 Created on Mon Sep 18 16:59:45 2017
 
@@ -250,9 +250,6 @@ def plasma_refraction_energy(double complex[:, :, :] E, double[:] x, double[:] y
             E[j, :, :] = e
         saveE(E, z[i]+z0)
         saven(ne, i-1)
-        for k in range(Nx):
-            for l in range(Ny):
-                  ne[k, l] = 0.0                           
     return E
 
 # TODO, move this to a helper function file

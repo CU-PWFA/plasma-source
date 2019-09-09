@@ -29,7 +29,7 @@ if os.name == 'nt':
                                 os.path.join(venv.sys.base_prefix, 'include')],
                   extra_compile_args = [],
                   extra_link_args=['-fopenmp'],
-                  define_macros=[('CYTHON_TRACE', '1')],
+                  #define_macros=[('CYTHON_TRACE', '1')],
                   language='c++'
         )
     ]
@@ -44,7 +44,7 @@ else:
                                 os.path.join(venv.sys.base_prefix, 'include')],
                   extra_compile_args = ['-march=native', '-fopenmp', '-O3'],
                   extra_link_args=['-fopenmp'],
-                  define_macros=[('CYTHON_TRACE', '1')]
+                  #define_macros=[('CYTHON_TRACE', '1')]
         )
     ]
 
