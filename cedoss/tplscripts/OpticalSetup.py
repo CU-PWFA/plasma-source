@@ -29,6 +29,7 @@ w0 = 5e-3               #Initial spot size in m
 E_ion = 15.8           #Ionization Energy:  13.6 for H, 15.8 for Ar, 24.6 for He 27.6 for Ar++
 setupTitle = ""         #Name the setup 
 reverse = 0
+fs_duration = 35e-15
 
 #I0 = 2*P/(np.pi*np.power(w0,2))*np.power(1/cm_m,2)
 
@@ -46,7 +47,163 @@ calcfocal = 1
 foc_dom_fac = 2
 radscl = 1   #Set to larger to increase the beam axis domain
 
-choice=72         #Set to one of the setups below
+choice=71         #Set to one of the setups below
+
+if choice==76:
+    setupTitle = "Spherical_2Cylindrical_reversed"
+    w0 = 8.66e-3 #calculated from 30mm diameter flattop estimation
+    reverse = 0
+    zi = 35e-2#96.735e-2             #Offset from small waist to plane we want to save params at
+    zoom=int(round(zi/l_step))
+    radscl = 0.4
+
+    setupTitle = "Spherical_2Cylindrical"
+
+    f0 = 0.20
+
+    f1 = -0.1000 #m
+    L1 = 0.109
+
+    f2 = f1 #m
+    L2 = L1
+
+    Lmax = 2.5
+
+    P = 30e9
+
+     #  0.00625 0.0125 0.025 0.050 0.100
+    #  0.015 0.020 0.030 0.040 0.075 0.150
+    q_x = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    q_y = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,.1,l_step)
+    GB.Prop_CylindricalLens(q_y,q_x,2*f0)
+    GB.Prop_CylindricalLens(q_x,q_y,2*f0)
+
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L1,l_step) 
+    GB.Prop_CylindricalLens(q_y,q_x,2*f1)
+
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L2-L1,l_step) 
+    GB.Prop_CylindricalLens(q_x,q_y,2*f2)
+
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y, Lmax,l_step)
+
+if choice==75:
+    setupTitle = "Spherical_2Cylindrical_reversed"
+    w0 = 8.66e-3 #calculated from 30mm diameter flattop estimation
+    reverse = 0
+    zi = 60e-2#96.735e-2             #Offset from small waist to plane we want to save params at
+    zoom=int(round(zi/l_step))
+    radscl = 0.7
+
+    setupTitle = "Spherical_2Cylindrical"
+
+    f0 = 0.20
+
+    f1 = -0.1000 #m
+    L1 = 0.109
+
+    f2 = -0.05000 #m
+    L2 = 0.1525
+
+    Lmax = 2.5
+
+    P = 100e9
+
+     #  0.00625 0.0125 0.025 0.050 0.100
+    #  0.015 0.020 0.030 0.040 0.075 0.150
+    q_x = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    q_y = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,.1,l_step)
+    GB.Prop_CylindricalLens(q_y,q_x,2*f0)
+    GB.Prop_CylindricalLens(q_x,q_y,2*f0)
+
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L1,l_step) 
+    GB.Prop_CylindricalLens(q_y,q_x,2*f1)
+
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L2-L1,l_step) 
+    GB.Prop_CylindricalLens(q_x,q_y,2*f2)
+
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y, Lmax,l_step)
+
+if choice==74:
+    setupTitle = "Spherical_2Cylindrical_reversed"
+    w0 = 8.66e-3 #calculated from 30mm diameter flattop estimation
+    reverse = 1
+    zi = 94.7e-2             #Offset from small waist to plane we want to save params at
+    zoom=int(round(zi/l_step))
+    radscl = 0.7
+
+    setupTitle = "Spherical_2Cylindrical"
+
+    f0 = 0.20
+
+    f1 = -0.05000 #m
+    L1 = 0.1525
+
+    f2 = f1 #m
+    L2 = L1
+
+    Lmax = 2.5
+
+    P = 100e9
+
+     #  0.00625 0.0125 0.025 0.050 0.100
+    #  0.015 0.020 0.030 0.040 0.075 0.150
+    q_x = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    q_y = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,.1,l_step)
+    GB.Prop_CylindricalLens(q_y,q_x,2*f0)
+    GB.Prop_CylindricalLens(q_x,q_y,2*f0)
+
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L1,l_step) 
+    GB.Prop_CylindricalLens(q_y,q_x,2*f1)
+
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L2-L1,l_step) 
+    GB.Prop_CylindricalLens(q_x,q_y,2*f2)
+
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y, Lmax,l_step)
+
+if choice==741:  #test for 74, where I>2e12 W/cm2 1.0 m upstream of focus
+    setupTitle = "Spherical_2Cylindrical_reversed"
+    w0 = 8.66e-3 #calculated from 30mm diameter flattop estimation
+    reverse = 1
+    zi = 100e-2             #Offset from small waist to plane we want to save params at
+    zoom=int(round(zi/l_step))
+    radscl = 0.7
+
+    setupTitle = "Spherical_2Cylindrical"
+
+    f0 = 0.20
+
+    f1 = -0.1000 #m
+    L1 = 0.105
+
+    f2 = -0.1000 #m
+    L2 = 0.105
+
+    Lmax = 4
+
+    P = 150e9
+
+     #  0.00625 0.0125 0.025 0.050 0.100
+    #  0.015 0.020 0.030 0.040 0.075 0.150
+    q_x = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    q_y = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,.1,l_step)
+    GB.Prop_CylindricalLens(q_y,q_x,2*f0)
+    GB.Prop_CylindricalLens(q_x,q_y,2*f0)
+
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L1,l_step) 
+    GB.Prop_CylindricalLens(q_y,q_x,2*f1)
+
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L2-L1,l_step) 
+    GB.Prop_CylindricalLens(q_x,q_y,2*f2)
+
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y, Lmax,l_step)
 
 if choice==70:#For the 70 series, this one is designed to do simple 2 cyl lenses to find I tolerances
     setupTitle = "Spherical_2Cylindrical_reversed"
@@ -87,7 +244,7 @@ if choice==71:#For the 70 series, this one is designed to do simple 2 cyl lenses
     setupTitle = "Spherical_2Cylindrical_reversed"
     w0 = 8.66e-3 #calculated from 30mm diameter flattop estimation
     reverse = 1
-    zi = 200e-2 #8e-2             #Offset from small waist to plane we want to save params at
+    zi = 20e-2 #8e-2             #Offset from small waist to plane we want to save params at
     zoom=int(round(zi/l_step))
     radscl = 2
     
@@ -118,7 +275,8 @@ if choice==71:#For the 70 series, this one is designed to do simple 2 cyl lenses
     
     GB.Prop_Cylindrical_FreeSpace(q_x,q_y, Lmax-L1-L2,l_step)
     
-if choice==72:#71, but with 3 lenses to minimize space.  0.8 mm spacing between lenses :(
+if choice==72:  #P 700-500 GW, 3.3e12-2.3e12 W/cm2 @ 1.88 m, 718-572 um
+                #P 400 GW, 1.8e12 W/cm2 @ 1.88 m, 440 um
     setupTitle = "Spherical_2Cylindrical_reversed"
     w0 = 8.66e-3 #calculated from 30mm diameter flattop estimation
     reverse = 1
@@ -136,7 +294,7 @@ if choice==72:#71, but with 3 lenses to minimize space.  0.8 mm spacing between 
     f2 = -0.07999 #m
     L2 = 0.1228
 
-    Lmax = 6
+    Lmax = 4
 
     P = 700e9
     
@@ -156,7 +314,46 @@ if choice==72:#71, but with 3 lenses to minimize space.  0.8 mm spacing between 
     GB.Prop_CylindricalLens(q_x,q_y,2*f2)
     
     GB.Prop_Cylindrical_FreeSpace(q_x,q_y, Lmax,l_step)
+    
+if choice==73:  #P 400-250 GW, 2.0e12-1.3e12 W/cm2 @ 1.88 m, 414-284 um
+    setupTitle = "Spherical_2Cylindrical_reversed"
+    w0 = 8.66e-3 #calculated from 30mm diameter flattop estimation
+    reverse = 1
+    zi = 187.53e-2             #Offset from small waist to plane we want to save params at
+    zoom=int(round(zi/l_step))
+    radscl = 2
 
+    setupTitle = "Spherical_2Cylindrical"
+
+    f0 = 0.20
+
+    f1 = -0.1000 #m
+    L1 = 0.105
+
+    f2 = -0.0750 #m
+    L2 = 0.1277
+
+    Lmax = 4
+
+    P = 250e9
+
+     #  0.00625 0.0125 0.025 0.050 0.100
+    #  0.015 0.020 0.030 0.040 0.075 0.150
+    q_x = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    q_y = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,.1,l_step)
+    GB.Prop_CylindricalLens(q_y,q_x,2*f0)
+    GB.Prop_CylindricalLens(q_x,q_y,2*f0)
+
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L1,l_step) 
+    GB.Prop_CylindricalLens(q_y,q_x,2*f1)
+
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L2-L1,l_step) 
+    GB.Prop_CylindricalLens(q_x,q_y,2*f2)
+
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y, Lmax,l_step)
+    
 ##The 60 series tried using a long lens in Chamber A of 1.5m and some other lenses in
 ##Chamber B to get the asymmetric focus.  However, the 1.5m lens has large intesities
 ##well into the tunnel and this makes it impossible to add any more lenses.
@@ -1001,7 +1198,7 @@ pulseParams = {'Description' : setupTitle,
 
 I_start=GB.GaussianBeamIntensity_SpotArray_2D(I0/1e4,wx[0],wy[0],w0,0,0)
 print()
-print("Intensity at start: ",I_start," W/cm2")
+print("Intensity at start: ",I_start/1e12,"x10^12 W/cm2")
 print("Change zi to find I at first lens.")
 
 if save == 1:
@@ -1017,8 +1214,15 @@ if calcfocal == 1:
     X = params['X']*foc_dom_fac*radscl; Nx = params['Nx']
     y = np.linspace(-X/2, X/2, Nx, False)/1e6
     
-    wmult = wy * wx
-    wmult_min = np.argmin(wmult)
+    centerchange = 0
+    if centerchange == 1:
+        wmult = wy * wx
+        wmult_min = np.argmin(wmult)
+    else:
+        if min(wy) < min(wx):
+            wmult_min = np.argmin(wy)
+        else:
+            wmult_min = np.argmin(wx)
     
     #wz_center = wy[int(len(wy)/2)]
     #wy_center = wx[int(len(wx)/2)]
@@ -1037,7 +1241,7 @@ if calcfocal == 1:
     plt.grid(); plt.show()
     
     params['EI'] = E_ion
-    H = ThrDim.IonFracFromIntensity_1D(I,params['EI'],35e-15)
+    H = ThrDim.IonFracFromIntensity_1D(I,params['EI'],fs_duration)
     H = H * den
     plt.plot(y*1e6,H)
     plt.title("Ion.Frac. along beam axis")
@@ -1073,7 +1277,7 @@ if calcdensity == 1:
     I = GB.IntensityFromSpotSizes(wy/1e6,wz/1e6,x/1e6,y/1e6,z/1e6,I0/1e4,w0)
     ThrDim.ImageCut(I,x,y,z,0,0,0,1e-3,'(mm)','Intensity','W/cm^2',0)
     params['EI'] = E_ion
-    H = ThrDim.IonFracFromIntensity(I,params['EI'],35e-15)
+    H = ThrDim.IonFracFromIntensity(I,params['EI'],fs_duration)
     ThrDim.ImageCut(H,x,y,z,0,0,0,1e-3,'(mm)','Ion. Frac.','%',0)
     H = H * den
     H = ThrDim.RobertRoll(ThrDim.RobertRoll(H))
