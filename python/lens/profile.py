@@ -234,7 +234,7 @@ def smoothed_gaussian_ramps(z0, dz, sigmaIn, sigmaOut, ion, N, order, alpha,
 
 
 def cutoff_gaussian_intensity(Nz, Z, z0, length, l_ent, s_ent, l_ext, s_ext, ion,
-                              order, alpha, path, xlim=None):
+                              order, alpha, path, xlim=None, z_start=0.0):
     """ Calculate the required intensity for a plasma with Gaussian ramps.
     
     Creates a plasma density with Gaussian ramps that end at a hard cutoff.
@@ -276,6 +276,8 @@ def cutoff_gaussian_intensity(Nz, Z, z0, length, l_ent, s_ent, l_ext, s_ext, ion
         Path to save the plasma parameters in.
     xlim : optional, tuple or array
         Bounds of z-axis plots.
+    z_start : optional, double
+        Start of the z grid, defaults to 0.
 
     Returns
     -------
@@ -286,7 +288,7 @@ def cutoff_gaussian_intensity(Nz, Z, z0, length, l_ent, s_ent, l_ext, s_ext, ion
     """
     # Calculate the plasma density profile
     #--------------------------------------------------------------------------
-    z, dz = np.linspace(0, Z, Nz, retstep=True)
+    z, dz = np.linspace(z_start, Z, Nz, retstep=True)
     frac_l = np.zeros(Nz, dtype='double')
     
     # Uniform accelerating plasma

@@ -136,7 +136,7 @@ def electron_propagation_nonlinear(double[:, :] ptcls, double[:] z, double z0,
     return np.array(ptcls)
 
 def cs_propagation(double[:] z, double[:] ne, double beta0, double alpha0, 
-                   double gb0, double dgdz0, double ne0):
+                   double gb0, double dgdz0, double ne0, energy_model='witness'):
     """ Propagates the Courant_Snyder parameters through a plasma. 
     
     Calculates how the Courant-Snyder parameters evolve as the beam passes
@@ -157,7 +157,9 @@ def cs_propagation(double[:] z, double[:] ne, double beta0, double alpha0,
     dgdz0 : function
         The change in the relativistic factor per unit length for a plasma ne0.
     ne0 : function
-        The nominal plasma density dgdz0 is specified at 
+        The nominal plasma density dgdz0 is specified at.
+    energy_model : string, optional
+        Model to use for energy gain or loss in the plasma.
     
     Returns
     -------
@@ -180,6 +182,10 @@ def cs_propagation(double[:] z, double[:] ne, double beta0, double alpha0,
     alpha[0] = alpha0
     gamma[0] = (1+alpha0**2) / beta0
     gb[0] = gb0
+    if energy_model == 'witness':
+        dgammadz = dgammadz_witness
+    if energy_model == 'drive':
+        dgammadz = dgammadz_drive
     cdef double kp, dz, dgamma, kb, coskb, sinkb, cos2, sin2, cossin, ik   
     for i in range(Nz-1):
         kp = 5.95074e4 * sqrt(ne[i])
@@ -208,10 +214,14 @@ def cs_propagation(double[:] z, double[:] ne, double beta0, double alpha0,
         gb[i+1] += dgamma
     return beta, alpha, gamma, gb
 
-#cdef double dgammadz(double ne, double ne0, double dgdz0):
-#    cdef double eta = ne/ne0
-#    return dgdz0 * (2*eta - sqrt(eta))
-
 cdef double dgammadz(double ne, double ne0, double dgdz0):
+    cdef double eta = ne/ne0
+    return dgdz0 * (2*eta - sqrt(eta))
+
+cdef double dgammadz_witness(double ne, double ne0, double dgdz0):
+    cdef double eta = ne/ne0
+    return dgdz0 * eta**0.7985 * (2*eta - 1)
+
+cdef double dgammadz_drive(double ne, double ne0, double dgdz0):
     cdef double eta = ne/ne0
     return dgdz0 * eta**0.71
