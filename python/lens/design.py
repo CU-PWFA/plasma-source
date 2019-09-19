@@ -396,7 +396,7 @@ def plot_laser_plasma(I, ne, ext):
     plt.tight_layout()
     plt.show()
 
-def plot_plasma_density(pulse, ne, ne0, ext, lines=[20, 40, 60], name=None, xlim=None):
+def plot_plasma_density(pulse, ne, ne0, ext, lines=[20, 40, 60], name=None, xlim=None, ylim=None):
     """ Plot the plasma desnity with line outs.
 
     Parameters
@@ -416,6 +416,8 @@ def plot_plasma_density(pulse, ne, ne0, ext, lines=[20, 40, 60], name=None, xlim
     """
     if xlim is None:
         xlim = [ext[0], ext[1]]
+    if ylim is None:
+        ylim = [-500, 500]
     orange = '#EE7733'
     fig = plt.figure(figsize=(10, 7), dpi=150)
     gs = gridspec.GridSpec(4, 2, height_ratios=(1.5, 0.5, 3, 1), width_ratios=(40, 1),
@@ -425,7 +427,7 @@ def plot_plasma_density(pulse, ne, ne0, ext, lines=[20, 40, 60], name=None, xlim
     im = plt.imshow(ne_im, aspect='auto', extent=ext, cmap='plasma',
                     interpolation='Spline16')
     plt.ylabel(r'$x$ ($\mathrm{\mu m}$)')
-    plt.ylim(-500, 500)
+    plt.ylim(ylim)
     grey2 = '#AAAAAA'
     linewidth = 0.8
     for i in lines:
