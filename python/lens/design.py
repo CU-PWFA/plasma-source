@@ -291,7 +291,8 @@ def domain_test(X, Nx, Z, Nz, beam0, pulseParams, z_target, I_target, start, yli
     
     return I
     
-def plasma_refraction(X, Nx, Z, Nz, beam0, pulseParams, species, n, start, m_e, ne0, name=None, t=0.0, n2=0.0):
+def plasma_refraction(X, Nx, Z, Nz, beam0, pulseParams, species, n, start, m_e, ne0, name=None, t=0.0, n2=0.0, 
+                      ionization_type='adk'):
     """ Propagate the laser pulse through the gas profile.
     
     Parameters
@@ -316,6 +317,12 @@ def plasma_refraction(X, Nx, Z, Nz, beam0, pulseParams, species, n, start, m_e, 
         Multiplier for the intensity.
     name : string, optional
         Name for the pulse, defaults to Refracted_Beam.
+    t : double, optional
+        Plasma heating energy to remove from the field, in eV.
+    n2 : double, optional
+        The nonlinear index of refraction at atmospheric pressure. In cm^2/W.
+    ionization_type : string, optional
+        Function to use for the ionization model.
     """
     if name is None:
         name = 'Refracted_Beam'
@@ -353,7 +360,7 @@ def plasma_refraction(X, Nx, Z, Nz, beam0, pulseParams, species, n, start, m_e, 
         n_gas[:, :, i] = n(plasma_source.z[i]+start)
     plasma_source.initialize_plasma(n_gas, ne)
     # Propagate the laser beam through the oven
-    interactions.pulse_plasma_energy(pulse, plasma_source)
+    interactions.pulse_plasma_energy(pulse, plasma_source, temp=t, n2=n2, ionization=ionization_type)
     print('Final pulse energy %0.2fmJ' % (pulse.pulse_energy()*1e3))
     e = np.zeros((Nz, Nx), dtype='complex128')
     ne = np.zeros((Nz, Nx))
