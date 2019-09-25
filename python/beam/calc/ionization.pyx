@@ -98,3 +98,30 @@ cdef int factorial(int n) nogil:
     for i in range(n):
         ret *= i + 1
     return ret
+
+cdef double rate_lithium(double EI, double E, int Z, int l, int m) nogil:
+    """ Calculates the ionization rate of lithium using a TDSE model fit.
+    
+    Calculates the cycle averaged ionization rate using a simple exponential
+    model fit to TDSE data and valid in the range of 3-9GV/m field. Only
+    uses E for the calculation.
+    
+    Parameters
+    ----------
+    EI : double
+        Ionization energy of the electron in eV.
+    E : double
+        Electric field strength in GV/m.
+    Z : int
+        Atomic residue i.e. which electron is being ionizaed (1st, 2nd...).
+    l : int
+        Orbital quantum number of the electron being ionized.
+    m : int
+        Magnetic quantum number of the electron being ionized.
+
+    Returns
+    -------
+    w : double
+        Ionization rate in 1/fs.
+    """
+    return 1.6e-6*E**6
