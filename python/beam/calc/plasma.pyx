@@ -16,6 +16,7 @@ from scipy import integrate
 from cython.parallel import prange
 from beam.calc import laser
 from beam.calc.ionization cimport adk_rate_linear
+from beam.calc.ionization cimport rate_lithium
 
 # Load necessary C functions
 cdef extern from "complex.h" nogil:
@@ -134,7 +135,7 @@ def plasma_refraction_energy(double complex[:, :, :] E, double[:] x, double[:] y
                       double[:] z, double[:] t, double lam, double n0, 
                       double z0, fft, ifft, saveE, saven, atom, 
                       loadn, loadne, int num_threads, double temp=0.0,
-                      double n2=0.0):
+                      double n2=0.0, ionization='adk'):
     """ Propagate a laser pulse through a plasma accounting for refraction.
 
     Propogates a laser pulse through a region of partially ionized gas. This
@@ -183,6 +184,8 @@ def plasma_refraction_energy(double complex[:, :, :] E, double[:] x, double[:] y
         out of the field locally.
     n2 : double, optional
         The nonlinear index of refraction at atmospheric pressure. In cm^2/W.
+    ionization : string, optional
+        Function to use for the ionization model.
     """
     cdef int i, j, k, l
     # TODO abstract this into its own function
@@ -214,6 +217,10 @@ def plasma_refraction_energy(double complex[:, :, :] E, double[:] x, double[:] y
     cdef double[:] fx = fftfreq(Nx, dx)
     cdef double[:] fy = fftfreq(Ny, dy)
     cdef double complex[:, :] ikz = laser.ikz_RS(fx, fy, lam, nh)
+    if ionization == 'adk':
+        rate_func = adk_rate_linear
+    if ionization =='lithium':
+        rate_func = rate_lithium
     cdef double complex arg
     cdef double rate
     cdef double Eavg
@@ -241,7 +248,7 @@ def plasma_refraction_energy(double complex[:, :, :] E, double[:] x, double[:] y
                         e[k, l] *= cexp(arg*ne[k, l] + arg_kerr*ng*e_abs*e_abs)
                         # Ionize the gas
                         Eavg = 0.5*(cabs(E[j, k, l]) + e_abs)
-                        rate = adk_rate_linear(EI, Eavg, Z, ll, m)
+                        rate = rate_func(EI, Eavg, Z, ll, m)
                         ne_new = n[k, l]-ng*exp(-rate*dt)
                         # Remove energy from the laser
                         dE = energy_loss(ne[k, l], ne_new, EI+temp, dz, dt, e[k, l])
