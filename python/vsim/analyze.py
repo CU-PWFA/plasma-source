@@ -118,7 +118,7 @@ def get_energy(data, mass):
 
 
 def get_emittance(data):
-    """ Calculates the emittance of the beam from the data object.
+    """ Calculates the emittance of the beam from the data object (in Vsim y (x)).
 
     Parameters
     ----------
@@ -149,6 +149,38 @@ def get_emittance(data):
     return e
 
 
+def get_emittance_y(data):
+    """ Calculates the emittance of the beam from the data object (in VSim z).
+
+    Parameters
+    ----------
+    data : HDF5 dataset
+        The data set for the beam of interest, use load.get_species_data to
+        load the dataset object from a file.
+
+    Returns
+    -------
+    e : double
+        The emittance of the beam in mm*mrad.
+    """      
+    dim = int(data.attrs['numSpatialDims'])
+    
+    z = get_z(data,dim)
+    ux = get_ux(data,dim)
+    uz = get_uz(data,dim)
+    weights = get_weights(data)
+    zp = uz / ux
+    dz = z - np.average(z, weights=weights)
+    dzp = zp - np.average(zp, weights=weights)
+    # Calculate the RMS sizes and the correlation
+    sigmaz2 = np.average(dz**2, weights=weights)
+    sigmazp2 = np.average(dzp**2, weights=weights)
+    sigmazzp = np.average(dz*dzp, weights=weights)
+    # Calculate the emittance
+    e = np.sqrt(sigmaz2*sigmazp2 - sigmazzp**2)*1e6
+    return e
+
+
 def get_sigmar(data):
     """ Calculates the sigmar of the beam from the data object.
 
@@ -166,8 +198,28 @@ def get_sigmar(data):
     y = get_y(data)
     weights = get_weights(data)
     dy = y - np.average(y, weights=weights)
-    # Calculate the RMS sizes and the correlation
     sigmar = np.sqrt(np.average(dy**2, weights=weights))
+    return sigmar
+
+
+def get_sigmar_y(data):
+    """ Calculates the sigmar of the beam from the data object in y.
+
+    Parameters
+    ----------
+    data : HDF5 dataset
+        The data set for the beam of interest, use load.get_species_data to
+        load the dataset object from a file.
+
+    Returns
+    -------
+    sigmar : double
+        The sigmar of the beam in m.
+    """
+    z = get_z(data)
+    weights = get_weights(data)
+    dz = z - np.average(z, weights=weights)
+    sigmar = np.sqrt(np.average(dz**2, weights=weights))
     return sigmar
 
 
@@ -188,6 +240,58 @@ def get_normemittance(data):
     e = get_emittance(data)
     gamma = get_gamma(data)
     return e * gamma
+
+
+def get_sigma_xp(data):
+    """ Calculates the sigmar of the beam from the data object in xp.
+
+    Parameters
+    ----------
+    data : HDF5 dataset
+        The data set for the beam of interest, use load.get_species_data to
+        load the dataset object from a file.
+
+    Returns
+    -------
+    sigma_xp : double
+        The sigmar of the beam in rad.
+    """
+    dim = int(data.attrs['numSpatialDims'])
+    
+    ux = get_ux(data,dim)
+    uy = get_uy(data,dim)
+    weights = get_weights(data)
+    yp = uy / ux
+    # Calculate the RMS sizes and the correlation
+    dyp = yp - np.average(yp, weights=weights)
+    sigma_yp = np.sqrt(np.average(dyp**2, weights))
+    return sigma_yp
+
+
+def get_sigma_yp(data):
+    """ Calculates the sigmar of the beam from the data object in yp.
+
+    Parameters
+    ----------
+    data : HDF5 dataset
+        The data set for the beam of interest, use load.get_species_data to
+        load the dataset object from a file.
+
+    Returns
+    -------
+    sigma_yp : double
+        The sigmar of the beam in rad.
+    """
+    dim = int(data.attrs['numSpatialDims'])
+    
+    ux = get_ux(data,dim)
+    uz = get_uz(data,dim)
+    weights = get_weights(data)
+    zp = uz / ux
+    # Calculate the RMS sizes and the correlation
+    dzp = zp - np.average(zp, weights=weights)
+    sigma_zp = np.sqrt(np.average(dzp**2, weights))
+    return sigma_zp
 
 
 def find_length(rhoX, x):
