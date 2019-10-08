@@ -107,8 +107,19 @@ class Beam:
     
     def reconstruct_from_cyl(self, r, data, x, y):
         """ Create a 2D field from a radial slice of a cylindircal field. """
-        dataOfR = interp1d(r, data, bounds_error=False, fill_value=0.0)
+        dataOfR = interp1d(r, data, bounds_error=False, fill_value=0.0, kind='cubic')
         return dataOfR(np.sqrt(x[:, None]**2 + y[None, :]**2))
+    
+    def reconstruct_from_cyl_beam(self, beam):
+        """ Create a 2D field from a cyclindircally symmetric input beam. """
+        r = beam.x
+        if len(np.shape(beam.e)) == 2:
+            data = np.array(beam.e[:, int(beam.Ny/2)])
+        if len(np.shape(beam.e)) == 3:
+            data = np.array(beam.e[int(beam.Nt/2),: , int(beam.Ny/2)])
+        x = self.x
+        y = self.y
+        return self.reconstruct_from_cyl(r, data, x, y)
     
     def rescale_field(self, beam1, beam2):
         """ Rescale a laser beam from one grid size to another laser field. """

@@ -216,7 +216,9 @@ def get_sigmar_y(data):
     sigmar : double
         The sigmar of the beam in m.
     """
-    z = get_z(data)
+    dim = int(data.attrs['numSpatialDims'])
+    
+    z = get_z(data, dim)
     weights = get_weights(data)
     dz = z - np.average(z, weights=weights)
     sigmar = np.sqrt(np.average(dz**2, weights=weights))
@@ -264,7 +266,7 @@ def get_sigma_xp(data):
     yp = uy / ux
     # Calculate the RMS sizes and the correlation
     dyp = yp - np.average(yp, weights=weights)
-    sigma_yp = np.sqrt(np.average(dyp**2, weights))
+    sigma_yp = np.sqrt(np.average(dyp**2, weights=weights))
     return sigma_yp
 
 
@@ -290,7 +292,7 @@ def get_sigma_yp(data):
     zp = uz / ux
     # Calculate the RMS sizes and the correlation
     dzp = zp - np.average(zp, weights=weights)
-    sigma_zp = np.sqrt(np.average(dzp**2, weights))
+    sigma_zp = np.sqrt(np.average(dzp**2, weights=weights))
     return sigma_zp
 
 
@@ -478,12 +480,11 @@ def get_y(data, dim=2):
         ind = 1
     return data[:, ind]
 
-def get_z(data, dim=2):
+def get_z(data, dim=3):
     """ Get the array of y positions from the data object.
     """
     if dim == 2:
         print("z Coord. not in 2D!")
-        sys.exit()
     elif dim == 3:
         ind = 2
     return data[:, ind]

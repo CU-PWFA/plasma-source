@@ -315,6 +315,7 @@ class GaussianPulse(Pulse):
     """
     
     def __init__(self, params):
+        self.keys = self.keys.copy()
         self.keys.extend(
                 ['E0',
                  'waist',
@@ -368,6 +369,7 @@ class RadialPulse(Pulse):
     """
     
     def __init__(self, params):
+        self.keys = self.keys.copy()
         self.keys.extend(
                 ['tau',
                  'order',

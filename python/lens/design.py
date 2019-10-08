@@ -972,7 +972,7 @@ def field_after_lens_B(beam0, rB, phiB, r, E, rlim=None, plot=True):
         plt.show()
     return r, e1
 
-def propagate_down_beampipe(pulse, apertures, diameters, X, Nx, Nz):
+def propagate_down_beampipe(pulse, apertures, diameters, X, Nx, Nz, ret_pulse=None):
     """ Propagate the pulse through the apertures in the beamline.
     
     Parameters
@@ -989,6 +989,8 @@ def propagate_down_beampipe(pulse, apertures, diameters, X, Nx, Nz):
         Number of cells in the transverse dimension for the pulse.
     Nz : int
         Total number of cells to use down the beampipe
+    ret_pulse : bool
+        Whether to return the pulse or not.
     
     Returns
     -------
@@ -1024,10 +1026,12 @@ def propagate_down_beampipe(pulse, apertures, diameters, X, Nx, Nz):
     N = len(apertures)
     
     prev = 0
+    m_tot = 0
     for i in range(N):
         l = apertures[i]-prev
         prev = apertures[i]
         m = int(l/dz)
+        m_tot += m
         z = np.linspace(0, l, m)
         pulse_bl.propagate(z, 1.0)
         holeParams['name'] = 'Aperture_'+str(i)
@@ -1035,10 +1039,13 @@ def propagate_down_beampipe(pulse, apertures, diameters, X, Nx, Nz):
         hole = optic.Aperture(holeParams)
         interactions.beam_intensity(pulse_bl, hole)
     I_bl = np.zeros((Nz, Nx), dtype='double')
-    for i in range(Nz):
+    for i in range(m_tot):
         I_bl[i, :] = np.amax(pulse_bl.intensity_from_field(pulse_bl.load_field(i+1)[0]), axis=0)
     I_bl = pulse_bl.prep_data(I_bl)
-    return I_bl
+    if ret_pulse is None:
+        return I_bl
+    else:
+        return I_bl, pulse_bl
     
     
         
