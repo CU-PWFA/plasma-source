@@ -11,6 +11,7 @@ import numpy as np
 from beam.beams import beam
 from beam.calc import laser
 import matplotlib.pyplot as plt
+from numpy.fft import fftfreq
 
 
 class Pulse(beam.Beam):
@@ -141,6 +142,24 @@ class Pulse(beam.Beam):
         """ Set the value of the electric field. """
         self.e = np.array(e, dtype='complex128')
         self.save_field(self.e, self.z[-1])
+        
+    def get_dx(self):
+        """ Get the grid spacing. """
+        x = self.x
+        return x[1] - x[0]
+    
+    def get_dy(self):
+        """ Get the grid spacing. """
+        y = self.y
+        return y[1] - y[0]
+        
+    def get_f(self):
+        """ Get the spatial frequencies of the fft of e. """
+        dx = self.get_dx()
+        dy = self.get_dy()
+        fx = fftfreq(self.Nx, dx)
+        fy = fftfreq(self.Ny, dy)
+        return fx, fy
     
     # File managment
     #--------------------------------------------------------------------------

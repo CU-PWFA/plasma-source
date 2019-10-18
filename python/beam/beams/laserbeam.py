@@ -11,6 +11,7 @@ import numpy as np
 from beam.beams import beam
 from beam.calc import laser
 import matplotlib.pyplot as plt
+from numpy.fft import fftfreq, fftshift
 
 
 class Laser(beam.Beam):
@@ -126,6 +127,24 @@ class Laser(beam.Beam):
         self.e = np.array(e, dtype='complex128')
         self.save_field(self.e, self.z[-1])
         
+    def get_dx(self):
+        """ Get the grid spacing. """
+        x = self.x
+        return x[1] - x[0]
+    
+    def get_dy(self):
+        """ Get the grid spacing. """
+        y = self.y
+        return y[1] - y[0]
+        
+    def get_f(self):
+        """ Get the spatial frequencies of the fft of e. """
+        dx = self.get_dx()
+        dy = self.get_dy()
+        fx = fftfreq(self.Nx, dx)
+        fy = fftfreq(self.Ny, dy)
+        return fx, fy
+        
     # File managment
     #--------------------------------------------------------------------------
         
@@ -231,6 +250,115 @@ class Laser(beam.Beam):
             plt.ylim(lim)
         plt.title('Transverse intensity at z=%.2f' % z)
         return im
+    
+    def plot_current_field(self, xlim=None, flim=None, log=False):
+        beam = self
+        I = beam.intensity_from_field(beam.e)
+        I = beam.prep_data(I)
+        If = abs(fftshift(beam.fft(beam.e)))**2
+        fx, fy = beam.get_f()
+        fx = fftshift(fx)
+        fy = fftshift(fy)
+        phase = np.angle(beam.e)
+
+        # Images
+        X = beam.X
+        Y = beam.Y
+        ext = [-X/2, X/2, -Y/2, Y/2]
+        extf = [fx[0], fx[-1], fy[0], fy[-1]]
+        plt.figure(figsize=(16, 4), dpi=150)
+        plt.subplot(131)
+        plt.imshow(I, aspect='auto', extent=ext, cmap='viridis')
+        cb = plt.colorbar()
+        cb.set_label(r'Intensity ($10^{14}$ W/cm^2)')
+        plt.xlabel(r'$x$ (um)')
+        plt.ylabel(r'$y$ (um)')
+        if xlim != None:
+            plt.xlim(xlim)
+            plt.ylim(xlim)
+
+        plt.subplot(132)
+        plt.imshow(np.unwrap(np.unwrap(phase, axis=0), axis=1), aspect='auto', extent=ext, cmap='viridis')
+        cb = plt.colorbar()
+        cb.set_label(r'Phase (rad)')
+        plt.xlabel(r'$x$ (um)')
+        plt.ylabel(r'$y$ (um)')
+        if xlim != None:
+            plt.xlim(xlim)
+            plt.ylim(xlim)
+
+        plt.subplot(133)
+        plt.imshow(If, aspect='auto', extent=extf, cmap='viridis')
+        cb = plt.colorbar()
+        cb.set_label(r'Intensity (arb unit)')
+        plt.xlabel(r'$f_x$ (um$^{-1}$)')
+        plt.ylabel(r'$f_y$ (um$^{-1}$)')
+        if flim != None:
+            plt.xlim(flim)
+            plt.ylim(flim)
+
+        plt.tight_layout()
+        plt.show()
+        # Lineouts
+        # We've already taken the transpose so y is the first index
+        ind = int(beam.Ny/2)
+        x = beam.x
+        plt.figure(figsize=(16, 4), dpi=150)
+        plt.subplot(131)
+        plt.plot(x, I[ind, :])
+        plt.xlabel(r'$x$ (um)')
+        plt.ylabel(r'Intensity ($10^{14}$ W/cm^2)')
+        if xlim != None:
+            plt.xlim(xlim)
+
+        plt.subplot(132)
+        plt.plot(x, np.unwrap(phase[ind, :]))
+        plt.xlabel(r'$x$ (um)')
+        plt.ylabel(r'Phase (rad)')
+        if xlim != None:
+            plt.xlim(xlim)
+
+        plt.subplot(133)
+        plt.plot(fx, If[ind, :])
+        plt.xlabel(r'$f_x$ (um$^{-1}$)')
+        plt.ylabel(r'Intensity (arb unit)')
+        if flim != None:
+            plt.xlim(flim)
+
+        plt.tight_layout()
+        plt.show()
+        
+        if log == True:
+            # Lineouts
+            ind = int(beam.Ny/2)
+            x = beam.x
+            plt.figure(figsize=(16, 4), dpi=150)
+            plt.subplot(131)
+            plt.plot(x, I[ind, :])
+            plt.xlabel(r'$x$ (um)')
+            plt.ylabel(r'Intensity ($10^{14}$ W/cm^2)')
+            plt.yscale('log')
+            if xlim != None:
+                plt.xlim(xlim)
+
+            plt.subplot(132)
+            plt.plot(x, np.unwrap(phase[ind, :]))
+            plt.xlabel(r'$x$ (um)')
+            plt.ylabel(r'Phase (rad)')
+            plt.yscale('log')
+            if xlim != None:
+                plt.xlim(xlim)
+
+            plt.subplot(133)
+            plt.plot(fx, If[ind, :])
+            plt.xlabel(r'$f_x$ (um$^{-1}$)')
+            plt.ylabel(r'Intensity (arb unit)')
+            plt.yscale('log')
+            if flim != None:
+                plt.xlim(flim)
+
+            plt.tight_layout()
+            plt.show()
         
 
 class GaussianLaser(Laser):
