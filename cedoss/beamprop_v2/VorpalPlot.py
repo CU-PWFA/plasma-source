@@ -27,20 +27,22 @@ params = {'drive' : 'rhoDrive',
           }
 plot.single_drive_density(params)
 """
-"""
+#"""
 path = '/media/chris/New Volume/VSimRuns/NERSCResults/3D/TwoBunch/1e18/50um/'
+path = '/home/chris/Desktop/thick4/'
 params = {'drive' : 'rhoDrive',
           'witness' : 'rhoWitness',
           'plasma' : 'electrons',
-          'dumpInd' : 3,
+          'dumpInd' : 10,
           'path' : path,
-          'simName' : 'ThinPlasmaLens3D',
+          #'simName' : 'ThinPlasmaLens3D',
+          'simName' : 'PTPLDoubleTanh',
           'zoom' : 4.0,
           'alphaCutoff' : 0.05
           }
 plot.drive_witness_density_new(params)
-"""
 #"""
+"""
 path = '/home/chris/Desktop/SFQED_NERSC_VaryDen/5e15/'
 #path = '/home/chris/Desktop/SimulationRepo/emittance_preservation/simulations/PTPL_FacetIIBeams/'
 params = {'drive' : 'rhoDrive',
@@ -54,4 +56,4 @@ params = {'drive' : 'rhoDrive',
           }
 plot.drive_witness_density_new(params)
 
-#"""
+"""

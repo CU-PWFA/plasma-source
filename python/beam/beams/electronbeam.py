@@ -460,7 +460,7 @@ class ElectronBeam(beam.Beam):
         sigmax = self.get_sigmar(ind)[1]
         numbins = 101   #bins in 1d hist
         binno = 56      #bins in 2d hist
-        xrange = 8
+        xrange = 10#8
         yrange = 0.29
         
         fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(7.5, 7), dpi = 150)
@@ -518,9 +518,10 @@ class ElectronBeam(beam.Beam):
         fig.text(.55,.84,"(b)")
         fig.text(.15,.46,"(c)",color='white')
         fig.text(.55,.46,"(d)",color='white')
-        
         #plt.savefig('/home/chris/Desktop/fig_histogram.eps',format='eps',bbox_inches='tight',dpi=100)
         plt.show()
+        
+        
 
     def plot_phase_hist_fitted(self, ptcls, z, ind, xlim=None, ylim=None, weights = None):
         #This version is the same as above, but instead of using the calculated RMS for the
@@ -587,6 +588,19 @@ class ElectronBeam(beam.Beam):
         plt.plot(xbins_cent, xhist_data, label='Test data')
         plt.plot(xbins_cent, hist_fit, label='Fitted data')
         
+        I = np.sum(xhist_data)
+        Isize = xbins_cent[5]-xbins_cent[4]
+        factor = I/0.5*Isize #(nC/um)^-1
+        #print(Isize)
+        #print("test: ", np.sum(xhist_data)/factor)
+        
+        sctx = plt.hist2d(ptcls[:, 2]*1e6, ptcls[:, 3]*1e3, weights = weights, bins=(binno,binno), cmap=plt.cm.jet, range = [[-xrange,xrange], [-yrange,yrange]], vmax = 100)
+        plt.show()
+        I2 = np.sum(sctx[0])
+        I2size = (sctx[1][2]-sctx[1][1])*(sctx[2][2]-sctx[2][1])
+        factor2 = I2/0.5*I2size #(nC/um^2-rad)^-1
+        #print(factor2)
+        
         # Finally, lets get the fitting parameters, i.e. the mean and standard deviation:
         print('x Fitted mean = ', xcoeff[1])
         print('x Fitted standard deviation = ', xcoeff[2])
@@ -629,39 +643,41 @@ class ElectronBeam(beam.Beam):
         fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(7.5, 7), dpi = 150)
         plt.rcParams.update({'font.size': 12})
         xhist = plt.subplot(221)
-        leftx = plt.hist(ptcls[:,2]*1e6, bins = numbins, weights = weights, color = 'C0', ec='C0')
-        x = np.linspace(min(ptcls[:,2]),max(ptcls[:,2]),100)
+        leftx = plt.hist(ptcls[:,2]*1e6, bins = numbins, weights = weights/factor, color = 'C0', ec='C0')
         
+        x = np.linspace(min(ptcls[:,2]),max(ptcls[:,2]),100)
         fx = peakx*np.exp(-1*np.square(x-x0/1e6)/2/np.square(sigx/1e6))
-        plt.plot(x*1e6, fx, label=r'$\sigma_x=$'+'%s' % float('%.3g' % (sigx))+r'$\ \mu m$', color='C1')
-        plt.ylabel('Arb. Units')
-        plt.ylim(bottom = 0.1)
-        plt.ylim(top = max(leftx[0])*1.2)
+        
+        leftx = plt.hist(ptcls[:,2]*1e6, bins = numbins, weights = weights/factor, color = 'C0', ec='C0')
+        plt.plot(x*1e6, fx/factor, label=r'$\sigma_x=$'+'%s' % float('%.3g' % (sigx))+r'$\ \mu m$', color='C1')
+        plt.ylabel(r'Charge Density ($\mathrm{nC/ \mu m}$)')
+        plt.ylim(bottom = 0.0005)
+        plt.ylim(top = max(leftx[0])*1.25)
         plt.xlim([-xrange, xrange])
         plt.legend()
                 
         yhist = plt.subplot(222, sharey = xhist)
-        lefty = plt.hist(ptcls[:,0]*1e6, bins = numbins, weights = weights, color = 'C0', ec='C0')#, log=True)
+        lefty = plt.hist(ptcls[:,0]*1e6, bins = numbins, weights = weights/factor, color = 'C0', ec='C0')#, log=True)
         y = np.linspace(min(ptcls[:,0]),max(ptcls[:,0]),100)
         fy = peaky*np.exp(-1*np.square(y-y0/1e6)/2/np.square(sigy/1e6))
-        plt.plot(y*1e6, fy, label=r'$\sigma_y=$'+'%s' % float('%.3g' % (sigy))+r'$\ \mu m$', color='C1')
-        plt.ylim(bottom = 0.1)
-        plt.ylim(top = max(lefty[0])*1.2)
+        plt.plot(y*1e6, fy/factor, label=r'$\sigma_y=$'+'%s' % float('%.3g' % (sigy))+r'$\ \mu m$', color='C1')
+        plt.ylim(bottom = 0.0005)
+        plt.ylim(top = max(lefty[0])*1.25)
         plt.xlim([-xrange, xrange])
         plt.legend()
     
         xphase = plt.subplot(223, sharex = xhist)
-        sctx = plt.hist2d(ptcls[:, 2]*1e6, ptcls[:, 3]*1e3, weights = weights, bins=(binno,binno), cmap=plt.cm.jet, range = [[-xrange,xrange], [-yrange,yrange]], vmax = 100)
-        plt.xlabel(r'$x\mathrm{\ [\mu m]}$')
-        plt.ylabel(r'$x\rq,\,y\rq\mathrm{\ [mrad]}$')
+        sctx = plt.hist2d(ptcls[:, 2]*1e6, ptcls[:, 3]*1e3, weights = weights/factor2, bins=(binno,binno), cmap=plt.cm.jet, range = [[-xrange,xrange], [-yrange,yrange]], vmax = 100/factor2)
+        plt.xlabel(r'$x\mathrm{\ (\mu m)}$')
+        plt.ylabel(r'$x\rq,\,y\rq\mathrm{\ (mrad)}$')
         if xlim is not None:
             plt.xlim(xlim)
         if ylim is not None:
             plt.ylim(ylim)
         
         yphase = plt.subplot(224, sharex = yhist, sharey = xphase)
-        scty = plt.hist2d(ptcls[:, 0]*1e6, ptcls[:, 1]*1e3, weights = weights, bins=(binno,binno), cmap=plt.cm.jet, range = [[-xrange,xrange], [-yrange,yrange]], vmax = 100)
-        plt.xlabel(r'$y\mathrm{\ [\mu m]}$')
+        scty = plt.hist2d(ptcls[:, 0]*1e6, ptcls[:, 1]*1e3, weights = weights/factor2, bins=(binno,binno), cmap=plt.cm.jet, range = [[-xrange,xrange], [-yrange,yrange]], vmax = 100/factor2)
+        plt.xlabel(r'$y\mathrm{\ (\mu m)}$')
         if xlim is not None:
             plt.xlim(xlim)
         if ylim is not None:
@@ -676,14 +692,14 @@ class ElectronBeam(beam.Beam):
         fig.subplots_adjust(right=0.9)
         cbar_ax = fig.add_axes([0.91, 0.125, 0.01, 0.376])
         CB = fig.colorbar(sctx[3], cax=cbar_ax)
-        CB.set_label("Arb. Units")
+        CB.set_label(r'Charge Density ($\mathrm{nC/ \mu m-mrad}$)')
 
         fig.text(.15,.84,"(a)")
         fig.text(.55,.84,"(b)")
         fig.text(.15,.46,"(c)",color='white')
         fig.text(.55,.46,"(d)",color='white')
         
-        #plt.savefig('/home/chris/Desktop/fig_histogram.eps',format='eps',bbox_inches='tight',dpi=100)
+        #plt.savefig('/home/chris/Desktop/fig6.eps',format='eps',bbox_inches='tight',dpi=150)
         plt.show()
 
     def plot_hist_at(self, ind):

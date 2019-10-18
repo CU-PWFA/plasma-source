@@ -16,6 +16,7 @@ import timeit
 path = '/home/chris/Desktop/BeamProp/vorpaltest'
 filename = '/home/chris/Desktop/FACETII_NERSC_Run4/PTPLDoubleTanh_WitnessBeam_10.h5'#z_arr to .03, threshold .00001
 #filename = '/home/chris/Desktop/SFQED_NERSC_VaryDen/5e15/PTPLDoubleTanh_ElectronBeam_10.h5' #z_arr to 0.7, ind 41, thresh 0.001
+filename = '/home/chris/Desktop/thick4/PTPLDoubleTanh_WitnessBeam_10.h5'
 
 debug = 1
 
@@ -51,5 +52,5 @@ print("index: ", minloc, "|  size [um]: ", sig_arr[minloc])
 #minloc=41#Used for sfqed 5e15 with linspace 0,0.7,1001 for smallest inner waist
 print(beam.get_sigmar_frac(minloc, 58.82e-6))#90% of beam at ind 41 for 5e15
 
-beam.plot_hist_at(minloc)
-#beam.plot_phase_hist_at(minloc,fitted=True)
+#beam.plot_hist_at(minloc)
+beam.plot_phase_hist_at(minloc,fitted=True)
