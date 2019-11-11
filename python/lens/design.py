@@ -746,7 +746,7 @@ def create_lens_A(ri, Ei, r, E, L, path, lam, X, Nx):
     # The phase difference between neighboring cells must be less than pi
     dphi = np.sort(abs(phi[1:, int(Nx/2+1)]-phi[:-1, int(Nx/2+1)]))[-3]
     dphi = dphi*(Nx-1)/X
-    print('Maximum phase change in one pixel %0.2f rad/um' % dphi)
+    print('Maximum phase gradient %0.4f rad/um' % dphi)
     return rA, phiA, lensA, multi
 
 def propagate_to_lens_B(r0, E0, L, path, lam, lensA, tau, threads, plot=True):
@@ -887,7 +887,7 @@ def create_lens_B(beam0, r, E, path, lam, X, Nx):
     lensB.initialize_phase(phi)
     dphi = np.sort(abs(phi[1:, int(Nx/2+1)]-phi[:-1, int(Nx/2+1)]))[-3]
     dphi = dphi*(Nx-1)/X
-    print('Maximum phase change in one pixel %0.2f rad/um' % dphi)
+    print('Maximum phase gradient %0.2f rad/um' % dphi)
     
     return r, phiB, lensB
 
