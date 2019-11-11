@@ -18,7 +18,7 @@ from cython.parallel import prange
 # Load necessary C functions
 cdef extern from "complex.h" nogil:
     double complex cexp(double complex)
-    double complex sqrt(double complex)
+    double complex csqrt(double complex)
 
 
 def fourier_prop(double complex[:, :] E, double[:] x, double[:] y, double[:] z,
@@ -269,7 +269,7 @@ cpdef double complex[:, :] ikz_RS(double[:] fx, double[:] fy, double lam,
             fy2[i] = fy[i] * fy[i]
         for i in prange(Nx):
             for j in range(Ny):
-                ikz[i, j] = pre * sqrt(f2 - fx2[i] - fy2[j])
+                ikz[i, j] = pre * csqrt(f2 - fx2[i] - fy2[j])
     return ikz
 
 
