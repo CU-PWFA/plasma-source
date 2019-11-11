@@ -275,13 +275,19 @@ def Prop_EPhase(q_y, q_z, offset, lmba, E0, w0):
     Rz=Prop_RadiusList(q_z)
     
     xrange=Prop_GetRange(q_y)
-    if min(wz) < min(wy):
-        waist=wz.index(min(wz))
-    else:
-        waist=wy.index(min(wy))
+    
+    waist=wz.index(min(wz))
+    
+    #if min(wz) < min(wy):
+    #    waist=wz.index(min(wz))
+    #else:
+    #    waist=wy.index(min(wy))
+    #    print("hoi")
+    
+    print("waist",waist)
     plane=waist-offset
     xi=xrange[plane]
-    print(xi)
+    print(xi, "Check that this is xi from earlier!")
     zRy=Gauss_zR(min(wy),lmba)
     zRz=Gauss_zR(min(wz),lmba)
     

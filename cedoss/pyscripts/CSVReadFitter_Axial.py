@@ -29,7 +29,7 @@ from modules import ProfileAnalyzer as Prof
 directory = '/home/chris/Desktop/CSVFiles/'
 off = 0
 fac = -1
-filename = '3DLam_R3_DenAxial.csv'
+filename = '3DLam_R5_DenAxial.csv'
 
 path = directory + filename
 

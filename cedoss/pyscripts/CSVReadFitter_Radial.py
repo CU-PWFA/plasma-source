@@ -27,7 +27,7 @@ from modules import ThreeDimensionAnalysis as ThrDim
 from modules import ProfileAnalyzer as Prof
 
 directory = '/home/chris/Desktop/CSVFiles/'
-filename = '3DLam_R3_DenRadial.csv'
+filename = '3DLam_R5_DenRadial.csv'
 
 path = directory + filename
 
@@ -39,7 +39,7 @@ zoom = 1e6 #For when you have meters and work with micrometers
 
 guess = [1.75e20,100,0] #Tweak this if python doesnt want to fit
 guess_tanh = [10,100,1e19]
-guess_super = [1.75e20,10,0,2]
+guess_super = [1.75e13,5,0,2]
 
 arr = []
 dist = []
@@ -63,15 +63,21 @@ with open(path, newline='') as csvfile:
     dist_precise = np.arange(-xwindow, xwindow, xstep)
     
     gfit = ThrDim.FitDataGaussian(arr, dist, guess)
-    #tfit = ThrDim.FitDataDoubleTanh(arr2, dist2, guess_tanh)
+    #tfit = ThrDim.FitDataDoubleTanh(arr, dist, guess_tanh)
     #tfit = ThrDim.FitDataDoubleTanhAbs(arr, dist, guess_tanh)
     lfit = ThrDim.FitDataLorentz(arr, dist, guess)
-    #sfit = ThrDim.FitDataSuperGaussian(arr2, dist2, guess_super)
+    #sfit = ThrDim.FitDataSuperGaussian(arr, dist, guess_super)
     
     plt.plot(dist,arr,label=simlabel)
     plt.title("Lorentzian Fit")
     plt.xlabel("Distance (microns)"); plt.ylabel("Density (cm^-3)")
     plt.plot(dist, ThrDim.Lorentz(lfit,dist),label="Lorentzian")
+    plt.grid(); plt.legend(); plt.show()
+    
+    plt.plot(dist,arr,label=simlabel)
+    plt.title("Funky Lorentzian Fit")
+    plt.xlabel("Distance (microns)"); plt.ylabel("Density (cm^-3)")
+    plt.plot(dist, ThrDim.Lorentz(lfit,dist)/(1+np.power(0.00015*dist,6)),label="Lorentzian with Factor")
     plt.grid(); plt.legend(); plt.show()
     """
     plt.plot(dist,arr,label=simlabel)

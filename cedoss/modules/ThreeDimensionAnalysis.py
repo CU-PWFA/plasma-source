@@ -120,9 +120,9 @@ def VarianceCut_Prod(data,axis,offset,number,spacing,unit,plot=['Title','x','f(x
     plt.xlabel(plot[1])
     plt.ylabel(plot[2])
     plt.legend(title=plot[3])
-    plt.grid()
+    #plt.grid()
     plt.tight_layout()
-
+    #plt.savefig('/home/chris/Desktop/fig5.eps',format='eps',bbox_inches='tight',dpi=150)
     plt.show()
 
 #Takes a 3D array, and plots the 2D planes cut along the 3 axes
@@ -199,8 +199,13 @@ def ImageCut_xy_Production(data,x,y,z,x_off=0,y_off=0,z_off=0,zoom=1,units='',la
     else:
         plt.set_cmap('viridis')
         
+    
+    font = {'family' : 'normal',
+        'weight' : 'bold',
+        'size'   : 18}
+
+    plt.rc('font', **font)
     plt.figure(figsize=(66.6,2))
-    plt.rcParams.update({'font.size': 16})
     plt.imshow(data_xz, interpolation="none", origin="lower",
                extent=[xrange_z[0]/2,xrange_z[-1]/2,zrange_z[0],zrange_z[-1]],
                aspect='equal')
@@ -210,7 +215,7 @@ def ImageCut_xy_Production(data,x,y,z,x_off=0,y_off=0,z_off=0,zoom=1,units='',la
     plt.ylabel('z '+units+' - Jet')
     plt.title(label+'; y='+str(yrange_z[round(len(y)/2)+y_off])+' '+units)
     #plt.savefig('demo.png', transparent=True,bbox_inches='tight')
-    #plt.savefig('/home/chris/Desktop/fig_strip.png',transparent=True,bbox_inches='tight')
+    plt.savefig('/home/chris/Desktop/fig_strip.png',transparent=True,bbox_inches='tight')
     plt.show()
     
 """

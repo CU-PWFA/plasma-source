@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Fri May  3 16:03:06 2019
+Created on Wed Sep 25 14:59:20 2019
 
 Since Paraview cannot take clips of rotationally extruded data (meaning I
 cant use Wedge simulations to directly export to Fourier propagation) this
 script uses the radially Gaussian and axially exponential fits to approximate
 a gas jet profile.
+
+This version simply sets the lowest density to a constant
 
 @author: chris
 """
@@ -18,7 +20,7 @@ import numpy as np
 sys.path.insert(0, "../")
 from modules import ThreeDimensionAnalysis as ThrDim
 
-save_data = 0
+save_data = 1
 reducer = 0
 """This was with the WedgeRAS R2 simulation
 a = 7.55200689789e+15 #cm-3
@@ -33,14 +35,16 @@ a = 3.31743175609e+16 #cm-3
 b = 0.00049976694808  #um-1
 c = 2.39194210599e+14 #cm-3
 f0 = a*np.exp(-b*5000)+c
-n0 = 3e16/1e17
+n0 = 7.2e17/1e17 - 3.4e16/1e17
 ## sig(y) = sa + sb y + sc y**2     From ApproxGasJet_SigVSAxial.py
 sa = 2986.91262632; sb = 0.550205150854; sc = -5.09030500347e-06
 
-folder = '/home/chris/Desktop/DataLoads/DensityFilesNp/'
-directory = 'gasjet_Ar3e16_60x24x400/'
+nb = 3.4e16/1e17
 
-xsize = 60e2; ysize = 24e2; zsize = 32e4#4e4#32e4 #um
+folder = '/home/chris/Desktop/DataLoads/DensityFilesNp/'
+directory = 'gasjet_He72e16_20x10x400/'
+
+xsize = 20e2; ysize = 10e2; zsize = 4e4#32e4 #um
 nx = 2**(9-reducer)
 ny = 2**(9-reducer)
 nz = 2**(8-reducer)
@@ -56,6 +60,13 @@ zaxis = np.reshape(z, (1, 1, len(z)))
 y_expo = a*np.exp(-b*(yaxis+5000))+c
 xz_gauss = np.exp(-(np.square(xaxis)+np.square(zaxis))/(2*np.square(sa+sb*yaxis+sc*np.square(yaxis))))
 approx = y_expo * xz_gauss * (n0/f0)
+
+for ix in range(len(x)):
+    for iy in range(len(y)):
+        for iz in range(len(z)):
+            approx[ix, iy, iz] = approx[ix, iy, iz] + nb
+            #if approx[ix,iy,iz] < nb:
+            #    approx[ix,iy,iz] = nb
 
 #x_Gauss  = ThrDim.Gaussian(px, xaxis)
 #yz_plane = ThrDim.DoubleTanh(pyz, ThrDim.EllipDist(yaxis, zaxis, scl))

@@ -53,7 +53,7 @@ def plot_EDF_fit(v, weights, dim, name, pol = False, path = '', save = False):
 		T = (me * sigma**2 / kb)/11600;
 		y = ia.double_peak(bins[1:], *popt)
 		l = ax.plot(bins[1:], y, '--r', label = 'T = %.3f' % T + ' eV')
-		print(popt[2])
+		#print(popt[2])
 	else:
 		(mu, sigma) = norm.fit(v)
 		T = (me * sigma**2 / kb)/11600;
@@ -322,7 +322,8 @@ def plot_recomb(elec, neutrals, i_start, ts, t, savePath, aniName, \
 								 interval = 1000)
 	if save:
 		ani.save(savePath + aniName)
-def plot_weights(elec, neutrals, recomb_start, t):
+def plot_weights(elec, neutrals, recomb_start, t, \
+	             savePath = '', name = '', save = False):
 	w_elec = np.zeros(len(elec))
 	w_neutral = np.zeros(len(elec))
 	diff = np.zeros(len(elec))
@@ -340,7 +341,7 @@ def plot_weights(elec, neutrals, recomb_start, t):
 	w_neutral = w_neutral / np.amax(w_neutral)
 	diff = diff/np.amax(diff);
 	w_diffuse = diff - w_neutral
-	fig = plt.figure(figsize = (5,3), dpi = 150);
+	fig = plt.figure(figsize = (5,3.5), dpi = 150);
 	ax = fig.gca()
 	ax.plot(t*1e9, w_elec, '-b', label = 'Electrons')
 	ax.plot(t*1e9, w_neutral, '-r', label = 'Ar')
@@ -349,4 +350,16 @@ def plot_weights(elec, neutrals, recomb_start, t):
 	ax.set_ylabel('Sum of weights')
 	ax.set_ylim([0, 1])
 	plt.legend()
+	if save:
+		plt.savefig(savePath + name)
+	plt.show()
+def plot_T_dist(T, edges, name = '', savePath = '', save = False):
+	fig = plt.figure(figsize = (5,3), dpi = 150)
+	ax = fig.gca()
+	ax.plot(edges*1e6, T)
+	ax.set_xlabel(r'y($\mu$m)')
+	ax.set_ylabel('T (eV)')
+	ax.set_title('Electron Temperature Distribution')
+	if save:
+		plt.savefig(savePath + name)
 	plt.show()

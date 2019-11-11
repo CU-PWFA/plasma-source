@@ -16,16 +16,16 @@ import matplotlib.pyplot as plt
 from modules import ThreeDimensionAnalysis as ThrDim
 from modules import TPLFocalLength as Foc
 
-gam = 30 # Foc.gam_def
+gam = Foc.gam_def
 
 """
 a = 86.8450398321
 b = 19.8872039701
 n_0 = 0.502043587936
 """
-a = 376.41
-b = 68.015
-n_0 = 0.29411e17 / 1e17
+a = 24.1395506569
+b = 6.33202026752
+n_0 = 5.09212414537# / 1e17
 
 fit = [a,b,n_0]
 edge = 1/2*(3*a+6*b)

@@ -144,6 +144,25 @@ def double_peak(v, A, sig, B):
 	'''
 	return ((A) * (2*np.pi)**(-.5)) * (np.exp(-(v-B)**2 / (2*sig**2)) + \
 		    np.exp(-(v+B)**2 / (2*sig**2)))
+def offset_peak(v, A, sig, B):
+	'''
+	Function to calculate a gaussian from 0. Used to fit species VDFs.
+
+	Paramters:
+	----------
+	v : array_like
+		Array of velocities 
+	A : float
+		The peak of Gaussian, important for getting a good fit not for analysis
+	sig : float, 
+		the standard deviation of the Gaussian. 
+	B : float
+		The offset of the Gassian from 0. Usually the absolute value of the 
+		mean of v. 
+	'''
+	return A * (2*np.pi)**(-.5) * (np.exp(-(v-B)**2 / (2*sig**2)))
+def gaus(v, T):
+    return np.sqrt(me / (2*np.pi*kb*T)) * np.exp(-me*v**2 / (2*kb*T));
 def correction(uy):
 	'''
 	corrects the y VDF to be centered at 0 when strong a0 causes a double peak 
@@ -225,7 +244,9 @@ def get_T(species, ndim = 2, correct_y = False):
 		uy_fit = correction(uy)
 	else:
 		uy_fit = uy
-	u2d = np.sqrt(ux**2 + uy_fit**2)
+	sortx = np.argsort(ux)
+	sorty = np.argsort(uy_fit)
+	u2d = np.sqrt(ux[sortx]**2 + uy_fit[sorty]**2)
 	(mu, sigma_2D) = norm.fit(u2d)
 	T_2D = (me * sigma_2D**2/kb)/11600;
 	if ndim == 3:
@@ -239,3 +260,35 @@ def get_T(species, ndim = 2, correct_y = False):
 	return T_1D, T_2D, T_3D
 
 	
+def multi_a0_data(simPath, speciesName, a0_str, file):
+
+	data = {}
+	for i in range(len(a0_str)):
+		data[a0_str[i]] = \
+		load.get_species_data(simPath + a0_str[i] + file, speciesName)
+	return data
+
+def get_T_dist(data, spacing):
+	y = data[:,1]
+	ux = data[:,2]
+	uy = data[:,3]
+	weights = data[:,-1]
+	u2 = ux**2 + uy**2
+	gamma = 1/np.sqrt(1- u2 / (c**2+u2))
+	ux = ux/gamma
+	uy = uy/gamma
+	edges = np.arange(min(y), max(y), spacing)
+	T = np.zeros(len(edges))
+	for i in range(len(edges)-1):
+		l = edges[i]
+		u = edges[i+1]
+		w = np.where(np.logical_and(y>=l, y<=u))
+		vy = uy[w]
+		wt = weights[w]
+		p0 = [1e5, 1e7, 1e7]
+		n, bins, patches = plt.hist(vy, bins = 200, weights = wt)
+		popt, pcov = cf(offset_peak, bins[1:], n, p0 = p0, bounds = \
+			([0, -np.inf, -np.inf], [np.inf, np.inf, np.inf]))
+		sigma = popt[1]
+		T[i] = (sigma**2 * me / kb)/11600
+	return T, edges

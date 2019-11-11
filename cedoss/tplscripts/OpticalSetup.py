@@ -38,16 +38,133 @@ zi = 7.5e-3             #Offset from small waist to plane we want to save params
 zoom=int(round(zi/l_step))
 
 path = '/home/chris/Desktop/DataLoads/PulseFilesNp/'
-filename = 'pulseParams_labtest1b.npy'
+filename = 'pulseParams_paperresub.npy'
 
-save = 0                #Set to 1 to save anything
-calcdensity = 0         #Set to 1 to calc resulting plasma density w/out refraction
-calcfocal = 1
+save = 1                #Set to 1 to save anything
+calcdensity = 0 #SLOW   #Set to 1 to calc resulting plasma density w/out refraction
+calcfocal = 0
 
 foc_dom_fac = 2
-radscl = 1   #Set to larger to increase the beam axis domain
+radscl = 1   #Set to larger to increase the beasm axis domain
 
-choice=81         #Set to one of the setups below
+choice=50         #Set to one of the setups below
+
+if choice == 84:  #To be designed for the limits of a window at 38.67 cm or 21.27 cm for <1e12 W/cm2
+    setupTitle = "Spherical_2Cylindrical_reversed"
+    w0 = 8.66e-3 #calculated from 30mm diameter flattop estimation
+    reverse = 0
+    zi = 38.67e-2#2e-2#38.67e-2           #Offset from small waist to plane we want to save params at
+    zoom=int(round(zi/l_step))
+    radscl = 0.4
+
+    setupTitle = "Spherical_2Cylindrical"
+
+    f0 = 0.20
+
+    f2 = -0.1000 #m
+    L2 = 0.109
+
+    f1 = 0.700 #m
+    L1 = 0.400
+
+    Lmax = 2.5
+
+    P = 119e9
+
+     #  0.00625 0.0125 0.025 0.050 0.100
+    #  0.015 0.020 0.030 0.040 0.075 0.150
+    q_x = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    q_y = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,.1,l_step)
+    #GB.Prop_CylindricalLens(q_y,q_x,2*f0)
+    GB.Prop_CylindricalLens(q_x,q_y,2*f0)
+
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L2,l_step) 
+    GB.Prop_CylindricalLens(q_x,q_y,2*f2)
+
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L1-L2,l_step) 
+    GB.Prop_CylindricalLens(q_y,q_x,2*f1)
+
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y, Lmax,l_step)
+
+if choice == 83:  #To be designed for the limits of a window at 38.67 cm or 21.27 cm for <1e12 W/cm2
+    setupTitle = "Spherical_2Cylindrical_reversed"
+    w0 = 8.66e-3 #calculated from 30mm diameter flattop estimation
+    reverse = 0
+    zi = 10.0e-2#2e-2#38.67e-2            #Offset from small waist to plane we want to save params at
+    zoom=int(round(zi/l_step))
+    radscl = 0.4
+
+    setupTitle = "Spherical_2Cylindrical"
+
+    f0 = 0.20
+
+    f2 = -0.1000 #m
+    L2 = 0.109
+
+    f1 = 0.700 #m
+    L1 = 0.420
+
+    Lmax = 2.5
+
+    P = 113e9
+
+     #  0.00625 0.0125 0.025 0.050 0.100
+    #  0.015 0.020 0.030 0.040 0.075 0.150
+    q_x = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    q_y = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,.1,l_step)
+    #GB.Prop_CylindricalLens(q_y,q_x,2*f0)
+    GB.Prop_CylindricalLens(q_x,q_y,2*f0)
+
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L2,l_step) 
+    GB.Prop_CylindricalLens(q_x,q_y,2*f2)
+
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L1-L2,l_step) 
+    GB.Prop_CylindricalLens(q_y,q_x,2*f1)
+
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y, Lmax,l_step)
+
+if choice == 82:  #To be designed for the limits of a window at 38.67 cm or 21.27 cm for <1e12 W/cm2
+    setupTitle = "Spherical_2Cylindrical_reversed"
+    w0 = 8.66e-3 #calculated from 30mm diameter flattop estimation
+    reverse = 0
+    zi = 38.67e-2#21.27e-2#38.67e-2           #Offset from small waist to plane we want to save params at
+    zoom=int(round(zi/l_step))
+    radscl = 0.4
+
+    setupTitle = "Spherical_2Cylindrical"
+
+    f0 = 0.20
+
+    f1 = -0.2000 #m
+    L1 = 0.0310
+
+    f2 = -0.1000 #m
+    L2 = 0.109
+
+    Lmax = 2.5
+
+    P = 65e9
+
+     #  0.00625 0.0125 0.025 0.050 0.100
+    #  0.015 0.020 0.030 0.040 0.075 0.150
+    q_x = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    q_y = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,.1,l_step)
+    GB.Prop_CylindricalLens(q_y,q_x,2*f0)
+    GB.Prop_CylindricalLens(q_x,q_y,2*f0)
+
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L1,l_step) 
+    GB.Prop_CylindricalLens(q_y,q_x,2*f1)
+
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,L2-L1,l_step) 
+    GB.Prop_CylindricalLens(q_x,q_y,2*f2)
+
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y, Lmax,l_step)
 
 if choice == 81:  #To be designed for the limits of a window at 38.67 cm or 21.27 cm for <1e12 W/cm2
     setupTitle = "Spherical_2Cylindrical_reversed"
@@ -92,7 +209,7 @@ if choice == 80:  #To be designed for the limits of a window at 38.67 cm or 21.2
     setupTitle = "Spherical_2Cylindrical_reversed"
     w0 = 8.66e-3 #calculated from 30mm diameter flattop estimation
     reverse = 0
-    zi = 21.27e-2#38.67e-2           #Offset from small waist to plane we want to save params at
+    zi = 38.67e-2           #Offset from small waist to plane we want to save params at
     zoom=int(round(zi/l_step))
     radscl = 0.4
 
@@ -108,7 +225,7 @@ if choice == 80:  #To be designed for the limits of a window at 38.67 cm or 21.2
 
     Lmax = 2.5
 
-    P = 11e9
+    P = 35e9
 
      #  0.00625 0.0125 0.025 0.050 0.100
     #  0.015 0.020 0.030 0.040 0.075 0.150
@@ -580,7 +697,7 @@ if choice==53:#Ar L=442.1 um  We gonna goldilocks this one
 if choice==50:#Ar L=737 um in Ar  Disregard exact shape, need ~100um wide transverse 
     setupTitle = "Spherical_2Cylindrical_reversed"
     reverse = 1
-    zi = 2e-2#16e-2 #5e-2             #Offset from small waist to plane we want to save params at
+    zi = 2e-2#2e-2#16e-2 #5e-2             #Offset from small waist to plane we want to save params at
     zoom=int(round(zi/l_step))
     radscl = 3
     
@@ -595,7 +712,8 @@ if choice==50:#Ar L=737 um in Ar  Disregard exact shape, need ~100um wide transv
     #f1=f2; L1=L2
 
     #P = 426e9 #For a 5e16 cm-3 442.2um lens
-    P = 747e9 #For a 3e16 cm-3 736.9um lens
+    #P = 747e9 #For a 3e16 cm-3 736.9um lens
+    P = 727e9#With Lorentzian gas jet profiles
     #P = 718e9
     
     #  0.00625 0.0125 0.025 0.050 0.100
