@@ -11,14 +11,7 @@ radiation calculations
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.constants as const
-import sys
-# WARGSim imports
-sys.path.insert(0, "/home/keenan/WARGSim")
-from beams import electronbeam
-# Set path for dumping
-path = "/media/keenan/Data_Storage/WARGSim/Dump"
-# pretty plots
-plt.style.use('huntstone')
+
 
 
 def velocity_interp(v, tau, tau_int):
@@ -78,37 +71,44 @@ def position_interp(x, tau, tau_int):
         Array of interpolated positions corresponding to tau_int
     """
 
-    x1n   = np.zeros(len(tau_int))
-    x2n   = np.zeros(len(tau_int))
-    x_int = np.zeros(len(tau_int))
+    x_int   = np.zeros(len(tau_int))
+    x1n     = np.zeros(len(tau_int))
+    x2n     = np.zeros(len(tau_int))
+    x1n_use = np.zeros(len(x))
+    x2n_use = np.zeros(len(x))
+
+    # Additional counting variable for getting x1n_use and x2n_use
+    it = 0
     for i in range(len(tau_int)):
         tau_in = tau_int[i]
-        inds   = np.argwhere(tau>= tau_in)[0]
+        inds = np.argwhere(tau >= tau_in)[0]
         if inds > 0:
-            ind1 = inds[0] - 1
-            ind2 = inds[0]
-            ind3 = inds[0] + 1
+                ind1 = inds[0] - 1
+                ind2 = inds[0]
         else:
             ind1 = inds[0]
             ind2 = inds[0] + 1
-            ind3 = inds[0] + 2
-            
+        if i == 0:
+            ind1_un = ind1
+            ind2_un = ind2
+
+        # First interpolation coefficient
         x1n[i] = (x[ind2] - x[ind1]) / (tau[ind2] - tau[ind1])
-        if ind3 >= len(x):
-            x_additional = x[-1] + x1n[i]
-            tau_additional = tau[-1] + (abs(tau[1] - tau[2]))
-            x2n[i] = ((x_additional - x[ind2]) / (tau_additional - tau[ind2])) - x1n[i]
-        else:
-            x1n[i] = (x[ind2] - x[ind1]) / (tau[ind2] - tau[ind1])
-            x2n[i] = ((x[ind3] - x[ind2]) / (tau[ind3] - tau[ind2])) - x1n[i]
-            
-        x_int[i] = x[ind1] + x1n[i] * (tau_in - tau[ind1]) + x2n[i] * \
-                   (tau_in - tau[ind1])**2
-                   
-    x1n = np.append(np.unique(x1n), x1n[-1])
-    x2n = np.append(np.unique(x2n), x2n[-1])
-    return x1n, x2n, x_int
-    
+        if ind2 == len(x) - 1:
+            x_extra = x[ind2] + x1n[i]
+            tau_extra = tau[ind2] + abs(tau[1] - tau[0])
+            x2n[i]     = (x_extra - x[ind2]) / (tau_extra - tau[ind2]) - x1n[i] 
+
+        # Every time the indeces change (i.e. new time range) record the
+        # interpolation coefficien
+        if ind1 != ind1_un:
+            ind1_un = ind1
+            x1n_use[it] = x1n[i]
+            x2n_use[it] = x2n[i]
+            it += 1
+        x_int[i] = x[ind1] + x1n[i] * (tau_in - tau[ind1]) \
+                   + x2n[i] * (tau_in - tau[ind1])**2
+    return x1n_use, x2n_use, x_int
     
     
     

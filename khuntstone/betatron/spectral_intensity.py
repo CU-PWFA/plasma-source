@@ -54,9 +54,9 @@ def get_coeffs(x_arr, v_arr, tau_arr, tau_int):
     x12n, x22n, x2_int = interp.position_interp(x_arr[2], tau_arr, tau_int)
     x13n, x23n, x3_int = interp.position_interp(x_arr[3], tau_arr, tau_int)
     
-    x1n   = np.array([x10n, x11n, x12n, x13n])
-    x2n   = np.array([x20n, x21n, x22n, x23n])
-    x_int = np.array([x0_int, x1_int, x2_int, x3_int])
+    x1n   = (x10n, x11n, x12n, x13n)
+    x2n   = (x20n, x21n, x22n, x23n)
+    x_int = (x0_int, x1_int, x2_int, x3_int)
     
     # Interpolate velocity
     v10n, v0_int = interp.velocity_interp(v_arr[0], tau_arr, tau_int)
@@ -64,8 +64,8 @@ def get_coeffs(x_arr, v_arr, tau_arr, tau_int):
     v12n, v2_int = interp.velocity_interp(v_arr[2], tau_arr, tau_int)
     v13n, v3_int = interp.velocity_interp(v_arr[3], tau_arr, tau_int)
     
-    v1n   = np.array([v10n, v11n, v12n, v13n])
-    v_int = np.array([v0_int, v1_int, v2_int, v3_int])
+    v1n   = (v10n, v11n, v12n, v13n)
+    v_int = (v0_int, v1_int, v2_int, v3_int)
     
     return x1n, x2n, v1n, x_int, v_int
     
