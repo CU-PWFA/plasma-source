@@ -9,7 +9,7 @@ an arbitray trajectory.
 @author: keenan
 """
 import numpy as np
-import v_x_interp as interp
+import v_x_interp as vx
 
 def get_coeffs(x_arr, v_arr, tau_arr, tau_int):
     """
@@ -22,7 +22,7 @@ def get_coeffs(x_arr, v_arr, tau_arr, tau_int):
         A 4 x n array of the particle's 4-position where n is the number of time
         steps
     v_arr : array_like
-        A 4 x n array of the particle's 4-velocity
+        A 3 x n array of the particle's velocity at each time step
     tau_arr : array_like
         A 1 x n array of the proper time corresponding to x_arr and v_arr
     tau_int : array_like
@@ -30,6 +30,9 @@ def get_coeffs(x_arr, v_arr, tau_arr, tau_int):
         
     Returns
     -------
+    x0n : array_like
+        A 4 x n array of the zeroth order interpolation coefficient of the 
+        4-position
     x1n : array_like
         A 4 x n array of the 1st order interpolation coefficient of the 
         4-position
@@ -48,53 +51,71 @@ def get_coeffs(x_arr, v_arr, tau_arr, tau_int):
     """
     
     # Interpolate the position
+    x00n, x01n, x02n, x0_int = vx.position_interp(x_arr[0], tau_arr, tau_int)
+    x10n, x11n, x12n, x1_int = vx.position_interp(x_arr[1], tau_arr, tau_int)
+    x20n, x21n, x22n, x2_int = vx.position_interp(x_arr[2], tau_arr, tau_int)
+    x30n, x31n, x32n, x3_int = vx.position_interp(x_arr[3], tau_arr, tau_int)
     
-    x10n, x20n, x0_int = interp.position_interp(x_arr[0], tau_arr, tau_int)
-    x11n, x21n, x1_int = interp.position_interp(x_arr[1], tau_arr, tau_int)
-    x12n, x22n, x2_int = interp.position_interp(x_arr[2], tau_arr, tau_int)
-    x13n, x23n, x3_int = interp.position_interp(x_arr[3], tau_arr, tau_int)
-    
-    x1n   = (x10n, x11n, x12n, x13n)
-    x2n   = (x20n, x21n, x22n, x23n)
+    x0n = (x00n, x10n, x20n, x30n)
+    x1n = (x01n, x11n, x21n, x31n)
+    x2n = (x02n, x12n, x22n, x32n)
     x_int = (x0_int, x1_int, x2_int, x3_int)
     
     # Interpolate velocity
-    v10n, v0_int = interp.velocity_interp(v_arr[0], tau_arr, tau_int)
-    v11n, v1_int = interp.velocity_interp(v_arr[1], tau_arr, tau_int)
-    v12n, v2_int = interp.velocity_interp(v_arr[2], tau_arr, tau_int)
-    v13n, v3_int = interp.velocity_interp(v_arr[3], tau_arr, tau_int)
+    v11n, v1_int = vx.velocity_interp(v_arr[0], tau_arr, tau_int)
+    v12n, v2_int = vx.velocity_interp(v_arr[1], tau_arr, tau_int)
+    v13n, v3_int = vx.velocity_interp(v_arr[2], tau_arr, tau_int)
     
-    v1n   = (v10n, v11n, v12n, v13n)
-    v_int = (v0_int, v1_int, v2_int, v3_int)
+    v1n   = (v11n, v12n, v13n)
+    v_int = (v1_int, v2_int, v3_int)
     
-    return x1n, x2n, v1n, x_int, v_int
+    return x0n, x1n, x2n, v1n, x_int, v_int
     
-def get_chis(s_hat, x1jn, z2jn):
+def get_vars(kappa, x1n, x2n, dtau, v_arr):
     """
-    Computes reduced variables chi_1jn and chi_2jn from observation vector
-    and interpolation coeffs
+    Computes reduced variables in Thomas equations 14-19 from 4-wave vector, 
+    interpolation coefficients, and initial time step
     
     Parameters
     ----------
-    s_hat : array_like
-        3 entry array of the normalized radiation observation vector (i.e. 
-        [0, 0, 1] for on-axis radiation)
-    x1jn : array_like
+    kappa : array_like
+        4 entry array of the wave vector omega * (1/c, s_hat/c) where s_hat
+        is the observation unit vector
+    x1n : array_like
         Array of 1st order interpolation coeffs for the jth particle at 
-        all n time steps, size is 3 x n (n steps in x, y, and z)
-    x2jn : array_like 
+        all n time steps, size is 4 x n (n steps in ct, x, y, and z)
+    x2n : array_like 
         Array of 2nd order interpolation coeffs for the jth particle at all n
         time steps, size is the same as x1jn
+    dtau : float
+        The time step of the original particle trajectory [s]
+    v_arr : array_like
+        A 3 x n array of the particle's velocity at each time step
     
     Returns
     -------
     chi_1jn : array_like
         Reduced variable chi_1jn (the dot product of the 4-wave vector and the
-        4-position vector 1st interpolation coefficient)
+        4-position vector 1st interpolation coefficient) (s^-1)
     chi_2jn : array_like
         Reduced variable chi_2jn (the dot product of the 4-wave vector and the 
-        4-position vecotr 2nd interpolation coefficient)
+        4-position vecotr 2nd interpolation coefficient) (s^-2)
+    phi_p : array_like
+        3 x n vector reduced variable (m/s^2)
+    phi_m  : array_like
+        3 x n vector reduced variable (m/s^2)
     """
     
+    chi_1n = kappa[0] * x1n[0] - kappa[1] * x1n[1] - kappa[2] * x1n[2] \
+             - kappa[3] * x1n[3]
+    chi_2n = kappa[0] * x2n[0] - kappa[1] * x2n[1] - kappa[2] * x2n[2] \
+             - kappa[3] * x2n[3]
     
+    phi_p = (dtau**2 / 4) * chi_2n + (dtau / 2) * chi_1n
+    phi_m = (dtau**2 / 4) * chi_2n + (dtau / 2) * chi_1n
+    
+    
+    
+    
+    return chi_1n, chi_2n
 
