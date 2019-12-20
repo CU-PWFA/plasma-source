@@ -319,7 +319,7 @@ def drive_witness_density_new(params):
     # Plot the plasma density
     cmapP = alpha_colormap(plt.cm.get_cmap('inferno'), 0.2, True)
     ax.imshow(rhoXY, interpolation='gaussian', aspect='auto', extent=[-125, 125, -125, 125],
-               norm=colors.LogNorm(vmin=3.5e15, vmax=2e16), cmap=cmapP)#1e16,2e18
+               norm=colors.LogNorm(vmin=1e16, vmax=1e18), cmap=cmapP)#1e16,2e18
     
     plt.savefig(path+'Title_Wake.png')
     plt.show()

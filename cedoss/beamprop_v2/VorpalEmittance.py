@@ -16,13 +16,14 @@ import timeit
 path = '/home/chris/Desktop/BeamProp/vorpaltest'
 filename = '/home/chris/Desktop/FACETII_NERSC_Run4/PTPLDoubleTanh_WitnessBeam_10.h5'
 #filename = '/home/chris/Desktop/SFQED_NERSC_Run1/PTPLDoubleTanh_ElectronBeam_10.h5'
-#filename = '/home/chris/Desktop/thick4/PTPLDoubleTanh_WitnessBeam_10.h5'
+#filename = '/home/chris/Desktop/PTPL_Cylinder/PTPLCylinder_electrons_10.h5'
+filename = '/home/chris/Desktop/thick4/PTPLDoubleTanh_WitnessBeam_10.h5'
 
 debug = 0
 
 dump = 20
 cores = 4
-threshold = 0.001
+threshold = 0.00001
 
 beam = PProp.VorpalBeam(path, filename, threshold, debug=debug)
 print("N: ",beam.N)

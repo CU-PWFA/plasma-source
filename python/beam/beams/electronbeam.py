@@ -458,10 +458,18 @@ class ElectronBeam(beam.Beam):
     
         sigmay = self.get_sigmar(ind)[0]
         sigmax = self.get_sigmar(ind)[1]
+        #For beam sizes ~2.2 ums
         numbins = 101   #bins in 1d hist
         binno = 56      #bins in 2d hist
         xrange = 10#8
         yrange = 0.29
+        
+        """#For slingshot injected beams
+        numbins = 101   #bins in 1d hist
+        binno = 56      #bins in 2d hist
+        xrange = 100#8
+        yrange = 3.0
+        """
         
         fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(7.5, 7), dpi = 150)
         plt.rcParams.update({'font.size': 12})
@@ -534,12 +542,19 @@ class ElectronBeam(beam.Beam):
             sort = np.argsort(weights)
             weights = weights[sort]
             ptcls = ptcls[sort]
-    
+        
         numbins = 101   #bins in 1d hist
         binno = 56      #bins in 2d hist
         xrange = 8
         yrange = 0.29
         
+        """
+        #For slingshot injected beams
+        numbins = 101   #bins in 1d hist
+        binno = 56      #bins in 2d hist
+        xrange = 10#8
+        yrange = 50.0
+        """
         ##Below is same stuff, but now we want to calculate some offsets in the 
         ## transverse dimensions and do actual fits to find the true sigmas
         

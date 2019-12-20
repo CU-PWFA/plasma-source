@@ -16,7 +16,7 @@ import timeit
 path = '/home/chris/Desktop/BeamProp/vorpaltest'
 filename = '/home/chris/Desktop/FACETII_NERSC_Run4/PTPLDoubleTanh_WitnessBeam_10.h5'#z_arr to .03, threshold .00001
 #filename = '/home/chris/Desktop/SFQED_NERSC_VaryDen/5e15/PTPLDoubleTanh_ElectronBeam_10.h5' #z_arr to 0.7, ind 41, thresh 0.001
-filename = '/home/chris/Desktop/thick4/PTPLDoubleTanh_WitnessBeam_10.h5'
+#filename = '/home/chris/Desktop/thick4/PTPLDoubleTanh_WitnessBeam_10.h5'
 
 debug = 1
 

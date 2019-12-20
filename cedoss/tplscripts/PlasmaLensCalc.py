@@ -18,8 +18,8 @@ from modules import TPLFocalLength as Foc
 from modules import CalcEmitGrowth as W2
 from modules import OideCalc as Oide
 
-tpl_n = 7.2e17    # cm^-3
-tpl_l = 21.8    # um
+tpl_n = 5.09e17    # cm^-3
+tpl_l = 75    # um
 tpl_offset = 0.0  # m
 
 gam = Foc.gam_def
