@@ -99,7 +99,7 @@ def smooth_data(profile, M):
     return x_s, y_s
 
 
-def feature_depth(profile, x, y, a):
+def feature_depth(profile, x, y, a, use_range=False):
     """ Calculate the depth of uniformly spaced lines. 
     
     Parameters
@@ -159,7 +159,7 @@ def feature_depth(profile, x, y, a):
         sel = sections == i
         points = roots[sel]
         delta = np.average(points[2:]-points[:-2])
-        d = np.zeros(len(points-1))
+        d = np.zeros(len(points)-1)
         plt.plot(points, np.ones(len(points))*middle/10, '.', label='%0.1fum'%delta)
         for k in range(1, len(points)):
             r1 = points[k-1]
@@ -168,10 +168,24 @@ def feature_depth(profile, x, y, a):
             x_t = x[sel]
             y_t = y[sel]
             l = len(x_t)
-            x_t = x_t[int(l*(0.5-a/2)):int(l*(0.5+a/2))]
-            y_t = y_t[int(l*(0.5-a/2)):int(l*(0.5+a/2))]
-            d[k-1] = np.median(y_t)
-            plt.plot([x_t[0], x_t[-1]], [d[k-1]/10, d[k-1]/10], 'k-')
+            if use_range:
+                y_t_min = np.amin(y_t)
+                x_t_min = x_t[np.argmin(y_t)]
+                y_t_max = np.amax(y_t)
+                x_t_max = x_t[np.argmax(y_t)]
+                # Check if this is a low or high spot
+                if y_t_min < middle:
+                    d[k-1] = y_t_min
+                    x_t = x_t_min
+                else:
+                    d[k-1] = y_t_max
+                    x_t = x_t_max
+                plt.plot([x_t], [d[k-1]/10], 'k.')
+            else:
+                x_t = x_t[int(l*(0.5-a/2)):int(l*(0.5+a/2))]
+                y_t = y_t[int(l*(0.5-a/2)):int(l*(0.5+a/2))]
+                d[k-1] = np.median(y_t)
+                plt.plot([x_t[0], x_t[-1]], [d[k-1]/10, d[k-1]/10], 'k-')
         depth[i-1] = np.average(abs(d[1:]-d[:-1]))
         std[i-1] = np.std(abs(d[1:]-d[:-1]))
         weight[i-1] = len(points)-1
@@ -192,8 +206,8 @@ def feature_depth(profile, x, y, a):
     plt.text(base_x, 0.16*base_y+y_min/10, str(profile['radius'])+'um')
     plt.text(base_x, 0.08*base_y+y_min/10, 'Stylus Force:')
     plt.text(base_x, 0.00*base_y+y_min/10, str(profile['force'])+'mg')
-
-    plt.xlim(0, 1.2*x[-1])
+    
+    plt.xlim(x[0], 1.2*(x[-1]-x[0])+x[0])
     plt.show()
 
 
