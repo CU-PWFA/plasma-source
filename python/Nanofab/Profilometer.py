@@ -209,6 +209,80 @@ def feature_depth(profile, x, y, a, use_range=False):
     
     plt.xlim(x[0], 1.2*(x[-1]-x[0])+x[0])
     plt.show()
+    
+def feature_depth_variable(profile, x, y, a, use_range=False):
+    """ Calculate the depth of variable spaced lines. 
+    
+    Parameters
+    ----------
+    profile : dict
+        The profile dictionary returned by load_profile.
+    x : array of doubles
+        The x values of the profile measurement.
+    y : array of doubles
+        The y (depth) values of the profile measurement.
+    a : double
+        The fraction of points in-between the half maxes to use for the peak.
+    """
+    y_min = np.min(y)
+    y_max = np.max(y)
+    middle = (y_max-y_min)*0.5 + y_min
+    spline = UnivariateSpline(x, y-middle, s=0)
+    roots = spline.roots()
+
+    plt.figure(figsize=(10, 4), dpi=150)
+    plt.plot(x, y/10, zorder=2)
+    plt.plot([0, x[-1]], [y_max/10, y_max/10], 'k', zorder=1)
+    plt.plot([0, x[-1]], [y_min/10, y_min/10], 'k', zorder=1)
+
+    points = roots
+    delta = np.average(points[2:]-points[:-2])
+    d = np.zeros(len(points)-1)
+    plt.plot(points, np.ones(len(points))*middle/10, '.', label='%0.1fum'%delta)
+    for k in range(1, len(points)):
+        r1 = points[k-1]
+        r2 = points[k]
+        sel = np.logical_and(x > r1, x < r2)
+        x_t = x[sel]
+        y_t = y[sel]
+        l = len(x_t)
+        if use_range:
+            y_t_min = np.amin(y_t)
+            x_t_min = x_t[np.argmin(y_t)]
+            y_t_max = np.amax(y_t)
+            x_t_max = x_t[np.argmax(y_t)]
+            # Check if this is a low or high spot
+            if y_t_min < middle:
+                d[k-1] = y_t_min
+                x_t = x_t_min
+            else:
+                d[k-1] = y_t_max
+                x_t = x_t_max
+            plt.plot([x_t], [d[k-1]/10], 'k.')
+        else:
+            x_t = x_t[int(l*(0.5-a/2)):int(l*(0.5+a/2))]
+            y_t = y_t[int(l*(0.5-a/2)):int(l*(0.5+a/2))]
+            d[k-1] = np.median(y_t)
+            plt.plot([x_t[0], x_t[-1]], [d[k-1]/10, d[k-1]/10], 'k-')
+    depth = np.average(abs(d[1:]-d[:-1]))/10
+    std = np.std(abs(d[1:]-d[:-1]))/10
+
+    plt.legend(title='Line Period', loc=1)
+    plt.xlabel(r'$x$ ($\mathrm{\mu m}$)')
+    plt.ylabel(r'Depth (nm)')
+    base_x = 1.02*x[-1]
+    base_y = (y_max-y_min)/10
+    plt.text(base_x, 0.56*base_y+y_min/10, 'Feature Depth:')
+    plt.text(base_x, 0.48*base_y+y_min/10, r'%0.0f$\pm$%0.0fnm' % (depth, std))
+    plt.text(base_x, 0.40*base_y+y_min/10, r'Range: %0.0fnm' % ((y_max-y_min)/10))
+    plt.text(base_x, 0.32*base_y+y_min/10, 'Date: '+profile['date'])
+    plt.text(base_x, 0.24*base_y+y_min/10, 'Stylus Radius:')
+    plt.text(base_x, 0.16*base_y+y_min/10, str(profile['radius'])+'um')
+    plt.text(base_x, 0.08*base_y+y_min/10, 'Stylus Force:')
+    plt.text(base_x, 0.00*base_y+y_min/10, str(profile['force'])+'mg')
+    
+    plt.xlim(x[0], 1.2*(x[-1]-x[0])+x[0])
+    plt.show()
 
 
 def step_depth(profile, x, y):
