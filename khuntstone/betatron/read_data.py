@@ -31,10 +31,10 @@ def read_data(path, nDumps, N):
     
     for i in range(nDumps):
         ptcls   = np.load(path + "_ptcls_" + str(i) + ".npy")
-        x[i,:]  = ptcls[0, 0]
-        xp[i,:] = ptcls[0, 1]
-        y[i,:]  = ptcls[0, 2]
-        yp[i,:] = ptcls[0, 3]
-        gb[i,:] = ptcls[0, 5] 
+        x[i,:]  = ptcls[:, 0]
+        xp[i,:] = ptcls[:, 1]
+        y[i,:]  = ptcls[:, 2]
+        yp[i,:] = ptcls[:, 3]
+        gb[i,:] = ptcls[:, 5] 
         
     return (x, xp, y, yp, gb)
