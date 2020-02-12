@@ -13,7 +13,7 @@ import psutil
 me = const.physical_constants['electron mass energy equivalent in MeV'][0]
 me = me * 1e6
 # Add WARGSim directory to path
-sys.path.insert(0, "/home/keenan/WARGSim")
+sys.path.insert(0, "/home/keenan/WARGSim/")
 from beams import electronbeam
 from beams import betatronbeam
 import calc.electron as ecalc
@@ -97,7 +97,7 @@ def init_beam(beam_params, n0):
     print('init eps_ny = ',eps_ny0)
     return my_ebeam
 
-def init_plasma(beam_params, plasma_params):
+def init_plasma(beam_params, plasma_params, hw_dn = 0):
     '''
     Function to intialize the PWFA
     
@@ -133,8 +133,9 @@ def init_plasma(beam_params, plasma_params):
    # Calculate ramp lengths and full length of plasma
     L_up = 8 * plasma_params['hw_up']
     gb0  = beam_params['beamE'] / me
-    hw_dn = 1.00 * match_hw(plasma_params['n0']*1e17, 2 * gb0,\
-                       beam_params['beta0'][0])
+    if hw_dn != 0:
+        hw_dn = 1.00 * match_hw(plasma_params['n0']*1e17, 2 * gb0,\
+                           beam_params['beta0'][0])
     L_dn  = min(1.600, 8 * hw_dn)
     L_p   = L_up + plasma_params['L_ft'] + L_dn
     pwfaParams = {

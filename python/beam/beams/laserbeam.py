@@ -556,13 +556,13 @@ class GeneralSuperGaussianLaser(Laser):
         E0 = self.E0
         n = self.order/2
         k = self.k
-        theta = self.theta
+        theta = np.radians(self.theta)
         dx = self.dx
         x = self.x[:, None]
         y = self.y[None, :]
         r2 = (x-dx)**2 + y**2
         e = np.array(E0 * np.exp(-(r2/w02)**n), dtype='complex128')
-        e *= np.exp(-1j*k*theta*x)
+        e *= np.exp(1j*k*theta*x)
         super().initialize_field(e)
 
 
