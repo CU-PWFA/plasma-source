@@ -17,8 +17,17 @@ from cython.parallel import prange
 
 # Load necessary C functions
 cdef extern from "complex.h" nogil:
-    double complex cexp(double complex)
-    double complex csqrt(double complex)
+    double complex exp(double complex)
+    double complex sqrt(double complex)
+    IF UNAME_SYSNAME != "Windows":
+        double complex cexp(double complex)
+        double complex csqrt(double complex)
+    
+IF UNAME_SYSNAME == "Windows":
+    cdef double complex cexp(double complex x) nogil:
+        return exp(x)
+    cdef double complex csqrt(double complex x) nogil:
+        return sqrt(x)
 
 
 def fourier_prop(double complex[:, :] E, double[:] x, double[:] y, double[:] z,
