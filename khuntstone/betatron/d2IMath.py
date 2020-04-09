@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 plt.style.use('huntstone')
 import numpy as np
 from scipy.constants import c, mu_0, epsilon_0, e
-from scipy.special import fresnel
+from scipy.special import fresnel, erf
 import sys
 # Avoid creating pyc files
 sys.dont_write_bytecode = True
@@ -70,8 +70,23 @@ def cross_product(vec1, vec2):
     v1v22 = vec1[0]*vec2[1] - vec1[1]*vec2[0]
     
     return (v1v20, v1v21, v1v22)
-            
-    
+
+def get_SC(z):
+    """
+    Function to compute the Fresnel integrals S and C
+    Parameters:
+    ----------
+    z : array_like
+        Array where entries are purely imaginary or real (array itself can 
+        be a mix)
+    """
+    ip    = 1j + 1
+    im    = 1 - 1j
+    arg_p = ip * np.sqrt(np.pi) * z * 0.5
+    arg_m = im * np.sqrt(np.pi) * z * 0.5
+    S     = (ip/4) * (erf(arg_p) - 1j * erf(arg_m))
+    C     = (im/4) * (erf(arg_p) + 1j * erf(arg_m))
+    return S, C
 def get_chis(kappa, x0n, x1n, x2n, plot = False):
     """
     Function to compute reduced variables chi1n and chi2n  
@@ -178,7 +193,8 @@ def get_psis(chi1n, chi2n, v0n, v1n, plot = False):
     """
     
     
-    psi_base = np.sqrt(2 * np.pi / chi2n) * (2*chi2n * v0n - chi1n * v1n) 
+    psi_base = np.sqrt(2 * np.pi / chi2n, dtype = 'complex128')
+    psi_base = psi_base * (2*chi2n * v0n - chi1n * v1n) 
     psi_p    = psi_base * np.cos(chi1n**2 / (4 * chi2n))
     psi_m    = psi_base * np.sin(chi1n**2 / (4 * chi2n))
     
@@ -211,15 +227,17 @@ def get_thetas(chi1n, chi2n, dtau, plot = False):
               As defined in eqn 14
     """
     
-    
-    theta_p = (chi1n + chi2n * dtau) / np.sqrt(2 * np.pi * chi2n)
-    theta_m = (chi1n - chi2n * dtau) / np.sqrt(2 * np.pi * chi2n)
+    norm    = np.sqrt(2 * np.pi * chi2n, dtype = 'complex128') 
+    theta_p = (chi1n + chi2n * dtau) / norm
+    theta_m = (chi1n - chi2n * dtau) / norm
 
     
     if plot:
         fig, ax = makefig(xlab = 'n', ylab = r'$\Theta$')
-        ax.plot(np.real(theta_p), label = r'$\Theta_{+}$')
-        ax.plot(np.real(theta_m), label = r'$\Theta_{-}$')
+        ax.plot(np.real(theta_p), label = r'$Re[\Theta_{+}]$')
+        ax.plot(np.real(theta_m), label = r'$Re[\Theta_{-}]$')
+        ax.plot(np.imag(theta_p), label = r'$Im[\Theta_{+}]$')
+        ax.plot(np.imag(theta_m), label = r'$Im[\Theta_{-}]$')
         ax.legend()
     return theta_p, theta_m
 
@@ -247,8 +265,8 @@ def get_fresnels(theta_p, theta_m, plot = False):
     """
     
     
-    Sp, Cp = fresnel(theta_p)
-    Sm, Cm = fresnel(theta_m)
+    Sp, Cp = get_SC(theta_p)
+    Sm, Cm = get_SC(theta_m)
     
     if plot:
         fig, ax = makefig(xlab = 'n', ylab = 'Fresnel Integral')
@@ -297,16 +315,16 @@ def tay_In(chi1n, chi2n, v0n, v1n, dtau):
     """
     
     arg = chi1n * dtau * 0.5
-    I0  = np.sinc(arg) * dtau
-    I1  = (dtau / chi1n) * (np.sinc(arg) - np.cos(arg))
-    I2  = (dtau**3 / 4) * np.sinc(arg) - (2 * I1 / chi1n)
+    I0  = np.sinc(arg/np.pi) * dtau
+    I1  = (dtau / chi1n) * (np.sinc(arg/np.pi) - np.cos(arg))
+    I2  = (dtau**3 / 4) * np.sinc(arg/np.pi) - (2 * I1 / chi1n)
     
     RI  = v0n * I0
     ImI = v1n * I1 + chi2n * v0n * I2
     
     return RI, ImI
    
-def get_single_d2I(x0n, x1n, x2n, th, v0n, v1n, dtau, w):
+def get_single_d2I(x0n, x1n, x2n, th, v0n, v1n, dtau, w, cut = 1e-3):
     """
     Function to compute a single spectral intensity.
     
@@ -328,6 +346,8 @@ def get_single_d2I(x0n, x1n, x2n, th, v0n, v1n, dtau, w):
            Proper time step corresponding to particle trajectory
     w    : float
            Frequency
+    cut : float, optional
+          Point at which to switch between Fresnel/Taylor methods
     
     Returns:
     --------
@@ -342,7 +362,7 @@ def get_single_d2I(x0n, x1n, x2n, th, v0n, v1n, dtau, w):
     
    # Break into Fresnel approximation and Taylor expansion
     # Fresnel
-    fi = np.argwhere(chi2n * dtau**2 > 1e-3)
+    fi = np.argwhere(abs(chi2n * dtau**2) > cut)
     phi_p, phi_m = get_phis(chi1n[fi], chi2n[fi], dtau)
     
     psi_px, psi_mx = get_psis(chi1n[fi], chi2n[fi], v0n[0][fi], v1n[0][fi])
@@ -351,7 +371,7 @@ def get_single_d2I(x0n, x1n, x2n, th, v0n, v1n, dtau, w):
     
     theta_p, theta_m = get_thetas(chi1n[fi], chi2n[fi], dtau)
     
-    Sp, Cp, Sm, Cm   = get_fresnels(np.double(theta_p), np.double(theta_m))
+    Sp, Cp, Sm, Cm   = get_fresnels(theta_p, theta_m)
     
     Rfx, Ifx = fres_In(chi2n[fi], psi_px, psi_mx, Cp, Cm, Sp, Sm,\
                           v1n[0][fi], phi_p, phi_m)
@@ -361,23 +381,29 @@ def get_single_d2I(x0n, x1n, x2n, th, v0n, v1n, dtau, w):
                           v1n[2][fi], phi_p, phi_m) 
     
     # Taylor
-    ti = np.argwhere(chi2n * dtau**2 <= 1e-3)
+    ti = np.argwhere(abs(chi2n * dtau**2) <= cut)
     Rtx, Itx = tay_In(chi1n[ti], chi2n[ti], v0n[0][ti], v1n[0][ti], dtau)
     Rty, Ity = tay_In(chi1n[ti], chi2n[ti], v0n[1][ti], v1n[1][ti], dtau)
     Rtz, Itz = tay_In(chi1n[ti], chi2n[ti], v0n[2][ti], v1n[2][ti], dtau) 
     
+    R_test = Rfx + Rfy + Rfz
+    I_test = Ifx + Ify + Ifz
+    if any(np.imag(R_test)) or any(np.imag(I_test)):
+        print("Error: complex values found")
+        return
     # Create full arrays
     Rx = np.zeros(len(chi2n)); Ix = np.zeros(len(chi2n));
     Ry = np.zeros(len(chi2n)); Iy = np.zeros(len(chi2n));
     Rz = np.zeros(len(chi2n)); Iz = np.zeros(len(chi2n));
-
-    Rx[fi] = Rfx; Ix[fi] = Ifx; 
-    Ry[fi] = Rfy; Iy[fi] = Ify; 
-    Rz[fi] = Rfz; Iz[fi] = Ifz;
+    
+    Rx[fi] = np.real(Rfx); Ix[fi] = np.real(Ifx); 
+    Ry[fi] = np.real(Rfy); Iy[fi] = np.real(Ify); 
+    Rz[fi] = np.real(Rfz); Iz[fi] = np.real(Ifz);
     
     Rx[ti] = Rtx; Ix[ti] = Itx; 
     Ry[ti] = Rty; Iy[ti] = Ity; 
     Rz[ti] = Rtz; Iz[ti] = Itz  
+    
     
     # Compute vectors present in eqn 26
     chi0n = dot_product(kappa, x0n)
@@ -399,7 +425,7 @@ def get_single_d2I(x0n, x1n, x2n, th, v0n, v1n, dtau, w):
     
     return d2I   
     
-def get_d2I(x0n, x1n, x2n, th, v0n, v1n, dtau, w):
+def get_d2I(x0n, x1n, x2n, th, v0n, v1n, dtau, w, cut = 1e-3):
     """
     Function to get d2I as an array along multiple values of th and w. Inputs
     are the same as get_single_d2I, but th and w are now arrays. 
@@ -412,5 +438,5 @@ def get_d2I(x0n, x1n, x2n, th, v0n, v1n, dtau, w):
             print(str(prog) + "%")
         for j in range(len(th)):
             d2I[i,j] = get_single_d2I(x0n, x1n, x2n, th[j], v0n, \
-                                      v1n, dtau, w[i])
+                                      v1n, dtau, w[i], cut)
     return d2I

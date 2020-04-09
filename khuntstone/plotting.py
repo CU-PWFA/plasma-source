@@ -3,7 +3,7 @@ Module containing often used plotting functions
 '''
 import matplotlib.pyplot as plt
 
-def makefig(x = 6, y = 8, dpi = 200, xlab = '', ylab ='', titl =''):
+def makefig(x = 8, y = 6, dpi = 200, xlab = '', ylab ='', titl =''):
     """
     Function to make a figure and axis handle
     
