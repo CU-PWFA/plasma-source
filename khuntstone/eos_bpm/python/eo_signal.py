@@ -25,38 +25,38 @@ def get_signal(ind, ctype, d, y0, tp, angle, r0, method, th = 0, plot = False):
 	Parameters:
 	-----------
 	ind : int,
-	      The index of the current profile
+		  The index of the current profile
 	ctype  : str, 
-		     The type of crystal to use, either 'GaP' or 'ZnTe'
+			 The type of crystal to use, either 'GaP' or 'ZnTe'
 	d      : float
-	         The crystal thickness
+			 The crystal thickness
 	y0     : float
-	         The central wavelength of the probe in m
+			 The central wavelength of the probe in m
 	tp     : float
-	         The FWHM of the probe in seconds
+			 The FWHM of the probe in seconds
 	angle  : float
-	         The crossing angle of the probe in radians
+			 The crossing angle of the probe in radians
 	r0     : float
-	         The beamline-crystal distance in m
+			 The beamline-crystal distance in m
 	th     : float, optional
-	         The angle of the half-wave plate for near balanced detectors (rad)
+			 The angle of the half-wave plate for near balanced detectors (rad)
 	method : str,
-		     The detection method, either 'cross', 'bal', or 'near' for 
-		     crossed polarizers, balanced detectors, or near for near balanced 
-		     detectors. 
+			 The detection method, either 'cross', 'bal', or 'near' for 
+			 crossed polarizers, balanced detectors, or near for near balanced 
+			 detectors. 
 	
 	
 	
 	Returns:
 	--------
 	I     : array_like
-	        The input current profile (kA)
+			The input current profile (kA)
 	ti    : array_like
-	        The time array corresponding to I
+			The time array corresponding to I
 	sig   : array_like
-	        The EOS signal
+			The EOS signal
 	t_sig : array_like
-	        Time array corresponding to sig
+			Time array corresponding to sig
 	"""
 	# Initialize crystal and parameters
 	cry = crystal(ctype)
@@ -84,7 +84,7 @@ def get_signal(ind, ctype, d, y0, tp, angle, r0, method, th = 0, plot = False):
 	Ec, tt = thz.cry_field(te_int, FEr, f, d, probe, cry, nslice = nslice);
 	tau    = np.linspace(0, 3, 1000) * 1e-12
 	gamma, t_gamma = pr.phase_retard(Ec, tt*1e-12, d_arr, tau, probe, cry,\
-	                                 'spatial', psi = angle, plot = False)
+									 'spatial', psi = angle, plot = False)
 
 	# Compute signal
 	if method == "cross":
@@ -106,17 +106,17 @@ def plot_signal(I, sig, ti, t_sig, save = False, sname = ""):
 	Parameters:
 	-----------
 	I     : array_like
-		    Input current profile
+			Input current profile
 	sig   : array_like
-		    EOS signal
+			EOS signal
 	ti    : array_like
-		    Time corresponding to I
+			Time corresponding to I
 	t_sig : array_like
-	        Time corresponding to sign
+			Time corresponding to sign
 	save  : bool, optional
-	        Whether or not to save the figure
+			Whether or not to save the figure
 	sname : str, optional 
-	        the name to save the figure
+			the name to save the figure
 	"""
 	fig, ax1 = makefig(5, 3.75)
 	# Input current
@@ -146,14 +146,14 @@ def peak2peak(signal, t, dt = 0.25e-12):
 	Parameters:
 	-----------
 	sig   : array_like
-	        The EOS signal
+			The EOS signal
 	t_sig : array_like
-	        The time corresponding to sig
+			The time corresponding to sig
 
 	Returns:
 	--------
 	p2p : float
-	      The peak to peak measurement (s), returns nan if noise is strong
+		  The peak to peak measurement (s), returns nan if noise is strong
 	"""
 
 	max_sig = max(signal)
@@ -167,21 +167,25 @@ def peak2peak(signal, t, dt = 0.25e-12):
 	peaks  = find_peaks(signal, height = cutoff * max_sig, distance = sep)[0]
 	npeaks = len(peaks)
 	while len(peaks) > 2:
-	    cutoff = cutoff + 0.025
-	    # sometimes the 2nd peak repeats
-	    peaks = find_peaks(signal, height = cutoff * max_sig, distance = sep)[0]
-	    if len(peaks) == 1: 
-	        cutoff = cutoff - 0.025
-	        peaks = find_peaks(signal, height = cutoff * max_sig, \
-	                           distance = sep)[0]
-	        peaks = [peaks[0], peaks[1]]
-	        break
-	    npeaks == len(peaks)
+		cutoff = cutoff + 0.025
+		# sometimes the 2nd peak repeats
+		peaks = find_peaks(signal, height = cutoff * max_sig, distance = sep)[0]
+		if len(peaks) == 1: 
+			cutoff = cutoff - 0.025
+			peaks = find_peaks(signal, height = cutoff * max_sig, \
+							   distance = sep)[0]
+			peaks = [peaks[0], peaks[1]]
+			break
+		npeaks == len(peaks)
 
 	try:
 		p2p = t[peaks[1]] - t[peaks[0]]
 	except:
-		p2p = np.nan
+		ind1 = np.argmin(abs(t - 0.3e-12))
+		ind2 = np.argmax(signal[ind1:-1])
+		wind = ind1 + ind2
+		drid = np.argmax(signal)
+		p2p  = t[wind] - t[drid]
 	return p2p
 def get_wit_stn(sig, t_sig, noise_t1, noise_t2, height, width):
 	"""
@@ -192,16 +196,16 @@ def get_wit_stn(sig, t_sig, noise_t1, noise_t2, height, width):
 	sig : array_like
 		  EOS signal
 	t_sig : array_like
-	        Time corresponding to sig
+			Time corresponding to sig
 	noise_t1 : float
-	           Index of the initial time at which to consider noise
+			   Index of the initial time at which to consider noise
 	noise_t2 : float
-	           Index of the final time at which to consider noise
+			   Index of the final time at which to consider noise
 	height   : float
-	           Cutoff for finding the witness peak, used in find_peaks
+			   Cutoff for finding the witness peak, used in find_peaks
 	width    : int
-	           Integer number of time steps between drive and witness signal
-	           used for find_peaks
+			   Integer number of time steps between drive and witness signal
+			   used for find_peaks
 	"""
 
 	# Compute noise
