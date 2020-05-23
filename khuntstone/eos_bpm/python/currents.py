@@ -57,14 +57,16 @@ def get_peaks(signal, t, dt = 0.25e-12):
         npeaks == len(peaks)
     return peaks
 
-def get_current(ind):
+def get_current(ind, comp = "Desktop"):
     '''
     Loads in a current profile and calculate longitudinal offset
 
     Parameters:
     -----------
-    ind    : int
-             The data set index (0-9) *ignore 1, bad set*
+    ind     : int
+              The data set index (0-9) *ignore 1, bad set*
+    comp    : str, optional
+              Computer being used, Desktop or Vela
 
     Returns:
 
@@ -76,7 +78,14 @@ def get_current(ind):
            Peak to peak spacing of the bunches in seconds
     --------
     '''
-    fpath = "/home/keenan/eos_bpm/khuntstone/current_profiles/"
+    
+    # Create file path based on compute
+    if comp == "Desktop":
+        fpath = "/home/keenan/plasma-source/khuntstone/eos_bpm/studies/" + \
+                "current_profiles/"
+    elif comp == "Vela":
+        fpath = "/home/cu-pwfa/CU-PWFA/plasma-source/khuntstone/eos_bpm/" + \
+                "studies/current_profiles/"
     if ind < 10:
         ipdz  = io.loadmat(fpath + "ipdz_for_keenan.mat")["ipdz_for_keenan"]
         shots = io.loadmat(fpath + "shots_for_keenan.mat")["shots_for_keenan"]
