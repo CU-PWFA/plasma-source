@@ -20,21 +20,22 @@ def read_data(path, nDumps, N):
         The number of particles in the simulation
     Returns:
     --------
-    ps : array_like
-        Array of particle phase space throughout the simulation
+    x : array_like
+        Particle x trajectory
+    y : array_like
+        Particle y trajectory
+    gb : array_like
+         Particle lorentz factor
     """
     x      = np.zeros((nDumps, N))
     y      = np.zeros((nDumps, N))
-    xp     = np.zeros((nDumps, N))
-    yp     = np.zeros((nDumps, N))
     gb     = np.zeros((nDumps, N))    
     
     for i in range(nDumps):
         ptcls   = np.load(path + "_ptcls_" + str(i) + ".npy")
         x[i,:]  = ptcls[:, 0]
-        xp[i,:] = ptcls[:, 1]
         y[i,:]  = ptcls[:, 2]
-        yp[i,:] = ptcls[:, 3]
         gb[i,:] = ptcls[:, 5] 
         
-    return (x, xp, y, yp, gb)
+        
+    return x, y, gb
