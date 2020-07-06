@@ -199,9 +199,9 @@ def cry_field(t, FEr, f, d, probe, crystal, nslice = 100, plot = False, \
     #print(probe.t_shift)
     if verbose:
         v_ph, v_g, dummy = crystal.velocities(f_Hz);
-        print("THz phase velocity:", np.round(np.mean(v_ph) / c, 2), 'c');
-        print("THz group velocity:", np.round(np.mean(v_g) / c, 2), 'c');
-        print("Probe group velocity:", np.round(np.mean(v_g_opt) / c, 2), 'c');
+        print("THz phase velocity:", np.round(np.nanmean(v_ph) / c, 2), 'c');
+        print("THz group velocity:", np.round(np.nanmean(v_g) / c, 2), 'c');
+        print("Probe group velocity:", np.round(np.nanmean(v_g_opt) / c, 2), 'c');
         print("Probe shift:", np.round(probe.t_shift, 2), 'ps')
 
     if plot:
@@ -326,8 +326,8 @@ def cry_field(t, FEr, f, d, probe, crystal, nslice = 100, plot = False, \
 
 
         # Prettify
-        t_min = tt[ind1] - 1;
-        t_max = tt[ind2] + 3;
+        t_min = tt[0]
+        t_max = tt[-1]
         
         ax1.set_xlim([t_min, t_max]);
         ax2.set_xlim([t_min, t_max]);

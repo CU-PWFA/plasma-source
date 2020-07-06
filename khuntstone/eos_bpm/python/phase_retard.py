@@ -4,15 +4,110 @@ propagating through an EO crystal. Allows for several different probe setups
 
 author : keenan
 '''
-import matplotlib.pyplot as plt;
-import numpy as np;
-from scipy.constants import c;
-from scipy.interpolate import interp1d;
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy.constants import c
+from scipy.interpolate import interp1d
 
-from laser import laser;
-from plotting import makefig;
-def phase_retard(Ec, te, d, tau, probe, crystal, method,\
+from laser import laser
+from plotting import makefig
+
+def phase_retard(Ec, te, d, tau, probe, crystal, psi = 0, interp = False, \
+                 n_interp = 10000, t_delay = 0, plot = False):
+    """
+    Function to compute the phase retardation spatially encoding into a 
+    probing laser pulse. 
+
+    Parameters:
+    -----------
+    Ec       : array_like
+               Array of the effective THz pulse in each crystal slice as 
+               created in the thz.py module
+    te       : array_like
+               1D array corresponding to the time axis of Ec (s)
+    d        : float
+               The EO crystal thickness (m)
+    tau      : array_like
+               Time array corresponding to the probe laser (effectively the
+               probe "timing delay" due to the sweeping angle, s)
+    probe    : object
+               Instance of the laser class used in the EOS setup
+    crystal  : object
+               Instance of the crystal class used in the EOS setup
+    psi      : float, optional
+               Probe crossing angle (deg.), default = 0 (no spatial encoding)
+    interp   : bool, optional
+               Set True for interpolating gamma before returning
+    n_interp : int, optional
+               Length of interpolated array defauult = 10000
+    t_delay  : float, optional
+               Optional time delay of the laser probe (s), default = 0
+    plot     : bool, optional
+               Set to true to plot the computed phase retardation
+
+    Returns:
+    --------
+    gamma   : array_like
+              The phase retardation (rad)
+    t_gamma : array_like
+              The time array corresponding to gamma (s)
+    """
+    # Convert psi to rads
+    psi = psi * np.pi / 180
+    # Add shift
+    tau = tau + t_delay
+    # Create depth array
+    nslice = np.shape(Ec)[1] + 1;
+    j     = np.arange(1, nslice, 1)
+    dz    = d / nslice
+    d_arr = (j - 0.5) * dz
+    # Compute Amplitude of gamma 
+    n0 = crystal.indref(np.array([probe.y0]))[0]
+    amp = 2 * np.pi * n0**3 * dz / (probe.y0)
+    # Get effective probe velocity
+    Lchar, v_g_opt = probe.laser_l_char(crystal)
+    vg_eff = v_g_opt * np.cos(psi)
+    # Preallocate for loop
+    gamma = np.zeros(len(tau))
+    # Loop and sum gamma
+    tau_use = tau
+    for j in range(len(d_arr)):
+        fEc = interp1d(te, np.real(Ec[:, j]), bounds_error = False, \
+                       fill_value = 0)
+        # Ec is effectively wrapped, reset the probe timing if it is past 
+        # the pulse domain
+        #ind = np.argwhere(tau_use > te[-1])
+        #dtau = tau_use[ind] - te[-1]
+        #tau_use[ind]  = te[0] + dtau
+        t_interp = (d_arr[j] / vg_eff) + tau_use
+        E_eff = fEc(t_interp)
+        gamma += E_eff
+    # Add amplitude
+    gamma = amp * gamma
+    # Artificially center gamma at t = 0
+    tau = tau - tau[np.argmax(gamma)]
+
+    if interp:
+        fgamma    = interp1d(tau, gamma)
+        tau_int   = np.linspace(tau[0], tau[-1], n_interp)
+        gamma_int = fgamma(tau_int)
+        gamma     = gamma_int
+        tau       = tau_int
+    if plot:
+        fig, ax = makefig(xlab = "t [ps]", ylab = r'$\Gamma$ [rad]')
+        ax.plot(tau * 1e15, gamma)
+        plt.show() 
+    return gamma, tau
+    
+def old_phase_retard(Ec, te, d, tau, probe, crystal, method,\
                  psi = 0, interp = False, n_interp = 10000, plot = False):
+
+    """
+    NOTE: This function is bugged, it produces phase retards with orders of
+    magnitude dependent upon the dimensionality of Ec and typically orders
+    of magnitude lower than expected values. It has not been deleted because 
+    the exact nature of the bug is unknown. 
+    """
     '''
     Function to compute phase retardation experienced by a probe pulse 
     propagating through an electo-optic crystal
@@ -81,7 +176,7 @@ def phase_retard(Ec, te, d, tau, probe, crystal, method,\
                 f    = interp1d(te, np.real(Ec[:, j]),\
                                 bounds_error = False, fill_value = 0);
                
-                t_interp = te + (d_arr[j] / vg_opt);
+                t_interp = te + (d_arr[j] / vg_opt)
                 E_eff = f(t_interp);
                 t_delay = tau[i] + t_probe
                 integrand = amp * E_eff * \
@@ -130,14 +225,8 @@ def phase_retard(Ec, te, d, tau, probe, crystal, method,\
         amp = 2 * np.pi * n0**3 * dz / (probe.y0);
         Lchar, vg_opt = probe.laser_l_char(crystal);
         gamma = np.zeros(len(tau));
-        t_probe = probe.t_shift * 1e-12; # s
-        if psi != 0:
-            t_delay = tau;
-            vg_eff = vg_opt * np.cos(psi);
-        else:
-            t_delay = tau #+ t_probe;
-            vg_eff = vg_opt;
-        vg_eff  = vg_opt * np.cos(psi);
+        t_delay = probe.t_shift * 1e-12; # s
+        vg_eff = vg_opt
         for j in range(len(d_arr)):
             f    = interp1d(te, np.real(Ec[:, j]),\
                             bounds_error = False, fill_value = 0);
@@ -145,7 +234,7 @@ def phase_retard(Ec, te, d, tau, probe, crystal, method,\
             E_eff = f(t_interp);
             gamma += amp * E_eff;
 
-        if psi == 0:
+        if interp:
             tau_interp = np.linspace(tau[0], tau[-1], 1000);   
             f          = interp1d(tau, gamma);     
             gamma_interp = f(tau_interp)
@@ -158,14 +247,17 @@ def phase_retard(Ec, te, d, tau, probe, crystal, method,\
         dz = abs(d_arr[1] - d_arr[0])
         amp = 2 * np.pi * n0**3 * dz / (probe.y0);
         gamma = np.zeros(len(tau));
-        Lchar, v_g_opt = probe.laser_l_char(crystal);
+        Lchar, v_g_opt = probe.laser_l_char(crystal)
         #print(max(tau), probe.t_shift*1e-12)
         tau = tau + probe.t_shift*1e-12
         vg_eff  = v_g_opt * np.cos(psi);
         for j in range(len(d_arr)):
             f = interp1d(te, np.real(Ec[:, j]), \
                         bounds_error = False, fill_value = 0);
-            t_interp = tau + (d_arr[j] / vg_eff);
+            t_interp = tau + (d_arr[j] / vg_eff)
+            indgt = np.argwhere(t_interp > te[-1])
+            dt_interp = t_interp[indgt] - te[-1]
+            t_interp[indgt] = te[0] + dt_interp
             E_eff = f(t_interp);
             gamma += amp * E_eff;
         tau_interp = np.linspace(tau[0], tau[-1], n_interp);
@@ -175,7 +267,8 @@ def phase_retard(Ec, te, d, tau, probe, crystal, method,\
     if plot:
         fig, ax = makefig(xlab = 't [fs]', ylab = r'$\Gamma$', \
                           title = 'Phase retardation')
-        ax.plot(tau_interp * 1e15, gamma_interp);
+
+        ax.plot(tau_interp, gamma_interp);
         plt.show();
     if interp:
         return gamma_interp, tau_interp;

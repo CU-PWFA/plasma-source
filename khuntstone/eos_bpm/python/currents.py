@@ -57,16 +57,16 @@ def get_peaks(signal, t, dt = 0.25e-12):
         npeaks == len(peaks)
     return peaks
 
-def get_current(ind, comp = "Desktop"):
+def get_current(ind, fpath):
     '''
     Loads in a current profile and calculate longitudinal offset
 
     Parameters:
     -----------
     ind     : int
-              The data set index (0-9) *ignore 1, bad set*
-    comp    : str, optional
-              Computer being used, Desktop or Vela
+              The data set index (0-9)
+    fpath   : string
+              The full path to the current profile and ipdz .mat files
 
     Returns:
 
@@ -79,20 +79,16 @@ def get_current(ind, comp = "Desktop"):
     --------
     '''
     
-    # Create file path based on compute
-    if comp == "Desktop":
-        fpath = "/home/keenan/plasma-source/khuntstone/eos_bpm/studies/" + \
-                "current_profiles/"
-    elif comp == "Vela":
-        fpath = "/home/cu-pwfa/CU-PWFA/plasma-source/khuntstone/eos_bpm/" + \
-                "studies/current_profiles/"
+    # Set file path
+    fpath = "/home/keenan/eos_bpm/current_data/"
+    #fpath = "/home/keenan/eos_bpm/khuntstone/" + "current_profiles/"
     if ind < 10:
-        ipdz  = io.loadmat(fpath + "ipdz_for_keenan.mat")["ipdz_for_keenan"]
-        shots = io.loadmat(fpath + "shots_for_keenan.mat")["shots_for_keenan"]
+        ipdz  = io.loadmat(fpath + "dz1.mat")["ipdz_for_keenan"]
+        shots = io.loadmat(fpath + "current1.mat")["shots_for_keenan"]
     else:
         ind   = ind - 10
-        ipdz  = io.loadmat(fpath + "ipdz_forKeenan.mat")["ipdz"]
-        shots = io.loadmat(fpath + "ipcurrent_forKeenan.mat")["ipcurrent"]
+        ipdz  = io.loadmat(fpath + "dz2.mat")["ipdz"]
+        shots = io.loadmat(fpath + "current2.mat")["ipcurrent"]
     dz    = ipdz[ind][0]
     I_ka  = shots[ind]; # kA
     z     = np.array([0 + (i * dz) for i in range(len(I_ka))])
@@ -114,20 +110,20 @@ def get_current(ind, comp = "Desktop"):
     return I_ka, ti, p2p
     
 
-def get_E(I, ti, r):
+def get_E(I, ti, r0, tilt = 0):
     '''
     Computes the E-field from a current profile
 
     Parameters:
     -----------
-    ind    : int
-             The data set index
-    r      : float
-             Distance from the beam to the crystal (m)
     I      : array_like
              The beam current profile in kA
     ti     : array_like
              Time array corresponding to I in s
+    r0     : float
+             Distance from the beam to the crystal (m)
+    tilt   : float, optional
+             Tilt of the given beam (in rad), default = 0
     Returns:
     --------
     E    : array_like
@@ -142,6 +138,8 @@ def get_E(I, ti, r):
     dti = abs(ti[0] - ti[1])
 
     Er = (e * gamma) / (4 * np.pi * eps0)
+    dx = c * (ti - ti[0]) * np.tan(tilt)
+    r  = r0 + dx
     Er = Er * r / ((r**2 + gamma**2 * c**2 * ti**2)**(3/2))
     N  = (I * 1e3) * dti / e # Longitudinal electron distribution
     E  = np.convolve(Er, N)
