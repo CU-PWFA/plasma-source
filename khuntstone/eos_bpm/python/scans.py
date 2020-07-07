@@ -13,7 +13,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 import sys
 import time
-sys.path.insert(0, "/home/keenan/eos_bpm/python")
+#sys.path.insert(0, "/home/keenan/eos_bpm/python")
 # EOS-BPM modules
 import eo_signal as eos
 from plotting import makefig
@@ -107,7 +107,7 @@ def scan2D(ds, ths, fpath, N = 3134, N_p = 4):
     
     return errors_t, errors_p
     
-def get_peak(ind, d, th, r0, dx, fpath):
+def get_peak(ind, d, th, r0, fpath):
     """
     Function to get the peak signal of a given EOS-BPM setup of crystal 
     thickness, probe crossing angle, and crystal-beamline distance. 
@@ -127,15 +127,15 @@ def get_peak(ind, d, th, r0, dx, fpath):
           
     Returns:
     --------
-    S_peak : float
-             The maximum signal of the EOS-BPM setup
+    maxG : float
+           The maximum phase of the EOS-BPM setup
     """
     setup = {"ctype"  : "GaP", 
              "d"      : d, 
              "y0"     : 800e-9,
              "tp"     : 30e-15,
              "angle"  : th, 
-             "r0"     : r0 + dx,
+             "r0"     : r0,
              "method" : "cross",
              "fpath"  : fpath,
              "tilt"   : 0,
@@ -144,17 +144,10 @@ def get_peak(ind, d, th, r0, dx, fpath):
              "plot"   : False, 
              }
     I, ti, Idz, sig1, t_sig1, gamma, t_gamma = eos.get_signal(ind, setup)
-    setup["r0"] = r0 - dx
-    I, ti, Idz, sig2, t_sig2, gamma, t_gamma = eos.get_signal(ind, setup)
-    sig = sig1 - sig2
-    maxS = np.nanmax(sig)
-    minS = -1.0 * np.nanmin(sig)
-    if minS > maxS:
-        return -1.0*minS
-    else:
-        return maxS
+    maxG = np.nanmax(gamma)
+    return maxG
 
-def scan1D(r0s, dx, d, th, fpath, N = 3134, N_p = 4):
+def scan1D(r0s, d, th, fpath, N = 3134, N_p = 4):
     """
     Function to perform a 1D parameter scan of crystal-beamline distance and 
     compute the average peak signal vs. transverse offset
@@ -163,8 +156,6 @@ def scan1D(r0s, dx, d, th, fpath, N = 3134, N_p = 4):
     -----------
     r0s : array_like
           Array of crystal-beamline distances to scan (m)
-    dx  : array_like
-          Array of electron bunch transverse offsets to scan for each r0 (m)
     d   : float
           Crystal thickness (m)
     th  : float
@@ -176,27 +167,29 @@ def scan1D(r0s, dx, d, th, fpath, N = 3134, N_p = 4):
     
     Returns:
     --------
-    S_peaks : array_like
-              2D array of peak signal vs transverse offset for each r0
+    G_peaks : array_like
+              1D array of avg peak phase vs r0
+    G_std   : array_like
+              1D array of the std of phase vs r0 
     """
     
     # Create array of indices to scan
     inds = np.arange(0, N, 1)
     # Preallocate for loo[]
-    S_peaks  = np.zeros([len(r0s), len(dx)])
+    G_peaks  = np.zeros(len(r0s))
+    G_std    = np.zeros(len(r0s))
     start = time.time()
     for i in range(len(r0s)):
         print(i+1, "of", len(r0s))
-        for j in range(len(dx)):
-            smax = partial(get_peak, d = d, th = th, r0 = r0s[i], dx = dx[j], \
-            	           fpath = fpath)
-            pool  = Pool(N_p)
-            peaks = pool.map(smax, inds)
-            pool.close()
-            pool.join()
-            S_peaks[i,j] = np.nanmean(peaks)
+        smax = partial(get_peak, d = d, th = th, r0 = r0s[i], fpath = fpath)
+        pool  = Pool(N_p)
+        peaks = pool.map(smax, inds)
+        pool.close()
+        pool.join()
+        G_peaks[i] = np.nanmean(peaks)
+        G_std[i]   = np.nanstd(peaks)
     print("Completed in", time.time()-start, "seconds")
-    return S_peaks
+    return G_peaks, G_std
 
 # Plotting functions
 

@@ -8,10 +8,10 @@ Contains useful functions for optimizing transverse EOS-BPM
 """
 
 import matplotlib.pyplot as plt 
-try:
-    plt.style.use('huntstone')
-except:
-    plt.style.use('dark_background')
+#try:
+#    plt.style.use('huntstone')
+#except:
+#    plt.style.use('dark_background')
 import numpy as np
 import sys
 sys.path.insert(0,"../../python/")

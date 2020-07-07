@@ -80,7 +80,7 @@ def get_current(ind, fpath):
     '''
     
     # Set file path
-    fpath = "/home/keenan/eos_bpm/current_data/"
+    #fpath = "/home/keenan/eos_bpm/current_data/"
     #fpath = "/home/keenan/eos_bpm/khuntstone/" + "current_profiles/"
     if ind < 10:
         ipdz  = io.loadmat(fpath + "dz1.mat")["ipdz_for_keenan"]

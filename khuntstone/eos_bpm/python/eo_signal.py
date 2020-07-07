@@ -2,10 +2,10 @@
 Module for computing EOS-BPM signal and performing analysis
 """
 import matplotlib.pyplot as plt 
-try:
-    plt.style.use('huntstone')
-except:
-    plt.style.use('dark_background')
+#try:
+#    plt.style.use('huntstone')
+#except:
+#    plt.style.use('dark_background')
 import numpy as np
 from scipy.constants import c
 from scipy.interpolate import interp1d
