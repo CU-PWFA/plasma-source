@@ -91,7 +91,7 @@ def get_signal(ind, setup):
     Ec, tt = thz.cry_field(te_int, FEr, f, d, probe, cry, nslice = nslice)
     # Compute probe timing window (camera res. of 3.5 microns assumed)
     dtau   = (3.5e-6 / c) * np.tan(angle * np.pi / 180)
-    tau    = np.arange(-500e-15, 950e-15, dtau)
+    tau    = np.arange(-500e-15, 1150e-15, dtau)
     gamma, t_gamma = pr.phase_retard(Ec, tt*1e-12, d, tau, probe, cry,\
                                      psi = angle)
 
@@ -149,6 +149,7 @@ def E_signal(E, te, setup):
     th     = setup["th"]
     nslice = setup["nslice"]
     plot   = setup["plot"]
+    tau    = setup["tau"]
     # Initialize crystal and parameters
     cry = crystal(ctype)
     nslice = 100;
@@ -171,8 +172,11 @@ def E_signal(E, te, setup):
     FEr, f = thz.raw_field(E_int, te_int);
     Ec, tt = thz.cry_field(te_int, FEr, f, d, probe, cry, nslice = nslice)
     # Compute probe timing window (camera res. of 3.5 microns assumed)
-    dtau   = (3.5e-6 / c) * np.tan(angle * np.pi / 180)
-    tau    = np.arange(-500e-15, 950e-15, dtau)
+    if angle != 0:
+        dtau   = (3.5e-6 / c) * np.tan(angle * np.pi / 180)
+    else: 
+        dtau = 3.5e-6/c
+    #tau    = np.arange(-500e-15, 950e-15, dtau)
     # Compute phase retardation
     gamma, t_gamma = pr.phase_retard(Ec, tt*1e-12, d, tau, probe, cry,\
                                      psi = angle)
@@ -187,7 +191,7 @@ def E_signal(E, te, setup):
     # Re-center time
     t_sig = t_gamma - t_gamma[np.argmax(gamma)]
 
-    return sig, t_sig
+    return sig, t_sig, gamma, t_gamma
 
 
 def plot_signal(I, sig, ti, t_sig, save = False, sname = ""):

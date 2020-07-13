@@ -135,19 +135,31 @@ def get_E(I, ti, r0, tilt = 0):
     --------
     '''
 
-    dti = abs(ti[0] - ti[1])
+    #dti = abs(ti[0] - ti[1])
 
-    Er = (e * gamma) / (4 * np.pi * eps0)
-    dx = c * (ti - ti[0]) * np.tan(tilt)
-    r  = r0 + dx
-    Er = Er * r / ((r**2 + gamma**2 * c**2 * ti**2)**(3/2))
-    N  = (I * 1e3) * dti / e # Longitudinal electron distribution
-    E  = np.convolve(Er, N)
-    te = np.array([0 + (i * dti) for i in range(len(E))])
+    #Er = (e * gamma) / (4 * np.pi * eps0)
+    #dx = c * (ti - ti[0]) * np.tan(tilt)
+    #r  = r0 + dx
+    #Er = Er * r / ((r**2 + gamma**2 * c**2 * ti**2)**(3/2))
+    #N  = (I * 1e3) * dti / e # Longitudinal electron distribution
+    #E  = np.convolve(Er, N)
+    #te = np.array([0 + (i * dti) for i in range(len(E))])
     # Ensure peak alignment
-    peaks = get_peaks(E, te)
-    te    = te - te[peaks[0]]
-    return E, te
+    #peaks = get_peaks(E, te)
+    #te    = te - te[peaks[0]]
+
+    dti  = ti[1]-ti[0]
+    dzi  = c * dti
+    ne   = I * 1e3 * dti / e
+    Ne   = np.sum(ne) # number of particles in the beam
+    Qe   = Ne * e # Total charge of the beam
+    lamz = I * 1e3 * dti / (Qe * c) # Distribution (m^-1)
+    lamz = lamz / np.sum(lamz * dzi)
+    E    = 2 * Qe * lamz / (4 * np.pi * epsilon_0 * r0)
+    fE     = interp1d(ti, E, bounds_error = False, fill_value = 0)
+    te_int = np.linspace(-1.5, 1.5, 1000)*1e-12
+    E_int  = fE(te_int)
+    return E_int, te_int
 
 def extend_I(I, ti, t_split, sigma = 0, scaling = 0, method = 'Gauss'):
     """
