@@ -129,6 +129,8 @@ def get_peak(ind, d, th, r0, fpath):
 	--------
 	maxG : float
 		   The maximum phase of the EOS-BPM setup
+	res  : float
+	       The response of EOS-BPM to a small offset based on maxG
 	"""
 	setup = {"ctype"  : "GaP", 
 			 "d"      : d, 
@@ -145,7 +147,8 @@ def get_peak(ind, d, th, r0, fpath):
 			 }
 	I, ti, Idz, sig1, t_sig1, gamma, t_gamma = eos.get_signal(ind, setup)
 	maxG = np.nanmax(gamma)
-	return maxG
+	res  = maxG * np.sin(maxG)
+	return maxG, res
 
 def scan1D(r0s, d, th, fpath, N = 3134, N_p = 4):
 	"""
@@ -171,6 +174,11 @@ def scan1D(r0s, d, th, fpath, N = 3134, N_p = 4):
 			  1D array of avg peak phase vs r0
 	G_std   : array_like
 			  1D array of the std of phase vs r0 
+	resps   : array_like
+	          1D array of the average responses (increase/decrease) of the
+	          signal to the offset
+	res_std : array_like
+	          1D array of the std of resps
 	"""
 	
 	# Create array of indices to scan
@@ -178,19 +186,25 @@ def scan1D(r0s, d, th, fpath, N = 3134, N_p = 4):
 	# Preallocate for loo[]
 	G_peaks  = np.zeros(len(r0s))
 	G_std    = np.zeros(len(r0s))
+	resps    = np.zeros(len(r0s))
+	res_std  = np.zeros(len(r0s))
 	start = time.time()
 	for i in range(len(r0s)):
-		if (i+1)%100==0:
+		if (i+1)%10 == 0:
 		  print(i+1, "of", len(r0s))
-		smax = partial(get_peak, d = d, th = th, r0 = r0s[i], fpath = fpath)
-		pool  = Pool(N_p)
-		peaks = pool.map(smax, inds)
+		smax      = partial(get_peak, d = d, th = th, \
+			                r0 = r0s[i], fpath = fpath)
+		pool      = Pool(N_p)
+		gmax, res = zip(*pool.map(smax, inds))
 		pool.close()
 		pool.join()
-		G_peaks[i] = np.nanmean(peaks)
-		G_std[i]   = np.nanstd(peaks)
+		G_peaks[i] = np.nanmean(gmax)
+		G_std[i]   = np.nanstd(gmax)
+		resps[i]   = np.nanmean(res)
+		res_std[i] = np.nanstd(res)
+
 	print("Completed in", time.time()-start, "seconds")
-	return G_peaks, G_std
+	return G_peaks, G_std, resps, res_std
 
 def get_slope(ind, r0, fpath):
 	"""
@@ -373,7 +387,7 @@ def polyfit(x, y, degree):
 	results['determination'] = ssreg / sstot
 	return results
 
-def plot_1D(r0s, g_max, g_std):
+def plot_1D(r0s, g_max, g_std, res, res_std):
 	"""
 	Function to plot the signal vs transverse offset for each r0 in scan_1D. 
 	Also computes and plots the overall drop in signal and the linearity of 
@@ -387,11 +401,24 @@ def plot_1D(r0s, g_max, g_std):
 			  array of max phase retardation for each r0
 	g_std   : array_like
 			  Array of phase standard deviation per r0
+	res     : array_like
+			  array of max response for each r0
+	res_std : array_like
+			  Array of response standard deviation per r0
 	"""
 
-	fig, ax = makefig(xlab = r'$r_0$ [mm]', ylab = r'max($\Gamma$) [rad.]')
-	ax.plot(r0s*1e3, g_max, "-k")
-	ax.fill_between(r0s*1e3, g_max - g_std, g_max+g_std, color = "r", alpha = 0.5)
+	fig1, ax1 = makefig(xlab = r'$r_0$ [mm]', \
+		                ylab = r'Max($\Gamma_0$)')
+	ax1.plot(r0s*1e3, g_max, "-k")
+	ax1.fill_between(r0s*1e3, g_max - g_std, g_max+g_std, color = "r", \
+		             alpha = 0.5)
+
+	fig1, ax1 = makefig(xlab = r'$r_0$ [mm]', \
+		                ylab = r'Max($\Gamma_0$ sin$\Gamma_0$)')
+	ax1.plot(r0s*1e3, res, "-k")
+	ax1.fill_between(r0s*1e3, res- res_std, res+res_std, color = "r", \
+		             alpha = 0.5)
+
 	plt.show()
 
 def plot_slopes(r0s, d_slopes, w_slopes, cd_slopes, cw_slopes):

@@ -142,11 +142,11 @@ def get_E(I, ti, r0, tilt = 0):
     #r  = r0 + dx
     #Er = Er * r / ((r**2 + gamma**2 * c**2 * ti**2)**(3/2))
     #N  = (I * 1e3) * dti / e # Longitudinal electron distribution
-    #E  = np.convolve(Er, N)
-    #te = np.array([0 + (i * dti) for i in range(len(E))])
+    #E_int  = np.convolve(Er, N)
+    #te_int = np.array([0 + (i * dti) for i in range(len(E_int))])
     # Ensure peak alignment
-    #peaks = get_peaks(E, te)
-    #te    = te - te[peaks[0]]
+    #peaks  = get_peaks(E_int, te_int)
+    #te_int = te_int - te_int[peaks[0]]
 
     dti  = ti[1]-ti[0]
     dzi  = c * dti
