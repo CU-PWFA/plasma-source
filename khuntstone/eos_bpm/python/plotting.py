@@ -44,5 +44,5 @@ def makefig(x = 6, y = 4, xlab = '', ylab = '', title = '', fs = 12, ts = 12):
 	ax.set_title(title, fontsize = ts, fontweight = 'bold');
 	ax.tick_params(labelsize = 'large');
 
-	return fig, ax;
+	return fig, ax
 	

@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.constants import c, e, epsilon_0
 import scipy.interpolate as interpolate
-import scipy.io as io
+import scipy.io as sio
 from scipy.signal import find_peaks, savgol_filter
 from scipy.interpolate import interp1d
 import sys;
@@ -47,7 +47,8 @@ def get_peaks(signal, t, dt = 0.25e-12):
     while len(peaks) > 2:
         cutoff = cutoff + 0.025
         # sometimes the 2nd peak repeats
-        peaks = find_peaks(signal, height = cutoff * max_sig, distance = sep)[0]
+        peaks = find_peaks(signal, height = cutoff * max_sig, \
+                           distance = sep)[0]
         if len(peaks) == 1: 
             cutoff = cutoff - 0.025
             peaks = find_peaks(signal, height = cutoff * max_sig, \
@@ -83,12 +84,12 @@ def get_current(ind, fpath):
     #fpath = "/home/keenan/eos_bpm/current_data/"
     #fpath = "/home/keenan/eos_bpm/khuntstone/" + "current_profiles/"
     if ind < 10:
-        ipdz  = io.loadmat(fpath + "dz1.mat")["ipdz_for_keenan"]
-        shots = io.loadmat(fpath + "current1.mat")["shots_for_keenan"]
+        ipdz  = sio.loadmat(fpath + "dz1.mat")["ipdz_for_keenan"]
+        shots = sio.loadmat(fpath + "current1.mat")["shots_for_keenan"]
     else:
         ind   = ind - 10
-        ipdz  = io.loadmat(fpath + "dz2.mat")["ipdz"]
-        shots = io.loadmat(fpath + "current2.mat")["ipcurrent"]
+        ipdz  = sio.loadmat(fpath + "dz2.mat")["ipdz"]
+        shots = sio.loadmat(fpath + "current2.mat")["ipcurrent"]
     dz    = ipdz[ind][0]
     I_ka  = shots[ind]; # kA
     z     = np.array([0 + (i * dz) for i in range(len(I_ka))])
@@ -157,7 +158,7 @@ def get_E(I, ti, r0, tilt = 0):
     lamz = lamz / np.sum(lamz * dzi)
     E    = 2 * Qe * lamz / (4 * np.pi * epsilon_0 * r0)
     fE     = interp1d(ti, E, bounds_error = False, fill_value = 0)
-    te_int = np.linspace(-1.5, 1.5, 1000)*1e-12
+    te_int = np.linspace(-3, 3, 1000)*1e-12
     E_int  = fE(te_int)
     return E_int, te_int
 
@@ -236,3 +237,83 @@ def smooth_I(I, window = 51, poly = 3, double = False):
         I_smooth = savgol_filter(I_smooth, window, polyorder = 1);
         I_smooth[I_smooth < 0] = 0;
     return I_smooth;
+
+def extractBeam(ind, fpath, onlyI = False):
+    """
+    Function to extract the dictionaries "data" and "scanvals" 
+    describing the SFQED electron bunches as provided by SLAC.
+
+    Parameters:
+    -----------
+    ind   : int
+            Current profile index, 0 to 50
+    fpath : string
+            Full file path to the .mat workspace file
+    onlyI : bool, optional
+            Whether or not to only extract the current profile, 
+            defualt = False
+    Returns:
+    --------
+    data     : dict
+               dictionary object describing the electron beam
+    scanvals : dict
+               dictionary object describing the linac values to create the 
+               beam
+    """
+
+    if onlyI:
+        mat_contents = sio.loadmat(fpath + "scanDataKeenan_072020.mat")
+        oct_struct   = mat_contents["scanData"]
+        val          = oct_struct[0, ind]
+        I            = val["data"]["I"][0][0]
+        dzi          = val["data"]["dz"][0][0][0][0]
+        z_arr        = np.linspace(0, dzi*len(I), len(I))
+        t_arr        = z_arr / c
+        ti           = t_arr - t_arr[np.argmax(I)]
+        return np.squeeze(I), ti
+    else:
+        mat_contents = sio.loadmat(fpath + "scanDataKeenan_072020.mat")
+        oct_struct = mat_contents["scanData"]
+        # Create dictionaries for beam values
+        data       = {}
+        scanvals   = {}
+        beamparams = {}
+        beam       = {}
+        bunch      = {}
+        beam_keys  = ["sigy", "sigx", "rmsx", "rmsy", "sigE", "sigz", "pkI", \
+                      "rmsz", "rmsE", "nx", "ny", "centroidx"]
+        # Extract data
+        val = oct_struct[0, ind]
+        data["scanparams"] = val["data"]["scanparams"][0][0][0]
+        data["I"]          = val["data"]["I"][0][0]
+        data["Eprof"]      = val["data"]["Eprof"][0][0][0]
+        data["dz"]         = val["data"]["dz"][0][0][0][0]
+        data["XEdges"]     = val["data"]["XEdges"][0][0][0]
+        data["YEdges"]     = val["data"]["YEdges"][0][0][0]
+        data["N"]          = val["data"]["N"][0][0]
+        #Extract beamparams
+        for i in range(12):
+            beamparams[beam_keys[i]] = \
+                                val["data"]["beamparams"][0][0][0][0][i][0][0]
+        # Extract beam (Lucretia values)
+        BunchInterval         = val['data']["beam"][0][0][0][0][0][0][0]
+        bunch["x"]            = \
+                       np.squeeze(val['data']["beam"][0][0][0][0][1][0][0][0])
+        bunch["Q"]            = \
+                       np.squeeze(val['data']["beam"][0][0][0][0][1][0][0][1])
+        bunch["stop"]         = \
+                       np.squeeze(val['data']["beam"][0][0][0][0][1][0][0][2])
+        beam["BunchInterval"] = BunchInterval
+        beam["Bunch"]         = bunch
+        # Add to data
+        data["beam"]          = beam
+        data["beamparams"]    = beamparams
+            # Extract scanvals from matlab data
+        scanvals["P1"] = val['scanvals']['P1'][0][0][0][0]
+        scanvals["P2"] = val['scanvals']['P2'][0][0][0][0]
+        scanvals["V1"] = val['scanvals']['V1'][0][0][0][0]
+        scanvals["V2"] = val['scanvals']['V2'][0][0][0][0]
+        scanvals["qi"] = val['scanvals']['qi'][0][0][0][0]
+        scanvals["dx"] = val['scanvals']['dx'][0][0][0][0]
+        scanvals["dy"] = val['scanvals']['dy'][0][0][0][0]
+        return data, scanvals

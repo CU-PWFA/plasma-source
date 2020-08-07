@@ -221,6 +221,7 @@ def plot_signal(I, sig, ti, t_sig, save = False, sname = ""):
     ax1.plot(ti * 1e12, I, '-r')
     ax1.set_ylabel('I [kA]', color = 'r')
     ax1.set_xlabel('t [ps]')
+    ax1.set_xlim([min(t_sig*1e12), -1*min(t_sig*1e12)])
 
     # Signal
     ax2 = ax1.twinx()
@@ -232,69 +233,6 @@ def plot_signal(I, sig, ti, t_sig, save = False, sname = ""):
     ax2.set_ylabel('Signal [AU]')
     plt.show()
 
-def plot_BPM(I, ti, sigA, sigB, tsig):
-    """
-    Function to plot the full EOS-BPM signal.
-
-    Parameters:
-    -----------
-    I    : array_like
-           Input current profile
-    ti   : array_like
-           Temporal array corresponding to I
-    sigA : array_like
-           Signal in crystal A
-    sigB : array_like
-           Signal in Crystal B
-    tsig : array_like
-           Temporal array corresponding to signals
-    """
-    # Make pretty
-    S_bpm = (sigA - sigB)
-    #S_bpm[abs(S_bpm) > 0.001] = 0
-    fig = plt.figure(figsize = (8, 6), dpi = 200)
-    ax1 = fig.add_subplot(211)
-    # Current axis
-    ax1.tick_params(labelsize = 'large')
-    ax1.set_ylabel("I [kA]")
-    ax1.spines['left'].set_color('r')
-    ax1.tick_params(axis = 'y', color = 'r', labelcolor = 'r')
-    ax1.yaxis.label.set_color('r')
-    ax1.set_xlim([-0.3, 0.7])
-    ax1.xaxis.tick_top()
-    ax1.xaxis.set_label_position('top') 
-    ax1.set_xlabel('t [ps]')
-    ax1.set_xlim([-0.3, 0.7])
-    # Crystal Signal Axis
-    ax2 = ax1.twinx()
-    ax2.spines['right'].set_color('b')
-    ax2.spines['left'].set_color('r')
-    ax2.tick_params(axis = 'y', color = "b", labelcolor = "b")
-    ax2.yaxis.label.set_color("b")
-    ax2.set_ylabel(r'$S_{\chi, A} + S_{\chi, B}$ [AU]')
-    ax2.set_xlim([-0.3, 0.7])
-    # BPM axis
-    ax3 = fig.add_subplot(212)#, sharex=ax1)
-    x_las = (c * (tA - tA[0])*1e-12) / np.tan(15 * np.pi / 180)
-    ax3.set_xlabel(r'$x_{laser}$ [mm]')
-    ax3.set_ylabel(r'$S_{\chi, A} - S_{\chi, B}$ [AU]')
-    ax3.yaxis.set_label_position("right")
-    ax3.yaxis.tick_right()
-    ax3.tick_params(labelsize = 'large')
-    ax3.spines['right'].set_color('g')
-    ax3.tick_params(axis = 'y', color = 'g', labelcolor = 'g')
-    ax3.yaxis.label.set_color('g')
-    ax3.set_xticklabels(labels)
-    ax3.set_xlim([-0.3, 0.7])
-    plt.subplots_adjust(hspace=0.0)
-    # Plotting
-    ax1.plot(ti*1e12, I, '-r', linewidth = 1)
-    ax2.plot(tA*1e12, sigA + sigB, '-b', linewidth = 1, label = r'$S_{\chi, A} \
-             + S_{\chi, B}$')
-    ax3.plot(tA*1e12, S_bpm, '-g')
-
-
-    plt.show()
 def peak2peak(signal, t, dt = 0.25e-12):
     """
     Function to compute (if possible) the peak to peak measurement of the 
@@ -380,5 +318,94 @@ def get_wit_stn(sig, t_sig, noise_t1, noise_t2, height, width):
     except:
         return np.nan, noise
 
+def plot_shot(I, ti, sigA, sigB, tsig, delta, dxd, dxw, angle, r0):
+    """
+    Function to plot the single shot EOS-BPM signal
+
+    Parameters:
+    -----------
+    I : array_like
+        The input current profile
+    ti : array_like
+         The time profile of I
+    sigA : array_like
+           Crystal A signal
+    sigB : array_like
+           Crystal B signal
+    tsig : array_like
+           Time array corresponding to sigA/sigB
+    dx_comp : arrray_like
+              Computed bunch offsets
+    dxd     : float
+              The actual drive offset
+    dxw     : float
+              The actual witness offset
+    angle   : float
+              Probe crossing angle deg. 
+    r0      : flaot
+              Crystal beamline distance
+    """
+    S_bpm = sigA - sigB
+    # EOS-BPM example shot figure
+    fig = plt.figure(figsize = (8, 6), dpi = 200)
+    ax1 = fig.add_subplot(211)
+    # Current axis
+    ax1.tick_params(labelsize = 'large')
+    ax1.set_ylabel("I [kA]")
+    ax1.spines['left'].set_color('r')
+    ax1.tick_params(axis = 'y', color = 'r', labelcolor = 'r')
+    ax1.yaxis.label.set_color('r')
+    ax1.set_xlim([-0.3, 0.7])
+    ax1.xaxis.tick_top()
+    ax1.xaxis.set_label_position('top') 
+    ax1.set_xlabel('t [ps]')
+    ax1.set_xlim([-0.3, 0.7])
+    # Crystal Signal Axis
+    ax2 = ax1.twinx()
+    ax2.spines['right'].set_color('b')
+    ax2.spines['left'].set_color('r')
+    ax2.tick_params(axis = 'y', color = "b", labelcolor = "b")
+    ax2.yaxis.label.set_color("b")
+    ax2.set_ylabel(r'$S_+ + S_-$ [AU]')
+    ax2.set_xlim([-0.3, 0.7])
+    # Signal Difference axis
+    ax3 = fig.add_subplot(212)# sharex=ax1)
+    xlas = (tsig - tsig[0]) * 1e-12 * c * 1e3 / np.tan(angle * np.pi / 180)
+    x0 = (-0.3 - tsig[0]) * 1e-12 * c * 1e3 / (np.tan(angle * np.pi / 180))
+    x1 = (0.7-tsig[0]) * 1e-12 * c * 1e3 / (np.tan(angle * np.pi / 180))
+    ax3.set_xlim([x0, x1])
+    ax3.set_xlabel(r'$x_{las}$ [mm]')
+    ax3.set_ylabel(r'$S_{+} - S_{-}$ [AU]')
+    ax3.yaxis.set_label_position("right")
+    ax3.yaxis.tick_right()
+    ax3.tick_params(labelsize = 'large')
+    #ax3.spines['right'].set_color('g')
+    ax3.tick_params(axis = 'y', color = 'g', labelcolor = 'g')
+    ax3.yaxis.label.set_color('g')
+    # Transverse offset axis
+    ax4 = ax3.twinx()
+    ax4.spines["left"].set_color("y")
+    ax4.spines["right"].set_color("g")
+    ax4.yaxis.tick_left()
+    ax4.tick_params(axis = 'y', color = "y", labelcolor="y")
+    ax3.yaxis.tick_right()
+    ax4.yaxis.label.set_color("y")
+    ax4.set_ylabel(r'$\Delta$ x [$\mu$m]')
+    ax4.yaxis.tick_left()
+    ax4.yaxis.set_label_position("left")
+    ax4.tick_params(labelsize = "large")
+    plt.subplots_adjust(hspace=0.0)
+    # Plotting
+    ax1.plot(ti*1e12, I, '-r', linewidth = 1)
+    ax2.plot(tsig, sigA + sigB, '-b', linewidth = 1, label = r'$S_+ + S_-$')
+    ax3.plot(xlas, S_bpm, '-g')
+    ax4.plot(xlas, delta * r0 * 1e6, "-y")
+    ax4.axhline(y = dxd*1e6, color = "k", linestyle = '--')
+    ax4.axhline(y = dxw*1e6, color = "k", linestyle = '--')
+    maxoff = max(abs(np.array([dxd*1e6, dxw*1e6])))
+    y1     = -maxoff * 1.4
+    y2     = maxoff * 1.4
+    ax4.set_ylim([y1, y2])
+    plt.show()
 
     
