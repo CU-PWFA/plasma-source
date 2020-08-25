@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 
 n0 = 1e18 #cm^-3
 emit = 7e-6 *100 #cm-rad
-#beta_i = .10 #m
+beta_i = 10 #cm
 
 #len_arr = np.linspace(50e-6,300e-6,50) #m
 #betaf_arr = np.zeros(len(len_arr))
@@ -38,7 +38,7 @@ for i in range(len(gam_arr)):
     L = 750. * np.sqrt(gam/n0) *100#cm, So that L*k_b = 0.1
     K = Foc.Calc_K(n0, gam)
     focal = Foc.Calc_Focus_KLength(K, L)
-    KLls_set = [K, L, Oide.Get_ls(L,focal)]
+    KLls_set = [K, L, Oide.Get_ls(L,focal,beta_i)]
     
     F_val = Oide.F_Oide(KLls_set)
     betam_arr[i] = Oide.Calc_BetaMin(F_val, emit, gam)

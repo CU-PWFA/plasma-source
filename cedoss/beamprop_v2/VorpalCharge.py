@@ -19,7 +19,8 @@ sys.path.insert(0, "../../python")
 from vsim import load
 
 #filename = '/home/chris/Desktop/thick4/PTPLDoubleTanh_rhoDrive_10.h5'
-filename = '/home/chris/Desktop/thick4/PTPLDoubleTanh_rhoPlasma_3.h5'
+filename = '/home/chris/Desktop/200e16/PTPLDoubleTanh_rhoPlasma_5.h5'
+#filename = '/home/chris/Desktop/afterglow_run1/PTPLDoubleTanh_rhoDrive_10.h5'
 
 #data = load.get_field_data(filename,'rhoWitness')
 #data = load.get_field_data(filename,'rhoDrive')
@@ -31,7 +32,8 @@ total_rho = np.sum(data)
 #Manually input for now, add other stuff later to auto this if neded
 
 #thick4 AND #cylinder
-dx = 5.590551181102362e-07; dy = 5.597014925373134e-07; dz = 5.597014925373134e-07;
+#nowafterglow
+dx = 5.629629629629629e-07; dy = 5.639097744360901e-07; dz = 5.639097744360901e-07;
 
 total_charge = total_rho * dx * dy * dz
 print("Charge = ",total_charge*1e9,"nC")

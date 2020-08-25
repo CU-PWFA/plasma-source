@@ -31,8 +31,8 @@ sys.path.insert(0, "../")
 from modules import ThreeDimensionAnalysis as ThrDim
 
 def_startloc = 0.80
-def_lenflat = 0.10 #0.50
-def_nset = 0.3 #1203.7 for gas cell
+def_lenflat = 0.50 #0.50
+def_nset = 0.5 #1203.7 for gas cell
 def_betastar = 0.10
 def_betaoffs = -0.387
 def_gamma = 19569.5 #10 GeV beam
@@ -427,7 +427,7 @@ def Plot_CSEvo(beamParams, n_arr, z_arr, z_offset = 0, legend_loc=0, subset = Fa
         beta = beta[subset[0]:subset[1]]
         beta0 = beta0[subset[0]:subset[1]]
         
-    fig, ax1 = plt.subplots(figsize=(7,5))
+    fig, ax1 = plt.subplots(figsize=(6,4))
     #plt.title("Beta function evolution at "+r'$n_0=$'+str(max(n_arr))+r'$\,\mathrm{\times 10^{17}cm^{-3}}$')
     ax1.plot(z_arr*1e2, np.array(beta)*1e2, 'b-', label=r'$\beta$')
     ax1.plot(z_arr*1e2, np.array(beta0)*1e2, 'b--',label=r'$\beta_{vac}$')
@@ -437,9 +437,9 @@ def Plot_CSEvo(beamParams, n_arr, z_arr, z_offset = 0, legend_loc=0, subset = Fa
     ax1.set_ylim([-0.05,20.05])
     #ax1.set_ylim([4.8,5.4])
     
-    #ax2 = ax1.twinx()
+    ax2 = ax1.twinx()
     ax2.plot(z_arr*1e2, n_arr/max(n_arr), 'g-')
-    ax2.semilogy(z_arr*1e2, n_arr/max(n_arr), 'g-')
+    ax2.plot(z_arr*1e2, n_arr/max(n_arr), 'g-')
     ax2.set_ylabel(r'$n/n_0$',color = 'g')
     ax2.tick_params('y', colors = 'g')
     ###

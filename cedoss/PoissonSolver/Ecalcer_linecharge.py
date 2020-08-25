@@ -24,12 +24,25 @@ slope  = -9.91e16 #cm-4
 xwindow = ywindow = 550e-6 * 1e2  #cm
 deltax = deltay = 10e-6 * 1e2  #cm
 """
+"""
 n_cent = 3.0e16  #cm-3
 radius = 43.55e-6 *1e2 #cm
 slope  = -9.91e16 #cm-4
 xwindow = ywindow = 100e-6 * 1e2  #cm
 deltax = deltay = 1e-6 * 1e2  #cm
-
+"""
+n_cent = 3e17  #cm-3
+radius = 29.2e-6 *1e2 #cm
+slope  = 6e18 #cm-4
+xwindow = ywindow = 60e-6 * 1e2  #cm
+deltax = deltay = 0.5e-6 * 1e2  #cm
+"""
+n_cent = 3.4e16  #cm-3
+radius = 5.00e-6 *1e2 #cm
+slope  = -6.7e19 #cm-4
+xwindow = ywindow = 10e-6 * 1e2  #cm
+deltax = deltay = 0.1e-6 * 1e2  #cm
+"""
 X = np.arange(-1/2*xwindow, 1/2*xwindow, deltax)
 Y = np.arange(-1/2*ywindow, 1/2*ywindow, deltay)
 
@@ -113,6 +126,7 @@ plt.legend(); plt.grid(); plt.show()
 Exvy_calc = eygrid[int(lenX/2),:]
 Exvy_theory = 2*pi*e*n_cent*(Y-2*ybar)
 Exvy_theory4 = 2*pi*e*n_cent*(Y-2*ybar) + 1.5*pi*e*slope*Y**2
+Exvy_theory5 = 2*pi*e*n_cent*Y + 0.5*pi*e*slope*(3*Y**2-2*radius**2)
 
 plt.title("E_y along y")
 plt.xlabel("y [cm]")
@@ -120,7 +134,19 @@ plt.ylabel("E [cgs]")
 plt.plot(Y,Exvy_calc, label="Calculation")
 plt.plot(Y,Exvy_theory,label="Theory")
 plt.plot(Y,Exvy_theory4,label="Theory4")
+plt.plot(Y,Exvy_theory5,label="Theory5")
 plt.ylim([min(Exvy_calc)*1.2,max(Exvy_calc)*1.2])
+plt.legend(); plt.grid(); plt.show()
+
+Eyvx_calc = eygrid[:,int(lenY/2)]
+Eyvx_theory5 = -0.5*pi*e*slope*(-1*X**2+2*radius**2)
+
+plt.title("E_y along x")
+plt.xlabel("x [cm]")
+plt.ylabel("E [cgs]")
+plt.plot(Y,Eyvx_calc, label="Calculation")
+plt.plot(Y,Eyvx_theory5,label="Theory5")
+plt.ylim([min(Eyvx_calc)*1.2,max(Eyvx_calc)*1.2])
 plt.legend(); plt.grid(); plt.show()
 
 plt.plot(Y[5:35],(Exvy_theory4[5:35] - Exvy_calc[5:35]))
@@ -172,9 +198,20 @@ eygrid_theory = np.zeros((lenX, lenY))
 exgrid_theory = np.zeros((lenX, lenY))
 for i in range(lenX):
     for j in range(lenY):
-        if np.sqrt(np.square(X[i])+np.square(Y[j])) < radius:
+        rad = np.sqrt(np.square(X[i])+np.square(Y[j]))
+        if np.sqrt(np.square(X[i])+np.square(Y[j])) == 0:
+            exgrid_theory[i,j] = 0
+            eygrid_theory[i,j] = -pi*e*slope*radius**2
+        elif np.sqrt(np.square(X[i])+np.square(Y[j])) < radius:
+            #mike's deriv
+            #exgrid_theory[i,j] = 2*pi*e*n_cent*X[i] + 1/2*pi*e*slope*(3*X[i]*Y[j]+2*radius**2/rad**2*(X[i]*Y[j]-rad*Y[j])-rad*Y[j])
+            #eygrid_theory[i,j] = 2*pi*e*n_cent*Y[i] + 1/2*pi*e*slope*(3*Y[j]**2-2*radius**2/rad**2*(Y[j]**2-rad*X[i])+rad*X[i])
+            #my deriv
             exgrid_theory[i,j] = 2*pi*e*n_cent*X[i] + pi*e*slope*X[i]*Y[j]
-            eygrid_theory[i,j] = 2*pi*e*n_cent*(Y[j]-2*ybar)+3/2*pi*slope*e*Y[j]**2 + 1/2*pi*e*slope*X[i]**2
+            eygrid_theory[i,j] = 2*pi*e*n_cent*Y[j] + 1/2*pi*slope*e*(Y[j]**2*(3-2*radius**2/(np.square(X[i])+np.square(Y[j]))) + X[i]**2*(1-2*radius**2/(np.square(X[i])+np.square(Y[j]))))
+            #orig
+            #exgrid_theory[i,j] = 2*pi*e*n_cent*X[i] + pi*e*slope*X[i]*Y[j]
+            #eygrid_theory[i,j] = 2*pi*e*n_cent*(Y[j]-2*ybar)+3/2*pi*slope*e*Y[j]**2 + 1/2*pi*e*slope*X[i]**2
         else:
             exgrid_theory[i,j] = exgrid[i,j]
             eygrid_theory[i,j] = eygrid[i,j]

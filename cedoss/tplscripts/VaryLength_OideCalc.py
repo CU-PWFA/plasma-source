@@ -15,8 +15,19 @@ from modules import CalcEmitGrowth as W2
 import numpy as np
 import matplotlib.pyplot as plt
 
-
-
+#2020 Parameter Scans
+n0 = 1e18 #cm^-3
+emit = 3e-6 *100#cm-rad
+beta_i = 10*10 #cm
+gam = Foc.gam_def/10
+sigmaE = 0.001
+delta = sigmaE/np.sqrt(1/3)
+#delta = 0.0025
+len_arr = np.linspace(10,200,101)/1e4 #cm
+ymode = 0 #1 for nm, 0 for um
+sigmaE = np.sqrt(1/3) * delta
+lumi=0
+"""
 #FACET II
 n0 = 1e18 #cm^-3
 emit = 3e-6 *100#cm-rad
@@ -29,7 +40,7 @@ len_arr = np.linspace(100,800,101)/1e4 #cm
 ymode = 0 #1 for nm, 0 for um
 sigmaE = np.sqrt(1/3) * delta
 lumi=0
-
+"""
 """
 #ILC
 n0 = 1e20 #cm^-3
@@ -107,12 +118,13 @@ plt.xlabel(r'$L_{pl} \mathrm{\,[\mu m]}$')
 plt.ylabel(r'$F(\sqrt{K}L,\sqrt{K}l^*)$')
 plt.grid(); plt.show()
     
-plt.plot(len_arr*1e4, betaf_arr, label=r'$\beta_f^*$')
+plt.semilogy(len_arr*1e4, betaf_arr, label=r'$\beta_f^*$')
 plt.plot(len_arr*1e4, betam_arr, label=r'$\beta^*_{opt}$')
 plt.title("Beta function at waist vs TPL thickness")
 plt.xlabel(r'$L_{pl} \mathrm{\,[\mu m]}$')
 plt.ylabel(r'$\beta \mathrm{\,[cm]}$')
 plt.grid(); plt.legend(); plt.show()
+
 """
 font = {'family' : 'normal',
         'weight' : 'bold',
@@ -140,12 +152,12 @@ plt.xlabel(r'$\sqrt{K}l$')
 plt.ylabel(label)
 plt.grid(); plt.legend(); plt.show()
 
-plt.plot(len_arr*np.sqrt(k_arr), sigo_arr*scale, label="Oide", linewidth = lwid)
+plt.semilogy(len_arr*np.sqrt(k_arr), sigo_arr*scale, label="Synch. Rad.", linewidth = lwid)
 plt.plot(len_arr*np.sqrt(k_arr), sigi_arr*scale, label="Ideal", linewidth = lwid)
-plt.plot(len_arr*np.sqrt(k_arr), sigm_arr*scale, label="Minimum", linewidth = lwid)
-plt.plot(len_arr*np.sqrt(k_arr), sigc_arr*scale, label="Chromaticity", linewidth = lwid)
+plt.plot(len_arr*np.sqrt(k_arr), sigm_arr*scale, label="Oide Limit", linewidth = lwid, ls='dotted')
+plt.plot(len_arr*np.sqrt(k_arr), sigc_arr*scale, label="Chromaticity", linewidth = lwid, ls='--')
 plt.title("Beam sizes vs TPL thickness")
-plt.xlabel(r'$\sqrt{K}l$')
+plt.xlabel(r'$\sqrt{K}L$')
 plt.ylabel(label)
 plt.grid(); plt.legend(); plt.show()
 

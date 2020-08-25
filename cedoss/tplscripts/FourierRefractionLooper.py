@@ -16,21 +16,21 @@ from modules import FourierRefraction as frefract
 
 #Script Selection
 test_density = 0
-free_space = 1
+free_space = 0
 double_x = 0
 
 #Set to some integer to lower grid resolution by a power
-reducer = 0
+reducer = 1
 
 load_density = 0
-constant_density = 0.34
+constant_density = 0.00003
 
 #DONT FORGET TO CHECK THE DIRECTORY AND ITS STUFF!
 # initDensity only knows its shape, not dimensions
-denfile = '/home/chris/Desktop/DataLoads/DensityFilesNp/gasjet_He72e16_20x10x400/gasdensity.npy'#60x24x800 for 996um case
-pulsefile = '/home/chris/Desktop/DataLoads/PulseFilesNp/pulseParams_heslactest3.npy'
+denfile = '/home/chris/Desktop/DataLoads/DensityFilesNp/gasjet_He1e17_20x20x2000_offset/gasdensity.npy'#60x24x800 for 996um case
+pulsefile = '/home/chris/Desktop/DataLoads/PulseFilesNp/pulseParams_testm22.npy'
 
-path = '/home/chris/Desktop/FourierPlots/HeGas_slactest_lowback_debugging/'
+path = '/home/chris/Desktop/FourierPlots/testm2/'
 """
 params_orig = {'Nx' : 2**(9-reducer)  * (1+double_x),
                'Ny' : 2**(9-reducer),
@@ -39,7 +39,7 @@ params_orig = {'Nx' : 2**(9-reducer)  * (1+double_x),
                'X' : 3e2 * (1+double_x),
                'Y' : 15e2,
                'Z' : 1.5e4,
-               'T' : 160,
+               'T' : 160, 
                'n0' : 1,
                'alpha' : 1.63,
                'EI' : 15.8,
@@ -50,12 +50,21 @@ params_orig = {'Nx' : 2**(9-reducer)  * (1+double_x),
               }
 """
 params_orig = frefract.GetDefaultParams(reducer,double_x)
-
-params_orig['X']=20e2
-params_orig['Y']=10e2
-params_orig['Z']=4e4
+"""
+params_orig['X']=12e2
+params_orig['Y']=6e2
+params_orig['Z']=2e4
 params_orig['EI']=24.6
 params_orig['lam']=0.800
+"""
+
+#Spherical Afterglow PTPL
+params_orig['X']=7e2
+params_orig['Y']=7e2
+params_orig['Z']=0.8e4
+params_orig['EI']=24.6
+params_orig['lam']=0.800
+
 """
 #Below is for paper1 stuff
 params_orig['X']=60e2

@@ -217,6 +217,19 @@ def ImageCut_xy_Production(data,x,y,z,x_off=0,y_off=0,z_off=0,zoom=1,units='',la
     #plt.savefig('demo.png', transparent=True,bbox_inches='tight')
     plt.savefig('/home/chris/Desktop/fig_strip.png',transparent=True,bbox_inches='tight')
     plt.show()
+
+#Given the plasma density and 3D axes, return the total amount of charge in C
+#   data = 3D array of plasma density (units 1e17 cm-3)
+#   x,y,z = axes for each direction (units um)
+def TotalCharge(data,x,y,z):
+    sumden = 0
+    e = 1.6022e-19
+    volume = (x[1]-x[0])*(y[1]-y[0])*(z[1]-z[0])/(1e18)
+    for i in range(len(data[:,0,0])):
+        for j in range(len(data[0,:,0])):
+            for k in range(len(data[0,0,:])):
+                sumden = sumden + (data[i,j,k] * 1e6 * volume)
+    return sumden * e * 1e17
     
 """
 Data Fit Functions

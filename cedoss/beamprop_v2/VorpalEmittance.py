@@ -14,10 +14,13 @@ import numpy as np
 import timeit
 
 path = '/home/chris/Desktop/BeamProp/vorpaltest'
-filename = '/home/chris/Desktop/FACETII_NERSC_Run4/PTPLDoubleTanh_WitnessBeam_10.h5'
+#filename = '/home/chris/Desktop/FACETII_NERSC_Run4/PTPLDoubleTanh_WitnessBeam_10.h5'
 #filename = '/home/chris/Desktop/SFQED_NERSC_Run1/PTPLDoubleTanh_ElectronBeam_10.h5'
 #filename = '/home/chris/Desktop/PTPL_Cylinder/PTPLCylinder_electrons_10.h5'
-filename = '/home/chris/Desktop/thick4/PTPLDoubleTanh_WitnessBeam_10.h5'
+#filename = '/home/chris/Desktop/thick4/PTPLDoubleTanh_WitnessBeam_10.h5'
+
+#filename = '/home/chris/Desktop/afterglow_run1/PTPLDoubleTanh_electrons_10.h5'
+filename = '/home/chris/Desktop/afterglow_run1/PTPLDoubleTanh_WitnessBeam_0.h5'
 
 debug = 0
 

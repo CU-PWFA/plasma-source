@@ -21,15 +21,15 @@ import numpy as np
 sys.path.insert(0, "../")
 from modules import ThreeDimensionAnalysis as ThrDim
 
-save_data = 0
+save_data = 1
 reducer = 0
 
-n0 = 3e16/1e17
+n0 = 1e17/1e17
 
 folder = '/home/chris/Desktop/DataLoads/DensityFilesNp/'
 directory = 'gasjet_Ar3e16_60x24x400_Lor/'
 
-xsize = 60e2; ysize = 24e2; zsize = 4e4#4e4#32e4 #um
+xsize = 20e2; ysize = 20e2; zsize = 20e4#4e4#32e4 #um
 nx = 2**(9-reducer)
 ny = 2**(9-reducer)
 nz = 2**(8-reducer)

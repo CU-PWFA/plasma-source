@@ -19,7 +19,7 @@ debug = 1
 path = '/home/chris/Desktop/BeamProp/testGaussian'
 gamma = PProp.def_gamma
 
-case = 31
+case = 1
 if case == 1:
     sighw = 0.08 * 1e6
     tpl_n = 0.5
@@ -103,4 +103,4 @@ print("Bmag BP: ",PProp.GetBmag(beam,m))
 bmagc = PProp.Calc_Bmag(beam_params,n[:endindex], z[:endindex])
 print("Bmag CS: ",bmagc)
 
-PProp.Plot_CSEvo(beam_params, n, z, z0, legend_loc = 6)
+PProp.Plot_CSEvo(beam_params, n, z, z0, legend_loc = 10)
