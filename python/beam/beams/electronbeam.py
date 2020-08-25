@@ -542,18 +542,18 @@ class ElectronBeam(beam.Beam):
             sort = np.argsort(weights)
             weights = weights[sort]
             ptcls = ptcls[sort]
-        
+        #"""
         numbins = 101   #bins in 1d hist
         binno = 56      #bins in 2d hist
         xrange = 8
         yrange = 0.29
-        
+        #"""
         """
         #For slingshot injected beams
         numbins = 101   #bins in 1d hist
         binno = 56      #bins in 2d hist
         xrange = 10#8
-        yrange = 50.0
+        yrange = 80.0
         """
         ##Below is same stuff, but now we want to calculate some offsets in the 
         ## transverse dimensions and do actual fits to find the true sigmas
@@ -682,7 +682,7 @@ class ElectronBeam(beam.Beam):
         plt.legend()
     
         xphase = plt.subplot(223, sharex = xhist)
-        sctx = plt.hist2d(ptcls[:, 2]*1e6, ptcls[:, 3]*1e3, weights = weights/factor2, bins=(binno,binno), cmap=plt.cm.jet, range = [[-xrange,xrange], [-yrange,yrange]], vmax = 100/factor2)
+        sctx = plt.hist2d(ptcls[:, 2]*1e6, ptcls[:, 3]*1e3, weights = weights/factor2, bins=(binno,binno), cmap=plt.cm.jet, range = [[-xrange,xrange], [-yrange,yrange]])#, vmax = 100/factor2)
         plt.xlabel(r'$x\mathrm{\ (\mu m)}$')
         plt.ylabel(r'$x\rq,\,y\rq\mathrm{\ (mrad)}$')
         if xlim is not None:
@@ -691,7 +691,7 @@ class ElectronBeam(beam.Beam):
             plt.ylim(ylim)
         
         yphase = plt.subplot(224, sharex = yhist, sharey = xphase)
-        scty = plt.hist2d(ptcls[:, 0]*1e6, ptcls[:, 1]*1e3, weights = weights/factor2, bins=(binno,binno), cmap=plt.cm.jet, range = [[-xrange,xrange], [-yrange,yrange]], vmax = 100/factor2)
+        scty = plt.hist2d(ptcls[:, 0]*1e6, ptcls[:, 1]*1e3, weights = weights/factor2, bins=(binno,binno), cmap=plt.cm.jet, range = [[-xrange,xrange], [-yrange,yrange]])#, vmax = 100/factor2)
         plt.xlabel(r'$y\mathrm{\ (\mu m)}$')
         if xlim is not None:
             plt.xlim(xlim)
