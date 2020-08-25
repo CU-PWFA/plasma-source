@@ -11,11 +11,9 @@ from beam.beams import beam
 from vsim import load as Vload
 from vsim import analyze as Vanalyze
 import matplotlib.pyplot as plt
-from scipy.stats import norm
 from scipy import optimize
 import scipy.integrate as Int
 from scipy.optimize import curve_fit
-from scipy.special import gamma
 
 class ElectronBeam(beam.Beam):
     """ An electron beam class that stores a collection of macroparticles.

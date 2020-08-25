@@ -3,119 +3,178 @@
 """
 Created on Wed Dec  4 09:33:36 2019
 
-Module to compute the spectral intensity emitted by charged particles following
-an arbitray trajectory.
+Module containing functions for computing the spectral intensity from a
+charged particle with an arbitrary trajectory
 
 @author: keenan
 """
+
+# Python code
+import matplotlib.pyplot as plt
 import numpy as np
-import v_x_interp as vx
+from scipy.constants import c, e, mu_0
+from scipy.special import fresnel
 
-def get_coeffs(x_arr, v_arr, tau_arr, tau_int):
-    """
-    Function to get the interpolation coefficients of a particle's four-position
-    and four-velocities
-    
-    Parameters
-    ----------
-    x_arr : array_like
-        A 4 x n array of the particle's 4-position where n is the number of time
-        steps
-    v_arr : array_like
-        A 3 x n array of the particle's velocity at each time step
-    tau_arr : array_like
-        A 1 x n array of the proper time corresponding to x_arr and v_arr
-    tau_int : array_like
-        An array of query proper times to interpolate for
-        
-    Returns
-    -------
-    x0n : array_like
-        A 4 x n array of the zeroth order interpolation coefficient of the 
-        4-position
-    x1n : array_like
-        A 4 x n array of the 1st order interpolation coefficient of the 
-        4-position
-    x2n : array_like
-        A 4 x n array of the 2nd order interpolation coefficient of the 
-        4-position
-    v1n : array_like
-        A 4 x n array of the 1st order interpolation coefficient of the 
-        4-velocity
-    
-    x_int : array_like
-        4 x len(tau_int) array of the interpolated 4 position vector
-    
-    v_int : array_line
-        4 x len(tau_int) array of the interpolated 4 velocity vector
-    """
-    
-    # Interpolate the position
-    x00n, x01n, x02n, x0_int = vx.position_interp(x_arr[0], tau_arr, tau_int)
-    x10n, x11n, x12n, x1_int = vx.position_interp(x_arr[1], tau_arr, tau_int)
-    x20n, x21n, x22n, x2_int = vx.position_interp(x_arr[2], tau_arr, tau_int)
-    x30n, x31n, x32n, x3_int = vx.position_interp(x_arr[3], tau_arr, tau_int)
-    
-    x0n = (x00n, x10n, x20n, x30n)
-    x1n = (x01n, x11n, x21n, x31n)
-    x2n = (x02n, x12n, x22n, x32n)
-    x_int = (x0_int, x1_int, x2_int, x3_int)
-    
-    # Interpolate velocity
-    v11n, v1_int = vx.velocity_interp(v_arr[0], tau_arr, tau_int)
-    v12n, v2_int = vx.velocity_interp(v_arr[1], tau_arr, tau_int)
-    v13n, v3_int = vx.velocity_interp(v_arr[2], tau_arr, tau_int)
-    
-    v1n   = (v11n, v12n, v13n)
-    v_int = (v1_int, v2_int, v3_int)
-    
-    return x0n, x1n, x2n, v1n, x_int, v_int
-    
-def get_vars(kappa, x1n, x2n, dtau, v_arr):
-    """
-    Computes reduced variables in Thomas equations 14-19 from 4-wave vector, 
-    interpolation coefficients, and initial time step
-    
-    Parameters
-    ----------
-    kappa : array_like
-        4 entry array of the wave vector omega * (1/c, s_hat/c) where s_hat
-        is the observation unit vector
-    x1n : array_like
-        Array of 1st order interpolation coeffs for the jth particle at 
-        all n time steps, size is 4 x n (n steps in ct, x, y, and z)
-    x2n : array_like 
-        Array of 2nd order interpolation coeffs for the jth particle at all n
-        time steps, size is the same as x1jn
-    dtau : float
-        The time step of the original particle trajectory [s]
-    v_arr : array_like
-        A 3 x n array of the particle's velocity at each time step
-    
-    Returns
-    -------
-    chi_1jn : array_like
-        Reduced variable chi_1jn (the dot product of the 4-wave vector and the
-        4-position vector 1st interpolation coefficient) (s^-1)
-    chi_2jn : array_like
-        Reduced variable chi_2jn (the dot product of the 4-wave vector and the 
-        4-position vecotr 2nd interpolation coefficient) (s^-2)
-    phi_p : array_like
-        3 x n vector reduced variable (m/s^2)
-    phi_m  : array_like
-        3 x n vector reduced variable (m/s^2)
-    """
-    
-    chi_1n = kappa[0] * x1n[0] - kappa[1] * x1n[1] - kappa[2] * x1n[2] \
-             - kappa[3] * x1n[3]
-    chi_2n = kappa[0] * x2n[0] - kappa[1] * x2n[1] - kappa[2] * x2n[2] \
-             - kappa[3] * x2n[3]
-    
-    phi_p = (dtau**2 / 4) * chi_2n + (dtau / 2) * chi_1n
-    phi_m = (dtau**2 / 4) * chi_2n + (dtau / 2) * chi_1n
-    
-    
-    
-    
-    return chi_1n, chi_2n
 
+def get_single_intensity(theta, w, x0n, x1n, x2n, v0n, v1n, dtau):
+    """
+    Function to get the radiated intensity from a single particle for a given
+    observation angle and frequency
+    
+    Parameters:
+    -----------
+    theta : float
+            The observation angle (y-z plane), rad
+    w     : float
+            The query frequency, rad/s
+    x0n   : array_like
+            Array of particles 4-position throughout the simulation
+    x1n   : array_like
+            Array of the linear interpolation coeffient of the trajectory
+    x2n   : array_like
+            Array of the quadratic interpolation coefficient of the trajectory
+    v0n   : array_like
+            Array of the particles velocity throughout the simulation
+    v1n   : array_like
+            Array of the linear interpolation coefficient of the velocity
+    dtau  : array_like
+            Array of the proper time step throughout the simulation
+    """
+    #%% Assign observation angle (y-z) and frequency then compute wave-vector
+
+    sx = 0; sy = np.sin(theta); sz = np.cos(theta) # unit observation vector
+    kappa = np.array([1, sx, sy, sz]) * (w/c)
+    
+    # Get reduced chi variables
+    chi0n = kappa[0]*x0n[0] - kappa[1]*x0n[1] - kappa[2]*x0n[2] \
+            - kappa[3]*x0n[3]
+    chi1n = kappa[0]*x1n[0] - kappa[1]*x1n[1] - kappa[2]*x1n[2] \
+            - kappa[3]*x1n[3]
+    chi2n = kappa[0]*x2n[0] - kappa[1]*x2n[1] - kappa[2]*x2n[2] \
+            - kappa[3]*x2n[3]
+            
+    ind_ex   = np.argwhere(chi2n * dtau > 0.1)
+    ind_t    = np.argwhere(chi2n * dtau <= 0.1)
+    chi2n[chi2n <= 0] = np.nan
+    
+    #%% Get reduced variable angles (only where taylor expansion isn't valid)
+    
+    dtex     = dtau[ind_ex]
+    chi1n_ex = chi1n[ind_ex]
+    chi2n_ex = chi2n[ind_ex]
+    
+    
+    phi_p  = (dtex**2 / 4) * chi2n_ex + (dtex / 2) * chi1n_ex
+    phi_m  = (dtex**2 / 4) * chi2n_ex - (dtex / 2) * chi1n_ex
+    
+    theta_p = chi1n_ex + chi2n_ex * dtex / (np.sqrt(2 * np.pi * chi2n_ex))
+    theta_m = chi1n_ex - chi2n_ex * dtex / (np.sqrt(2 * np.pi * chi2n_ex))
+    #%% Get reduced vector psis (only where taylor expansion isn't valid)
+    p_factor = np.sqrt(2 * np.pi / chi2n_ex) * np.cos(chi1n_ex**2 \
+              / (4 * chi2n_ex))
+    m_factor = np.sqrt(2 * np.pi / chi2n_ex) * np.sin(chi1n_ex**2 \
+              / (4 * chi2n_ex))
+    
+    psi_p_x  = p_factor * (2 * chi2n_ex * v0n[0][ind_ex] \
+                - chi1n_ex * v1n[0][ind_ex])
+    psi_p_y  = p_factor * (2 * chi2n_ex * v0n[1][ind_ex] \
+               - chi1n_ex * v1n[1][ind_ex])
+    psi_p_z  = p_factor * (2 * chi2n_ex * v0n[2][ind_ex] \
+               - chi1n_ex * v1n[2][ind_ex])
+    
+    psi_m_x  = m_factor * (2 * chi2n_ex * v0n[0][ind_ex] \
+               - chi1n_ex * v1n[0][ind_ex])
+    psi_m_y  = m_factor * (2 * chi2n_ex * v0n[1][ind_ex] \
+               - chi1n_ex * v1n[1][ind_ex])
+    psi_m_z  = m_factor * (2 * chi2n_ex * v0n[2][ind_ex] \
+               - chi1n_ex * v1n[2][ind_ex])
+    
+    #%% Get real and imaginary parts of the integral 
+    RIx = np.zeros(len(chi2n))
+    RIy = np.zeros(len(chi2n))
+    RIz = np.zeros(len(chi2n))
+    
+    ImIx = np.zeros(len(chi2n))
+    ImIy = np.zeros(len(chi2n))
+    ImIz = np.zeros(len(chi2n))
+    
+    # Compute useful factors, fresnel functions
+    invchi2 = (1 / (4 * chi2n_ex))
+    Cp, Sp  = fresnel(theta_p)
+    Cm, Sm  = fresnel(theta_m)
+    
+    RIx[ind_ex] = invchi2 * ((psi_p_x * (Cp - Cm)) + (psi_m_x * (Sp-Sm)) \
+          - (2*v1n[0][ind_ex]) * (np.sin(phi_p) - np.sin(phi_m)))
+    
+    RIy[ind_ex] = invchi2 * ((psi_p_y * (Cp - Cm)) + (psi_m_y * (Sp-Sm)) \
+          - (2*v1n[1][ind_ex]) * (np.sin(phi_p) - np.sin(phi_m)))
+          
+    RIz[ind_ex] = invchi2 * ((psi_p_z * (Cp - Cm)) + (psi_m_z * (Sp-Sm)) \
+          - (2*v1n[2][ind_ex]) * (np.sin(phi_p) - np.sin(phi_m)))
+    
+    ImIx[ind_ex] = invchi2 * ((psi_p_x * (Sp-Sm)) - (psi_m_x * (Cp-Cm)) \
+                   - 2*v1n[0][ind_ex] * (np.cos(phi_p) - np.cos(phi_m)))
+                   
+    ImIy[ind_ex] = invchi2 * ((psi_p_y * (Sp-Sm)) - (psi_m_y * (Cp-Cm)) \
+                   - 2*v1n[1][ind_ex] * (np.cos(phi_p) - np.cos(phi_m)))
+                   
+    ImIz[ind_ex] = invchi2 * ((psi_p_z * (Sp-Sm)) - (psi_m_z * (Cp-Cm)) \
+                   - 2*v1n[2][ind_ex] * (np.cos(phi_p) - np.cos(phi_m))) 
+                   
+    # Imaginary parts have a +/- in them
+                   
+    #ImIx_m = -1.0 * ImIx
+    #ImIy_m = -1.0 * ImIy
+    #ImIz_m = -1.0 * ImIz
+    #%% Compute using taylor approximation where appropriate
+    
+    dtt     = dtau[ind_t]
+    chi1n_t = chi1n[ind_t]
+    chi2n_t = chi2n[ind_t]             
+    
+    RIx[ind_t] = v0n[0][ind_t] * np.sinc(chi1n_t * dtt / 2) * dtt
+    RIy[ind_t] = v0n[1][ind_t] * np.sinc(chi1n_t * dtt / 2) * dtt
+    RIz[ind_t] = v0n[2][ind_t] * np.sinc(chi1n_t * dtt / 2) * dtt
+    
+    
+    I1 = (dtt / chi1n_t) * (np.sinc(chi1n_t * dtt / 2) \
+          - np.cos(chi1n_t * dtt / 2))
+    I2 = (dtt**3 / 4) * np.sinc(chi1n_t * dtt / 2) - (2 / chi1n_t) * I1
+    
+    ImIx[ind_t] =  v1n[0][ind_t] * I1 + chi2n_t * v0n[0][ind_t] * I2
+    ImIy[ind_t] =  v1n[1][ind_t] * I1 + chi2n_t * v0n[1][ind_t] * I2
+    ImIz[ind_t] =  v1n[2][ind_t] * I1 + chi2n_t * v0n[2][ind_t] * I2
+    #%% Compute spectral intensity
+    # Add back the phase factor
+    Ix = np.exp(1j*chi0n) * (RIx + 1j*ImIx)
+    Iy = np.exp(1j*chi0n) * (RIy + 1j*ImIy)
+    Iz = np.exp(1j*chi0n) * (RIz + 1j*ImIz)
+    
+    # Compute componets of s cross I
+    scIx = sy*np.nansum(Iz) - sz*np.nansum(Iy)
+    scIy = sz*np.nansum(Ix) - sx*np.nansum(Iz)
+    scIz = sx*np.nansum(Iy) - sy*np.nansum(Ix)
+    # Take magntiude squared of the cross product
+    
+    scI2 = scIx * np.conj(scIx) + scIy * np.conj(scIy) + scIz * np.conj(scIz)
+    
+    # Finally get the radiate intensity
+    d2I = mu_0 * e**2 * c * w**2 / (16 * np.pi**3) * scI2
+    #print(d2I)
+    
+    # Test comparison
+    #RSx = np.nansum(RIx * np.cos(chi0n) - ImIx*np.sin(chi0n))
+    #RSy = np.nansum(RIy * np.cos(chi0n) - ImIy*np.sin(chi0n))
+    #RSz = np.nansum(RIz * np.cos(chi0n) - ImIz*np.sin(chi0n))
+    
+    #ImSx = np.nansum(ImIx * np.cos(chi0n) + RIx * np.sin(chi0n))
+    #ImSy = np.nansum(ImIx * np.cos(chi0n) + RIx * np.sin(chi0n))
+    #ImSz = np.nansum(ImIx * np.cos(chi0n) + RIx * np.sin(chi0n))
+    
+    #x_term = RSx**2 + ImSx**2
+    #y_term = (RSy*np.cos(theta) - RSz*np.sin(theta))**2
+    #z_term = (ImSy*np.cos(theta) - ImSz*np.sin(theta))**2
+    #d2I_test = (mu_0 * e**2 * c * w**2 / (16 * np.pi**3)) \
+    #           * (x_term + y_term + z_term)
+               
+    return d2I
