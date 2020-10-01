@@ -308,7 +308,8 @@ def scan_slope(r0s, fpath, N = 3135, N_p = 4):
 	return d_slopes, w_slopes, cd_slopes, cw_slopes
 # Plotting functions
 
-def plot_2D(errors_t, errors_p, ds, ths, cm = "CMRmap"):
+def plot_2D(errors_t, errors_p, ds, ths, cm = "CMRmap", sname = "", \
+	        save = False):
 	"""
 	Function to plot the results of scan2D. 
 	
@@ -324,6 +325,10 @@ def plot_2D(errors_t, errors_p, ds, ths, cm = "CMRmap"):
 			   Array of angles input into scan2D
 	cm       : str, optional
 			   Colormap to use in plotting
+	sname    : str, optional
+	           Filename if saving
+	save     : bool, optional
+	           Whether or not to save the image
 	"""
 	
 	# Compute extent (needs evenly spaced ds and ths)
@@ -352,6 +357,8 @@ def plot_2D(errors_t, errors_p, ds, ths, cm = "CMRmap"):
 						   extent = ext, aspect = 'auto')
 	plt.colorbar(mappable = img2, label = r'Avg. Error [fs]') 
 	
+	if save:
+		plt.savefig(sname)
 	plt.show()
 
 def polyfit(x, y, degree):
@@ -387,7 +394,7 @@ def polyfit(x, y, degree):
 	results['determination'] = ssreg / sstot
 	return results
 
-def plot_1D(r0s, g_max, g_std, res, res_std):
+def plot_1D(r0s, g_max, g_std, res, res_std, sname = "", save = False):
 	"""
 	Function to plot the signal vs transverse offset for each r0 in scan_1D. 
 	Also computes and plots the overall drop in signal and the linearity of 
@@ -405,20 +412,25 @@ def plot_1D(r0s, g_max, g_std, res, res_std):
 			  array of max response for each r0
 	res_std : array_like
 			  Array of response standard deviation per r0
+	sname    : str, optional
+	           Filename if saving
+	save     : bool, optional
+	           Whether or not to save the image
 	"""
 
-	fig1, ax1 = makefig(xlab = r'$r_0$ [mm]', \
-		                ylab = r'Max($\Gamma_0$)')
-	ax1.plot(r0s*1e3, g_max, "-k")
-	ax1.fill_between(r0s*1e3, g_max - g_std, g_max+g_std, color = "r", \
-		             alpha = 0.5)
+	#fig1, ax1 = makefig(xlab = r'$x_0$ [mm]', \
+	#	                ylab = r'Max($\Gamma_0$)')
+	#ax1.plot(r0s*1e3, g_max, "-k")
+	#ax1.fill_between(r0s*1e3, g_max - g_std, g_max+g_std, color = "r", \
+	#	             alpha = 0.5)
 
-	fig1, ax1 = makefig(xlab = r'$r_0$ [mm]', \
+	fig1, ax1 = makefig(xlab = r'$x_0$ [mm]', \
 		                ylab = r'Max($\Gamma_0$ sin$\Gamma_0$)')
 	ax1.plot(r0s*1e3, res, "-k")
 	ax1.fill_between(r0s*1e3, res- res_std, res+res_std, color = "r", \
 		             alpha = 0.5)
-
+	if save: 
+		plt.savefig(sname)
 	plt.show()
 
 def plot_slopes(r0s, d_slopes, w_slopes, cd_slopes, cw_slopes):
