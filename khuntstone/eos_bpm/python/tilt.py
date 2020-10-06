@@ -6,7 +6,10 @@ import numpy as np
 from scipy.constants import c, e, epsilon_0
 from scipy.interpolate import interp1d
 from scipy.signal import find_peaks
-plt.style.use("huntstone")
+try:
+	plt.style.use("huntstone")
+except:
+	plt.style.use("default")
 import sys
 # Get system paths from config files
 with open("conf.json") as json_conf:

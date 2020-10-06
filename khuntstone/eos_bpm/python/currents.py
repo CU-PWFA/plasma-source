@@ -111,7 +111,7 @@ def get_current(ind, fpath):
     return I_ka, ti, p2p
     
 
-def get_E(I, ti, r0, tilt = 0):
+def get_E(I, ti, r0):
     '''
     Computes the E-field from a current profile
 
@@ -121,10 +121,9 @@ def get_E(I, ti, r0, tilt = 0):
              The beam current profile in kA
     ti     : array_like
              Time array corresponding to I in s
-    r0     : float
-             Distance from the beam to the crystal (m)
-    tilt   : float, optional
-             Tilt of the given beam (in rad), default = 0
+    r0     : float or array_like
+             Distance from the beam to the crystal or temporal
+             profile of distance from the beam to the crystal (m)
     Returns:
     --------
     E    : array_like
@@ -148,7 +147,7 @@ def get_E(I, ti, r0, tilt = 0):
     # Ensure peak alignment
     #peaks  = get_peaks(E_int, te_int)
     #te_int = te_int - te_int[peaks[0]]
-
+    
     dti  = ti[1]-ti[0]
     dzi  = c * dti
     ne   = I * 1e3 * dti / e
