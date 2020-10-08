@@ -3,9 +3,8 @@
 import json
 import matplotlib.pyplot as plt 
 import numpy as np 
-from scipy.constants import c, e, epsilon_0
+from scipy.constants import c, epsilon_0
 from scipy.interpolate import interp1d
-from scipy.signal import find_peaks
 try:
 	plt.style.use("huntstone")
 except:
@@ -14,11 +13,10 @@ import sys
 # Get system paths from config files
 with open("conf.json") as json_conf:
 	CONF = json.load(json_conf)
-sys.path.insert(0, CONF["py_ubu"])
+sys.path.insert(0, CONF["py_lnx"])
 sys.path.insert(0, CONF["py_wind"])
 sys.path.insert(0, CONF["py_winl"])
 # Custom modules
-import currents as cp
 import eo_signal as eos 
 from plotting import makefig 
 
@@ -74,8 +72,6 @@ def getE(I, ti, r0, tilt, cor, interp = False):
 	# Get Charge in each slice of the bunch, qps
 	dti   = (ti[1] - ti[0])
 	qps   = I * 1e3 * dti
-	# Tilt beam at center of active current
-	isI   = np.squeeze(np.argwhere(np.squeeze(I) > 0))
 	# Compute longitudinal, z, position of the tilted bunch
 	zi    = (ti - cor) * c
 	tz    = zi * np.cos(tilt) / c
@@ -91,9 +87,9 @@ def getE(I, ti, r0, tilt, cor, interp = False):
 		te_int = np.linspace(-3, 3, 1000)*1e-12
 		fE = interp1d(tz, E, bounds_error = False, fill_value = 0)
 		E_int = fE(te_int)
-		return E_int, te_int
+		return E_int, te_int, rbeam
 	else:
-		return E, tz
+		return E, tz, rbeam
 
 def tilt_signal(I, ti, r0, tilt, cor, setup):
 	"""
@@ -113,15 +109,16 @@ def tilt_signal(I, ti, r0, tilt, cor, setup):
 			The setup dictionary as described in eo_signal.
 	"""
 	# Compute the electric field as seen from both crystals
-	Ep, tp = getE(I, ti, r0, tilt, cor, interp = True)
-	Em, tm = getE(I, ti, r0, -tilt, cor, interp = True)
+	Ep, tp, dm = getE(I, ti, r0, tilt, cor, interp = True)
+	Em, tm, dm = getE(I, ti, r0, -tilt, cor, interp = True)
 	# Compute EOS signal for each crystal
 	simp = eos.E_signal(Ep, tp, setup)
 	simm = eos.E_signal(Em, tm, setup)
 
+    # return signal [0] and time [1] for both fields
 	return simp[0], simp[1], simm[0], simm[1]
 
-def tilt_delta(Sp, Sm, tsig, r0, plot = False):
+def tilt_delta(Sp, Sm, tsig, r0):
 	"""
 	Function calcuate the tilt of a bunch from the EOS-BPM signal
 
@@ -149,19 +146,6 @@ def tilt_delta(Sp, Sm, tsig, r0, plot = False):
 	R12    = Rnum / Rden
 	deltas = - R12 / (1 + R12)
 	dx     = deltas * r0
-	zData  = c * tsig
-	try:
-		m, b   = np.polyfit(zData, dx, deg = 1)
-		theta  = np.arctan(m)
-	except:
-		m = 0
-		b = 0
-		theta = np.nan
-	if plot:
-		fig, ax = makefig(xlab = "t [ps]", ylab = r'$\Delta x [\mu m]$')
-		ax.plot(tsig*1e12, dx*1e6)
-		ax.plot(tsig*1e12, (m * zData + b)*1e6, '--r')
-		plt.show()
-	return theta, dx
+	return dx[~np.isnan(dx)], tsig[~np.isnan(dx)]
 
 

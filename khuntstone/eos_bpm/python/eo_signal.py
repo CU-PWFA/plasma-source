@@ -68,9 +68,6 @@ def get_signal(ind, setup):
     plot   = setup["plot"]
     # Initialize crystal and parameters
     cry = crystal(ctype)
-    j     = np.arange(1, nslice, 1)
-    dz    = d / nslice
-    d_arr = (j - 0.5) * dz
 
     # Initialize probe
     dy = 27e-9;
@@ -142,24 +139,17 @@ def E_signal(E, te, setup):
     y0     = setup["y0"]
     tp     = setup["tp"]
     angle  = setup["angle"]
-    r0     = setup["r0"]
     method = setup["method"]
-    fpath  = setup["fpath"]
-    tilt   = setup["tilt"]
     th     = setup["th"]
     nslice = setup["nslice"]
-    plot   = setup["plot"]
     tau    = setup["tau"]
     # Initialize crystal and parameters
     cry = crystal(ctype)
-    nslice = 100;
-    j     = np.arange(1, nslice, 1)
-    dz    = d / nslice
-    d_arr = (j - 0.5) * dz
+    nslice = 100
 
     # Initialize probe
-    dy = 27e-9;
-    probe = laser({'y0' : y0, 'dy' : dy, 'tp' : tp});
+    dy = 27e-9
+    probe = laser({'y0' : y0, 'dy' : dy, 'tp' : tp})
 
     # Make symmetric
     N      = 1000
@@ -171,12 +161,6 @@ def E_signal(E, te, setup):
     # Compute Signal
     FEr, f = thz.raw_field(E_int, te_int);
     Ec, tt = thz.cry_field(te_int, FEr, f, d, probe, cry, nslice = nslice)
-    # Compute probe timing window (camera res. of 3.5 microns assumed)
-    if angle != 0:
-        dtau   = (3.5e-6 / c) * np.tan(angle * np.pi / 180)
-    else: 
-        dtau = 3.5e-6/c
-    #tau    = np.arange(-500e-15, 950e-15, dtau)
     # Compute phase retardation
     gamma, t_gamma = pr.phase_retard(Ec, tt*1e-12, d, tau, probe, cry,\
                                      psi = angle)
