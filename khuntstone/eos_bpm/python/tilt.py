@@ -18,7 +18,6 @@ sys.path.insert(0, CONF["py_wind"])
 sys.path.insert(0, CONF["py_winl"])
 # Custom modules
 import eo_signal as eos 
-from plotting import makefig 
 
 # Tilt analysis function
 def get_dur(sig, tsig):
@@ -118,7 +117,7 @@ def tilt_signal(I, ti, r0, tilt, cor, setup):
     # return signal [0] and time [1] for both fields
 	return simp[0], simp[1], simm[0], simm[1]
 
-def tilt_delta(Sp, Sm, tsig, r0):
+def tilt_delta(Sp, Sm, tsig, r0, filt = 0.2):
 	"""
 	Function calcuate the tilt of a bunch from the EOS-BPM signal
 
@@ -132,6 +131,8 @@ def tilt_delta(Sp, Sm, tsig, r0):
 		   Temporal array corresponding to Sp and Sm
 	r0   : float
 		   The crystal beamline distance
+    filt : float, optional
+           Cut-off for filtering out low signal
 	Returns:
 	--------
 	theta : float
@@ -146,6 +147,6 @@ def tilt_delta(Sp, Sm, tsig, r0):
 	R12    = Rnum / Rden
 	deltas = - R12 / (1 + R12)
 	dx     = deltas * r0
-	return dx[~np.isnan(dx)], tsig[~np.isnan(dx)]
+	return dx[Sp <= filt * max(Sp)], tsig[Sp <= filt * max(Sp)]
 
 

@@ -40,6 +40,7 @@ def get_signal(ind, setup):
             "tilt"   : foat, tilt angle of beam
             "th"     : float, the waveplate angle in near-crossed pol. setup
             "nslice" : int, the number of crystal slices to use (rec 100)
+            "tau"    : array_like, array of probe delay time
             "plot"   : bool, whether or not to plot the resultant signal
     
     Returns:
@@ -62,9 +63,9 @@ def get_signal(ind, setup):
     r0     = setup["r0"]
     method = setup["method"]
     fpath  = setup["fpath"]
-    tilt   = setup["tilt"]
     th     = setup["th"]
     nslice = setup["nslice"]
+    tau    = setup["tau"]
     plot   = setup["plot"]
     # Initialize crystal and parameters
     cry = crystal(ctype)
@@ -75,7 +76,7 @@ def get_signal(ind, setup):
 
     I, ti, p2p = cp.get_current(ind, fpath)
     # Compute electric field
-    E, te = cp.get_E(I, ti, r0, tilt)
+    E, te = cp.get_E(I, ti, r0)
     # Make symmetric
     N      = 1000
     fE     = interp1d(te, E)
@@ -87,8 +88,8 @@ def get_signal(ind, setup):
     FEr, f = thz.raw_field(E_int, te_int);
     Ec, tt = thz.cry_field(te_int, FEr, f, d, probe, cry, nslice = nslice)
     # Compute probe timing window (camera res. of 3.5 microns assumed)
-    dtau   = (3.5e-6 / c) * np.tan(angle * np.pi / 180)
-    tau    = np.arange(-500e-15, 1150e-15, dtau)
+    #dtau   = (3.5e-6 / c) * np.tan(angle * np.pi / 180)
+    #tau    = np.arange(-500e-15, 1150e-15, dtau)
     gamma, t_gamma = pr.phase_retard(Ec, tt*1e-12, d, tau, probe, cry,\
                                      psi = angle)
 
@@ -105,7 +106,6 @@ def get_signal(ind, setup):
     if plot:
         plot_signal(I, sig, ti, t_sig)
     return I, ti, p2p, sig, t_sig, gamma, t_gamma
-
 def E_signal(E, te, setup):
     """
     Function to compute spatially encoded EOS signal from an electric field.
@@ -152,7 +152,7 @@ def E_signal(E, te, setup):
     probe = laser({'y0' : y0, 'dy' : dy, 'tp' : tp})
 
     # Make symmetric
-    N      = 1000
+    N      = len(te)
     fE     = interp1d(te, E)
     t_use  = min([abs(te[0]), te[-1]])
     te_int = np.linspace(-t_use, t_use, N)

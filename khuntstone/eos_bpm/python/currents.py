@@ -1,12 +1,9 @@
 from cycler import cycler
-import matplotlib.pyplot as plt
 import numpy as np
 from scipy.constants import c, e, epsilon_0
-import scipy.interpolate as interpolate
 import scipy.io as sio
 from scipy.signal import find_peaks, savgol_filter
 from scipy.interpolate import interp1d
-import sys;
 eps0 = epsilon_0;
 gamma = 19569.4716; # Nominal FACET-II (E = 10 GeV)
 # Simulation module
@@ -93,14 +90,9 @@ def get_current(ind, fpath):
     dz    = ipdz[ind][0]
     I_ka  = shots[ind]; # kA
     z     = np.array([0 + (i * dz) for i in range(len(I_ka))])
-    dzp   = abs(z[0] - z[1])
     ti    = (z * 1e-6) / c
-    dt    = (dz * 1e-6) / c
 
-    tsep   = 0.3e-12
-    t1     = np.argmin(abs(ti))
-    t2     = np.argmin(abs(ti - tsep))
-    tsteps = t2 - t1
+
     # center drive on 0
     peaks = get_peaks(I_ka, ti)
     ti    = ti - ti[peaks[0]]
@@ -161,53 +153,6 @@ def get_E(I, ti, r0):
     E_int  = fE(te_int)
     return E_int, te_int
 
-def extend_I(I, ti, t_split, sigma = 0, scaling = 0, method = 'Gauss'):
-    """
-    Function to increase the longitudinal rms of a single bunch by convolving
-    it with a Gaussian.
-    
-    Parmeters:
-    ----------
-    I       : array_like
-              The current profile
-    ti      : array_like
-              The time array corresponding to I
-    t_split : float
-              Time at which to separate the currents
-    sigma   : float, optional
-              The rms of the Gaussian (used for Gauss method)
-    scaling : float, optional
-              The scaling factor to extend time by (used for Scaling method)
-    Returns:
-    --------
-    I_conv : array_like
-             New current profile with larger rms, corresponding to ti
-    """
-    t_shift = 50e-15
-    if method == 'Gauss':
-        def gaussian(x, A, sigma):
-            return A * np.exp(-(x/sigma)**2)
-            
-        I_drive, I_wit = split_I(I, ti, t_split)
-        fg      = gaussian(ti, max(I_drive), sigma)
-        I_conv  = np.convolve(I_drive, fg)
-        I_conv  = max(I)/max(I_conv) * I_conv
-        t_conv  = np.linspace(ti[0], ti[-1], len(I_conv))
-        f_wit     = interp1d(ti + t_shift, I_wit, \
-                             bounds_error = False, fill_value = 0)
-        I_wit_int = f_wit(t_conv)
-        fI        = interp1d(t_conv, I_conv + I_wit_int)
-        I_conv    = fI(ti)
-        return I_conv
-    elif method == 'scale':
-        I_drive, I_wit = split_I(I, ti, t_split)
-        t_extend  = ti * scaling
-        f_wit     = interp1d(ti + t_shift, I_wit, \
-                             bounds_error = False, fill_value = 0)
-        I_wit_int = f_wit(t_extend)
-        fI        = interp1d(t_extend, I_drive + I_wit_int)
-        I_extend  = fI(ti)
-        return I_extend
 
 def smooth_I(I, window = 51, poly = 3, double = False):
     '''
