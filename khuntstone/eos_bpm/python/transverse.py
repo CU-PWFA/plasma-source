@@ -62,7 +62,7 @@ def cry_sigs(offsets, setup):
         gB[i]   = max(simB[5])
     return sigA, sigB, gA, gB
 
-def comp_delta(sigA, sigB, g0):
+def comp_delta(sigA, sigB, g0, method):
     """
     Function to compute delta (percent offset) from the two crystal signals
     and average peak 
@@ -74,34 +74,30 @@ def comp_delta(sigA, sigB, g0):
     sigB : array_like or float
            Crystal B signal
     g0   : array_like or float
-           Nominal G0
-
+           Nominal phase retardation with no offset
+    method : str
+             Method of detection, either "cross" or "bal"
+    cutoff : float
+             Cutoff percentage of signal to compute delta
     Returns:
     --------
-    order1  : array_like or float
-             delta computed by 1st order taylor approximation
-    order2  : array_like or float
-              delta as computed by 2nd order taylor approximation
-    taylor2 : array_like
-              delta computed as a taylor expansion of order 2
+    delta : array_like
+          percent offset of the beam 
     """
     # Compute signal sums and differences
     s_diff = sigA - sigB
     s_sum  = sigA + sigB
-    # First order
-    num    = s_diff * np.tan(0.5 * g0)
-    den    = s_sum * g0
-    order1 = -num / den
-    # Second order
-    a      = (s_diff / s_sum) * (g0**2 / 4) / np.tan(g0)
-    b      = g0
-    c      = (s_diff / s_sum) * 0.5 * np.tan(0.5 * g0)
-    order2 = -b + np.sqrt(b**2 - 4 * a * c)
-    order2 = order2/(2*a)
-    order2[np.isnan(order2)] = 0
-    # Taylor of second order
-    taylor2 = -(np.tan(0.5*g0) * (s_diff / s_sum)) / (2 * g0)
-    return order1, order2, taylor2
+    R      = s_diff / s_sum
+    # Compute delta based on detection method
+    if method == "cross":
+        delta = R * np.tan(0.5*g0) / g0
+        return delta
+    elif method == "bal":
+        delta = R * np.tan(g0) / g0
+        return delta
+    else:
+        print("Error: unknown detection method")
+        return
 
 def split_offsets(d_offsets, w_offsets, setup):
     """
@@ -167,25 +163,51 @@ def split_offsets(d_offsets, w_offsets, setup):
             wsigB[i,j] = max(simB[0][ind:-1])
     return dsigA, dsigB, wsigA, wsigB
 
-def plot_deltas(r0, offsets, d_comp1, d_comp2):
+def optimize_r0(I, ti, r0s, setup, verbose = False):
     """
-    Function to plot the comptued delta (converted to distance offset)
-
+    Function to optimize the crystal beamline spacing for maximum response
+    to a beams transverse offset.
+    
     Parameters:
     -----------
-    r0      : float,
-              Nominal crystal-beamline distance
-    offsets : array_like,
-              Array of transverse offsets 
-    d_comp1 : array_like
-              1st order computed delta
-    d_comp2 : array_like
-             2nd order computed delta
+    I       : array_like, 
+              Input current profile, kA
+    ti      : array_like
+              Time array corresponding to I, s
+    r0s     : array_like
+              Array of crystal beamline spacing, m 
+    setup   : dictionary_object
+              EOS-BPM setup dictionary as defined in eo_signal
+    verbose : bool, optional
+              Whether or not to print loop status
+    Returns:
+    --------
+    g0        : array_like
+                Array of maximum phase retardation for each r0
+    bal_res   : array_like
+                Array of the balanced detectors response to transverse
+                offsets
+    cross_res : array_like
+                Array of the crossed polarizers response to transverse
+                offsets
     """
-
-    fig, ax = makefig(xlab = r'Drive offset $[\mu$m]',\
-                      ylab = r'Computed offset [$\mu$m]')
-    ax.plot(offsets * 1e6, -d_comp1 * r0 * 1e6, label = "1st order")
-    ax.plot(offsets* 1e6, d_comp2 * r0 * 1e6, label = "2nd order")
-    plt.legend()
-    plt.show()
+    # Preallocate
+    g0 = np.zeros(len(r0s))
+    # Compute nominal phase retardation for each setup
+    for i in range(len(r0s)):
+        if verbose:
+            print(i+1, "of", len(r0s))
+        r0 = r0s[i]
+        setup["r0"] = r0
+        E, te = cp.get_E(I, ti, r0)
+        # Set probe timing for the setup
+        setup["tau"] = te
+        sig, t_sig, gamma, t_gamma = eos.E_signal(E, te, setup)
+        g0[i] = np.amax(gamma)
+    # Compute response
+    bal_res = g0 * np.cos(g0)
+    cross_res = g0 * np.sin(g0)
+    # Set response to nan where phase wrapping would occur
+    bal_res[g0 > 0.5*np.pi] = np.nan
+    cross_res[g0 > np.pi] = np.nan
+    return g0, bal_res, cross_res

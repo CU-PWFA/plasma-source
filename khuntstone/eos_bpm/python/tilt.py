@@ -76,20 +76,47 @@ def getE(I, ti, r0, tilt, cor, interp = False):
 	tz    = zi * np.cos(tilt) / c
 	dzi   = c * (tz[1] - tz[0])
 	# Compute x-offset due to the tilt
-	rbeam = zi * np.sin(tilt)
+	dx = c * ti * np.tan(tilt)
 	# Compute Electric field
 	Qe   = np.sum(qps)
 	lamz = I * 1e3 * dti / (Qe * c) # Distribution (m^-1)
 	lamz = lamz / np.sum(lamz * dzi)
-	E    = 2 * Qe * lamz / (4 * np.pi * epsilon_0 * (r0 + rbeam))
+	E    = 2 * Qe * lamz / (4 * np.pi * epsilon_0 * (r0 + dx))
 	if interp:
 		te_int = np.linspace(-3, 3, 1000)*1e-12
 		fE = interp1d(tz, E, bounds_error = False, fill_value = 0)
 		E_int = fE(te_int)
-		return E_int, te_int, rbeam
+		return E_int, te_int, dx
 	else:
-		return E, tz, rbeam
-
+		return E, tz, dx
+def gaussianE(Q, sig, t, r0, tilt):
+    """
+    Function to compute a Gaussian electric field for use in EOS-BPM sims. 
+    
+    Parameters:
+    -----------
+    Q    : float
+           Bunch charge in C
+    sig  : float
+           Bunch rms length in s
+    t    : array_like
+           Time array (s) along which the field is computed
+    r0   : float
+           Radial distance at which the field is computed 
+           (i.e. crystal separation)
+    tilt : float, optional
+           Tilt, if any, of the electron beam in rad.
+    Returns:
+    --------
+    E : array_like
+        The electric field of the bunch
+    """
+    # Compute offset due to tilt
+    dx = c * t * np.tan(tilt)
+    E0 = Q / ((2*np.pi)**(1.5) * epsilon_0 * (r0 + dx) * c * sig)
+    E  = E0 * np.exp(-t**2 / (2 * sig**2))
+    return E
+    
 def tilt_signal(I, ti, r0, tilt, cor, setup):
 	"""
 	Parameters:
@@ -117,36 +144,43 @@ def tilt_signal(I, ti, r0, tilt, cor, setup):
     # return signal [0] and time [1] for both fields
 	return simp[0], simp[1], simm[0], simm[1]
 
-def tilt_delta(Sp, Sm, tsig, r0, filt = 0.2):
-	"""
-	Function calcuate the tilt of a bunch from the EOS-BPM signal
-
-	Parameters:
-	-----------
-	Sp   : array_like
-		   Array of positive (closer) crystal signal
-	Sm   : array_like
-		   Array of negative (further) crystal signal
-	tsig : array_like
-		   Temporal array corresponding to Sp and Sm
-	r0   : float
-		   The crystal beamline distance
-    filt : float, optional
-           Cut-off for filtering out low signal
-	Returns:
-	--------
-	theta : float
-			The computed beam tilt
-	dx    : array_like
-			The computed transverse offset of the beam
-	plot  : bool, optional
-	        Whether or not to plot the signal
-	"""
-	Rnum   = np.sqrt(Sp) - np.sqrt(Sm)
-	Rden   = np.sqrt(Sp) + np.sqrt(Sm)
-	R12    = Rnum / Rden
-	deltas = - R12 / (1 + R12)
-	dx     = deltas * r0
-	return dx[Sp <= filt * max(Sp)], tsig[Sp <= filt * max(Sp)]
-
-
+def comp_tilt(sigP, sigM, tsig, r0, trange, method = "cross"):
+    """
+    Function to compute the tilt of a bunch from the EOS-BPM signal
+    Parameters:
+    -----------
+    sigP : array_like
+           EOS-BPM signal from crystal in +x
+    sigM : array_like
+           EOS-BPM signal from crystal in -x
+    tsig : array_like
+           Time array corresponding to sigP and sigM
+    r0   : float
+           Crystal beamline separation in m
+    trange: array_like
+            Region of interest for computing the tilt [t1, t2]
+         
+    method : str, optional
+             Detector setup, either "cross" for crossed polarizers or "bal" for
+             balanced detectors
+    Returns:
+    --------
+    dx   : array_like
+           Computed transverse offset of the electron bunch
+    tilt : float
+           Computed tilt of the electron bunch
+    """
+    # Apply filter
+    ind1 = np.argmin(abs(tsig - trange[0]))
+    ind2 = np.argmin(abs(tsig - trange[1]))
+    # Compute offset due to tilt
+    if method == "cross":
+        dx = (np.sqrt(sigP) - np.sqrt(sigM)) / (np.sqrt(sigP) + np.sqrt(sigM))
+        dx = r0 * dx
+    elif method == "bal":
+        dx = r0 * ((sigP - sigM) / (sigP + sigM))
+    # Compute tilt
+    dx = dx[ind1:ind2]
+    ps = np.polyfit(c*tsig[ind1:ind2], dx, 1)
+    tilt = np.arctan(ps[0])
+    return dx, tilt
