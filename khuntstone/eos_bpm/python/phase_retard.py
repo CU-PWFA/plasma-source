@@ -63,14 +63,14 @@ def phase_retard(Ec, te, d, tau, probe, crystal, psi = 0, interp = False, \
     d_arr = (j - 0.5) * dz
     # Compute Amplitude of gamma 
     n0 = crystal.indref(np.array([probe.y0]))[0]
-    amp = 2 * np.pi * n0**3 * dz / (probe.y0)
+    amp = 2 * np.pi * n0**3 * dz/ (probe.y0)
     # Get effective probe velocity
     Lchar, v_g_opt = probe.laser_l_char(crystal)
     vg_eff = v_g_opt * np.cos(psi)
     # Preallocate for loop
     gamma = np.zeros(len(tau))
     # Loop and sum gamma
-    tau_use = tau
+    tau_use = tau + t_delay
     for j in range(len(d_arr)):
         fEc = interp1d(te, np.real(Ec[:, j]), bounds_error = False, \
                        fill_value = 0)
@@ -79,7 +79,11 @@ def phase_retard(Ec, te, d, tau, probe, crystal, psi = 0, interp = False, \
         #ind = np.argwhere(tau_use > te[-1])
         #dtau = tau_use[ind] - te[-1]
         #tau_use[ind]  = te[0] + dtau
-        t_interp = (d_arr[j] / vg_eff) + tau_use
+        t_probe = d_arr[j] / vg_eff
+        #if t_probe > te[-1]:
+        #    diff = t_probe - te[-1]
+        #    t_probe = te[0] + diff
+        t_interp = t_probe + tau_use
         E_eff = fEc(t_interp)
         gamma += E_eff
     # Add amplitude

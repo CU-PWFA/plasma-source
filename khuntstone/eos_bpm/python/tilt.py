@@ -1,6 +1,6 @@
 # Module for studying EOS-BPM response to tilted SFQED bunches
 # Standard python imports
-import json
+#import json
 import matplotlib.pyplot as plt 
 import numpy as np 
 from scipy.constants import c, epsilon_0
@@ -9,13 +9,13 @@ try:
 	plt.style.use("huntstone")
 except:
 	plt.style.use("default")
-import sys
+#import sys
 # Get system paths from config files
-with open("conf.json") as json_conf:
-	CONF = json.load(json_conf)
-sys.path.insert(0, CONF["py_lnx"])
-sys.path.insert(0, CONF["py_wind"])
-sys.path.insert(0, CONF["py_winl"])
+#with open("conf.json") as json_conf:
+#	CONF = json.load(json_conf)
+#sys.path.insert(0, CONF["py_lnx"])
+#sys.path.insert(0, CONF["py_wind"])
+#sys.path.insert(0, CONF["py_winl"])
 # Custom modules
 import eo_signal as eos 
 
@@ -89,7 +89,7 @@ def getE(I, ti, r0, tilt, cor, interp = False):
 		return E_int, te_int, dx
 	else:
 		return E, tz, dx
-def gaussianE(Q, sig, t, r0, tilt):
+def gaussianE(Q, sigt, t, r0, tilt):
     """
     Function to compute a Gaussian electric field for use in EOS-BPM sims. 
     
@@ -97,7 +97,7 @@ def gaussianE(Q, sig, t, r0, tilt):
     -----------
     Q    : float
            Bunch charge in C
-    sig  : float
+    sigt : float
            Bunch rms length in s
     t    : array_like
            Time array (s) along which the field is computed
@@ -113,8 +113,8 @@ def gaussianE(Q, sig, t, r0, tilt):
     """
     # Compute offset due to tilt
     dx = c * t * np.tan(tilt)
-    E0 = Q / ((2*np.pi)**(1.5) * epsilon_0 * (r0 + dx) * c * sig)
-    E  = E0 * np.exp(-t**2 / (2 * sig**2))
+    E0 = Q / ((2*np.pi)**(1.5) * epsilon_0 * (r0 + dx) * c * sigt)
+    E  = E0 * np.exp(-t**2 / (2 * sigt**2))
     return E
     
 def tilt_signal(I, ti, r0, tilt, cor, setup):
@@ -179,8 +179,61 @@ def comp_tilt(sigP, sigM, tsig, r0, trange, method = "cross"):
         dx = r0 * dx
     elif method == "bal":
         dx = r0 * ((sigP - sigM) / (sigP + sigM))
+    else:
+        print("Method not recognized")
+        return
     # Compute tilt
     dx = dx[ind1:ind2]
     ps = np.polyfit(c*tsig[ind1:ind2], dx, 1)
     tilt = np.arctan(ps[0])
     return dx, tilt
+
+# Some otpimization functions
+
+def avg_g0(Q, sigt, r0s, ds, setup, plot = False):
+    """
+    Computes average phase retardation for a variety of beamline separations
+    and crystal thicknesses and given bunch parameters
+    
+    Parameters:
+    -----------
+    Q     : float,
+            Bunch charge (C)
+    sigt  : float
+            Bunch rms duration (s)
+    r0s   : array_like
+            Array of beamline separations (m)
+    ds    : array_like
+            Array of crystal thicknesses (m)
+    setup : dictionary obj
+            EOS-BPM setup dictionary as defined in eo_signal.py (omitting r0 
+            and d)
+    plot  : bool, optional
+            Whether or not to plot results. 
+    Rerturns:
+    ---------
+    gap_g0  : array_like
+              Array of average phase retardation of a GaP crystal
+    znte_g0 : array_like
+              Array of average phase retardation of a ZnTe crystal
+    """
+    # Useful function for computing peak average phase retardation 
+    def get_gamma(r0, d, ctype, Q, sigt, setup, N = 8000):
+        setup["r0"]    = r0
+        setup["d"]     = d
+        setup["ctype"] = ctype
+        dt = sigt / 10
+        tb = np.linspace(-0.5*N*dt, 0.5*N*dt, N)
+        setup["tau"] = tb
+        E  = gaussianE(Q, sigt, tb, r0, 0)
+        return max(eos.E_signal(E, tb, setup)[2])
+    # Preallocate for loop
+    gap_g0  = np.zeros((len(ds), len(r0s)))
+    znte_g0 = np.zeros((len(ds), len(r0s)))
+    for i in range(len(ds)):
+        print(i+1, "of", len(ds))
+        d = ds[i]
+        for j in range(len(r0s)):
+            r0 = r0s[j]
+            gap_g0[i, j] = get_gamma(r0, d, "GaP", Q, sigt, setup)
+            znte_g0[i, j] = get_gamma(r0, d, "ZnTe", Q, sigt, setup)

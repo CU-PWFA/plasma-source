@@ -192,10 +192,10 @@ def cry_field(t, FEr, f, d, probe, crystal, nslice = 100, plot = False, \
     n_opt     = n_opt[1];
     f_opt     = f_opt[1];
     v_g_opt   = c / (n_opt + f_opt * dndf[1]);
-    match_ind = 0;
-    t_peak = tt[np.argmax(np.real(Ec[:, match_ind]))];
-    probe.t_shift = t_peak - ((d_arr[match_ind] / v_g_opt) * 1e12);
-    probe.t_shift = 0
+    #match_ind = 0;
+    #t_peak = tt[np.argmax(np.real(Ec[:, match_ind]))];
+    #probe.t_shift = t_peak - ((d_arr[match_ind] / v_g_opt) * 1e12);
+    #probe.t_shift = 0
     #print(probe.t_shift)
     if verbose:
         v_ph, v_g, dummy = crystal.velocities(f_Hz);
@@ -227,6 +227,9 @@ def cry_field(t, FEr, f, d, probe, crystal, nslice = 100, plot = False, \
         ax1.plot(tt, Ec_plot, '-', label = depth);
         # Plot the probe
         t_plot_probe = (d_arr[ind] / v_g_opt) * 1e12 + probe.t_shift;
+        if t_plot_probe > tt[-1]:
+            diff = t_plot_probe - tt[-1]
+            t_plot_probe = tt[0] + diff
         sigj         = probe.sigp * np.sqrt(1 + (d_arr[ind] / Lchar)**2);
 
         t_exp        = (tt - t_plot_probe) * 1e-12
@@ -252,6 +255,9 @@ def cry_field(t, FEr, f, d, probe, crystal, nslice = 100, plot = False, \
 
         # Plot the probe
         t_plot_probe = (d_arr[ind] / v_g_opt) * 1e12 + probe.t_shift;
+        if t_plot_probe > tt[-1]:
+            diff = t_plot_probe - tt[-1]
+            t_plot_probe = tt[0] + diff
         t_exp        = (tt - t_plot_probe) * 1e-12
         probe_plot   = np.exp(-(t_exp)**2 / (2 * sigj**2));
         ax2.plot(tt, probe_plot, '-r')
@@ -272,6 +278,9 @@ def cry_field(t, FEr, f, d, probe, crystal, nslice = 100, plot = False, \
 
         # Plot the probe
         t_plot_probe = (d_arr[ind] / v_g_opt) * 1e12 + probe.t_shift;
+        if t_plot_probe > tt[-1]:
+            diff = t_plot_probe - tt[-1]
+            t_plot_probe = tt[0] + diff
         t_exp        = (tt - t_plot_probe) * 1e-12
         probe_plot   = np.exp(-(t_exp)**2 / (2 * sigj**2));
         ax3.plot(tt, probe_plot, '-r')
@@ -292,6 +301,9 @@ def cry_field(t, FEr, f, d, probe, crystal, nslice = 100, plot = False, \
 
         # Plot the probe
         t_plot_probe = (d_arr[ind] / v_g_opt) * 1e12 + probe.t_shift;
+        if t_plot_probe > tt[-1]:
+            diff = t_plot_probe - tt[-1]
+            t_plot_probe = tt[0] + diff
         t_exp        = (tt - t_plot_probe) * 1e-12
         probe_plot   = np.exp(-(t_exp)**2 / (2 * sigj**2));
         ax4.plot(tt, probe_plot, '-r')
@@ -312,6 +324,10 @@ def cry_field(t, FEr, f, d, probe, crystal, nslice = 100, plot = False, \
 
         # Plot the probe
         t_plot_probe = (d_arr[ind] / v_g_opt) * 1e12 + probe.t_shift;
+        print(t_plot_probe)
+        if t_plot_probe > tt[-1]:
+            diff = t_plot_probe - tt[-1]
+            t_plot_probe = tt[0] + diff
         t_exp        = (tt - t_plot_probe) * 1e-12
         probe_plot   = np.exp(-(t_exp)**2 / (2 * sigj**2));
         ax5.plot(tt, probe_plot, '-r')
