@@ -46,16 +46,18 @@ plot.drive_witness_density_new(params)
 
 path = '/home/chris/Desktop/SimulationRepo/TestCases/3D/SingleBunch/5e17/200um/'
 path = '/home/chris/Desktop/NERSC_LIN_Aug/'
+path = '/media/chris/New Volume/VSimRuns/NERSCResults/Paper1/FACETII_NERSC_Run4/'
 
 params = {'drive' : 'rhoDrive',
           'plasma' : 'electrons',
-          'dumpInd' : 2,
+          'dumpInd' : 3,
           'path' : path,
-          'simName' : 'MatchedBeams',
+          #'simName' : 'MatchedBeams',
+          'simName' : 'PTPLDoubleTanh',
           'zoom' : 4.0,
           'alphaCutoff' : 0.05
           }
-plot.single_drive_density(params)
+plot.drive_witness_density_new(params)
 
 """
 path = '/media/chris/New Volume/VSimRuns/NERSCResults/3D/TwoBunch/1e18/50um/'

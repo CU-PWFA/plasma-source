@@ -273,8 +273,8 @@ def drive_witness_density_new(params):
     # Load in plasma density
     rho, rhoAttrs = load.load_field(path, simName, 'rhoPlasma')
     Nx, Ny, Nz = analyze.get_shape(rho[ind])
-    rhoXY = -np.transpose(rho[ind][:, :, int(Nz+1)/2, 0]/e/1e6)+2 #for one transverse dim
-    #rhoXY = -np.transpose(rho[ind][:, int(Nz+1)/2, :, 0]/e/1e6)+2 #for the other tran dim
+    #rhoXY = -np.transpose(rho[ind][:, :, int(Nz+1)/2, 0]/e/1e6)+2 #for one transverse dim
+    rhoXY = -np.transpose(rho[ind][:, int(Nz+1)/2, :, 0]/e/1e6)+2 #for the other tran dim
     
     #Load in drive beam density
     rho, rhoAttrs = load.load_field(path, simName, 'rhoDrive')
@@ -313,7 +313,7 @@ def drive_witness_density_new(params):
     #cmapW = alpha_colormap(plt.cm.get_cmap('nipy_spectral'), 0.1, True)
     cmapW = alpha_colormap(plt.cm.get_cmap('rainbow'), 0.1, True)
     ax.imshow(rhoWXY, interpolation='gaussian', extent=[-125, 125, -125, 125], cmap=cmapW)
-    npcase = 2e18
+    npcase = 2e16
     vmax = 1e18*(npcase/3.7e17)
     vmin = 3e16*(npcase/3.7e17)
     
@@ -353,15 +353,15 @@ def wake_cross_section(params):
     
     # Load in plasma density
     rho, rhoAttrs = load.load_field(path, simName, 'rhoPlasma')
-    print(rho); print(np.shape(rho))
-    print(rhoAttrs); print(np.shape(rhoAttrs))
+    #print(rho); print(np.shape(rho))
+    #print(rhoAttrs); print(np.shape(rhoAttrs))
     Nx, Ny, Nz = analyze.get_shape(rho[ind])
     #rhoYZ = -np.transpose(rho[ind][int(Nx+1)/2+central_off, :, :, 0]/e/1e6)+2
     rhoYZ = -(rho[ind][int(Nx+1)/2+central_off, :, :, 0]/e/1e6)+2
     x = np.linspace(-tranExtent, tranExtent, Nz)
     y = np.linspace(-tranExtent, tranExtent, Ny)
     """
-    rho_grad = rhoYZ[:,int((Ny+1)/3)]
+    rho_grad = rhoYZ[:,int((Ny+1)/2)]
     plt.plot(y,rho_grad)
     plt.title("Linear Density Gradient")
     plt.xlabel(r'$x (\mu m)$')
@@ -377,9 +377,11 @@ def wake_cross_section(params):
         cmapP = alpha_colormap(plt.cm.get_cmap('inferno'), 0.2, True)
         ax.imshow(rhoYZ, interpolation='gaussian', aspect=1, extent=[-tranExtent, tranExtent, -tranExtent, tranExtent],
                    norm=colors.LogNorm(vmin=vmin, vmax=vmax), cmap=cmapP)#1e16,2e18
-        """r_circ = 28.74
+        """
+        r_circ = 80
         plt.plot(x, np.sqrt(r_circ**2-np.square(x)),  c='b',ls='--')
-        plt.plot(x, -np.sqrt(r_circ**2-np.square(x)), c='b',ls='--')"""
+        plt.plot(x, -np.sqrt(r_circ**2-np.square(x)), c='b',ls='--')
+        """
         plt.savefig(path+'Title_Wake.png')
         plt.show()
     
@@ -400,7 +402,7 @@ def wake_cross_section(params):
             rhoPol[z] = rhoYZ[i,j]
             z = z+1
             
-    threshset = np.array(np.where(r < 40)[0])
+    threshset = np.array(np.where(r < 100)[0])
     theta = theta[threshset]; r = r[threshset]; rhoPol = rhoPol[threshset]
     sort = np.argsort(theta)
     theta = theta[sort]; r = r[sort]; rhoPol = rhoPol[sort]
@@ -413,20 +415,20 @@ def wake_cross_section(params):
     for i in range(len(thetabins)-1):
         while theta[k] < thetabins[i+1]:
             
-            if rhoPol[k] < 1e15:
+            if rhoPol[k] < 1e16:
                 if r[k] > rsheath[i]:
                     rsheath[i] = r[k]
             """
             if rhosheath[i] < rhoPol[k]:
                 rhosheath[i] = rhoPol[k]
                 rsheath[i] = r[k]
-                """
+            """
             k=k+1
             
     return (thetabins[1:]+.5*(thetabins[2]-thetabins[1])), rsheath
     #return r, theta, rhoPol
 
-def wake_cross_section_efield(params):
+def wake_cross_section_field(params):
     e = const.physical_constants['elementary charge'][0]
 
     path = params['path']
@@ -436,9 +438,10 @@ def wake_cross_section_efield(params):
     tranExtent = params['tranExtent']
     plot = params['plot']
     vec = params['vector']
+    field = params['field']
     
     # Load in plasma density
-    efield, efieldAttrs = load.load_field(path, simName, 'ElecFieldPlasma')
+    efield, efieldAttrs = load.load_field(path, simName, field)
     Nx, Ny, Nz = analyze.get_shape(efield[ind])
     #rhoYZ = -np.transpose(rho[ind][int(Nx+1)/2+central_off, :, :, 0]/e/1e6)+2
     eYZ = -(efield[ind][int(Nx+1)/2+central_off, :, :, vec])

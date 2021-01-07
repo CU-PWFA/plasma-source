@@ -20,33 +20,42 @@ from scipy.optimize import curve_fit
 
 #path = '/home/chris/Desktop/WakeShape_LinGrad/'
 #path = '/home/chris/Desktop/SimulationRepo/emittance_preservation/simulations/LinearGradient/'
-path = '/home/chris/Desktop/SimulationRepo/emittance_preservation/simulations/LinearGradient_ControlCase/'
-path = '/home/chris/Desktop/NERSC_LIN_Aug/'
+#path = '/home/chris/Desktop/SimulationRepo/emittance_preservation/simulations/LinearGradient_ControlCase/'
+#path = '/home/chris/Desktop/NERSC_Sep_Control/'
+#path = '/home/chris/Desktop/NERSC_LIN_Aug/'
+#path = '/media/chris/New Volume/VSimRuns/NERSCResults/Paper1/FACETII_NERSC_Run4/'
+#path = '/home/chris/Desktop/NERSC_Sep_Control2/'
 
-npcase = 4e17
+path = '/home/chris/Desktop/NERSC_Sep_Grad/'
+path = '/home/chris/Desktop/NERSC_Dec_Grad/'
+#path = '/home/chris/Desktop/VELA_Oct_Grad/'
+
+npcase = 2e16#4e17
 vmax = 1e18*(npcase/3.7e17)
 vmin = 1e16*(npcase/3.7e17)
-central_off = -65#-100
+central_off = 0
 """
 vmax = 3.5e17
 vmin = 2.5e17
 central_off = 200
 """
-tranExtent = 75
+tranExtent = 200
 params = {'vmin' : vmin,
           'vmax' : vmax,
           'plasma' : 'electrons',
-          'dumpInd' : 2,
+          'dumpInd' : 9,
           'path' : path,
           'simName' : 'MatchedBeams',
           'zoom' : 4.0,
           'alphaCutoff' : 0.05,
           'centralOff' : central_off,
           'tranExtent' : tranExtent,
-          'plot' : True
+          'plot' : True,
+          'drive' : 'rhoBeam'
           }
+plot.drive_witness_density_new(params)
 #plot.wake_cross_section_efield(params)
-plot.wake_cross_section(params)
+#plot.wake_cross_section(params)
 
 theta,r = plot.wake_cross_section(params)
 #r, theta, rhoPol = plot.wake_cross_section(params)
@@ -60,7 +69,7 @@ def coslike(x, *p):
 p0 = [1., 0., 1.]
         
 xcoeff, var_matrix = curve_fit(coslike, theta, r, p0=p0)
-        
+#xcoeff = np.array([  3.97932549e+01,  -4.01443535e-01,   2.79529067e-02])
 # Get the fitted curve
 hist_fit = coslike(theta, *xcoeff)
 
