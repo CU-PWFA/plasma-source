@@ -152,7 +152,7 @@ RIt = v0*I0
 IIt = v1*I1 + chi2*v0*I2
 
 # choose Fourier or Taylor integral solutions
-comp_par = chi2*tau*tau
+comp_par = np.absolute(chi2*tau*tau)
 small = 1e-3
 RI = RIf
 II = IIf
