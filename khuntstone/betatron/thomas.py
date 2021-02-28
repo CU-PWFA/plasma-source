@@ -55,6 +55,7 @@ v1n       : array_like
 import numpy as np
 from scipy.constants import c, e, mu_0
 from scipy.special import erf
+import matplotlib.pyplot as plt
 
 
 def get_fresnel(z):
@@ -124,7 +125,7 @@ def get_thetas(chi1n, chi2n, dtau):
     theta_m[chi2n < 0] = 1j * theta_m[chi2n < 0]
     return theta_p, theta_m
 
-def fresnel_I(chi1n, chi2n, v0n, v1n, dtau, sign):
+def fresnel_I(chi1n, chi2n, v0n, v1n, dtau, sign, plot = False):
     
     """
     Function to compute the spectral intensity integral (Eqs. 12 & 13) using
@@ -159,6 +160,64 @@ def fresnel_I(chi1n, chi2n, v0n, v1n, dtau, sign):
     ImIn += psi_p * (Sp - Sm) - psi_m * (Cp - Cm) - 2 * v1n * (cos_p - cos_m)
     ImIn = sign * (0.25 / chi2n) * ImIn
     
+    if plot:
+        # Phis
+        fig = plt.figure(figsize = (8, 6))
+        ax1  = fig.add_subplot(121)
+        ax2  = fig.add_subplot(122)
+        ax1.plot(phi_p, label = "phi +")
+        ax1.legend()
+        ax2.plot(phi_m, label = "phi -")
+        ax2.legend()
+        plt.show()
+        # psis (real)
+        fig = plt.figure(figsize = (8, 6))
+        ax1  = fig.add_subplot(121)
+        ax2  = fig.add_subplot(122)
+        ax1.plot(np.real(psi_p), label = "Re psi +")
+        ax1.legend()
+        ax2.plot(np.real(psi_m), label = "Re psi -")
+        ax2.legend()
+        plt.show()
+        # psi
+        fig = plt.figure(figsize = (8, 6))
+        ax1  = fig.add_subplot(121)
+        ax2  = fig.add_subplot(122)
+        ax1.plot(np.imag(psi_p), label = "Im psi +")
+        ax1.legend()
+        ax2.plot(np.imag(psi_m), label = "Im psi -")
+        ax2.legend()
+        plt.show()
+        # Thetas (real)
+        fig = plt.figure(figsize = (8, 6))
+        ax1  = fig.add_subplot(121)
+        ax2  = fig.add_subplot(122)
+        ax1.plot(np.real(theta_p), label = "Re Theta +")
+        ax1.legend()
+        ax2.plot(np.real(theta_m), label = "Re Theta -")
+        ax2.legend()
+        plt.show()
+        # Thetas (imag)
+        fig = plt.figure(figsize = (8, 6))
+        ax1  = fig.add_subplot(121)
+        ax2  = fig.add_subplot(122)
+        ax1.plot(np.imag(theta_p), label = "Im Theta +")
+        ax1.legend()
+        ax2.plot(np.imag(theta_m), label = "Im Theta -")
+        ax2.legend()
+        plt.show()
+        
+        #Re and Im
+        # psi
+        fig = plt.figure(figsize = (8, 6))
+        ax1  = fig.add_subplot(121)
+        ax2  = fig.add_subplot(122)
+        ax1.plot(ReIn, label = "Real I")
+        ax1.legend()
+        ax2.plot(ImIn, label = "Imag I")
+        ax2.legend()
+        plt.show()
+        
     return ReIn, ImIn
 
 def taylor_I(chi1n, chi2n, v0n, v1n, dtau, sign):
@@ -207,6 +266,8 @@ def get_d2I(w, s_hat, x4, x41n, x42n, v4, v1n, dtau, theta):
     
     # Looping for now, speedup later
     d2I = np.zeros(len(w))
+
+    
     for i in range(len(w)):
         om = w[i]
         sign = np.sign(om)
@@ -266,6 +327,6 @@ def get_d2I(w, s_hat, x4, x41n, x42n, v4, v1n, dtau, theta):
         d2I[i] = RSx**2 + ISx**2 \
              + (RSy * np.cos(theta) - RSz * np.sin(theta))**2 \
              + (ISy * np.cos(theta) - ISz * np.sin(theta))**2
-    d2I = d2I * (mu_0 * e**2 * c * w**2) / (16 * np.pi**3)  
+    d2I = d2I * (mu_0 * e**2 * (w)**2) / (16 * np.pi**3)  
         
     return d2I

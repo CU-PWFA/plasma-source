@@ -42,7 +42,7 @@ Nw   = 10000
 w    = w0*np.linspace(1e0,1e7,Nw)
 
 shat   = np.array([1,0,0],dtype="longdouble")
-kaphat = np.concatenate(([1],shat*inv_c))
+kaphat = np.concatenate(([inv_c],shat*inv_c))
 
 gamma     = np.longdouble(1000)
 inv_gamma = 1/gamma
@@ -55,14 +55,15 @@ inv_rho = 1/rho
 dtau = pi*(1e4)/w0
 Ntau = Nw
 tau  = np.linspace(0,Ntau*dtau,Ntau)
+t    = gamma * tau
 
 phi_obs = 90*pi/180
 
 # position vectors
-x  = rho * np.sin(beta*c*tau * 0.5*inv_pi*inv_rho)
-y  = rho * (1 - np.cos(beta*c*tau * 0.5*inv_pi*inv_rho))
+x  = rho * np.sin(beta*c*t * 0.5*inv_pi*inv_rho)
+y  = rho * (1 - np.cos(beta*c*t * 0.5*inv_pi*inv_rho))
 z  = np.zeros(len(x),dtype="longdouble")
-x4 = np.array([c*tau,x,y,z],dtype="longdouble")
+x4 = np.array([c*t,x,y,z],dtype="longdouble")
 
 # get quadratic interpolation coefficients
 def get_interp_coeffs(tau,x,x_spl):
@@ -88,8 +89,8 @@ z0,z1,z2,vz0,vz1 = get_interp_coeffs(tau,z,z_spl)
 
 # quadratic coefficient position four-vectors
 zero_array = np.zeros(len(tau),dtype="longdouble")
-x40 = np.array([c*tau,x0,y0,z0],dtype="longdouble")
-x41 = np.array([zero_array,x1,y1,z1],dtype="longdouble")
+x40 = np.array([c*t,x0,y0,z0],dtype="longdouble")
+x41 = np.array([zero_array + gamma * c,x1,y1,z1],dtype="longdouble")
 x42 = np.array([zero_array,x2,y2,z2],dtype="longdouble")
 
 # quadratic coefficient velocity three-vectors

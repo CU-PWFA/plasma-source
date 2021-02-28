@@ -8,7 +8,7 @@ from scipy.special import kv
 
 import thomas as th
 
-
+inv_c = 1 / c
 def analytic_synch(w, gamma, p, angle):
     """
     Function to compute the analytic solution for bending magnet radiation.
