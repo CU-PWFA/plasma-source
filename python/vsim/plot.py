@@ -273,10 +273,8 @@ def drive_witness_density_new(params):
     # Load in plasma density
     rho, rhoAttrs = load.load_field(path, simName, 'rhoPlasma')
     Nx, Ny, Nz = analyze.get_shape(rho[ind])
-    rhoXY = -np.transpose(rho[ind][:, :, int(Nz+1)/2, 0]/e/1e6)+2 #for one transverse dim
-    #rhoXY = -np.transpose(rho[ind][:, int(Nz+1)/2, :, 0]/e/1e6)+2 #for the other tran dim
-    #x = np.linspace(0, 250, Nx)
-    #y = np.linspace(0, 250, Ny)
+    #rhoXY = -np.transpose(rho[ind][:, :, int(Nz+1)/2, 0]/e/1e6)+2 #for one transverse dim
+    rhoXY = -np.transpose(rho[ind][:, int(Nz+1)/2, :, 0]/e/1e6)+2 #for the other tran dim
     
     #Load in drive beam density
     rho, rhoAttrs = load.load_field(path, simName, 'rhoDrive')
@@ -315,14 +313,156 @@ def drive_witness_density_new(params):
     #cmapW = alpha_colormap(plt.cm.get_cmap('nipy_spectral'), 0.1, True)
     cmapW = alpha_colormap(plt.cm.get_cmap('rainbow'), 0.1, True)
     ax.imshow(rhoWXY, interpolation='gaussian', extent=[-125, 125, -125, 125], cmap=cmapW)
+    npcase = 2e16
+    vmax = 1e18*(npcase/3.7e17)
+    vmin = 3e16*(npcase/3.7e17)
     
     # Plot the plasma density
     cmapP = alpha_colormap(plt.cm.get_cmap('inferno'), 0.2, True)
     ax.imshow(rhoXY, interpolation='gaussian', aspect='auto', extent=[-125, 125, -125, 125],
-               norm=colors.LogNorm(vmin=1e16, vmax=1e18), cmap=cmapP)#1e16,2e18
+               norm=colors.LogNorm(vmin=vmin, vmax=vmax), cmap=cmapP)#1e16,2e18
     
     plt.savefig(path+'Title_Wake.png')
     plt.show()
+
+def wake_cross_section(params):
+    e = const.physical_constants['elementary charge'][0]
+
+    path = params['path']
+    simName = params['simName']
+    ind = params['dumpInd']
+    vmin = params['vmin']
+    vmax = params['vmax']
+    central_off = params['centralOff']
+    tranExtent = params['tranExtent']
+    plot = params['plot']
+    
+    def alpha_colormap(cmap, cutoff, flip=True):
+        N = cmap.N
+        cmapt = cmap(np.arange(N))
+        alpha = np.ones(N)
+        if flip:
+            temp = alpha[:int(cutoff*N)]
+            M = len(temp)
+            alpha[:int(cutoff*N)] = np.linspace(0, 1, M)
+        else:
+            alpha[int((1-cutoff)*N):] = 0.0
+        cmapt[:, -1] = alpha
+        cmapt = colors.ListedColormap(cmapt)
+        return cmapt
+    
+    # Load in plasma density
+    rho, rhoAttrs = load.load_field(path, simName, 'rhoPlasma')
+    #print(rho); print(np.shape(rho))
+    #print(rhoAttrs); print(np.shape(rhoAttrs))
+    Nx, Ny, Nz = analyze.get_shape(rho[ind])
+    #rhoYZ = -np.transpose(rho[ind][int(Nx+1)/2+central_off, :, :, 0]/e/1e6)+2
+    rhoYZ = -(rho[ind][int(Nx+1)/2+central_off, :, :, 0]/e/1e6)+2
+    x = np.linspace(-tranExtent, tranExtent, Nz)
+    y = np.linspace(-tranExtent, tranExtent, Ny)
+    """
+    rho_grad = rhoYZ[:,int((Ny+1)/2)]
+    plt.plot(y,rho_grad)
+    plt.title("Linear Density Gradient")
+    plt.xlabel(r'$x (\mu m)$')
+    plt.ylabel(r'$n_p (cm^{-3})$')
+    plt.grid();plt.show()
+    """
+    if plot is True:
+        # Plot the plasma density
+        fig = plt.figure(figsize=(7.5, 7.5), dpi=100, frameon=False)
+        ax = plt.Axes(fig, [0., 0., 1., 1.])
+        #ax.set_axis_off()
+        fig.add_axes(ax)
+        cmapP = alpha_colormap(plt.cm.get_cmap('inferno'), 0.2, True)
+        ax.imshow(rhoYZ, interpolation='gaussian', aspect=1, extent=[-tranExtent, tranExtent, -tranExtent, tranExtent],
+                   norm=colors.LogNorm(vmin=vmin, vmax=vmax), cmap=cmapP)#1e16,2e18
+        """
+        r_circ = 80
+        plt.plot(x, np.sqrt(r_circ**2-np.square(x)),  c='b',ls='--')
+        plt.plot(x, -np.sqrt(r_circ**2-np.square(x)), c='b',ls='--')
+        """
+        plt.savefig(path+'Title_Wake.png')
+        plt.show()
+    
+    r = np.zeros(Nz*Ny); theta = np.zeros(Nz*Ny); rhoPol = np.zeros(Nz*Ny)
+    z=0
+    for i in range(Nz):
+        for j in range(Ny):
+            r[z] = np.sqrt(np.square(x[i])+np.square(y[j]))
+            if x[i] == 0:
+                if y[j] >= 0:
+                    theta[z] = np.pi/2
+                else:
+                    theta[z] = -np.pi/2
+            else:
+                theta[z] = np.arctan(y[j]/x[i])
+            if x[i] < 0:
+                theta[z] = theta[z] + np.pi
+            rhoPol[z] = rhoYZ[i,j]
+            z = z+1
+            
+    threshset = np.array(np.where(r < 100)[0])
+    theta = theta[threshset]; r = r[threshset]; rhoPol = rhoPol[threshset]
+    sort = np.argsort(theta)
+    theta = theta[sort]; r = r[sort]; rhoPol = rhoPol[sort]
+    
+    thetabins = np.linspace(min(theta), max(theta), 60)
+    rhosheath = np.zeros(len(thetabins)-1)
+    rsheath = np.zeros(len(thetabins)-1)
+
+    k = 0
+    for i in range(len(thetabins)-1):
+        while theta[k] < thetabins[i+1]:
+            
+            if rhoPol[k] < 1e16:
+                if r[k] > rsheath[i]:
+                    rsheath[i] = r[k]
+            """
+            if rhosheath[i] < rhoPol[k]:
+                rhosheath[i] = rhoPol[k]
+                rsheath[i] = r[k]
+            """
+            k=k+1
+            
+    return (thetabins[1:]+.5*(thetabins[2]-thetabins[1])), rsheath
+    #return r, theta, rhoPol
+
+def wake_cross_section_field(params):
+    e = const.physical_constants['elementary charge'][0]
+
+    path = params['path']
+    simName = params['simName']
+    ind = params['dumpInd']
+    central_off = params['centralOff']
+    tranExtent = params['tranExtent']
+    plot = params['plot']
+    vec = params['vector']
+    field = params['field']
+    
+    # Load in plasma density
+    efield, efieldAttrs = load.load_field(path, simName, field)
+    Nx, Ny, Nz = analyze.get_shape(efield[ind])
+    #rhoYZ = -np.transpose(rho[ind][int(Nx+1)/2+central_off, :, :, 0]/e/1e6)+2
+    eYZ = -(efield[ind][int(Nx+1)/2+central_off, :, :, vec])
+
+    if plot is True:
+        # Plot the plasma density
+        fig = plt.figure(figsize=(7.5, 7.5), dpi=100, frameon=False)
+        ax = plt.Axes(fig, [0., 0., 1., 1.])
+        #ax.set_axis_off()
+        fig.add_axes(ax)
+        h = ax.imshow(eYZ, interpolation='gaussian', aspect=1, extent=[-tranExtent, tranExtent, -tranExtent, tranExtent])
+        plt.savefig(path+'Title_Wake.png')
+        plt.colorbar(h)
+        plt.show()
+    
+    evx = np.flip(eYZ[int((Nz+1)/2),:],0)
+    evy = np.flip(eYZ[:,int((Nz+1)/2)],0)
+    x = np.linspace(-tranExtent,tranExtent,Nz)
+    y = np.linspace(-tranExtent,tranExtent,Ny)
+
+    return x, y, evx, evy, eYZ
 
 def drive_witness_animation(params):
     """ Creates an animation of the electron wake and beam density evolution.

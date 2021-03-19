@@ -21,7 +21,7 @@ e = 4.8032e-10
 pi = np.pi
 
 n_cent = 3.0e16  #cm-3
-yradius = 40e-6 *1e2 #cm
+yradius = 32e-6 *1e2 #cm
 xradius = 30e-6 *1e2
 slope  = 0 #cm-4
 xwindow = ywindow = 100e-6 * 1e2  #cm
@@ -183,8 +183,13 @@ exgrid_theory = np.zeros((lenX, lenY))
 for i in range(lenX):
     for j in range(lenY):
         if np.square(X[i])/np.square(xradius) + np.square(Y[j])/np.square(yradius) < 1:
-            exgrid_theory[i,j] = 2*pi*e*n_cent*(X[i])*(rmu/xradius)
-            eygrid_theory[i,j] = 2*pi*e*n_cent*(Y[j]-2*ybar)*(rmu/yradius)
+                #mike's theory
+            delt=yradius/xradius-1
+            exgrid_theory[i,j] = 2*pi*e*n_cent*(X[i])*(1+delt/2)
+            eygrid_theory[i,j] = 2*pi*e*n_cent*(Y[j])*(1-delt/2)
+                #mytheory
+            #exgrid_theory[i,j] = 2*pi*e*n_cent*(X[i])*(rmu/xradius)
+            #eygrid_theory[i,j] = 2*pi*e*n_cent*(Y[j]-2*ybar)*(rmu/yradius)
         else:
             exgrid_theory[i,j] = exgrid[i,j]
             eygrid_theory[i,j] = eygrid[i,j]

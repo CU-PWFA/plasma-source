@@ -21,8 +21,9 @@ import matplotlib.pyplot as plt
 #'max_corrector' will shift the beam axis to the maximum density
 #  poor for most cases-only interesting at high densities ~10e19
 cuts=1
-max_corrector=1
-enforce_xoff=0#-31#for p2g8
+max_corrector=0
+enforce_xoff=0#-60#60#-46#-31#for p2g8
+#-11 for the spherical casea highp, -30 for highpz zoomed versions
 calc_focal = 1
 center_jet = 1 #set to 1 to not max correct on the jet axis
 
@@ -38,8 +39,6 @@ infinite_approx = 0
 #size of window in micrometers
 resize=1
 
-
-
 #Locate the desired data by specifying the folder and directory within
 
 #folder = '/home/chris/Desktop/FourierPlots/ArBackground/'
@@ -47,7 +46,7 @@ resize=1
 #folder = '/home/chris/Desktop/FourierPlots/H_996um_5e16cm-3/'
 #folder = '/home/chris/Desktop/FourierPlots/ArGasJet_442um_5e16cm-3_new/'
 #folder = '/home/chris/Desktop/FourierPlots/ArGasJet_442_5e16cm-3_Wider/'
-#"""
+"""
 #folder = '/home/chris/Desktop/FourierPlots/ArGasJet_737um_3e16cm-3/' #Case in Paper 1
 #folder = '/home/chris/Desktop/FourierPlots/ArGasJet_737um_3e16cm-3_zoom/'
 folder = '/home/chris/Desktop/FourierPlots/ArJet_paperresub_lorentz/' # NEW zoomed
@@ -55,14 +54,32 @@ folder = '/home/chris/Desktop/FourierPlots/ArJet_paperresub_lorentz/' # NEW zoom
 n0_lens = 3e16
 y_window = 1500
 z_window = 300
-#"""
+"""
 """
 folder = '/home/chris/Desktop/FourierPlots/HeGas_slactest/'
 folder = '/home/chris/Desktop/FourierPlots/HeGas_slactest3/'
 #folder = '/home/chris/Desktop/FourierPlots/HeGas_slactest_gasjet/'
 folder = '/home/chris/Desktop/FourierPlots/HeGas_slactest_lowback/'
-n0_lens = 7.2e17
-y_window = 100
+folder = '/home/chris/Desktop/FourierPlots/3e12He_cyl_largeM2/'
+n0_lens = 3e12
+y_window = 120
+z_window = 400
+"""
+
+#folder = '/home/chris/Desktop/FourierPlots/spherical_caseb_he10e16/'
+#folder = '/home/chris/Desktop/FourierPlots/spherical_caseb_he1e18_gasjet/'
+folder = '/home/chris/Desktop/FourierPlots/spherical_casea_he37e16_highpz_mr2/'
+folder = '/home/chris/Desktop/FourierPlots/testm2/'
+n0_lens = 3.7e17
+n0_lens = 3e12
+y_window = 90
+z_window = 400
+
+"""
+folder = '/home/chris/Desktop/FourierPlots/crosscylafterglow_case3/'
+folder = '/home/chris/Desktop/FourierPlots/pulseParams_spherical_largeM2/'
+n0_lens = 1e18
+y_window = 400
 z_window = 400
 """
 directory = 'case_1/'
@@ -122,8 +139,10 @@ if max_corrector == 1:
 ThrDim.ImageCut(den,x,y,z,x_off,y_off,z_off,1e-3,
                 '(mm)','Plasma Density','e17(cm^-3)',1)
 
-ThrDim.ImageCut_xy_Production(den,x,y,z,x_off,y_off,z_off,1e-3,
-                '(mm)',r'$n_p$',r'$\mathrm{\ (10^{16} cm^{-3}})$',1)
+print("Total Charge: ",ThrDim.TotalCharge(den,x,y,z)," C")
+
+#ThrDim.ImageCut_xy_Production(den,x,y,z,x_off,y_off,z_off,1e-3,
+#                '(mm)',r'$n_p$',r'$\mathrm{\ (10^{16} cm^{-3}})$',1)
 sys.exit()
 #Perform variance cuts to investigate density profiles on-and off-axis
 if cuts == 1:
@@ -228,11 +247,16 @@ if getfit == 1:
     #Get the tanh parameters for the z axis by fitting den_vs_z
     den_vs_z=den[round(len(x)/2)+x_off,round(len(y)/2),:]
     fitz = ThrDim.FitDataDoubleTanh(den_vs_z,z,[guess[0]/10.0,guess[1]*10.,guess[2]],"Density vs z")
+    #plt.plot(z,den_vs_z)
+    #fitz = [31.5,2,1]
+    #plt.plot(z,ThrDim.DoubleTanh(fitz,z))
+    #plt.show()
+    #sys.exit()
     
     if slanted == 1:
         fitz_sl = ThrDim.FitDataSomething(den_vs_z,z,ThrDim.DoubleTanhSlant,[fitz[0],fitz[1],fitz[2],-0.01])
     
-        comparePaper = 1
+        comparePaper = 0
         if comparePaper == 1:
             fitz_old = [82.1345751991, 14.7258249296, 0.299171976932, -4.52975946e-04]
             plt.plot(z, den_vs_z)

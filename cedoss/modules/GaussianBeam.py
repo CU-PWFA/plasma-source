@@ -267,6 +267,7 @@ def Prop_SpotList(q,lmba):
 #  lmba - laser wavelength
 #  E0 - initial laser electric field strength (GV/m)
 #  w0 - initial waist size
+#  M2 - M-squared value of beam, =1 for pure Gaussian
 def Prop_EPhase(q_y, q_z, offset, lmba, E0, w0):
     wy=Prop_SpotList(q_y,lmba)
     wz=Prop_SpotList(q_z,lmba)
@@ -302,6 +303,58 @@ def Prop_EPhase(q_y, q_z, offset, lmba, E0, w0):
     vals = [E0*w0/np.sqrt(wy[waist-offset]*wz[waist-offset]),wy[plane],
             wz[plane],-lmba*Ry[plane]/np.pi,-lmba*Rz[plane]/np.pi,
             (.5*(guoyy+guoyz-phase))%(2*np.pi),xrange[waist]-xi]
+    
+    print("E0 =",str(vals[0]))
+    print("wx =",str(vals[1]))
+    print("wy =",str(vals[2]))
+    print("Px =",str(vals[3]))
+    print("Py =",str(vals[4]))
+    print("phi =",str(vals[5]))
+    print("zi =",str(vals[6]))
+    
+    return vals
+
+def Prop_EPhase_M2(q_y, q_z, offset, lmba, E0, w0, M2 = 1):
+    wy=Prop_SpotList(q_y,lmba)
+    wz=Prop_SpotList(q_z,lmba)
+    
+    Ry=Prop_RadiusList(q_y)
+    Rz=Prop_RadiusList(q_z)
+    
+    xrange=Prop_GetRange(q_y)
+    
+    waist=wz.index(min(wz))
+    
+    #if min(wz) < min(wy):
+    #    waist=wz.index(min(wz))
+    #else:
+    #    waist=wy.index(min(wy))
+    #    print("hoi")
+    
+    print("waist",waist)
+    plane=waist-offset
+    xi=xrange[plane]
+    print(xi, "Check that this is xi from earlier!")
+    zRy=Gauss_zR(min(wy),lmba)
+    zRz=Gauss_zR(min(wz),lmba)
+    
+    xoy=xrange[wy.index(min(wy))]
+    xoz=xrange[wz.index(min(wz))]
+    
+    guoyy=np.arctan((xi-xoy)/zRy)
+    guoyz=np.arctan((xi-xoz)/zRz)
+    
+    phase=2*np.pi/lmba*(2*xi-xoy-xoz)
+    
+    wy = np.array(wy)*np.sqrt(M2); wz = np.array(wz)*np.sqrt(M2)
+    
+    vals = [E0*w0/np.sqrt(wy[waist-offset]*wz[waist-offset]),
+            wy[plane],
+            wz[plane],
+            -lmba*Ry[plane]/np.pi,
+            -lmba*Rz[plane]/np.pi,
+            (.5*(guoyy+guoyz-phase))%(2*np.pi),
+            xrange[waist]-xi]
     
     print("E0 =",str(vals[0]))
     print("wx =",str(vals[1]))

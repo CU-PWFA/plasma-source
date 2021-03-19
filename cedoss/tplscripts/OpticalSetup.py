@@ -26,10 +26,10 @@ n=1.                    #Refractive index
 epsilon0 = 8.854e-12    #Dielectric constant
 wavelength = 800.0e-9 #785.3e-9   #Laser wavelength in m
 w0 = 5e-3               #Initial spot size in m
-E_ion = 15.8           #Ionization Energy:  13.6 for H, 15.8 for Ar, 24.6 for He 27.6 for Ar++
+E_ion = 24.6           #Ionization Energy:  13.6 for H, 15.8 for Ar, 24.6 for He 27.6 for Ar++
 setupTitle = ""         #Name the setup 
 reverse = 0
-fs_duration = 35e-15
+fs_duration = 40e-15
 
 #I0 = 2*P/(np.pi*np.power(w0,2))*np.power(1/cm_m,2)
 
@@ -38,16 +38,86 @@ zi = 7.5e-3             #Offset from small waist to plane we want to save params
 zoom=int(round(zi/l_step))
 
 path = '/home/chris/Desktop/DataLoads/PulseFilesNp/'
-filename = 'pulseParams_paperresub.npy'
+filename = 'pulseParams_spherical_casea_highpz.npy'
 
-save = 1                #Set to 1 to save anything
-calcdensity = 0 #SLOW   #Set to 1 to calc resulting plasma density w/out refraction
-calcfocal = 0
+path = '/home/chris/Desktop/DataLoads/PulseFilesNp/'
+filename = 'pulseParams_testm2.npy'
+
+save = 1             #Set to 1 to save anything
+calcdensity = 1 #SLOW   #Set to 1 to calc resulting plasma density w/out refraction
+calcfocal = 1
 
 foc_dom_fac = 2
 radscl = 1   #Set to larger to increase the beasm axis domain
 
-choice=50         #Set to one of the setups below
+choice=592         #Set to one of the setups below
+
+if choice == 591:  #Single Spherical Lens
+    setupTitle = "1Spherical"
+    w0 = 14.3e-3 #calculated from 30mm diameter flattop estimation
+    #w0 = 3.575e-3
+    reverse = 0
+    zi = 2e-2
+    zoom = int(round(zi/l_step))
+    radscl = 0.3
+    
+    f0 = 0.646
+    Lmax = 1.0
+    #P = 12.5e9
+    P = 125e9
+    
+    q_x = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    q_y = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,.1,l_step)
+    
+    GB.Prop_CylindricalLens(q_y,q_x,2*f0)
+    GB.Prop_CylindricalLens(q_x,q_y,2*f0)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,Lmax,l_step)
+    
+if choice == 592:  #Single Spherical Lens, same as above but zoomed in more
+    setupTitle = "1Spherical"
+    w0 = 14.3e-3 #calculated from 30mm diameter flattop estimation
+    #w0 = 3.575e-3
+    reverse = 0
+    zi = 0.40e-2#2e-2
+    zoom = int(round(zi/l_step))
+    radscl = 0.3
+    
+    f0 = 0.646
+    Lmax = 1.0
+    #P = 12.5e9
+    P = 125e9
+    
+    q_x = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    q_y = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,.1,l_step)
+    
+    GB.Prop_CylindricalLens(q_y,q_x,2*f0)
+    GB.Prop_CylindricalLens(q_x,q_y,2*f0)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,Lmax,l_step)
+
+if choice == 59:  #Single Spherical Lens
+    setupTitle = "1Spherical"
+    w0 = 8.66e-3 #calculated from 30mm diameter flattop estimation
+    reverse = 0
+    zi = 10e-2
+    zoom = int(round(zi/l_step))
+    radscl = 0.4
+    
+    f0 = 1.8
+    Lmax = 2.8
+    P = 150e9
+    
+    q_x = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    q_y = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,.1,l_step)
+    
+    GB.Prop_CylindricalLens(q_y,q_x,2*f0)
+    GB.Prop_CylindricalLens(q_x,q_y,2*f0)
+    
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,Lmax,l_step)
 
 if choice == 84:  #To be designed for the limits of a window at 38.67 cm or 21.27 cm for <1e12 W/cm2
     setupTitle = "Spherical_2Cylindrical_reversed"

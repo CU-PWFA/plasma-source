@@ -36,7 +36,7 @@ def makefig(x = 6, y = 4, xlab = '', ylab = '', title = '', fs = 12, ts = 12):
 	plot_colors = ['#332288', '#88CCEE', '#44AA99', '#117733', '#999933',\
 	               '#DDCC77', '#CC6677', '#882255', '#AA4499'];
 	cy  = cycler('color', plot_colors);
-	fig = plt.figure(figsize = (x, y), dpi = 200);
+	fig = plt.figure(figsize = (x, y), dpi = 600);
 	ax  = fig.gca();
 	ax.set_prop_cycle(cy);
 	ax.set_xlabel(xlab, fontsize = fs);
@@ -44,5 +44,5 @@ def makefig(x = 6, y = 4, xlab = '', ylab = '', title = '', fs = 12, ts = 12):
 	ax.set_title(title, fontsize = ts, fontweight = 'bold');
 	ax.tick_params(labelsize = 'large');
 
-	return fig, ax;
+	return fig, ax
 	
