@@ -20,6 +20,8 @@ cdef extern from "math.h" nogil:
     double sin(double)
     double cos(double)
     double sqrt(double)
+    
+ctypedef double (*cfptr) (double, double, double, double, double) nogil
 
 def electron_propagation_plasma(double[:, :] ptcls, double[:] z, double z0, 
                                 double[:] ne, int dumpPeriod, saveP, dgammadz,
@@ -50,6 +52,73 @@ def electron_propagation_plasma(double[:, :] ptcls, double[:] z, double z0,
             for j in prange(N, num_threads=n):
         #if True:
         #    for j in range(N):
+                ptcls[j, 5] += dgamma
+                kb = kp/sqrt(2*ptcls[j, 5])
+                #print('z: %0.2f, kb: %0.2f, kp: %0.2E, ne: %0.2E' %(z[i], kb, kp, ne[i]))
+                coskb = cos(kb*dz)
+                sinkb = sin(kb*dz)
+                angle = 1 - 2*dgamma / ptcls[j, 5]
+                # Calculate the components of the transfer matrix
+                if ne[i] < 1.0e-18:
+                    R11 = 1.0
+                    R12 = dz
+                    R21 = 0.0
+                    R22 = 1.0
+                else:
+                    R11 = coskb
+                    R12 = sinkb / kb
+                    R21 = -angle * kb * sinkb
+                    R22 = angle * coskb
+                x = ptcls[j, 0]
+                y = ptcls[j, 2]
+                ptcls[j, 0] = R11 * x + R12 * ptcls[j, 1]
+                ptcls[j, 1] = R21 * x + R22 * ptcls[j, 1]
+                ptcls[j, 2] = R11 * y + R12 * ptcls[j, 3]
+                ptcls[j, 3] = R21 * y + R22 * ptcls[j, 3]
+                ptcls[j, 5] += dgamma
+        if (i % dumpPeriod) == 0:
+            saveP(ptcls, z[i+1]+z0)
+    return np.array(ptcls)
+
+def electron_propagation_plasma_Ez(double[:, :] ptcls, double[:] z, double z0, 
+                                   double[:] ne, int dumpPeriod, saveP, dgammadz,
+                                   int n, double arg1, double arg2, double arg3):
+    """ Propagate an electron beam through an ion column with xi dependent Ez.
+    
+    Propagates a collection of macro particles through a full blowout plasma
+    wake. The calculation essentially assumes the electrons are propagating
+    through a pure ion column and allows for xi dependent energy increase/decrease.
+    """
+    cdef int i, j
+    cdef int N = np.shape(ptcls)[0]
+    cdef int Nz = len(z)
+    cdef double dgamma
+    cdef double kp, kb, dz
+    cdef double coskb, sinkb, angle
+    cdef double R11, R12, R21, R22
+    cdef double x, y
+    cdef cfptr f_dgammadz
+    # Use the energy gain function
+    if dgammadz == 'uniform_linear':
+        f_dgammadz = dgammadz_uniform_linear
+    if dgammadz == 'uniform_quadratic':
+        f_dgammadz = dgammadz_uniform_quadratic
+    if dgammadz == 'ramped_linear':
+        f_dgammadz = dgammadz_ramped_linear
+    if dgammadz == 'ramped_linear_simple':
+        f_dgammadz = dgammadz_ramped_linear_simple
+    # Calculate parameters for each z-slice
+    for i in range(Nz-1):
+        kp = 5.95074e4 * sqrt(ne[i])
+        if ne[i] < -1e-18:
+            warnings.warn('Plasma density less than zero, treating as zero.')
+        # Pre-calculate the energy gain per slice
+        dz = z[i+1] - z[i]
+        with nogil:
+            for j in prange(N, num_threads=n):
+        #if True:
+        #    for j in range(N):
+                dgamma = 0.5 * f_dgammadz(ne[i], ptcls[j, 4], arg1, arg2, arg3) * dz
                 ptcls[j, 5] += dgamma
                 kb = kp/sqrt(2*ptcls[j, 5])
                 #print('z: %0.2f, kb: %0.2f, kp: %0.2E, ne: %0.2E' %(z[i], kb, kp, ne[i]))
@@ -225,3 +294,28 @@ cdef double dgammadz_witness(double ne, double ne0, double dgdz0):
 cdef double dgammadz_drive(double ne, double ne0, double dgdz0):
     cdef double eta = ne/ne0
     return dgdz0 * eta**0.71
+
+
+cdef double dgammadz_uniform_linear(double ne, double xi, double E0, double E1, double arg3) nogil:
+    cdef double E = E0 + E1*xi
+    return E*1.956957e-6
+
+cdef double dgammadz_ramped_linear(double ne, double xi, double E0, double E1, double ne0) nogil:
+    cdef double eta = ne/ne0
+    cdef double multi = (eta)**0.7985*(2*sqrt(eta) - 1)
+    cdef double E0_n = E0*multi
+    cdef double E1_n = E1*multi
+    cdef double E = E0_n + E1_n*xi
+    return E*1.956957e-6
+
+cdef double dgammadz_ramped_linear_simple(double ne, double xi, double E0, double E1, double ne0) nogil:
+    cdef double eta = ne/ne0
+    cdef double multi = 2*eta-sqrt(eta)
+    cdef double E0_n = E0*multi
+    cdef double E1_n = E1*multi
+    cdef double E = E0_n + E1_n*xi
+    return E*1.956957e-6
+
+cdef double dgammadz_uniform_quadratic(double ne, double xi, double E0, double E2, double arg3) nogil:
+    cdef double E = E0 + E2*xi**2
+    return E*1.956957e-6

@@ -215,7 +215,7 @@ def propagate_to_start(r, E, Z, X, Nx, path, lam, tau, threads, xlim=None, plot=
     
     return beam, pulseParams
 
-def domain_test(X, Nx, Z, Nz, beam0, pulseParams, z_target, I_target, start, ylim=None, log=False, plot=True):
+def domain_test(X, Nx, Z, Nz, beam0, pulseParams, z_target, I_target, start, ylim=None, log=False, plot=True, legend=True):
     """ Propagate the beam to see if the domain is large enough.
     
     Parameters
@@ -285,7 +285,8 @@ def domain_test(X, Nx, Z, Nz, beam0, pulseParams, z_target, I_target, start, yli
         plt.twinx()
         plt.plot((z_target-start-dz)/1e4, I_target, 'w-', label='Target')
         plt.plot(np.array(beam1.z[:-1])/1e4, I[:, int(Nx/2)], 'c--', label='Simulated')
-        plt.legend(loc=8)
+        if legend:
+            plt.legend(loc=8)
         plt.xlim(0, Z/1e4)
         plt.show()
     
@@ -403,7 +404,7 @@ def plot_laser_plasma(I, ne, ext):
     plt.tight_layout()
     plt.show()
 
-def plot_plasma_density(pulse, ne, ne0, ext, lines=[20, 40, 60], name=None, xlim=None, ylim=None):
+def plot_plasma_density(pulse, ne, ne0, ext, lines=[20, 40, 60], name=None, xlim=None, ylim=None, xlim2=None, yticks=None):
     """ Plot the plasma desnity with line outs.
 
     Parameters
@@ -425,6 +426,10 @@ def plot_plasma_density(pulse, ne, ne0, ext, lines=[20, 40, 60], name=None, xlim
         xlim = [ext[0], ext[1]]
     if ylim is None:
         ylim = [-500, 500]
+    if xlim2 is None:
+        xlim2 = [-350, 350]
+    if yticks is None:
+        yticks = [-200, 0, 200]
     orange = '#EE7733'
     fig = plt.figure(figsize=(10, 7), dpi=150)
     gs = gridspec.GridSpec(4, 2, height_ratios=(1.5, 0.5, 3, 1), width_ratios=(40, 1),
@@ -438,7 +443,7 @@ def plot_plasma_density(pulse, ne, ne0, ext, lines=[20, 40, 60], name=None, xlim
     grey2 = '#AAAAAA'
     linewidth = 0.8
     for i in lines:
-        plt.plot([i, i], [-500, 500], '-', c=grey2, linewidth=0.8)
+        plt.plot([i, i], [ylim[0], ylim[1]], '-', c=grey2, linewidth=0.8)
 
     ax2 = plt.subplot(gs[2, 1])
     cb = plt.colorbar(im, cax=ax2)
@@ -447,7 +452,7 @@ def plot_plasma_density(pulse, ne, ne0, ext, lines=[20, 40, 60], name=None, xlim
     ax3 = plt.subplot(gs[3, 0], sharex=ax1)
     plt.plot(np.array(pulse.z)/1e4, ne[:, int(pulse.Nx/2)]/1e16, c=orange)
     plt.xlim(xlim)
-    plt.ylim(0, 4)
+    plt.ylim(0, 1.1*ne0*10)
     plt.xlabel(r'$z$ (cm)')
     plt.ylabel(r'$n_e$')
     plt.grid(True)
@@ -460,27 +465,27 @@ def plot_plasma_density(pulse, ne, ne0, ext, lines=[20, 40, 60], name=None, xlim
     gs2 = gridspec.GridSpecFromSubplotSpec(1, 3, wspace=0.0, subplot_spec=gs[0, 0])
     ax01 = plt.subplot(gs2[0, 2])
     plt.plot(ne[int(Nz*lines[2]/Z), :]/1e16, pulse.x, c=orange)
-    plt.plot([ne0*10, ne0*10], [-500, 500], '-', c=grey2, linewidth=linewidth)
+    plt.plot([ne0*10, ne0*10], xlim2, '-', c=grey2, linewidth=linewidth)
     plt.grid(True, axis='y')
     plt.xlim(0, 1.1*ne0*10)
     plt.xlabel(r'$n_e$')
 
     ax02 = plt.subplot(gs2[0, 1], sharey=ax01)
     plt.plot(ne[int(Nz*lines[1]/Z), :]/1e16, pulse.x, c=orange)
-    plt.plot([ne0*10, ne0*10], [-500, 500], '-', c=grey2, linewidth=linewidth)
+    plt.plot([ne0*10, ne0*10], xlim2, '-', c=grey2, linewidth=linewidth)
     plt.grid(True, axis='y')
     plt.xlim(0, 1.1*ne0*10)
     plt.xlabel(r'$n_e$')
 
     ax03 = plt.subplot(gs2[0, 0], sharey=ax02)
     plt.plot(ne[int(Nz*lines[0]/Z), :]/1e16, pulse.x, c=orange)
-    plt.plot([ne0*10, ne0*10], [-500, 500], '-', c=grey2, linewidth=linewidth)
+    plt.plot([ne0*10, ne0*10], xlim2, '-', c=grey2, linewidth=linewidth)
     plt.grid(True, axis='y')
     plt.xlim(0, 1.1*ne0*10)
     plt.xlabel(r'$n_e$')
-    plt.ylim(-350, 350)
+    plt.ylim(xlim2)
     plt.ylabel(r'$x$ ($\mathrm{\mu m}$)')
-    plt.yticks([-200, 0, 200])
+    plt.yticks(yticks)
 
     plt.setp([a.get_yticklabels() for a in fig.axes[3:-1]], visible=False)
     if name is not None:
@@ -619,10 +624,10 @@ def load_plasma_design(path, name=None):
     pulse : Pulse object
         The laser pulse object from the refraction simulation.
     """
-    plasma = np.load(path+'plasma.npy')
-    I = np.load(path+'intensity.npy')
-    z = np.load(path+'z.npy')
-    sim_start, sim_length = np.load(path+'sim_size.npy')
+    plasma = np.load(path+'plasma.npy', allow_pickle=True)
+    I = np.load(path+'intensity.npy', allow_pickle=True)
+    z = np.load(path+'z.npy', allow_pickle=True)
+    sim_start, sim_length = np.load(path+'sim_size.npy', allow_pickle=True)
     
     if name is None:
         name = 'Refracted_Beam'

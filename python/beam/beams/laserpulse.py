@@ -123,7 +123,7 @@ class Pulse(beam.Beam):
     def load_beam(self):
         """ Load the beam, specifically load the z grid and saveInd. """
         self.create_grid()
-        self.z = np.load(self.filePre + '_z.npy').tolist()
+        self.z = np.load(self.filePre + '_z.npy', allow_pickle=True).tolist()
         self.saveInd = len(self.z)
         e, temp = self.load_field(self.saveInd - 1)
         if not self.cyl:
