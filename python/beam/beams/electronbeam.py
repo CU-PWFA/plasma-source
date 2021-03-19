@@ -911,7 +911,47 @@ class GaussianElectronBeam(ElectronBeam):
         ptcls[:, 3] = (vy-self.alphay*uy) / np.sqrt(betay) + offset_yp
         ptcls[:, 4] = np.random.normal(0.0, self.sigmaz, N)
         ptcls[:, 5] = gamma * (1 + self.dE*np.random.uniform(-1, 1, N))
-        super().initialize_particles(ptcls) 
+        super().initialize_particles(ptcls)
+        
+class GaussianElectronBeam_GaussianEnergy(GaussianElectronBeam):
+    """ A electron beam with a Gaussian transverse profile. 
+    
+    Parameters
+    ----------
+    gamma : double
+        The relativistic factor of the beam.
+    emittance : double
+        The normalized emittance of the beam in m*rad.
+    betax : double
+        The beta function in the x-direction at z=0, in m.
+    betay : double
+        The beta function in the y direction at z=0, in m.
+    alphax : double
+        The alpha parameter of the beam in the x-direction at z=0.
+    alphay : double
+        The alpha parameter of the beam in the y-direction at z=0.
+    sigmaz : double
+        The RMS size of the beam in z in m.
+    dE : double
+        The RMS energy spread of the beam as a fraction, 0.01 = +-1% energy spread.
+    """
+    
+    def initialize_particles(self, offset_x=0.0, offset_y=0.0, offset_xp=0.0, offset_yp=0.0):
+        """ Initialize the particles in a 6D distribution. """
+        N = self.N
+        gamma = self.gamma
+        betax = self.betax
+        betay = self.betay
+        ptcls = np.zeros((N, 6), dtype='double')
+        ux, vx, uy, vy = self.action_angle_distribution()
+        # Calculate the coordinates
+        ptcls[:, 0] = ux*np.sqrt(betax) + offset_x
+        ptcls[:, 1] = (vx-self.alphax*ux) / np.sqrt(betax) + offset_xp
+        ptcls[:, 2] = uy*np.sqrt(betay) + offset_y
+        ptcls[:, 3] = (vy-self.alphay*uy) / np.sqrt(betay) + offset_yp
+        ptcls[:, 4] = np.random.normal(0.0, self.sigmaz, N)
+        ptcls[:, 5] = gamma*np.random.normal(1, self.dE, N)
+        super().initialize_particles(ptcls)
 
 class OffsetGaussianElectronBeam(GaussianElectronBeam):
     def __init__(self, params):
