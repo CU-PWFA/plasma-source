@@ -82,7 +82,7 @@ def init_beam(beam_params, n0):
             'shape'   : 'Gauss',
             'gb0'     : gb0,
             'rms_gb'  : beam_params['rms_gb0'],
-            'rms_z'   : beam_params['rms_z'],
+            'rms_z'   : beam_params['rms_z0'],
             'eps_nx'  : beam_params['eps_n0'],
             'eps_ny'  : beam_params['eps_n0'],
             'beta_x'  : beta_x00, 
@@ -146,8 +146,10 @@ def init_plasma(beam_params, plasma_params, hw_dn = 0):
         'gb0'    : gb0,
         'shape'  : plasma_params['shape'],
         'L_ft'   : plasma_params['L_ft'],
+        'L_up'   : plasma_params['L_up'],
+        'L_dn'   : plasma_params['L_dn'],
         'hw_up'  : plasma_params['hw_up'],
-        'hw_dn'  : hw_dn
+        'hw_dn'  : plasma_params["hw_dn"]
 }
 
     pwfa0 = pwfa.PWFA(pwfaParams)
@@ -169,13 +171,13 @@ def propagate(beam_params, plasma_params, dumpPeriod = 1e9, name = ""):
         Name of the simulation run
     '''
     # Assign dump path to default or default + name
-    path = "/media/keenan/Data_Storage/WARGSim/"
+    path = "/home/keenan/Documents/data/Wargsim/dumps/"
     path = path + name
     beam_params['path'] = path
     
     my_ebeam = init_beam(beam_params, plasma_params['n0'])
     pwfa0   = init_plasma(beam_params, plasma_params)
-    
+    print("Step size", pwfa0.dz)
     # Get number of threads
     Ncores = psutil.cpu_count()
     numThread  = Ncores # int, number of threads to run on
