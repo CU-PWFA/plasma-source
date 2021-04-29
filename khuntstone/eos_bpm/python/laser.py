@@ -123,7 +123,7 @@ class laser:
             Ec_env = np.abs(Ec_env)**2;
             f      = interp1d(t_arr, Ec_env);
             A      = f(t)
-            return A;
+            return A
 
     def plot_field(self):
         if self.check_chirp():
