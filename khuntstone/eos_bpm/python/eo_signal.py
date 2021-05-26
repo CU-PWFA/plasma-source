@@ -21,7 +21,7 @@ import thz
 def get_signal(ind, setup):
     """
     Function to run a full eos simulation and compute a signal for a given 
-    current profile. 
+    current profile (or E-field) and detector setup.  
 
     Parameters:
     -----------
@@ -54,7 +54,7 @@ def get_signal(ind, setup):
     t_sig : array_like
             Time array corresponding to sig
     """
-    # Extract variables
+    # Extract variables (setup MUST have the following)
     ctype  = setup["ctype"]
     d      = setup["d"]
     y0     = setup["y0"]
@@ -90,8 +90,9 @@ def get_signal(ind, setup):
     # Compute probe timing window (camera res. of 3.5 microns assumed)
     #dtau   = (3.5e-6 / c) * np.tan(angle * np.pi / 180)
     #tau    = np.arange(-500e-15, 1150e-15, dtau)
-    gamma, t_gamma = pr.phase_retard(Ec, tt*1e-12, d, tau, probe, cry,\
-                                     psi = angle)
+    
+    if method == "eosd":
+        gamma, t_gamma = pr.eosd(Ec, te, setup)
 
     # Compute signal
     if method == "cross":
@@ -161,19 +162,27 @@ def E_signal(E, te, setup):
     # Compute Signal
     FEr, f = thz.raw_field(E_int, te_int);
     Ec, tt = thz.cry_field(te_int, FEr, f, d, probe, cry, nslice = nslice)
-    # Compute phase retardation
-    gamma, t_gamma = pr.phase_retard(Ec, tt*1e-12, d, tau, probe, cry,\
-                                     psi = angle)
-
-    # Compute signal
-    if method == "cross":
-        sig = np.sin(gamma / 2)**2
-    elif method == "bal":
-        sig = np.sin(gamma)
-    elif method == "near":
-        sig = 1 - np.cos(gamma + 4 * th)
-    # Re-center time
-    t_sig = t_gamma - t_gamma[np.argmax(gamma)]
+    
+    if method != "eotd":
+        # Not using temporal decoding, can just grab the phase
+        gamma, t_gamma = pr.phase_retard(Ec, tt*1e-12, d, tau, probe, cry,\
+                                         psi = angle)
+        # Compute signal
+        if method == "cross":
+            sig = np.sin(gamma / 2)**2
+        elif method == "bal":
+            sig = np.sin(gamma)
+        elif method == "near":
+            sig = 1 - np.cos(gamma + 4 * th)
+        # Re-center time
+        t_sig = t_gamma - t_gamma[np.argmax(gamma)]
+    
+    elif method == "eotd":
+        # Temporal decoding requires some extra steps
+        an = setup["analyzer"] # Method for probe beam 
+        I_gate = setup["I_gate"] # Gate pulse intensity (AU)
+        # Interpolating function for I_gate
+        f_gate = interp1d(t_las, I_gate, bounds_error = False, fill_value = 0)
 
     return sig, t_sig, gamma, t_gamma
 
