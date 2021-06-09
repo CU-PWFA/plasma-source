@@ -43,10 +43,10 @@ for time in range (0, Ntimestep-1):
 a518= nNew
 #a516= nNew
 #%%
-plt.plot((t+dt)[0:Ntimestep-1]*1e3, a518, label= 'alpha8= 2.36e-14 $(cm^3/s)$')
+plt.plot((t+dt)[0:Ntimestep-1]*1e3, a518, label= '$Recombination Coefficient \\alpha$= 2.36e-14 $(cm^3/s)$')
 #plt.plot((t+dt)[0:Ntimestep-1]*1e6, a516, label= 'alpha8=5e-10 (cm^3/s)')
 
-plt.xlabel('ms')
-plt.ylabel('m^-3')
+plt.xlabel('Time (ms)')
+plt.ylabel('Density ($m^{-3}$)')
 plt.legend()
 #plt.title('Alpha=1e-8cm^3/s_TimeStep=10000')

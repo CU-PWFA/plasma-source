@@ -22,7 +22,6 @@ def FWHM(X,Y):
     right_idx = find(d < 0)[-1]
     return X[right_idx] - X[left_idx] 
 #%%
-PlasmaAfterglow= np.zeros((1, 6))
 count= 0
 #Den= [2, 5, 8, 10, 40, 80]
 Den= [2, 5, 8, 10, 20, 40, 50, 80]
@@ -59,6 +58,7 @@ for density in Den:
                 
                 PWcount= PWcount+1
             except:
+                print('Oh No!')
                 pass
         GPcount= GPcount+1
         PWcount= 0
@@ -195,6 +195,33 @@ plt.xlabel('Density $(1e16 cm^{-3})$')
 plt.ylabel('Afterglow Half Width $(\mu m)$')
 #plt.title('n10 & n25 & n50')
 
+#%%
+plt.figure(4)
+plt.plot(PWidth, AgI_n2[0, :], 'o-', label= '2e16')
+plt.plot(PWidth, AgI_n5[0, :], 'o-', label= '5e16')
+plt.plot(PWidth, AgI_n8[0, :], 'o-', label= '8e16')
+plt.plot(PWidth, AgI_n10[0, :], 'o-', label= '10e16')
+plt.plot(PWidth, AgI_n20[0, :], 'o-', label= '18e16')
+plt.plot(PWidth, AgI_n40[0, :], 'o-', label= '40e16')
+plt.plot(PWidth, AgI_n80[0, :], 'o-', label= '80e16')
+
+plt.legend()
+plt.xlabel('Plasma Half Width $(\mu m)$')
+plt.ylabel('Afterglow Half Width $(\mu m)$')
+#plt.title('n10 & n25 & n50')
+
+#%%
+plt.figure(5)
+plt.plot(Den, AgI_pw30[0, :], 'o-', label= '30')
+plt.plot(Den, AgI_pw35[0, :], 'o-', label= '35')
+plt.plot(Den, AgI_pw40[0, :], 'o-', label= '40')
+plt.plot(Den, AgI_pw45[0, :], 'o-', label= '45')
+plt.plot(Den, AgI_pw50[0, :], 'o-', label= '50')
+plt.xscale("log")
+plt.legend()
+plt.xlabel('Density $(1e16 cm^{-3})$')
+plt.ylabel('Afterglow Half Width $(\mu m)$')
+#plt.title('n10 & n25 & n50')
 #%%
 plt.plot(Den, FittingPara[:, 0], 'o')
 #%%
