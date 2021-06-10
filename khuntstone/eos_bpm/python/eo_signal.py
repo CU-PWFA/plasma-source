@@ -54,6 +54,104 @@ def get_signal(ind, setup):
     t_sig : array_like
             Time array corresponding to sig
     """
+    ctype   = setup["ctype"]
+    d       = setup["d"]
+    y0      = setup["y0"]
+    tp      = setup["tp"]
+    r0      = setup["r0"]
+    fpath   = setup["fpath"]
+    nslice  = setup["nslice"]
+    tau     = setup["tau"]
+    method  = setup["method"]
+    process = setup["process"]
+    if process == "near":
+        theta = setup["theta"] * np.pi/180
+    if method == "spatial":
+        # Extract initial parameters
+        angle   = setup["angle"]
+        # Convert to rad
+        angle = angle*np.pi/180
+        # Initialize crystal and parameters
+        cry = crystal(ctype)
+        # Initialize probe
+        dy = 27e-9;
+        probe = laser({'y0' : y0, 'dy' : dy, 'tp' : tp})
+        # Get current profile
+        I, ti, p2p = cp.get_current(ind, fpath)
+        # Compute electric field
+        E, te = cp.get_E(I, ti, r0)
+        # Make symmetric
+        N      = 1000
+        fE     = interp1d(te, E)
+        t_use  = min([abs(te[0]), te[-1]])
+        te_int = np.linspace(-t_use, t_use, N)
+        E_int  = np.flip(fE(te_int))
+        # Compute Effective THz pulse
+        FEr, f = thz.raw_field(E_int, te_int);
+        Ec, tt = thz.cry_field(te_int, FEr, f, d, probe, cry, \
+                               nslice = nslice)
+        # Compute phase retardation
+        gamma, t_gamma = pr.phase_retard(Ec, tt*1e-12, d, tau, probe, \
+                                         cry, psi = angle)
+        # Center drive bunch on t = 0
+        t_sig = t_gamma - t_gamma[np.argmax(gamma)]
+        # Compute and return signal
+        if process == "cross":
+            sig = np.sin(0.5*gamma)*np.sin(0.5*gamma)
+            return sig, t_sig
+        elif process == "near":
+            sig = 1 - np.cos(gamma + 4 * theta)
+            return sig, t_sig
+        elif process == "bal":
+            sig = np.sin(gamma)
+            return sig, t_sig
+        else:
+            print("Undefined process")
+            return np.nan, np.nan
+        
+    elif method == "eosd":
+        # Get current profile
+        I, ti, p2p = cp.get_current(ind, fpath)
+        # Compute electric field
+        E, te = cp.get_E(I, ti, r0)
+        # Make symmetric
+        N      = 1000
+        fE     = interp1d(te, E)
+        t_use  = min([abs(te[0]), te[-1]])
+        te_int = np.linspace(-t_use, t_use, N)
+        E_int  = np.flip(fE(te_int))
+        # Compute phase retardation
+        gamma, t_gamma = pr.eosd(E_int, te_int, setup)
+        # Recenter max at t = 0
+        t_sig = t_gamma - t_gamma[np.argmax(gamma)]
+        # Compute and return signal
+        if process == "cross":
+            sig = np.sin(0.5*gamma)*np.sin(0.5*gamma)
+            return sig, t_sig
+        elif process == "near":
+            sig = 1 - np.cos(gamma + 4 * theta)
+            return sig, t_sig
+        elif process == "bal":
+            sig = np.sin(gamma)
+            return sig, t_sig
+        else:
+            print("Undefined process")
+            return np.nan, np.nan
+    elif method == "eotd":
+        # Get current profile
+        I, ti, p2p = cp.get_current(ind, fpath)
+        # Compute electric field
+        E, te = cp.get_E(I, ti, r0)
+        # Make symmetric
+        N      = 1000
+        fE     = interp1d(te, E)
+        t_use  = min([abs(te[0]), te[-1]])
+        te_int = np.linspace(-t_use, t_use, N)
+        E_int  = np.flip(fE(te_int))
+        # Compute phase retardation
+        sig, t_sig = pr.eotd(E, te, setup)
+        return sig, t_sig
+    '''
     # Extract variables (setup MUST have the following)
     ctype  = setup["ctype"]
     d      = setup["d"]
@@ -107,6 +205,7 @@ def get_signal(ind, setup):
     if plot:
         plot_signal(I, sig, ti, t_sig)
     return I, ti, p2p, sig, t_sig, gamma, t_gamma
+'''
 def E_signal(E, te, setup):
     """
     Function to compute spatially encoded EOS signal from an electric field.

@@ -68,8 +68,8 @@ def plot_signal(E, te, sig, tsig):
     ax2.plot(tsig*1e12, sig/max(sig), '--b')
     
     # creat appropriate limits 
-    x1 = te[np.argmax(E)]*1e12 - 0.15
-    x2 = 0.7
+    #x1 = te[np.argmax(E)]*1e12 - 0.15
+    #x2 = te[np.argmax(E)]*1e12 + 0.65
     #ax1.set_xlim([x1, x2])
     
     plt.show()

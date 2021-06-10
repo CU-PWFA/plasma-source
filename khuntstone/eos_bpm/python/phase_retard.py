@@ -108,22 +108,15 @@ def phase_retard(Ec, te, d, tau, probe, crystal, psi = 0, interp = False, \
 def eosd(E, te, setup):
     """
     Currently in testing. Function to compute the phase retardation
-    imparted on a chirped pulse (EOSD). Treats the pulse as a 'fine'
-    frequency comb. 
+    imparted on a chirped pulse (EOSD).
     """
     ctype    = setup["ctype"]   # crystal type
     d        = setup["d"]       # crystal thickness
     y0       = setup["y0"]      # probe central wavelength
     tp       = setup["tp"]      # probe FWHM duration
-    angle    = setup["angle"]   # probe crossing angle
-    r0       = setup["r0"]      # crystal beamline distance
-    method   = setup["method"]  # detection method
     nslice   = setup["nslice"]  # number of crystal slices
     tau      = setup["tau"]     # Probing time array
-    t_delay  = setup["t_delay"] # Artificial probe delay
     tchirp   = setup["tc"]      # Chirped pulse FWHM
-    plot     = setup["plot"]    # Plotting preference (True/False)
-    
     # Initialize crystal and parameters
     cry = crystal(ctype)
     # Slice the crystal
@@ -138,14 +131,8 @@ def eosd(E, te, setup):
     # Compute Effective THz pulse
     FEr, f = thz.raw_field(E, te);
     Ec, tt = thz.cry_field(te, FEr, f, d, probe, cry, nslice = nslice)
-    # Convert angle to rads
-    psi = angle * np.pi / 180
-    # preallocate for loop
     gamma = np.zeros(len(tau))
-    upd   = int(len(tau)/10)
     for i in range(len(tau)):
-        #if (i+1)%upd==0:
-        #    print(i+1, "of", len(tau))
         # Get instantaneous frequency/wavelength and create a mini probe
         wi = probe.get_inst_w(tau[i])
         yi = 2*np.pi*c/wi
@@ -153,85 +140,87 @@ def eosd(E, te, setup):
         n0   = cry.indref(np.array([mini_probe.y0]))[0]
         dz   = d_arr[1]-d_arr[0]
         amp1 = 2 * np.pi * n0**3 * dz/ (mini_probe.y0)
-        amp2 = probe.get_inst_amp(tau[i])
         # Get effective probe velocity
         Lchar, vg_opt = mini_probe.laser_l_char(cry)
-        tau_use = tau[i] + t_delay
+        tau_use = tau[i]
         for j in range(len(d_arr)):
-            fEc = interp1d(tt*1e-12, np.real(Ec[:, j]), bounds_error = False, \
+            fEc = interp1d(tt*1e-12, np.real(Ec[:, j]), bounds_error = False,\
                            fill_value = 0)
+
             t_probe = d_arr[j] / vg_opt
             t_interp = t_probe + tau_use
             E_eff = fEc(t_interp)
             gamma[i] += E_eff
-        # Factor in amplitudes
-        gamma[i] = amp1*amp2*gamma[i]
-    # Artificially center gamma at t = 0
-    tau = tau - tau[np.argmax(gamma)]
+        # Compute the signal at time tau
+        # Get probe intensity with delay
+        gamma[i] = amp1*gamma[i]
     return gamma, tau
 
-def broad_signal(E, te, setup):
+def eotd(E, te, setup):
     """
-    Currentyly in testing. Function to compute phase retardation 
-    imparted on a short pulse. Takes into account the """
-    # Extract variables
-    ctype   = setup["ctype"]   # crystal type
-    d       = setup["d"]       # crystal thickness
-    y0      = setup["y0"]      # probe central wavelength
-    tp      = setup["tp"]      # probe FWHM duration
-    angle   = setup["angle"]   # probe crossing angle
-    r0      = setup["r0"]      # crystal beamline distance
-    method  = setup["method"]  # detection method
-    nslice  = setup["nslice"]  # number of crystal slices
-    tau     = setup["tau"]     # Probing time array
-    t_delay = setup["t_delay"] # Artificial probe delay
-    plot    = setup["plot"]    # Plotting preference (True/False)
-    
+    Funtion to compute temporally decoded signal.
+    """
+    ctype    = setup["ctype"]   # crystal type
+    d        = setup["d"]       # crystal thickness
+    y0       = setup["y0"]      # probe central wavelength
+    tp       = setup["tp"]      # probe FWHM duration
+    nslice   = setup["nslice"]  # number of crystal slices
+    tau      = setup["tau"]     # Probing time array
+    tchirp   = setup["tc"]      # Chirped pulse FWHM
     # Initialize crystal and parameters
     cry = crystal(ctype)
-    # Initialize probe
-    dy = 27e-9;
-    probe = laser({'y0' : y0, 'dy' : dy, 'tp' : tp})
-    # Compute Effective THz pulse
-    FEr, f = thz.raw_field(E, te);
-    Ec, tt = thz.cry_field(te, FEr, f, d, probe, cry, nslice = nslice)
-    # Convert angle to rads
-    psi = angle * np.pi / 180
-    # Add shift
-    tau = tau + t_delay
-    # Create depth array
-    nslice = np.shape(Ec)[1] + 1;
+    # Slice the crystal
     j     = np.arange(1, nslice, 1)
     dz    = d / nslice
     d_arr = (j - 0.5) * dz
-    # Compute Amplitude of gamma 
-    n0 = cry.indref(np.array([probe.y0]))[0]
-    amp = n0**3 * dz/ (probe.y0)
-    # Get effective probe velocity
-    Lchar, vg_opt = probe.laser_l_char(cry)
-    Lchar2 = Lchar*Lchar
-    inv_L2 = 1/Lchar2
-    vg_eff = vg_opt * np.cos(psi)
-    # Preallocate for loop
-    gamma = np.zeros(len(tau))
-    # Loop and sum gamma
-    tau_use = tau + t_delay
-    upd = int(len(tau)/10)
+    # Initialize probe
+    dy = 27e-9;
+    probe = laser({'y0' : y0, 'dy' : dy, 'tp' : tp})
+    # Get intensity profile of gate pulse and interpolating function
+    rms_las = tp / (2 * np.sqrt(2*np.log(2)))
+    Nlas    = 5000
+    dt_las  = rms_las*0.1
+    t_las   = np.linspace(-0.5*Nlas*dt_las, 0.5*Nlas*dt_las, Nlas)
+    I_gate  = np.exp(-t_las*t_las/(2*rms_las*rms_las))
+    f_gate  = interp1d(t_las, I_gate, bounds_error = False, fill_value=0)
+    # Create chirped probe pulse and get intensity profile
+    probe.chirp(tchirp)
+    tlim = np.sqrt(tp*tchirp)
+    I_probe = probe.get_inst_amp(t_las)
+    f_probe = interp1d(t_las, I_probe, bounds_error=False, fill_value=0)
+    # Compute Effective THz pulse
+    FEr, f = thz.raw_field(E, te);
+    Ec, tt = thz.cry_field(te, FEr, f, d, probe, cry, nslice = nslice)
+    sig = np.zeros(len(tau))
     for i in range(len(tau)):
-        if (i+1)%upd==0:
-            print(i+1, "of", len(tau))
+        gamma = 0
+        # Get instantaneous frequency/wavelength and create a mini probe
+        wi = probe.get_inst_w(tau[i])
+        yi = 2*np.pi*c/wi
+        mini_probe = laser({"y0" : yi, "dy" : 0, "tp" : tlim})
+        n0   = cry.indref(np.array([mini_probe.y0]))[0]
+        dz   = d_arr[1]-d_arr[0]
+        amp1 = 2 * np.pi * n0**3 * dz/ (mini_probe.y0)
+        # Get effective probe velocity
+        Lchar, vg_opt = mini_probe.laser_l_char(cry)
+        tau_use = tau[i]
         for j in range(len(d_arr)):
-            sigj = probe.sigp * np.sqrt(1 + (d_arr[j] / Lchar)**2)
-            f    = interp1d(tt*1e-12, np.real(Ec[:, j]),\
-                            bounds_error = False, fill_value = 0)
+            fEc = interp1d(tt*1e-12, np.real(Ec[:, j]), bounds_error = False,\
+                           fill_value = 0)
 
-            t_interp = tt*1e-12 + (d_arr[j] / vg_opt)
-            E_eff = f(t_interp)
-            t_delay = tau[i]
-            integrand = E_eff * \
-                        np.exp(-(tt*1e-12 - t_delay)**2 / (2 * sigj**2)) / (sigj)
-            gamma[i] += np.trapz(integrand, tt*1e-12)
-    # Artificially center peak gamma at t = 0
-    tau = tau - tau[np.argmax(gamma)]
-    return amp*gamma, tau
+            t_probe = d_arr[j] / vg_opt
+            t_interp = t_probe + tau_use
+            E_eff = fEc(t_interp)
+            gamma += E_eff
+        # Compute the signal at time tau
+        # Get probe intensity with delay
+        gamma = amp1*gamma
+        I_gate_int = f_gate(t_las - 0.5*tau_use)
+        I_probe_int = np.sin(0.5*gamma)*np.sin(0.5*gamma)\
+                      *f_probe(t_las-0.5*tau_use)
+        integrand = I_gate_int*I_probe_int
+        sig[i] = np.trapz(integrand, x = t_las)
+    sig   = np.flip(sig)
+    t_sig = tau - tau[np.argmax(sig)]
+    return sig, t_sig
 
