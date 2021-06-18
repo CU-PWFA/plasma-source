@@ -48,7 +48,7 @@ for t_i in range (len(theta_i_a)):
         else:
             diff2= 0-abs(L*np.tan(theta_mr)+L*np.tan(theta_mb))*np.cos(theta_i)
         
-        totdiff= diff1+diff2
+        totdiff= (diff1+diff2)*2
         #print(diff1, diff2)
         #print(totdiff)
         
