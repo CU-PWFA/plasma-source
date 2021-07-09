@@ -56,7 +56,7 @@ def plot_signal(E, te, sig, tsig):
     ax1.yaxis.label.set_color("red")
     ax1.tick_params(axis="y", colors="red")
     ax1.set_xlabel('t [ps]')
-    ax1.set_xlim([min(tsig*1e12), max(tsig*1e12)])
+    #ax1.set_xlim([min(tsig*1e12), max(tsig*1e12)])
     ax1.plot(te*1e12, E, '-r')
     
     ax2 = ax1.twinx()
@@ -68,8 +68,10 @@ def plot_signal(E, te, sig, tsig):
     ax2.plot(tsig*1e12, sig/max(sig), '--b')
     
     # creat appropriate limits 
-    #x1 = te[np.argmax(E)]*1e12 - 0.15
-    #x2 = te[np.argmax(E)]*1e12 + 0.65
-    #ax1.set_xlim([x1, x2])
+    xstart = tsig[0]*1e12
+    xend = tsig[-1]*1e12
+    x1 = max([xstart, te[np.argmax(E)]*1e12 - 1.2])
+    x2 = min([xend, te[np.argmax(E)]*1e12 + 0.8])
+    ax1.set_xlim([x1, x2])
     
     plt.show()

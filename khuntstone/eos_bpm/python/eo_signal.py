@@ -234,15 +234,16 @@ def E_signal(E, te, setup):
     --------
     """
     # Extract parameters
-    ctype  = setup["ctype"]
-    d      = setup["d"]
-    y0     = setup["y0"]
-    tp     = setup["tp"]
-    angle  = setup["angle"]
-    method = setup["method"]
-    th     = setup["th"]
-    nslice = setup["nslice"]
-    tau    = setup["tau"]
+    ctype   = setup["ctype"]
+    d       = setup["d"]
+    y0      = setup["y0"]
+    tp      = setup["tp"]
+    r0      = setup["r0"]
+    fpath   = setup["fpath"]
+    nslice  = setup["nslice"]
+    tau     = setup["tau"]
+    method  = setup["method"]
+    process = setup["process"]
     # Initialize crystal and parameters
     cry = crystal(ctype)
     nslice = 100
@@ -263,25 +264,27 @@ def E_signal(E, te, setup):
     Ec, tt = thz.cry_field(te_int, FEr, f, d, probe, cry, nslice = nslice)
     
     if method != "eotd":
-        # Not using temporal decoding, can just grab the phase
-        gamma, t_gamma = pr.phase_retard(Ec, tt*1e-12, d, tau, probe, cry,\
-                                         psi = angle)
+        if method == "spatial":
+            angle = setup["angle"]
+            # Not using temporal decoding, can just grab the phase
+            gamma, t_gamma = pr.phase_retard(Ec, tt*1e-12, d, tau, probe, cry,\
+                                             psi = angle)
+        if method == "eosd":
+            gamma, t_gamma = pr.eosd(E, te, setup)
         # Compute signal
-        if method == "cross":
+        if process == "cross":
             sig = np.sin(gamma / 2)**2
-        elif method == "bal":
+        elif process == "bal":
             sig = np.sin(gamma)
-        elif method == "near":
+        elif process == "near":
+            th = setup["theta"]
             sig = 1 - np.cos(gamma + 4 * th)
         # Re-center time
         t_sig = t_gamma - t_gamma[np.argmax(gamma)]
     
     elif method == "eotd":
-        # Temporal decoding requires some extra steps
-        an = setup["analyzer"] # Method for probe beam 
-        I_gate = setup["I_gate"] # Gate pulse intensity (AU)
-        # Interpolating function for I_gate
-        f_gate = interp1d(t_las, I_gate, bounds_error = False, fill_value = 0)
+        sig, t_sig = pr.eotd(E, te, setup)
+        gamma = 0; t_gamma = 0
 
     return sig, t_sig, gamma, t_gamma
 
