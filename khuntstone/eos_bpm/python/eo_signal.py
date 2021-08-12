@@ -286,8 +286,34 @@ def E_signal(E, te, setup):
         sig, t_sig = pr.eotd(E, te, setup)
         gamma = 0; t_gamma = 0
 
-    return sig, t_sig, gamma, t_gamma
-
+def get_offset(siga, sigb, x0):
+    """
+    Function to compute the transverse offset of the electron bunches. 
+    
+    Parameters:
+    -----------
+    siga  : array_like
+            Signal from crystal A
+    sigb  : array_like
+            Signal from crystal B
+    t_sig : array_like
+            time array of the signals
+    x0    : float
+            nominal crystal beamline separation
+    
+    Returns:
+    --------
+    dx : array_like
+         Time resolved transverse position of the beam
+    """
+    # Compute nominal phase retardation
+    g0 = 2*np.arcsin(np.sqrt(0.5*(siga + sigb)))
+    # Compute R parameter
+    R  = (siga-sigb)/(siga+sigb)
+    # Compute offset
+    dx = (x0/g0)*R*np.tan(0.5*g0)
+    return dx
+    
 
 def plot_signal(I, sig, ti, t_sig, save = False, sname = ""):
     """
@@ -451,9 +477,10 @@ def plot_shot(I, ti, sigA, sigB, tsig, delta, dxd, dxw, angle, r0):
     ax1.tick_params(axis = 'y', color = 'r', labelcolor = 'r')
     ax1.yaxis.label.set_color('r')
     ax1.set_xlim([-0.3, 0.7])
-    ax1.xaxis.tick_top()
-    ax1.xaxis.set_label_position('top') 
-    ax1.set_xlabel('t [ps]')
+    #ax1.xaxis.tick_top()
+    #ax1.xaxis.set_label_position('top') 
+    ax1.set_xticks([])
+    #ax1.set_xlabel('t [ps]')
     ax1.set_xlim([-0.3, 0.7])
     # Crystal Signal Axis
     ax2 = ax1.twinx()
@@ -469,7 +496,6 @@ def plot_shot(I, ti, sigA, sigB, tsig, delta, dxd, dxw, angle, r0):
     x0 = (-0.3 - tsig[0]) * 1e-12 * c * 1e3 / (np.tan(angle * np.pi / 180))
     x1 = (0.7-tsig[0]) * 1e-12 * c * 1e3 / (np.tan(angle * np.pi / 180))
     ax3.set_xlim([x0, x1])
-    ax3.set_xlabel(r'$x_{las}$ [mm]')
     ax3.set_ylabel(r'$S_{+} - S_{-}$ [AU]')
     ax3.yaxis.set_label_position("right")
     ax3.yaxis.tick_right()
@@ -492,9 +518,9 @@ def plot_shot(I, ti, sigA, sigB, tsig, delta, dxd, dxw, angle, r0):
     plt.subplots_adjust(hspace=0.0)
     # Plotting
     ax1.plot(ti*1e12, I, '-r', linewidth = 1)
-    ax2.plot(tsig, sigA + sigB, '-b', linewidth = 1, label = r'$S_+ + S_-$')
-    ax3.plot(xlas, S_bpm, '-g')
-    ax4.plot(xlas, delta * r0 * 1e6, "-y")
+    ax2.plot(tsig*1e12, sigA + sigB, '-b', linewidth = 1, label = r'$S_+ + S_-$')
+    ax3.plot(tsig*1e12, S_bpm, '-g')
+    ax4.plot(tsig*1e12, delta * r0 * 1e6, "-y")
     ax4.axhline(y = dxd*1e6, color = "k", linestyle = '--')
     ax4.axhline(y = dxw*1e6, color = "k", linestyle = '--')
     maxoff = max(abs(np.array([dxd*1e6, dxw*1e6])))
