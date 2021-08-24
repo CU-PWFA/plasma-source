@@ -117,6 +117,7 @@ def eosd(E, te, setup):
     nslice   = setup["nslice"]  # number of crystal slices
     tau      = setup["tau"]     # Probing time array
     tchirp   = setup["tc"]      # Chirped pulse FWHM
+    
     # Initialize crystal and parameters
     cry = crystal(ctype)
     # Slice the crystal
@@ -133,27 +134,28 @@ def eosd(E, te, setup):
     Ec, tt = thz.cry_field(te, FEr, f, d, probe, cry, nslice = nslice)
     gamma = np.zeros(len(tau))
     for i in range(len(tau)):
-        # Get instantaneous frequency/wavelength and create a mini probe
         wi = probe.get_inst_w(tau[i])
         yi = 2*np.pi*c/wi
-        mini_probe = laser({"y0" : yi, "dy" : 0, "tp" : tlim})
-        n0   = cry.indref(np.array([mini_probe.y0]))[0]
-        dz   = d_arr[1]-d_arr[0]
-        amp1 = 2 * np.pi * n0**3 * dz/ (mini_probe.y0)
-        # Get effective probe velocity
+        mini_probe = laser({"y0":yi, "dy":0, "tp":tlim})
+        n0 = cry.indref(np.array([mini_probe.y0]))[0]
+        amp1 = 2*np.pi*n0**3*dz/yi
         Lchar, vg_opt = mini_probe.laser_l_char(cry)
+        inv_Lchar = 1/Lchar
+        inv_vg_opt = 1/vg_opt
         tau_use = tau[i]
         for j in range(len(d_arr)):
-            fEc = interp1d(tt*1e-12, np.real(Ec[:, j]), bounds_error = False,\
-                           fill_value = 0)
-
-            t_probe = d_arr[j] / vg_opt
-            t_interp = t_probe + tau_use
-            E_eff = fEc(t_interp)
-            gamma[i] += E_eff
-        # Compute the signal at time tau
-        # Get probe intensity with delay
+            zj   = d_arr[j]
+            sigj = probe.sigp*np.sqrt(1+zj*zj*inv_Lchar*inv_Lchar)
+            inv_sigj = 1/sigj
+            fEc  = interp1d(tt*1e-12, np.real(Ec[:, j]), bounds_error=False,fill_value=0)
+            t_probe = zj*inv_vg_opt
+            t_int = tt*1e-12 + t_probe
+            E_eff = fEc(t_int)
+            t_num = tt*1e-12 - tau_use
+            integrand = E_eff * inv_sigj * np.exp(-0.5*t_num*t_num*inv_sigj*inv_sigj)
+            gamma[i] += np.trapz(integrand, tt*1e-12)
         gamma[i] = amp1*gamma[i]
+
     return gamma, tau
 
 def eotd(E, te, setup):
@@ -203,15 +205,20 @@ def eotd(E, te, setup):
         amp1 = 2 * np.pi * n0**3 * dz/ (mini_probe.y0)
         # Get effective probe velocity
         Lchar, vg_opt = mini_probe.laser_l_char(cry)
+        inv_Lchar = 1/Lchar
+        inv_vg_opt = 1/vg_opt
         tau_use = tau[i]
         for j in range(len(d_arr)):
-            fEc = interp1d(tt*1e-12, np.real(Ec[:, j]), bounds_error = False,\
-                           fill_value = 0)
-
-            t_probe = d_arr[j] / vg_opt
-            t_interp = t_probe + tau_use
-            E_eff = fEc(t_interp)
-            gamma += E_eff
+            zj   = d_arr[j]
+            sigj = probe.sigp*np.sqrt(1+zj*zj*inv_Lchar*inv_Lchar)
+            inv_sigj = 1/sigj
+            fEc  = interp1d(tt*1e-12, np.real(Ec[:, j]), bounds_error=False,fill_value=0)
+            t_probe = zj*inv_vg_opt
+            t_int = tt*1e-12 + t_probe
+            E_eff = fEc(t_int)
+            t_num = tt*1e-12 - tau_use
+            integrand = E_eff * inv_sigj * np.exp(-0.5*t_num*t_num*inv_sigj*inv_sigj)
+            gamma += np.trapz(integrand, tt*1e-12)
         # Compute the signal at time tau
         # Get probe intensity with delay
         gamma = amp1*gamma
