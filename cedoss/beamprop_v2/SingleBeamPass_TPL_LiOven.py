@@ -22,7 +22,7 @@ path = '/home/chris/Desktop/BeamProp/testGaussian'
 
 tanhlens_option = 0
 
-case = 31
+case = 2
 if case == 1:#Ideal Matching
     tpl_l = 0
     tpl_offset = 0
