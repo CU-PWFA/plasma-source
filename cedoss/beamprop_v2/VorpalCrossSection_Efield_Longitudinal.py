@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Jul 15 11:23:30 2020
+Created on Wed Jul 14 11:33:06 2021
 
 Script to call a function that analyzes the electric field in the transverse
 plane of a wake
+
+Copy of crosssection_efield, but here I want to just mess around with analysis of the longitudinal fields.
 
 @author: chris
 """
@@ -28,16 +30,16 @@ ind=8
 """
 
 #path = '/home/chris/Desktop/NERSC_Sep_Control2/'
-#path = '/media/chris/New Volume/VSimRuns/NonuniformPlasma/NERSC_Sep_Control2/'
-#ind = 5
-path = superpath + 'NERSC_Sep_Grad/'
-ind = 9
-#path = '/home/chris/Desktop/NERSC_Mar_Grad0.001/'
+path = superpath+'NERSC_Sep_Control2/'
+ind = 5
+#path = superpath + 'NERSC_Sep_Grad/'
+#ind = 9
+#path = superpath+'NERSC_Mar_Grad0.001/'
 #ind = 10
-#path = '/home/chris/Desktop/NERSC_Mar_Grad0.01/'
+#path = superpath+'NERSC_Mar_Grad0.01/'
 #ind = 10
 tranExtent = 200
-central_off = 0
+central_off = -30#-100
 
 """
 path = '/home/chris/Desktop/NERSC_Dec_Grad/'
@@ -58,14 +60,7 @@ tranExtent = 200
 central_off = 0
 ind = 5
 """
-
-path = '/home/chris/Desktop/NERSC_LongiFieldFix1/'
-npcase = 2e16
-ind = 3
-tranExtent = 200
-centrol_off = 0
-
-vector = 1 # 0 for Ez, 1 for Ey, 2 for Ex
+vector = 0 # 0 for Ez, 1 for Ey, 2 for Ex
 
 params = {'plasma' : 'electrons',
           'dumpInd' : ind,
@@ -80,7 +75,7 @@ params = {'plasma' : 'electrons',
           'field' : 'edgeE'#'ElecFieldPlasma'
           }
 x, y, evx, evy, eYZ = plot.wake_cross_section_field(params)
-
+"""
 params['field'] = 'faceB'
 if vector == 1:
     params['vector'] = 2
@@ -91,42 +86,16 @@ xb, yb, bvx, bvy, bYZ = plot.wake_cross_section_field(params)
 params['vector']=0
 xc, yc, bvxz, bvyz, bYZz = plot.wake_cross_section_field(params)
 
-"""
-if vector == 1:
-    evx = evx - bvx*3e8
-    evy = evy - bvy*3e8
-else:
-    evx = evx + bvx*3e8
-    evy = evy + bvy*3e8
-"""
 if vector == 1:
     eYZ = eYZ - bYZ*3e8
-else:
+elif vector == 2:
     eYZ = eYZ + bYZ*3e8
-
+"""
 Nz = len(x)
 
 evx = np.array(np.flip(eYZ[int((Nz+1)/2)-1,:],0))
-"""
-evx1 = np.flip(eYZ[int((Nz+1)/2)-1,:],0)
-evx2 = np.flip(eYZ[int((Nz+1)/2)-2,:],0)
-for i in range(len(evx1)):
-    evx[i] = (evx1[i]+evx2[i])/2
-"""
 evy = np.array(np.flip(eYZ[:,int((Nz+1)/2)-1],0))
-"""
-evy1 = np.flip(eYZ[:,int((Nz+1)/2)-1],0)
-evy2 = np.flip(eYZ[:,int((Nz+1)/2)-2],0)
-for i in range(len(evy1)):
-    evy[i] = (evy1[i]+evy2[i])/2
-"""
-"""
-#For Jan
-x = x[220:425]
-y = y[220:425]
-evx = evx[220:425]
-evy = evy[220:425]
-"""
+
 
 pi = np.pi
 e = const.physical_constants['elementary charge'][0]

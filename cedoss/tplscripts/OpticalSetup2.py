@@ -44,7 +44,7 @@ zoom=int(round(zi/l_step))
 path = '/home/chris/Desktop/DataLoads/PulseFilesNp/'
 filename = 'pulseParams_oct20_20mj.npy'
 
-save = 1             #Set to 1 to save anything
+save = 0             #Set to 1 to save anything
 calcdensity = 0 #SLOW   #Set to 1 to calc resulting plasma density w/out refraction
 calcfocal = 0
 offsetlooper = 0
@@ -52,7 +52,7 @@ offsetlooper = 0
 foc_dom_fac = 2
 radscl = 1   #Set to larger to increase the beasm axis domain
 
-choice=5952         #Set to one of the setups below
+choice=603#5952         #Set to one of the setups below
 
 if choice == 595:  #Single Spherical Lens, same as above but zoomed in more
                     #More details with respect to immenent FACET-II
@@ -285,6 +285,27 @@ if choice == 602:  #Single Spherical Lens, same as above but zoomed in more
     GB.Prop_Cylindrical_FreeSpace(q_x,q_y,.1,l_step)
     GB.Prop_CylindricalLens(q_x,q_y,2*f1)
     GB.Prop_Cylindrical_FreeSpace(q_x,q_y,1.7,l_step)
+    GB.Prop_CylindricalLens(q_y,q_x,2*f2)
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,0.4,l_step)
+
+if choice == 603:  #Single Spherical Lens, same as above but zoomed in more
+    setupTitle = "1Spherical"
+    w0 = 8.0e-3#4.2e-3
+    reverse = 0
+    zi = 0.30e-2#0.75e-2#2e-2
+    zoom = int(round(zi/l_step))
+    radscl = 0.3
+    
+    f1 = 0.250
+    f2 = 0.250
+    Lmax = 1.0
+    #P = 12.5e9
+    P = 25e9
+    
+    q_x = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    q_y = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,.1,l_step)
+    GB.Prop_CylindricalLens(q_x,q_y,2*f1)
     GB.Prop_CylindricalLens(q_y,q_x,2*f2)
     GB.Prop_Cylindrical_FreeSpace(q_x,q_y,0.4,l_step)
 

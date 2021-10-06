@@ -17,8 +17,10 @@ path = '/home/chris/Desktop/BeamProp/vorpaltest'
 #filename = '/home/chris/Desktop/FACETII_NERSC_Run4/PTPLDoubleTanh_WitnessBeam_10.h5'#z_arr to .03, threshold .00001
 #filename = '/home/chris/Desktop/SFQED_NERSC_VaryDen/5e15/PTPLDoubleTanh_ElectronBeam_10.h5' #z_arr to 0.7, ind 41, thresh 0.001
 #filename = '/home/chris/Desktop/thick4/PTPLDoubleTanh_WitnessBeam_10.h5'
+
 filename = '/home/chris/Desktop/100e16/PTPLDoubleTanh_WitnessBeam_10.h5'
 
+filename = '/home/chris/Desktop/NERSC_Deflection_July/PTPL_Gradient_WitnessBeam_10.h5'
 
 debug = 1
 
@@ -30,7 +32,8 @@ threshold = 0.00001#0.00001
 beam = PProp.VorpalBeam(path, filename, threshold, debug=debug)
 print("N: ",beam.N)
 
-z_arr = np.linspace(0, 0.03, 1000 + 1)
+#z_arr = np.linspace(0, 0.03, 1000 + 1)
+z_arr = np.linspace(0, 0.11, 1000 + 1)
 n_arr = np.zeros(len(z_arr))#+1e-9
 
 argon_params = PProp.ReturnDefaultPlasmaParams(path)

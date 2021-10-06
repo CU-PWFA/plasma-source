@@ -1,0 +1,16 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Apr  7 12:39:11 2021
+
+@author: chris
+"""
+
+import numpy as np
+import matplotlib.pyplot as plt
+import sys
+sys.path.insert(0,"../")
+from modules import ThreeDimensionAnalysis as ThrDim
+
+timing=[50 ,60 ,70 ,80 ,90 ,100 ,105 ,110 ,115 ,120 ,125 ,130 ,135 ,140 ,145 ,150 ,170 ,190 ,210 ,230 ,250]
+energy=[518,512,496,467,426,376 ,347 ,313 ,281.2,241.8,212.7,176.7,147.5,119.7,95.6,77.2,33.9,20.73,19.99,15.99,16.37]
