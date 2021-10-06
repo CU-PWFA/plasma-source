@@ -39,7 +39,7 @@ lam = 0.796
 # Create a laser beam, pulse and axicon lens
 Nx = 2**13
 X = 60e3
-tau = 30
+tau = 40
 pulseParams = {'Nx' : Nx,
                'Ny' : Nx,
                'Nt' : 2**6,
@@ -86,7 +86,8 @@ aperture = optic.Aperture(apertureParams)
 #%%
 # Create a super gaussian intensity profile and pass it through a lens.
 w0 = 15e3
-E0 = 3
+energy = 0.25     # Pulse energy, J
+E0 = np.sqrt(2/(3e8*8.85e-12)*(energy/np.pi/tau*1e15))/w0*1e6/1e9      # Peak electric field at the waist, GV/m
 n = 8
 x2 = np.reshape(beam.x, (beam.Nx, 1))**2
 y2 = np.reshape(beam.y, (1, beam.Ny))**2
@@ -116,8 +117,8 @@ sim_length = 380e4#3e6 #80e4
 #np.save(path+'sim_size.npy', [sim_start, sim_length])
 
 #%%
-X = 60e3
-Nx = 2**13
+X = 30e3
+Nx = 2**11
 beam0, pulseParams = design.propagate_to_start(r, E, sim_start, X, Nx, path, lam, tau, 20, [-1, 1])
 #%%
 Nx = 2**11
@@ -125,11 +126,11 @@ Nz = 100
 X =30e3
 design.domain_test(X, Nx, sim_length, Nz, beam0, pulseParams, z, np.zeros(len(z)), sim_start, [-800, 800]);
 #%%
-Nx = 2**12
-Nz = 500
+Nx = 2**11
+Nz = 100
 ext = [0, sim_length/1e4, -X/2, X/2]
 #plt.style.use('presentation')
-pulse, I, ne = design.plasma_refraction(X, Nx, sim_length, Nz, beam0, pulseParams, ionization.He, n, sim_start, 1, ne0)
+pulse, I, ne = design.plasma_refraction(X, Nx, sim_length, Nz, beam0, pulseParams, ionization.Ar, n, sim_start, 1, ne0)
 #%%
 design.plot_plasma_density(pulse, ne, ne0, ext, lines=[250, 300, 350])
 #%%

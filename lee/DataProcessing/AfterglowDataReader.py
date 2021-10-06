@@ -12,7 +12,10 @@ import matplotlib.pyplot as plt
 from PIL import Image
 
 #%%
-test= np.array(Image.open('2009210107/17583372_2009210107_0004.tiff'))
+test1= np.array(Image.open('2109160180/17583372_2109160180_0000.tiff'))
+BG1= np.array(Image.open('2109160241/17583372_2109160241_0000.tiff'))
+test2= np.array(Image.open('2109160180/19423598_2109160180_0000.tiff'))
+BG2= np.array(Image.open('2109160181/19423598_2109160181_0000.tiff'))
 #%%
 #testNew= test
 testNew= test[50:250, 400:600]
@@ -27,4 +30,7 @@ plt.colorbar()
 plt.xlabel('x ($\mu$m)')
 plt.ylabel('y ($\mu$m)')
 #%%
-plt.pcolormesh(test)
+plt.figure(1)
+plt.pcolormesh(test2)
+plt.figure(2)
+plt.pcolormesh(BG2)
