@@ -39,7 +39,7 @@ c= 3e8
 #%%
 Start= -16.5
 End= -16.75
-Steps= 335
+Steps= 333
 record= np.empty((int(Steps-1), 2))
 record[:, 0]= [x for x in range(0, int(Steps-1))]
 record[:, 1]= [Start+(End-Start)/Steps*x for x in range(0, int(Steps-1))]
@@ -48,7 +48,7 @@ Count= []
 Delay= []
 #path= '~/GitHub/plasma-source/lee/BobTheFrog'
 path= ''
-DataSetNumber= '2109290019'
+DataSetNumber= '2111050070'
 for data_number in range(len(record)):
     data= np.load(path+ ''+ DataSetNumber+ '/michaelito_'+ DataSetNumber+ '_'+\
                   str(int(record[int(data_number), 0])).zfill(4)+ '.npy', allow_pickle=True)
