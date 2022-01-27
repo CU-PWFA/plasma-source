@@ -96,22 +96,22 @@ start = 97
 offset_arr = np.arange(-120,100.5,2)
 simName = 'PTPL_Gradient'
 """
-"""
+
 #August Linear Gradients, n=2e16 sims
 superpath = '/media/chris/New Volume/VSimRuns/AugustLinearGradient/'
 path = superpath + '/NERSC_n2e16_g0/'
 ind=5
 path = superpath + 'NERSC_n2e16_g8e17/'
-path = superpath + 'NERSC_n2e16_g2e17/'
-path = superpath + 'NERSC_n2e16_g2.5e16/'
-path = superpath + 'NERSC_n2e16_g2.5e15/'
+#path = superpath + 'NERSC_n2e16_g2e17/'
+#path = superpath + 'NERSC_n2e16_g2.5e16/'
+#path = superpath + 'NERSC_n2e16_g2.5e15/'
 tranExtent = 200
 
 dx = 1.2 #um
 start = 90 #um
 offset_arr = np.arange(-140,90.5,2)
-"""
 
+"""
 #August Linear Gradients, n=1e16 sims
 superpath = '/media/chris/New Volume/VSimRuns/AugustLinearGradient/'
 path = superpath + '/NERSC_n1e16_g0/'
@@ -121,7 +121,7 @@ tranExtent = 200
 dx = 1.233 #um
 start = 90 #um
 offset_arr = np.arange(-140,90.5,2)
-
+"""
 """
 #August Linear Gradients, n=3e17 sims
 superpath = '/media/chris/New Volume/VSimRuns/AugustLinearGradient/'
@@ -134,7 +134,7 @@ start = 90 #um
 offset_arr = np.arange(-210,140.5,3)
 """
 
-vector = 0 # 0 for Ez, 1 for Ey, 2 for Ex
+vector = 1 # 0 for Ez, 1 for Ey, 2 for Ex
 
 e0_arr = np.zeros(len(offset_arr))
 e0p_arr= np.zeros(len(offset_arr))
@@ -180,11 +180,11 @@ for i in range(len(offset_arr)):
     for j in range(len(evy1)):
         evy[j] = (evy1[j]+evy2[j])/2
     """
-    evy1 = np.flip(eYZ[:,int((Nz+1)/2)-1],0)
-    evy2 = np.flip(eYZ[:,int((Nz+1)/2)-2],0)
+    evy1 = eYZ[:,int((Nz+1)/2)-1]
+    evy2 = eYZ[:,int((Nz+1)/2)-2]
     if axeflip:
-        evy1 = np.flip(eYZ[int((Nz+1)/2)-1,:],0)
-        evy2 = np.flip(eYZ[int((Nz+1)/2)-2,:],0)
+        evy1 = eYZ[int((Nz+1)/2)-1,:]
+        evy2 = eYZ[int((Nz+1)/2)-2,:]
     for j in range(len(evy1)):
         evy[j] = (evy1[j]+evy2[j])/2
     
@@ -197,6 +197,7 @@ for i in range(len(offset_arr)):
     """
     center = int(len(evy)/2)
     e0_arr[i] = (evy[center+1]+evy[center-1])/2
+    #e0_arr[i] = (evx[center+1]+evx[center-1])/2
     e0p_arr[i]=(evy[center+1]-evy[center-1])/(y[center+1]-y[center-1])*1e4
     
 

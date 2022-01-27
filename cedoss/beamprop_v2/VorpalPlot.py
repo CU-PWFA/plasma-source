@@ -45,7 +45,7 @@ plot.drive_witness_density_new(params)
 #path = '/home/chris/Desktop/NERSC_LongiFieldFix1/'
 #path = '/home/chris/Desktop/NERSC_Deflection_July/'
 path =  '/media/chris/New Volume/VSimRuns/AugustLinearGradient/NERSC_n2e16_g8e17/'
-path =  '/media/chris/New Volume/VSimRuns/AugustLinearGradient/Tests/NERSC_n3e17_g0/'
+#path =  '/media/chris/New Volume/VSimRuns/AugustLinearGradient/Tests/NERSC_n3e17_g0/'
 #path =  '/media/chris/New Volume/VSimRuns/AugustLinearGradient/NERSC_n1e17_g0/'
 #path = superpath + 'NERSC_Dec_Grad/'
 params = {'drive' : 'rhoDrive',

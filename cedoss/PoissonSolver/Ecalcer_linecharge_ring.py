@@ -12,6 +12,7 @@ Testing the hypothesis that my field error is due to the asymmetric sheaths
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
+from matplotlib.colors import LinearSegmentedColormap
 
 e = 4.8032e-10
 pi = np.pi
@@ -54,7 +55,7 @@ deltax = deltay = 4.6e-6 * 1e2  #cm
 n_cent = -7.0e16#-3.5e16  #cm-3
 radius = 80.00e-6 *1e2 #cm
 thickness = 10e-6*1e2 #cm
-slope  = 2.3e17-2e17#5.0e17#1.0e18 #cm-4
+slope  = 1.2e18#5.0e17#1.0e18 #cm-4
 xwindow = ywindow = 182e-6 * 1e2  #cm
 deltax = deltay = 1e-6 * 1e2  #cm
 
@@ -70,14 +71,22 @@ for i in range(len(X)):
             dengrid[i][j] = n_cent + Y[j]*slope
         else:
             dengrid[i][j] = 0
-            
-plt.title("Density")
-plt.imshow(np.transpose(dengrid), extent=(X[0],X[-1],Y[0],Y[-1]), origin = 'lower')
-plt.colorbar()
-plt.clim(0,n_cent-slope*radius)#2.6e16,3.4e16)
+
+ncolors = 256
+color_array = plt.get_cmap('plasma')(range(ncolors))
+color_array[-1] = 0
+map_object = LinearSegmentedColormap.from_list(name='alpha_adj',colors=color_array)
+plt.register_cmap(cmap=map_object)
+
+#plt.title("Density")
+plt.imshow(np.transpose(dengrid), extent=(X[0]*1e4,X[-1]*1e4,Y[0]*1e4,Y[-1]*1e4), origin = 'lower', cmap='alpha_adj')
+plt.colorbar(label='Charge Density '+r'$(cm^{-3})$')
+plt.clim(n_cent+slope*radius*1.2,n_cent-slope*radius*1.2)#2.6e16,3.4e16)
+plt.xlabel("x " + r'$(\mu m)$')
+plt.ylabel("y " + r'$(\mu m)$')
 plt.show()
 
-#sys.exit()
+sys.exit()
 
 centX = centY = total = 0
 for i in range(len(X)):

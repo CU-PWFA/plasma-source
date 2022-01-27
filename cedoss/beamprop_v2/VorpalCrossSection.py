@@ -89,7 +89,7 @@ tranExtent = 75
 ind = 7
 central_off=-10
 """
-
+"""
 path = '/media/chris/New Volume/VSimRuns/NonuniformPlasma/NERSC_Jun_Grad_High/'
 npcase = 3e17#
 tranExtent = 75
@@ -112,6 +112,57 @@ threshold = 100
 
 vmax = 1e18*(npcase/3.7e17)
 vmin = 1e16*(npcase/3.7e17)
+"""
+
+
+#August 2021 n=2e16 runs
+superpath = '/media/chris/New Volume/VSimRuns/AugustLinearGradient/'
+path = superpath + 'NERSC_n2e16_g0/'
+grad = 0
+yoff = 0 #m
+radius = 76.149e-6 #m
+ind = 5
+tranExtent = 200        #tranextent for the sim
+threshold = 100
+npcase = 2e16           #central density for the sim
+dx=1.2                  #dx for the sim
+central_off = -125#-20
+simname = 'MatchedBeams'
+efield = 'edgeE'
+bfield = 'faceB'
+setno = 1
+if setno == 1:
+    path = superpath + 'NERSC_n2e16_g8e17/'
+    grad = 8e17
+    yoff = 3.962e-6 #m
+    radius = 76.435e-6 #m
+if setno == 10:
+    path = superpath + 'NERSC_Deflection_Aug/'
+    grad = 8e17
+    yoff = 3.962e-6 #m
+    radius = 76.435e-6 #m
+    central_off = -50
+    ind = 6
+    simname = 'PTPL_Gradient'
+    efield = 'ElecFieldPlasma'
+    bfield = 'MagFieldPlasma'
+elif setno == 2:
+    path = superpath + 'NERSC_n2e16_g2e17/'
+    grad = 2e17
+    yoff = 0.946e-6 #m
+    radius = 76.143e-6 #m
+elif setno == 3:
+    path = superpath + 'NERSC_n2e16_g2.5e16/'
+    grad = 2.5e16
+    yoff = 0.106e-6 #m
+    radius = 76.122e-6 #m
+elif setno == 4:
+    path = superpath + 'NERSC_n2e16_g2.5e15/'
+    grad = 2.5e15
+    yoff = 0.0167e-6 #m
+    radius = 76.154e-6 #m
+
+
 
 
 vmax = 1e18*(npcase/3.7e17)#*1.8
@@ -131,7 +182,7 @@ params = {'vmin' : vmin,
           'drive' : 'rhoBeam',
           'threshold' : threshold #how far out in r to consider wake sheath
           }
-plot.drive_witness_density_new(params)
+#plot.drive_witness_density_new(params)
 #plot.wake_cross_section_efield(params)
 #plot.wake_cross_section(params)
 

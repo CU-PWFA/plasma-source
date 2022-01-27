@@ -22,6 +22,9 @@ filename = '/home/chris/Desktop/100e16/PTPLDoubleTanh_WitnessBeam_10.h5'
 
 filename = '/home/chris/Desktop/NERSC_Deflection_July/PTPL_Gradient_WitnessBeam_10.h5'
 
+filename = '/media/chris/New Volume/VSimRuns/AugustLinearGradient/NERSC_Deflection_170um/PTPL_Gradient_WitnessBeam_10.h5'
+#filename = '/media/chris/New Volume/VSimRuns/AugustLinearGradient/NERSC_Control_114um/PTPL_Gradient_WitnessBeam_10.h5'
+
 debug = 1
 
 dump = 20
@@ -33,7 +36,7 @@ beam = PProp.VorpalBeam(path, filename, threshold, debug=debug)
 print("N: ",beam.N)
 
 #z_arr = np.linspace(0, 0.03, 1000 + 1)
-z_arr = np.linspace(0, 0.11, 1000 + 1)
+z_arr = np.linspace(0, 0.15, 1000 + 1)
 n_arr = np.zeros(len(z_arr))#+1e-9
 
 argon_params = PProp.ReturnDefaultPlasmaParams(path)

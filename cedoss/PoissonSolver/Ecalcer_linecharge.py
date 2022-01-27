@@ -41,9 +41,9 @@ deltax = deltay = 0.5e-6 * 1e2  #cm
 
 n_cent = 2e16  #cm-3
 radius = 80.00e-6 *1e2 #cm
-slope  = -8e17 #cm-4
+slope  = 0#-8e17 #cm-4
 xwindow = ywindow = 200e-6 * 1e2  #cm
-deltax = deltay = 1e-6 * 1e2  #cm
+deltax = deltay = 1e-6 * 1e2 *10  #cm
 
 X = np.arange(-1/2*xwindow, 1/2*xwindow, deltax)
 Y = np.arange(-1/2*ywindow, 1/2*ywindow, deltay)

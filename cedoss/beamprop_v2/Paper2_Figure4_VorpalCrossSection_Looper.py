@@ -67,10 +67,10 @@ for i in range(len(offset_arr)):
     xcoeff, var_matrix = curve_fit(coslike, theta, r, p0=p0)
     rmajor_arr[i] = xcoeff[0]
     rminor_arr[i] = xcoeff[2]
-
-dx=1.2#0.25
-
 """
+dx=1.2#0.25
+dx=1.1972789115646258
+
 
 x = offset_arr[trunc:]*dx*-1+47
 y = rminor_arr[trunc:]
@@ -90,8 +90,8 @@ emp = 1/2*(rp-rm)/(halfloc)*z
 fig, (ax0,ax1) = plt.subplots(nrows=2,sharex=True)
 fig.set_size_inches(5,5)
 
-pl1 = ax0.plot(offset_arr*dx*-1+start,rmajor_arr+rminor_arr,c='k',label="Upper")
-ax0.plot(offset_arr*dx*-1+start,rmajor_arr-rminor_arr,c='k',ls='--',label="Lower")
+pl1 = ax0.plot(offset_arr*dx*-1+start,rmajor_arr+rminor_arr,c='k',label="Greater")
+ax0.plot(offset_arr*dx*-1+start,rmajor_arr-rminor_arr,c='k',ls='--',label="Lesser")
 #ax0.set_title("Wake radius in first bucket")
 #sax0.set_xlabel("Distance behind drive beam "+r'$(\mu m)$')
 ax0.set_ylabel("Sheath Radius "+r'$(\mu m)$')
