@@ -335,11 +335,14 @@ def drive_witness_density_paperplot(params):
     drive = params['drive']
     plasma = params['plasma']
     
-    offset = 70
+    offset = 85
+    longext = 352
+    tranext = 400
     
     # Load in plasma density
     rho, rhoAttrs = load.load_field(path, simName, 'rhoPlasma')
     Nx, Ny, Nz = analyze.get_shape(rho[ind])
+    rhoXY = -(rho[ind][:, :, int(Nz+1)/2, 0]/e/1e6)+2 #for one transverse dim
     rhoXY = -np.transpose(rho[ind][:, :, int(Nz+1)/2, 0]/e/1e6)+2 #for one transverse dim
     #rhoXY = -np.transpose(rho[ind][:, int(Nz+1)/2, :, 0]/e/1e6)+2 #for the other tran dim
     
@@ -374,7 +377,7 @@ def drive_witness_density_paperplot(params):
     fig.add_axes(ax)
     
     # Plot the drive beam
-    ax.imshow(rhoBXY, interpolation='gaussian', extent=[150+offset, -150+offset, -200, 200], cmap='copper')
+    ax.imshow(rhoBXY, interpolation='gaussian', extent=[longext/2+offset, -longext/2+offset, -tranext/2, tranext/2], cmap='copper')
     
     # Plot the witness beam
     #cmapW = alpha_colormap(plt.cm.get_cmap('nipy_spectral'), 0.1, True)
@@ -387,7 +390,7 @@ def drive_witness_density_paperplot(params):
     
     # Plot the plasma density
     cmapP = alpha_colormap(plt.cm.get_cmap('inferno'), 0.2, True)
-    cf = ax.imshow(rhoXY, interpolation='gaussian', aspect='auto', extent=[150+offset, -150+offset, -200, 200],
+    cf = ax.imshow(rhoXY, interpolation='gaussian', aspect='auto', extent=[longext/2+offset, -longext/2+offset, -tranext/2, tranext/2],
                norm=colors.LogNorm(vmin=vmin, vmax=vmax), cmap=cmapP)#1e16,2e18
     fig.colorbar(cf, ax=ax,label=r'$\mathrm{Plasma \ Electron \ Density \ }(cm^{-3})$')
     plt.xlabel(r'$z \ (\mu m)$')
@@ -569,7 +572,8 @@ def wake_cross_section_field(params):
     efield, efieldAttrs = load.load_field(path, simName, field)
     Nx, Ny, Nz = analyze.get_shape(efield[ind])
     #rhoYZ = -np.transpose(rho[ind][int(Nx+1)/2+central_off, :, :, 0]/e/1e6)+2
-    eYZ = -(efield[ind][int(Nx+1)/2+central_off, :, :, vec])
+    ###minus sign was below###
+    eYZ = (efield[ind][int(Nx+1)/2+central_off, :, :, vec])
 
     if plot is True:
         # Plot the plasma density
@@ -599,6 +603,7 @@ def wake_cross_section_sheath(params):
     tranExtent = params['tranExtent']
     plot = params['plot']
     radmax = params['radmax']
+    yoff = params['yoff']
     
     def alpha_colormap(cmap, cutoff, flip=True):
         N = cmap.N
@@ -668,7 +673,7 @@ def wake_cross_section_sheath(params):
     xrig_arr = np.zeros(len(y_arr))
     xlef_arr = np.zeros(len(y_arr))
     for k in range(len(y_arr)): 
-        if np.abs(y[y_arr[k]]) < radmax:
+        if np.abs(y[y_arr[k]]+yoff) < radmax:
             for m in range(len(x_arr)):
                 if srig_arr[k] < rhoYZ[y_arr[k],x_arr[m]]:
                     srig_arr[k] = rhoYZ[y_arr[k],x_arr[m]]
@@ -712,7 +717,6 @@ def wake_cross_section_sheath(params):
     yret = np.concatenate((ylef_arr,yrig_arr,ybot_arr,ytop_arr))
     nret = np.concatenate((slef_arr,srig_arr,sbot_arr,stop_arr))
     return xret,yret,nret
-
 def drive_witness_animation(params):
     """ Creates an animation of the electron wake and beam density evolution.
 
