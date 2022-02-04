@@ -10,7 +10,7 @@ Created on Thu Jan 30 13:27:08 2020
 import sys
 import os
 sys.path.insert(0, "python")
-import pyximport; pyximport.install()
+#import pyximport; pyximport.install()
 import numpy as np
 from beam.beams import laserbeam
 from beam.elements import plasma
@@ -20,9 +20,8 @@ from lens import profile
 from lens import phaselens
 from lens import ray
 import matplotlib.pyplot as plt
-from unwrap import unwrap
 from propagation import laser
-from scipy import interpolate; 
+from scipy import interpolate
 
 '''
 If laser plasma interaction fail, check the grid density. If the spacing k*theta is larger than the grid spacig, it will fail.
@@ -34,27 +33,27 @@ path = basePath + 'LaserRefraction/'
 
 # Build the plasma
 plasmaParams = {
-    'Nx' : 2**12,
+    'Nx' : 2**14,
     'Ny' : 2**8,
-    'Nz' : 2**8,
-    'X' : 0.060e6,
+    'Nz' : 2**9,
+    'X' : 0.120e6,
     'Y' : 0.030e6,
     'Z' : 2.0e6, 
     'n0' : 0.25, #Nominal gas number density in 10^17 cm^-3.
     'atom' : ionization.Ar,
     'path' : path,
-    'name' : 'HePlasma',
+    'name' : 'Ar',
     'load' : False,
     'cyl' : True
 }
 
 
-w = 50
-z0 = 0.85e6 #The distance at which the uniform fully ionized plasma starts.
+w = 100
+z0 = 0.5e6 #The distance at which the uniform fully ionized plasma starts.
 zf = plasmaParams['Z']
-dz = 0.3e6 #The length of the fully ionized plasma.
-sigmaIn = 0.15e6
-sigmaOut = 0.15e6
+dz = 1e6 #The length of the fully ionized plasma.
+sigmaIn = 0.02e6
+sigmaOut = 0.02e6
 z, ne = profile.plasma_gaussian_ramps(z0, dz, sigmaIn, sigmaOut, plasmaParams['Nz'], zf)
 Ar = plasma.Plasma(plasmaParams)
 
@@ -63,12 +62,12 @@ r2 = Ar.x[:, None, None]**2 + Ar.y[None, :, None]**2
 
 
 
-ne = plasmaParams['n0'] * ne[None, None, :] * np.exp(-r2/w**2)
+ne = plasmaParams['n0'] * ne[None, None, :] * np.exp(-(r2/(2*w**2)))
 Ar.initialize_plasma(n, ne)
 del n
 del ne
 
-#Ar.plot_long_density_center()
+Ar.plot_long_density_center()
 #%%
 # Build the beam
 beamParams = {
@@ -86,22 +85,30 @@ beamParams = {
     'waist' : 8000, #The spot size of the flattop region.
     'z0' : 0.0,
     'order' : 3,
-    'theta' : 0.859,#2.06175769, #The angle of propagation in degrees, positive is angled upward.
-    'dx' : -0.015e6
+    'theta' : 2.2906,#The angle of propagation in degrees, positive is angled upward.
+    'dx' : -0.04e6
 }
 
 beam = laserbeam.GeneralSuperGaussianLaser(beamParams)
 #%%
-#beam.plot_current_field()
-#beam.plot_current_intensity()
+beam.plot_current_field()
+beam.plot_current_intensity()
 #%%
 c= 3e8
 epsilon= 8.85e-12
 I= abs(beam.e)**2*c*epsilon/2
 #%%
 interactions.beam_plasma(beam, Ar)
-#plt.figure(4)
-#beam.plot_intensity_at(255)
+#%%
+NewBeam = beam.e*np.exp(-1j*beam.k*np.radians(beam.theta)*beam.x[:, None])
+#%%
+Lineout= abs(NewBeam[13653, :])**2
+#%%
+plt.figure()
+beam.plot_intensity_at(511)
+#%%
+plt.figure()
+plt.plot(abs(NewBeam[13653, :])**2)
 #%%
 #fix propagation angle
 NewBeam = beam.e*np.exp(-1j*beam.k*np.radians(beam.theta)*beam.x[:, None])
