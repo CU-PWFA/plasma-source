@@ -135,7 +135,7 @@ def plasma_refraction_energy(double complex[:, :, :] E, double[:] x, double[:] y
                       double[:] z, double[:] t, double lam, double n0, 
                       double z0, fft, ifft, saveE, saven, atom, 
                       loadn, loadne, int num_threads, double temp=0.0,
-                      double n2=0.0, ionization='adk'):
+                      double n2=0.0, ionization='adk', bool 2ndIonization= False):
     """ Propagate a laser pulse through a plasma accounting for refraction.
 
     Propogates a laser pulse through a region of partially ionized gas. This
@@ -247,6 +247,7 @@ def plasma_refraction_energy(double complex[:, :, :] E, double[:] x, double[:] y
                         e_abs = cabs(e[k, l])
                         e[k, l] *= cexp(arg*ne[k, l] + arg_kerr*ng*e_abs*e_abs)
                         # Ionize the gas
+			#Ionize the first electron
                         Eavg = 0.5*(cabs(E[j, k, l]) + e_abs)
                         rate = rate_func(EI, Eavg, Z, ll, m)
                         ne_new = n[k, l]-ng*exp(-rate*dt)
@@ -254,6 +255,13 @@ def plasma_refraction_energy(double complex[:, :, :] E, double[:] x, double[:] y
                         dE = energy_loss(ne[k, l], ne_new, EI+temp, dz, dt, e[k, l])
                         ne[k, l] = ne_new
                         e[k, l] *= dE
+
+			#Ionize the second electron
+#			e_abs = cabs(e[k, l])
+#                        Eavg = 0.5*(cabs(E[j, k, l]) + e_abs)
+#                        rate = rate_func(EI, Eavg, Z, ll, m)
+#                        ne_new = n[k, l]-ng*exp(-rate*dt)
+
             E[j, :, :] = e
         saveE(E, z[i]+z0)
         saven(ne, i-1)

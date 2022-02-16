@@ -28,12 +28,30 @@ path = superpath + 'NERSC_n2e16_g0/'
 grad = 0
 yoff = 0 #m
 radius = 76.149e-6 #m
-setno = 1
+ind = 5
+tranExtent = 200        #tranextent for the sim
+npcase = 2e16           #central density for the sim
+dx=1.2                  #dx for the sim
+central_off = -20
+simname = 'MatchedBeams'
+efield = 'edgeE'
+bfield = 'faceB'
+setno = 4
 if setno == 1:
     path = superpath + 'NERSC_n2e16_g8e17/'
     grad = 8e17
     yoff = 3.962e-6 #m
     radius = 76.435e-6 #m
+if setno == 10:
+    path = superpath + 'NERSC_Deflection_Aug/'
+    grad = 8e17
+    yoff = 3.962e-6 #m
+    radius = 76.435e-6 #m
+    central_off = -50
+    ind = 6
+    simname = 'PTPL_Gradient'
+    efield = 'ElecFieldPlasma'
+    bfield = 'MagFieldPlasma'
 elif setno == 2:
     path = superpath + 'NERSC_n2e16_g2e17/'
     grad = 2e17
@@ -49,12 +67,6 @@ elif setno == 4:
     grad = 2.5e15
     yoff = 0.0167e-6 #m
     radius = 76.154e-6 #m
-    
-ind = 5
-tranExtent = 200        #tranextent for the sim
-npcase = 2e16           #central density for the sim
-dx=1.2                  #dx for the sim
-central_off = -20
 """
 
 """
@@ -109,14 +121,14 @@ vector = 1 # 0 for Ez, 1 for Ey, 2 for Ex
 params = {'plasma' : 'electrons',
           'dumpInd' : ind,
           'path' : path,
-          'simName' : 'MatchedBeams',
+          'simName' : simname,#'MatchedBeams',
           'zoom' : 4.0,
           'alphaCutoff' : 0.05,
           'centralOff' : central_off,
           'tranExtent' : tranExtent,
           'plot' : True,
           'vector' : vector,
-          'field' : 'edgeE'#'ElecFieldPlasma'
+          'field' : efield
           }
 x, y, evx, evy, eYZ = plot.wake_cross_section_field(params)
 
@@ -145,20 +157,12 @@ else:
 
 Nz = len(x)
 
-evx = np.array(np.flip(eYZ[int((Nz+1)/2)-1,:],0))
-"""
-evx1 = np.flip(eYZ[int((Nz+1)/2)-1,:],0)
-evx2 = np.flip(eYZ[int((Nz+1)/2)-2,:],0)
-for i in range(len(evx1)):
-    evx[i] = (evx1[i]+evx2[i])/2
-"""
-evy = np.array(np.flip(eYZ[:,int((Nz+1)/2)-1],0))
-"""
-evy1 = np.flip(eYZ[:,int((Nz+1)/2)-1],0)
-evy2 = np.flip(eYZ[:,int((Nz+1)/2)-2],0)
-for i in range(len(evy1)):
-    evy[i] = (evy1[i]+evy2[i])/2
-"""
+evx1 = np.array(np.flip(eYZ[int((Nz+1)/2)-1,:],0))
+evx2 = np.array(np.flip(eYZ[int((Nz+1)/2)-2,:],0))
+evx = (evx1+evx2)/2
+evy1 = np.array(np.flip(eYZ[:,int((Nz+1)/2)-1],0))
+evy2 = np.array(np.flip(eYZ[:,int((Nz+1)/2)-2],0))
+evy = (evy1+evy2)/2
 
 slope = -grad*100**4 #m-4
 n_cent =  npcase*100**3#*0.95 #m-3
@@ -168,7 +172,7 @@ xsi = x*1e-6
 eps = 8.854e-12
 pi = np.pi
 e = const.physical_constants['elementary charge'][0]
-ring = 0 # -1.21e9 #V/m
+ring = -0 # -1.21e9 #V/m
 error = 0
 
 if vector == 0:
@@ -216,4 +220,5 @@ plt.ylabel(elab+" (SI)")
 plt.grid(); plt.legend(); plt.show()
 
 cent = int(len(y)/2)
-print("Ey: theory - sim = ",e_v_y_theory[cent]-evy[cent]," V/m")
+print("Ey_sim = ",evx[cent], "V/m")
+print("Ey: theory - sim = ",e_v_x_theory[cent]-evx[cent]," V/m")

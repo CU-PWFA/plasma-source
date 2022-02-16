@@ -22,9 +22,13 @@ import scipy.constants as const
 #ind = 9
 #central_off = 0
 path = '/media/chris/New Volume/VSimRuns/AugustLinearGradient/NERSC_n2e16_g8e17/'
+#path = '/media/chris/New Volume/VSimRuns/AugustLinearGradient/NERSC_n2e16_g0/'
 ind=5
 central_off = -20
 tranExtent = 200
+c = const.speed_of_light
+
+flip = True
 
 vecarr = np.array([1,2])
 for i in range(len(vecarr)):
@@ -52,40 +56,87 @@ for i in range(len(vecarr)):
         params['vector'] = 1
     xb, yb, bvx, bvy, bYZ = plot.wake_cross_section_field(params)
     
-    params['vector']=0
-    xc, yc, bvxz, bvyz, bYZz = plot.wake_cross_section_field(params)
+    #params['vector']=0
+    #xc, yc, bvxz, bvyz, bYZz = plot.wake_cross_section_field(params)
     
     Nz = len(x)
-    if vector == 1:
-        eYZ = eYZ - bYZ*3e8
-        eyvx = np.array(np.flip(eYZ[int((Nz+1)/2)-1,:],0))
-        eyvy = np.array(np.flip(eYZ[:,int((Nz+1)/2)-1],0))
+    if flip:
+        if vector == 1:
+            eYZ = -1*(eYZ - bYZ*c)
+            eyvx_1 = np.array(np.flip(eYZ[int((Nz+1)/2)-1,:],0))
+            eyvy_1 = np.array(np.flip(eYZ[:,int((Nz+1)/2)-1],0))
+            eyvx_2 = np.array(np.flip(eYZ[int((Nz+1)/2)-2,:],0))
+            eyvy_2 = np.array(np.flip(eYZ[:,int((Nz+1)/2)-2],0))
+            eyvx = (eyvx_1 + eyvx_2)/2
+            eyvy = (eyvy_1 + eyvy_2)/2
+        else:
+            eYZ = -1*(eYZ + bYZ*c)
+            exvx_1 = np.array(np.flip(eYZ[int((Nz+1)/2)-1,:],0))
+            exvy_1 = np.array(np.flip(eYZ[:,int((Nz+1)/2)-1],0))
+            exvx_2 = np.array(np.flip(eYZ[int((Nz+1)/2)-2,:],0))
+            exvy_2 = np.array(np.flip(eYZ[:,int((Nz+1)/2)-2],0))
+            exvx = (exvx_1 + exvx_2)/2
+            exvy = (exvy_1 + exvy_2)/2
     else:
-        eYZ = eYZ + bYZ*3e8
-        exvx = np.array(np.flip(eYZ[int((Nz+1)/2)-1,:],0))
-        exvy = np.array(np.flip(eYZ[:,int((Nz+1)/2)-1],0))
+        if vector == 1:
+            eYZ = eYZ - bYZ*c
+            eyvx_1 = np.array(eYZ[int((Nz+1)/2)-1,:])
+            eyvy_1 = np.array(eYZ[:,int((Nz+1)/2)-1])
+            eyvx_2 = np.array(eYZ[int((Nz+1)/2)-2,:])
+            eyvy_2 = np.array(eYZ[:,int((Nz+1)/2)-2])
+            eyvx = (eyvx_1 + eyvx_2)/2
+            eyvy = (eyvy_1 + eyvy_2)/2
+        else:
+            eYZ = eYZ + bYZ*c
+            exvx_1 = np.array(eYZ[int((Nz+1)/2)-1,:])
+            exvy_1 = np.array(eYZ[:,int((Nz+1)/2)-1])
+            exvx_2 = np.array(eYZ[int((Nz+1)/2)-2,:])
+            exvy_2 = np.array(eYZ[:,int((Nz+1)/2)-2])
+            exvx = (exvx_1 + exvx_2)/2
+            exvy = (exvy_1 + exvy_2)/2
  
     pi = np.pi
     e = const.physical_constants['elementary charge'][0]
     error= 0
     
     #Sep Grad
-    radius = 80.70044626e-6 #m
+    radius = 76.15e-6 #m
     n_cent = 2e16*100**3#*0.95 #m-3
-    slope = -8e17*100**4 #m-4
-    ybar = -1/4*radius**2*slope/n_cent
-    yoff = 4.2188366149411554e-6 #m
+    slope = 8e17*100**4 #m-4
+    if flip:
+        slope = slope*-1
+    zsi_max = 114e-6
+    facA = 0.3239
+    facB = 2.482
+    delta = 0.134
+    rpl = radius*np.sqrt((n_cent-facA*radius*slope)/n_cent) #sign flip b/c slope is wack
+    rmn = radius*np.sqrt((n_cent+facA*radius*slope)/n_cent)
+    yoff = zsi_max*(rpl-rmn)/(2*zsi_max)
+    
+    n_cent = n_cent+slope*yoff
+    
+    ybar = 1/4*radius**2*slope/n_cent
+    #yoff = 4.2188366149411554e-6 #m
     ysi = y*1e-6
     xsi = x*1e-6
     eps = 8.854e-12
-    ring=-1.10e9#-1.21e9 #V/m
+    #ring=-7.17e8#-8.6e8#-3.358e8#-1.10e9#-1.21e9 #V/m
+    
+
+    
+
+    
+    sheathslope = slope*facB
+    L_sh = delta*radius
+    ring = -(slope - sheathslope)*(L_sh)*(radius)*e/2/eps
+    
     
     if vector == 0:
         elab = r'$E_s$'
     elif vector == 1:
         elab = r'$E_y$'
-        ey_v_y_theory = 1/(2*eps)*e*n_cent*(ysi+2*ybar-yoff) + 1/(8*eps)*e*slope*(3*(ysi-yoff)**2) + ring + error
-        ey_v_x_theory = 1/(8*eps)*e*slope*(3*yoff**2+xsi**2) + 1/eps*e*n_cent*(ybar-1/2*yoff) + ring + error
+        ey_v_y_theory = 1/(2*eps)*e*n_cent*(ysi-2*ybar-yoff) + 1/(8*eps)*e*slope*(3*(ysi-yoff)**2) + ring + error
+        ey_v_x_theory = 1/(8*eps)*e*slope*(3*yoff**2+xsi**2) + 1/eps*e*n_cent*(-ybar-1/2*yoff) + ring + error
     else:
         elab = r'$E_x$'
         ex_v_y_theory = np.zeros(len(ysi))
