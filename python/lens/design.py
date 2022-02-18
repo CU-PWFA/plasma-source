@@ -293,7 +293,7 @@ def domain_test(X, Nx, Z, Nz, beam0, pulseParams, z_target, I_target, start, yli
     return I
     
 def plasma_refraction(X, Nx, Z, Nz, beam0, pulseParams, species, n, start, m_e, ne0, name=None, t=0.0, n2=0.0, 
-                      ionization_type='adk'):
+                      ionization_type='adk', multispecies= False, species2= None):
     """ Propagate the laser pulse through the gas profile.
     
     Parameters
@@ -324,54 +324,127 @@ def plasma_refraction(X, Nx, Z, Nz, beam0, pulseParams, species, n, start, m_e, 
         The nonlinear index of refraction at atmospheric pressure. In cm^2/W.
     ionization_type : string, optional
         Function to use for the ionization model.
+    multispecies : boolean
+        turn multispecies on or not
+    species2: dict
+        Ionization species dict from ionization.ionization. 
+        If multispecies is on, second sepcies is specified here
     """
-    if name is None:
-        name = 'Refracted_Beam'
-    pulseParams['name'] = name
-    pulseParams['Nx'] = Nx
-    pulseParams['Ny'] = Nx
-    pulseParams['X'] = X
-    pulseParams['Y'] = X
-    plasmaParams = {
-        'Nx' : Nx,
-        'Ny' : Nx,
-        'Nz' : Nz,
-        'X' : X,
-        'Y' : X,
-        'Z' : Z,
-        'atom' : species,
-        'path' : pulseParams['path'],
-        'load' : False,
-        'cyl' : True,
-        'name' : 'Plasma_Source',
-        'n0' : ne0
-    }
-    tau = pulseParams['tau']
-    pulse = laserpulse.Pulse(pulseParams)
-    e = np.sqrt(m_e)*pulse.reconstruct_from_cyl(beam0.x, np.array(beam0.e)[:, int(beam0.Ny/2)], pulse.x, pulse.y)
-    e = e[None, :, :]*np.exp(-pulse.t[:, None, None]**2*np.pi/(2*tau**2))
-    pulse.initialize_field(e)
-    print('Initial pulse energy %0.2fmJ' % (pulse.pulse_energy()*1e3))
-    plasma_source = plasma.Plasma(plasmaParams)
+    if multispecies == False:        
+        if name is None:
+            name = 'Refracted_Beam'
+        pulseParams['name'] = name
+        pulseParams['Nx'] = Nx
+        pulseParams['Ny'] = Nx
+        pulseParams['X'] = X
+        pulseParams['Y'] = X
+        plasmaParams = {
+            'Nx' : Nx,
+            'Ny' : Nx,
+            'Nz' : Nz,
+            'X' : X,
+            'Y' : X,
+            'Z' : Z,
+            'atom' : species,
+            'path' : pulseParams['path'],
+            'load' : False,
+            'cyl' : True,
+            'name' : 'Plasma_Source',
+            'n0' : ne0
+        }
+        tau = pulseParams['tau']
+        pulse = laserpulse.Pulse(pulseParams)
+        e = np.sqrt(m_e)*pulse.reconstruct_from_cyl(beam0.x, np.array(beam0.e)[:, int(beam0.Ny/2)], pulse.x, pulse.y)
+        e = e[None, :, :]*np.exp(-pulse.t[:, None, None]**2*np.pi/(2*tau**2))
+        pulse.initialize_field(e)
+        print('Initial pulse energy %0.2fmJ' % (pulse.pulse_energy()*1e3))
+        plasma_source = plasma.Plasma(plasmaParams)
+    
+        # Initialize gas density
+        n_gas = np.zeros((Nx, Nx, Nz), dtype='double')
+        ne = np.zeros((Nx, Nx, Nz), dtype='double')
+        for i in range(Nz):
+            n_gas[:, :, i] = n(plasma_source.z[i]+start)
+        plasma_source.initialize_plasma(n_gas, ne)
+        # Propagate the laser beam through the oven
+        interactions.pulse_plasma_energy(pulse, plasma_source, temp=t, n2=n2, ionization=ionization_type)
+        print('Final pulse energy %0.2fmJ' % (pulse.pulse_energy()*1e3))
+        e = np.zeros((Nz, Nx), dtype='complex128')
+        ne = np.zeros((Nz, Nx))
+        for i in range(0, Nz-1):
+            ne[i, :] = plasma_source.load_plasma_density(i)[0]
+        for i in range(Nz):
+            e[i, :] = pulse.load_field(i)[0][int(pulseParams['Nt']/2), :]
+        I = ionization.intensity_from_field(e)
+        ne = ne*1e17
+        return pulse, I, ne
+    
+    else:
+#TODO check if species2 is none, if so, through error
+        if name is None:
+            name = 'Refracted_Beam'
+        pulseParams['name'] = name
+        pulseParams['Nx'] = Nx
+        pulseParams['Ny'] = Nx
+        pulseParams['X'] = X
+        pulseParams['Y'] = X
+        plasmaParams = {
+            'Nx' : Nx,
+            'Ny' : Nx,
+            'Nz' : Nz,
+            'X' : X,
+            'Y' : X,
+            'Z' : Z,
+            'atom' : species,
+            'path' : pulseParams['path'],
+            'load' : False,
+            'cyl' : True,
+            'name' : 'Plasma_Source',
+            'n0' : ne0
+        }
+        plasmaParams2 = {
+            'Nx' : Nx,
+            'Ny' : Nx,
+            'Nz' : Nz,
+            'X' : X,
+            'Y' : X,
+            'Z' : Z,
+            'atom' : species2,
+            'path' : pulseParams['path'],
+            'load' : False,
+            'cyl' : True,
+            'name' : 'Plasma_Source',
+            'n0' : ne0
+        }
+        
+        tau = pulseParams['tau']
+        pulse = laserpulse.Pulse(pulseParams)
+        e = np.sqrt(m_e)*pulse.reconstruct_from_cyl(beam0.x, np.array(beam0.e)[:, int(beam0.Ny/2)], pulse.x, pulse.y)
+        e = e[None, :, :]*np.exp(-pulse.t[:, None, None]**2*np.pi/(2*tau**2))
+        pulse.initialize_field(e)
+        print('Initial pulse energy %0.2fmJ' % (pulse.pulse_energy()*1e3))
+        plasma_source = plasma.Plasma(plasmaParams)
+        plasma_source2 = plasma.Plasma(plasmaParams2)
+    
+        # Initialize gas density
+        n_gas = np.zeros((Nx, Nx, Nz), dtype='double')
+        ne = np.zeros((Nx, Nx, Nz), dtype='double')
+        for i in range(Nz):
+            n_gas[:, :, i] = n(plasma_source.z[i]+start)
+        plasma_source.initialize_plasma(n_gas, ne)
+        # Propagate the laser beam through the oven
+        interactions.pulse_plasma_energy_second(pulse, plasma_source, plasma_source2, temp=t, n2=n2, ionization=ionization_type)
+        print('Final pulse energy %0.2fmJ' % (pulse.pulse_energy()*1e3))
+        e = np.zeros((Nz, Nx), dtype='complex128')
+        ne = np.zeros((Nz, Nx))
+        for i in range(0, Nz-1):
+            ne[i, :] = plasma_source.load_plasma_density(i)[0]
+        for i in range(Nz):
+            e[i, :] = pulse.load_field(i)[0][int(pulseParams['Nt']/2), :]
+        I = ionization.intensity_from_field(e)
+        ne = ne*1e17
+        return pulse, I, ne
 
-    # Initialize gas density
-    n_gas = np.zeros((Nx, Nx, Nz), dtype='double')
-    ne = np.zeros((Nx, Nx, Nz), dtype='double')
-    for i in range(Nz):
-        n_gas[:, :, i] = n(plasma_source.z[i]+start)
-    plasma_source.initialize_plasma(n_gas, ne)
-    # Propagate the laser beam through the oven
-    interactions.pulse_plasma_energy(pulse, plasma_source, temp=t, n2=n2, ionization=ionization_type)
-    print('Final pulse energy %0.2fmJ' % (pulse.pulse_energy()*1e3))
-    e = np.zeros((Nz, Nx), dtype='complex128')
-    ne = np.zeros((Nz, Nx))
-    for i in range(0, Nz-1):
-        ne[i, :] = plasma_source.load_plasma_density(i)[0]
-    for i in range(Nz):
-        e[i, :] = pulse.load_field(i)[0][int(pulseParams['Nt']/2), :]
-    I = ionization.intensity_from_field(e)
-    ne = ne*1e17
-    return pulse, I, ne
 
 def plot_laser_plasma(I, ne, ext):
     """ Plot the laser intensity at z=0 and the final plasma density.
