@@ -30,7 +30,8 @@ emn_set = np.array([3.147, 3.147, 3.147, 3.148, 3.256, 3.2, 3.224, 4.324, 4.130,
 
 calc_beta_set = np.square(fit_set*1e-6)*19569.5/(emn_set*1e-6)*100
 
-tpl_l = 100    # um
+tpl_l = 69.6    # um
+tpl_l2 = 33.4
 tpl_offset = 0.0  # m
 
 gam = Foc.gam_def
@@ -87,6 +88,16 @@ plt.semilogx(x_arr,y2_arr*100, color='r',label="Theory")
 plt.scatter(den_set, loc_set,marker="4",c='k',s=100,label="Simulation")
 plt.title("Focus waist location VS plasma lens density")
 plt.ylabel(r'$z_w$'+ " (cm)")
+plt.xlabel(r'$n_p\mathrm{\ (cm^{-3})}$')
+plt.grid(b=True, which='major', color='0.65', linestyle='-')
+plt.grid(b=True, which='minor', color='0.65', linestyle='dotted')
+plt.legend(); plt.show()
+
+plt.loglog(x_arr,y1_arr*100, color='b',label="L = 33.4 "+r'$\mu m$')
+plt.loglog(x_arr,y3_arr*100, color='r',label="L = 69.6 "+r'$\mu m$')
+#plt.scatter(den_set, calc_beta_set,marker="4",c='k',s=100,label="Fitted from Simulation")
+plt.title("Beam betafunction at focus VS plasma lens density")
+plt.ylabel(r'$\beta_f^*$'+ " (cm)")
 plt.xlabel(r'$n_p\mathrm{\ (cm^{-3})}$')
 plt.grid(b=True, which='major', color='0.65', linestyle='-')
 plt.grid(b=True, which='minor', color='0.65', linestyle='dotted')

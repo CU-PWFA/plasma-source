@@ -70,7 +70,7 @@ class Beam:
             
     def load_params(self):
         """ Load the params from a saved file"""
-        self.params = np.load(self.filePre + '_params.npy').item()
+        self.params = np.load(self.filePre + '_params.npy', allow_pickle=True).item()
         self.check_params(self.params)
         self.params_to_attrs(self.params)
         self.load = True

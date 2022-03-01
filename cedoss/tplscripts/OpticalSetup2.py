@@ -28,7 +28,7 @@ n=1.                    #Refractive index
 epsilon0 = 8.854e-12    #Dielectric constant
 wavelength = 800.0e-9 #785.3e-9   #Laser wavelength in m
 w0 = 5e-3               #Initial spot size in m
-E_ion = 24.6           #Ionization Energy:  13.6 for H, 15.8 for Ar, 24.6 for He 27.6 for Ar++
+E_ion = 13.6#24.6           #Ionization Energy:  13.6 for H, 15.8 for Ar, 24.6 for He 27.6 for Ar++
 setupTitle = ""         #Name the setup 
 reverse = 0
 fs_duration = 40e-15
@@ -42,16 +42,77 @@ zi = 7.5e-3             #Offset from small waist to plane we want to save params
 zoom=int(round(zi/l_step))
 
 path = '/home/chris/Desktop/DataLoads/PulseFilesNp/'
-filename = 'pulseParams_testm22.npy'
+filename = 'pulseParams_oct20_20mj.npy'
 
 save = 0             #Set to 1 to save anything
-calcdensity = 1 #SLOW   #Set to 1 to calc resulting plasma density w/out refraction
+calcdensity = 0 #SLOW   #Set to 1 to calc resulting plasma density w/out refraction
 calcfocal = 0
+offsetlooper = 0
 
 foc_dom_fac = 2
 radscl = 1   #Set to larger to increase the beasm axis domain
 
-choice=592         #Set to one of the setups below
+choice=603#5952         #Set to one of the setups below
+
+if choice == 595:  #Single Spherical Lens, same as above but zoomed in more
+                    #More details with respect to immenent FACET-II
+    setupTitle = "1Spherical"
+    M2 = 1.1
+    w0 = 14.3e-3 #calculated from 30mm diameter flattop estimation
+    #w0 = 4.77e-3 #10mm
+    reverse = 0
+    zi = 3.5e-2#0.50e-2#0.75e-2#2e-2
+    zoom = int(round(zi/l_step))
+    radscl = 0.5#0.3
+    
+    f0 = 0.646
+    Lmax = 1.0
+    #P = 17.2e9 #For H, 30mm
+    #P = 125e9 #For He, 30mm
+    #P = 20e9 #For H, 10 mm
+    #P = 148e9 #For He, 10 mm
+    
+    P = 500e9
+    radscl = 1.5
+    
+    q_x = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    q_y = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,.1,l_step)
+    
+    GB.Prop_CylindricalLens(q_y,q_x,2*f0)
+    GB.Prop_CylindricalLens(q_x,q_y,2*f0)
+
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,Lmax,l_step)
+    
+if choice == 5952:  #Single Spherical Lens, same as above but zoomed in more
+                    #More details with respect to immenent FACET-II
+    setupTitle = "1Spherical"
+    M2 = 1.0
+    w0 = 13.6e-3 #calculated from 30mm diameter flattop estimation
+    #w0 = 4.77e-3 #10mm
+    reverse = 0
+    zi = 3.5e-2#0.50e-2#0.75e-2#2e-2
+    zoom = int(round(zi/l_step))
+    radscl = 0.5#0.3
+    
+    f0 = 0.646
+    Lmax = 1.0
+    #P = 17.2e9 #For H, 30mm
+    #P = 125e9 #For He, 30mm
+    #P = 20e9 #For H, 10 mm
+    #P = 148e9 #For He, 10 mm
+    
+    P = 500e9
+    radscl = 1.5
+    
+    q_x = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    q_y = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,.1,l_step)
+    
+    GB.Prop_CylindricalLens(q_y,q_x,2*f0)
+    GB.Prop_CylindricalLens(q_x,q_y,2*f0)
+
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,Lmax,l_step)
 
 if choice == 83:  #To be designed for the limits of a window at 38.67 cm or 21.27 cm for <1e12 W/cm2
     setupTitle = "Spherical_2Cylindrical_reversed"
@@ -114,7 +175,7 @@ if choice == 591:  #Single Spherical Lens
     GB.Prop_CylindricalLens(q_x,q_y,2*f0)
     
     GB.Prop_Cylindrical_FreeSpace(q_x,q_y,Lmax,l_step)
-    
+
 if choice == 592:  #Single Spherical Lens, same as above but zoomed in more
     setupTitle = "1Spherical"
     w0 = 14.3e-3 #calculated from 30mm diameter flattop estimation
@@ -224,6 +285,27 @@ if choice == 602:  #Single Spherical Lens, same as above but zoomed in more
     GB.Prop_Cylindrical_FreeSpace(q_x,q_y,.1,l_step)
     GB.Prop_CylindricalLens(q_x,q_y,2*f1)
     GB.Prop_Cylindrical_FreeSpace(q_x,q_y,1.7,l_step)
+    GB.Prop_CylindricalLens(q_y,q_x,2*f2)
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,0.4,l_step)
+
+if choice == 603:  #Single Spherical Lens, same as above but zoomed in more
+    setupTitle = "1Spherical"
+    w0 = 8.0e-3#4.2e-3
+    reverse = 0
+    zi = 0.30e-2#0.75e-2#2e-2
+    zoom = int(round(zi/l_step))
+    radscl = 0.3
+    
+    f1 = 0.250
+    f2 = 0.250
+    Lmax = 1.0
+    #P = 12.5e9
+    P = 25e9
+    
+    q_x = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    q_y = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,.1,l_step)
+    GB.Prop_CylindricalLens(q_x,q_y,2*f1)
     GB.Prop_CylindricalLens(q_y,q_x,2*f2)
     GB.Prop_Cylindrical_FreeSpace(q_x,q_y,0.4,l_step)
 
@@ -350,6 +432,24 @@ if calcfocal == 1:
             wmult_min = np.argmin(wy)
         else:
             wmult_min = np.argmin(wx)
+    
+    if offsetlooper == 1:
+        l_arr = np.zeros(len(wy))
+        o_arr = (np.array(range(len(l_arr)))-int(0.5*len(l_arr)))*(xrange[1]-xrange[0])*1e3
+        for i in range(len(l_arr)):
+            wz_current = wy[i]
+            wy_current = wx[i]
+            I = GB.IntensityFromSpotSizes_1D(wy_current,wz_current,y,I0/1e4,w0)
+            params['EI'] = E_ion
+            H = ThrDim.IonFracFromIntensity_1D(I,params['EI'],fs_duration)*den
+            focal = Foc.Calc_Focus(H, y*1e6)
+            l_arr[i] = Foc.Calc_Square_Lens(den*1e17, focal)
+        plt.title("Longitudinal Plasma Thickness vs Horizontal Offset")
+        plt.xlabel("Horizontal Laser Focus Offset "+r'$(mm)$')
+        plt.ylabel("Plasma Thickness in Electron Beam Axis "+r'$(\mu m)$')
+        plt.plot(o_arr,l_arr)
+        plt.grid(); plt.show()
+        print("Maximum Thickness: ",max(l_arr))
     
     #wz_center = wy[int(len(wy)/2)]
     #wy_center = wx[int(len(wx)/2)]

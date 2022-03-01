@@ -21,7 +21,7 @@ import thz
 def get_signal(ind, setup):
     """
     Function to run a full eos simulation and compute a signal for a given 
-    current profile. 
+    current profile (or E-field) and detector setup.  
 
     Parameters:
     -----------
@@ -54,7 +54,105 @@ def get_signal(ind, setup):
     t_sig : array_like
             Time array corresponding to sig
     """
-    # Extract variables
+    ctype   = setup["ctype"]
+    d       = setup["d"]
+    y0      = setup["y0"]
+    tp      = setup["tp"]
+    r0      = setup["r0"]
+    fpath   = setup["fpath"]
+    nslice  = setup["nslice"]
+    tau     = setup["tau"]
+    method  = setup["method"]
+    process = setup["process"]
+    if process == "near":
+        theta = setup["theta"] * np.pi/180
+    if method == "spatial":
+        # Extract initial parameters
+        angle   = setup["angle"]
+        # Convert to rad
+        angle = angle*np.pi/180
+        # Initialize crystal and parameters
+        cry = crystal(ctype)
+        # Initialize probe
+        dy = 27e-9;
+        probe = laser({'y0' : y0, 'dy' : dy, 'tp' : tp})
+        # Get current profile
+        I, ti, p2p = cp.get_current(ind, fpath)
+        # Compute electric field
+        E, te = cp.get_E(I, ti, r0)
+        # Make symmetric
+        N      = 1000
+        fE     = interp1d(te, E)
+        t_use  = min([abs(te[0]), te[-1]])
+        te_int = np.linspace(-t_use, t_use, N)
+        E_int  = np.flip(fE(te_int))
+        # Compute Effective THz pulse
+        FEr, f = thz.raw_field(E_int, te_int);
+        Ec, tt = thz.cry_field(te_int, FEr, f, d, probe, cry, \
+                               nslice = nslice)
+        # Compute phase retardation
+        gamma, t_gamma = pr.phase_retard(Ec, tt*1e-12, d, tau, probe, \
+                                         cry, psi = angle)
+        # Center drive bunch on t = 0
+        t_sig = t_gamma - t_gamma[np.argmax(gamma)]
+        # Compute and return signal
+        if process == "cross":
+            sig = np.sin(0.5*gamma)*np.sin(0.5*gamma)
+            return sig, t_sig
+        elif process == "near":
+            sig = 1 - np.cos(gamma + 4 * theta)
+            return sig, t_sig
+        elif process == "bal":
+            sig = np.sin(gamma)
+            return sig, t_sig
+        else:
+            print("Undefined process")
+            return np.nan, np.nan
+        
+    elif method == "eosd":
+        # Get current profile
+        I, ti, p2p = cp.get_current(ind, fpath)
+        # Compute electric field
+        E, te = cp.get_E(I, ti, r0)
+        # Make symmetric
+        N      = 1000
+        fE     = interp1d(te, E)
+        t_use  = min([abs(te[0]), te[-1]])
+        te_int = np.linspace(-t_use, t_use, N)
+        E_int  = np.flip(fE(te_int))
+        # Compute phase retardation
+        gamma, t_gamma = pr.eosd(E_int, te_int, setup)
+        # Recenter max at t = 0
+        t_sig = t_gamma - t_gamma[np.argmax(gamma)]
+        # Compute and return signal
+        if process == "cross":
+            sig = np.sin(0.5*gamma)*np.sin(0.5*gamma)
+            return sig, t_sig
+        elif process == "near":
+            sig = 1 - np.cos(gamma + 4 * theta)
+            return sig, t_sig
+        elif process == "bal":
+            sig = np.sin(gamma)
+            return sig, t_sig
+        else:
+            print("Undefined process")
+            return np.nan, np.nan
+    elif method == "eotd":
+        # Get current profile
+        I, ti, p2p = cp.get_current(ind, fpath)
+        # Compute electric field
+        E, te = cp.get_E(I, ti, r0)
+        # Make symmetric
+        N      = 1000
+        fE     = interp1d(te, E)
+        t_use  = min([abs(te[0]), te[-1]])
+        te_int = np.linspace(-t_use, t_use, N)
+        E_int  = np.flip(fE(te_int))
+        # Compute phase retardation
+        sig, t_sig = pr.eotd(E, te, setup)
+        return sig, t_sig
+    '''
+    # Extract variables (setup MUST have the following)
     ctype  = setup["ctype"]
     d      = setup["d"]
     y0     = setup["y0"]
@@ -90,8 +188,9 @@ def get_signal(ind, setup):
     # Compute probe timing window (camera res. of 3.5 microns assumed)
     #dtau   = (3.5e-6 / c) * np.tan(angle * np.pi / 180)
     #tau    = np.arange(-500e-15, 1150e-15, dtau)
-    gamma, t_gamma = pr.phase_retard(Ec, tt*1e-12, d, tau, probe, cry,\
-                                     psi = angle)
+    
+    if method == "eosd":
+        gamma, t_gamma = pr.eosd(Ec, te, setup)
 
     # Compute signal
     if method == "cross":
@@ -106,6 +205,7 @@ def get_signal(ind, setup):
     if plot:
         plot_signal(I, sig, ti, t_sig)
     return I, ti, p2p, sig, t_sig, gamma, t_gamma
+'''
 def E_signal(E, te, setup):
     """
     Function to compute spatially encoded EOS signal from an electric field.
@@ -134,15 +234,16 @@ def E_signal(E, te, setup):
     --------
     """
     # Extract parameters
-    ctype  = setup["ctype"]
-    d      = setup["d"]
-    y0     = setup["y0"]
-    tp     = setup["tp"]
-    angle  = setup["angle"]
-    method = setup["method"]
-    th     = setup["th"]
-    nslice = setup["nslice"]
-    tau    = setup["tau"]
+    ctype   = setup["ctype"]
+    d       = setup["d"]
+    y0      = setup["y0"]
+    tp      = setup["tp"]
+    r0      = setup["r0"]
+    fpath   = setup["fpath"]
+    nslice  = setup["nslice"]
+    tau     = setup["tau"]
+    method  = setup["method"]
+    process = setup["process"]
     # Initialize crystal and parameters
     cry = crystal(ctype)
     nslice = 100
@@ -161,22 +262,58 @@ def E_signal(E, te, setup):
     # Compute Signal
     FEr, f = thz.raw_field(E_int, te_int);
     Ec, tt = thz.cry_field(te_int, FEr, f, d, probe, cry, nslice = nslice)
-    # Compute phase retardation
-    gamma, t_gamma = pr.phase_retard(Ec, tt*1e-12, d, tau, probe, cry,\
-                                     psi = angle)
+    
+    if method != "eotd":
+        if method == "spatial":
+            angle = setup["angle"]
+            # Not using temporal decoding, can just grab the phase
+            gamma, t_gamma = pr.phase_retard(Ec, tt*1e-12, d, tau, probe, cry,\
+                                             psi = angle)
+        if method == "eosd":
+            gamma, t_gamma = pr.eosd(E, te, setup)
+        # Compute signal
+        if process == "cross":
+            sig = np.sin(gamma / 2)**2
+        elif process == "bal":
+            sig = np.sin(gamma)
+        elif process == "near":
+            th = setup["theta"]
+            sig = 1 - np.cos(gamma + 4 * th)
+        # Re-center time
+        t_sig = t_gamma - t_gamma[np.argmax(gamma)]
+    
+    elif method == "eotd":
+        sig, t_sig = pr.eotd(E, te, setup)
+        gamma = 0; t_gamma = 0
 
-    # Compute signal
-    if method == "cross":
-        sig = np.sin(gamma / 2)**2
-    elif method == "bal":
-        sig = np.sin(gamma)
-    elif method == "near":
-        sig = 1 - np.cos(gamma + 4 * th)
-    # Re-center time
-    t_sig = t_gamma - t_gamma[np.argmax(gamma)]
-
-    return sig, t_sig, gamma, t_gamma
-
+def get_offset(siga, sigb, x0):
+    """
+    Function to compute the transverse offset of the electron bunches. 
+    
+    Parameters:
+    -----------
+    siga  : array_like
+            Signal from crystal A
+    sigb  : array_like
+            Signal from crystal B
+    t_sig : array_like
+            time array of the signals
+    x0    : float
+            nominal crystal beamline separation
+    
+    Returns:
+    --------
+    dx : array_like
+         Time resolved transverse position of the beam
+    """
+    # Compute nominal phase retardation
+    g0 = 2*np.arcsin(np.sqrt(0.5*(siga + sigb)))
+    # Compute R parameter
+    R  = (siga-sigb)/(siga+sigb)
+    # Compute offset
+    dx = (x0/g0)*R*np.tan(0.5*g0)
+    return dx
+    
 
 def plot_signal(I, sig, ti, t_sig, save = False, sname = ""):
     """
@@ -340,9 +477,10 @@ def plot_shot(I, ti, sigA, sigB, tsig, delta, dxd, dxw, angle, r0):
     ax1.tick_params(axis = 'y', color = 'r', labelcolor = 'r')
     ax1.yaxis.label.set_color('r')
     ax1.set_xlim([-0.3, 0.7])
-    ax1.xaxis.tick_top()
-    ax1.xaxis.set_label_position('top') 
-    ax1.set_xlabel('t [ps]')
+    #ax1.xaxis.tick_top()
+    #ax1.xaxis.set_label_position('top') 
+    ax1.set_xticks([])
+    #ax1.set_xlabel('t [ps]')
     ax1.set_xlim([-0.3, 0.7])
     # Crystal Signal Axis
     ax2 = ax1.twinx()
@@ -358,7 +496,6 @@ def plot_shot(I, ti, sigA, sigB, tsig, delta, dxd, dxw, angle, r0):
     x0 = (-0.3 - tsig[0]) * 1e-12 * c * 1e3 / (np.tan(angle * np.pi / 180))
     x1 = (0.7-tsig[0]) * 1e-12 * c * 1e3 / (np.tan(angle * np.pi / 180))
     ax3.set_xlim([x0, x1])
-    ax3.set_xlabel(r'$x_{las}$ [mm]')
     ax3.set_ylabel(r'$S_{+} - S_{-}$ [AU]')
     ax3.yaxis.set_label_position("right")
     ax3.yaxis.tick_right()
@@ -381,9 +518,9 @@ def plot_shot(I, ti, sigA, sigB, tsig, delta, dxd, dxw, angle, r0):
     plt.subplots_adjust(hspace=0.0)
     # Plotting
     ax1.plot(ti*1e12, I, '-r', linewidth = 1)
-    ax2.plot(tsig, sigA + sigB, '-b', linewidth = 1, label = r'$S_+ + S_-$')
-    ax3.plot(xlas, S_bpm, '-g')
-    ax4.plot(xlas, delta * r0 * 1e6, "-y")
+    ax2.plot(tsig*1e12, sigA + sigB, '-b', linewidth = 1, label = r'$S_+ + S_-$')
+    ax3.plot(tsig*1e12, S_bpm, '-g')
+    ax4.plot(tsig*1e12, delta * r0 * 1e6, "-y")
     ax4.axhline(y = dxd*1e6, color = "k", linestyle = '--')
     ax4.axhline(y = dxw*1e6, color = "k", linestyle = '--')
     maxoff = max(abs(np.array([dxd*1e6, dxw*1e6])))

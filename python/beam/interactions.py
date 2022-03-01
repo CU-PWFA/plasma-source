@@ -56,6 +56,33 @@ def pulse_plasma_energy(pulse, plasma, temp=0.0, n2=0.0, ionization='adk'):
                       plasma.save_plasma_density, plasma.atom, 
                       plasma.load_num_den, plasma.load_plasma_den,
                       pulse.threads, temp, n2, ionization))
+    
+    
+def pulse_plasma_energy_second(pulse, plasma, plasma2, temp=0.0, n2=0.0, ionization='adk'):
+    """ Propagates a pulse through a gas, ionizing and refracting as it goes. Counting the second inoization
+    
+    Parameters
+    ----------
+    pulse : Pulse class
+        The laser pulse to propagate through the plasma.
+    plasma : Plasma class
+        The gas to propagate the laser pulse through.
+    temp : double, optional
+        Temperature of the plasma in eV.
+    n2 : double, optional
+        The nonlinear index of refraction at atmospheric pressure. In cm^2/W.
+    ionization : string, optional
+        The ionization model, options are:
+            adk
+            lithium
+    """
+    pulse.e = np.array(pcalc.plasma_refraction_energy_second(pulse.e, pulse.x, pulse.y,
+                      plasma.z, pulse.t, pulse.lam, plasma.n0, pulse.z[-1],
+                      pulse.fft, pulse.ifft, pulse.save_field, 
+                      plasma.save_plasma_density, plasma.atom, plasma2.atom,
+                      plasma.load_num_den, plasma.load_plasma_den,
+                      pulse.threads, temp, n2, ionization))
+
 
 
 def pulse_multispecies(pulse, multi):
@@ -84,8 +111,8 @@ def beam_phase(beam, phase):
         The phase mask to apply to the beam.
     """
     beam.set_field(beam.e * np.exp(1j*phase.phi))
-    
-    
+
+
 def beam_intensity(beam, intensity):
     """ Applies a transmission mask to a optical beam, either a pulse or laser.
     
@@ -121,8 +148,8 @@ def beam_plasma(beam, plasma):
     beam.e = lcalc.beam_prop(beam.e, beam.x, beam.y, plasma.z, beam.lam, loadnh,
                              beam.z[-1], beam.fft, beam.ifft, beam.save_field,
                              loadn)
-    
-    
+
+
 def beam_index(beam, index):
     """ Propagate a beam through a region with varying index of refraction. 
     
@@ -159,3 +186,24 @@ def electron_plasma(electron, plasma, z, dumpPeriod, n):
     electron.ptcls = ecalc.electron_propagation_plasma(electron.ptcls,
                             z*1e-6, 0.0, plasma.get_ne(z), dumpPeriod,
                             electron.save_ptcls, plasma.dgammadz, n)
+
+
+def electron_plasma_Ez(electron, plasma, z, dumpPeriod, n, arg1, arg2, arg3=0.0):
+    """ Propagate an electron beam through an ion column. 
+    
+    Parameters
+    ----------
+    electron : ElectronBeam class
+        The electron beam to propagate through the plasma.
+    plasma : Plasma class
+        The plasma that the electron beam will be propagating through.
+    z : array-like
+        The spatial grid used to set the step size for the electron beam.
+    dumpPeriod : int
+        How frequently to save the electron beam to disk.
+    n : int
+        Number of threads to run on.
+    """
+    electron.ptcls = ecalc.electron_propagation_plasma_Ez(electron.ptcls,
+                            z*1e-6, 0.0, plasma.get_ne(z), dumpPeriod,
+                            electron.save_ptcls, plasma.dgammadz, n, arg1, arg2, arg3)

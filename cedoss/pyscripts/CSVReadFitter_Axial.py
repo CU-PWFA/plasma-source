@@ -56,21 +56,37 @@ with open(path, newline='') as csvfile:
         arr.append(float(row[variable]))
         dist.append(fac*float(row[axis])-offset)
         
-    arr = np.array(arr)
+    factor = 7.411
+        
+    arr = np.array(arr)*factor
     dist = np.array(dist)
+    
     
     #arr = arr[round(len(arr)*1/4):round(len(arr)*3/4)]
     #dist = dist[round(len(dist)*1/4):round(len(dist)*3/4)]
     
     dist=-1*dist*1e6
+    dist_fine = np.linspace(dist[0],dist[-1],len(dist)*100)
 #    arr=arr-arr[0]
     efit=ThrDim.FitDataSomething(arr, dist, ThrDim.LorentzOffset, guess)
     
-    #xwindow = dist[-1]; xstep = (dist[2]-dist[1])/50 #microns
-    #dist_precise = np.arange(-xwindow, xwindow, xstep)
+    xwindow = dist[-1]; xstep = (dist[2]-dist[1])/50 #microns
+    dist_precise = np.arange(-xwindow, xwindow, xstep)
     
-    #plt.plot(dist,arr,label=simlabel)
-    #plt.title("Data")
-    #plt.xlabel("Distance (microns)"); plt.ylabel("Density (cm^-3)")
-    #plt.plot(dist, ThrDim.Lorentz(lfit,dist),label="Lorentzian")
-    #plt.grid(); plt.legend(); plt.show()
+    plt.plot(dist,arr,label=simlabel)
+    plt.title("Data")
+    plt.xlabel("Distance (microns)"); plt.ylabel("Density (cm^-3)")
+    plt.plot(dist_fine, ThrDim.LorentzOffset(efit,dist_fine),label="Lorentzian")
+    #5mm
+    #plt.plot([4900,5100],[3.1455e16,2.950e16],ls='--')
+    #plt.xlim([4900,5100])
+    #plt.ylim([3.9e15*factor, 4.3e15*factor])
+    #1mm
+    #plt.xlim([900,1100])
+    #plt.ylim([1.33e17, 1.45e17])
+    #plt.plot([900,1100],[1.441e17,1.356e17],ls='--')
+    #1mm
+    plt.xlim([7300,7700])
+    plt.ylim([1.4e16, 1.61e16])
+    plt.plot([7300,7700],[1.605e16,1.461e16],ls='--')
+    plt.grid(); plt.legend(); plt.show()

@@ -313,14 +313,88 @@ def drive_witness_density_new(params):
     #cmapW = alpha_colormap(plt.cm.get_cmap('nipy_spectral'), 0.1, True)
     cmapW = alpha_colormap(plt.cm.get_cmap('rainbow'), 0.1, True)
     ax.imshow(rhoWXY, interpolation='gaussian', extent=[-125, 125, -125, 125], cmap=cmapW)
-    npcase = 2e18
-    vmax = 1e18*(npcase/3.7e17)
-    vmin = 3e16*(npcase/3.7e17)
+    
+    vmax = params['vmax']
+    vmin = params['vmin']
     
     # Plot the plasma density
     cmapP = alpha_colormap(plt.cm.get_cmap('inferno'), 0.2, True)
     ax.imshow(rhoXY, interpolation='gaussian', aspect='auto', extent=[-125, 125, -125, 125],
                norm=colors.LogNorm(vmin=vmin, vmax=vmax), cmap=cmapP)#1e16,2e18
+    
+    plt.savefig(path+'Title_Wake.png')
+    plt.show()
+
+def drive_witness_density_paperplot(params):
+    e = const.physical_constants['elementary charge'][0]
+
+    path = params['path']
+    simName = params['simName']
+    ind = params['dumpInd']
+    zf = params['zoom']
+    drive = params['drive']
+    plasma = params['plasma']
+    
+    offset = 85
+    longext = 352
+    tranext = 400
+    
+    # Load in plasma density
+    rho, rhoAttrs = load.load_field(path, simName, 'rhoPlasma')
+    Nx, Ny, Nz = analyze.get_shape(rho[ind])
+    rhoXY = -(rho[ind][:, :, int(Nz+1)/2, 0]/e/1e6)+2 #for one transverse dim
+    rhoXY = -np.transpose(rho[ind][:, :, int(Nz+1)/2, 0]/e/1e6)+2 #for one transverse dim
+    #rhoXY = -np.transpose(rho[ind][:, int(Nz+1)/2, :, 0]/e/1e6)+2 #for the other tran dim
+    
+    #Load in drive beam density
+    rho, rhoAttrs = load.load_field(path, simName, 'rhoBeam')
+    Nx, Ny, Nz = analyze.get_shape(rho[ind])
+    rhoBXY = -np.transpose(rho[ind][:, :, int(Nz+1)/2, 0]/e/1e6)
+    
+    #Load in witness beam density
+    #rho, rhoAttrs = load.load_field(path, simName, 'rhoWitness')
+    #Nx, Ny, Nz = analyze.get_shape(rho[ind])
+    #rhoWXY = -np.transpose(rho[ind][:, :, int(Nz+1)/2, 0]/e/1e6)
+    
+    def alpha_colormap(cmap, cutoff, flip=True):
+        N = cmap.N
+        cmapt = cmap(np.arange(N))
+        alpha = np.ones(N)
+        if flip:
+            temp = alpha[:int(cutoff*N)]
+            M = len(temp)
+            alpha[:int(cutoff*N)] = np.linspace(0, 1, M)
+        else:
+            alpha[int((1-cutoff)*N):] = 0.0
+        cmapt[:, -1] = alpha
+        cmapt = colors.ListedColormap(cmapt)
+        return cmapt
+    
+    # Plot the plasma density
+    fig = plt.figure(figsize=(5, 3.75), dpi=100, frameon=False)
+    ax = plt.Axes(fig, [0., 0., 1., 1.])
+    #ax.set_axis_off()
+    fig.add_axes(ax)
+    
+    # Plot the drive beam
+    ax.imshow(rhoBXY, interpolation='gaussian', extent=[longext/2+offset, -longext/2+offset, -tranext/2, tranext/2], cmap='copper')
+    
+    # Plot the witness beam
+    #cmapW = alpha_colormap(plt.cm.get_cmap('nipy_spectral'), 0.1, True)
+    #cmapW = alpha_colormap(plt.cm.get_cmap('rainbow'), 0.1, True)
+    #ax.imshow(rhoWXY, interpolation='gaussian', extent=[150+98, -150+98, -200, 200], cmap=cmapW)
+    npcase = 1e16
+    multfac = 4
+    vmax = 1e18*(npcase/3.7e17)*multfac
+    vmin = 3e16*(npcase/3.7e17)/multfac
+    
+    # Plot the plasma density
+    cmapP = alpha_colormap(plt.cm.get_cmap('inferno'), 0.2, True)
+    cf = ax.imshow(rhoXY, interpolation='gaussian', aspect='auto', extent=[longext/2+offset, -longext/2+offset, -tranext/2, tranext/2],
+               norm=colors.LogNorm(vmin=vmin, vmax=vmax), cmap=cmapP)#1e16,2e18
+    fig.colorbar(cf, ax=ax,label=r'$\mathrm{Plasma \ Electron \ Density \ }(cm^{-3})$')
+    plt.xlabel(r'$z \ (\mu m)$')
+    plt.ylabel(r'$y \ (\mu m)$')
     
     plt.savefig(path+'Title_Wake.png')
     plt.show()
@@ -353,21 +427,26 @@ def wake_cross_section(params):
     
     # Load in plasma density
     rho, rhoAttrs = load.load_field(path, simName, 'rhoPlasma')
-    print(rho); print(np.shape(rho))
-    print(rhoAttrs); print(np.shape(rhoAttrs))
+    #print(rho); print(np.shape(rho))
+    #print(rhoAttrs); print(np.shape(rhoAttrs))
     Nx, Ny, Nz = analyze.get_shape(rho[ind])
     #rhoYZ = -np.transpose(rho[ind][int(Nx+1)/2+central_off, :, :, 0]/e/1e6)+2
     rhoYZ = -(rho[ind][int(Nx+1)/2+central_off, :, :, 0]/e/1e6)+2
     x = np.linspace(-tranExtent, tranExtent, Nz)
     y = np.linspace(-tranExtent, tranExtent, Ny)
-    """
-    rho_grad = rhoYZ[:,int((Ny+1)/3)]
-    plt.plot(y,rho_grad)
-    plt.title("Linear Density Gradient")
-    plt.xlabel(r'$x (\mu m)$')
-    plt.ylabel(r'$n_p (cm^{-3})$')
-    plt.grid();plt.show()
-    """
+    
+    rho_grad = rhoYZ[:,int((Ny+1)/2)]
+    for i in range(len(rho_grad)):
+        if rho_grad[i]<0:
+            rho_grad[i]=0
+    if plot is True:
+        plt.plot(-y,rho_grad)
+        #print(rho_grad)
+        plt.title("Plasma Electron Density on Vertical Axis")
+        plt.xlabel(r'$x (\mu m)$')
+        plt.ylabel(r'$n_p (cm^{-3})$')
+        plt.grid();plt.show()
+    
     if plot is True:
         # Plot the plasma density
         fig = plt.figure(figsize=(7.5, 7.5), dpi=100, frameon=False)
@@ -377,9 +456,12 @@ def wake_cross_section(params):
         cmapP = alpha_colormap(plt.cm.get_cmap('inferno'), 0.2, True)
         ax.imshow(rhoYZ, interpolation='gaussian', aspect=1, extent=[-tranExtent, tranExtent, -tranExtent, tranExtent],
                    norm=colors.LogNorm(vmin=vmin, vmax=vmax), cmap=cmapP)#1e16,2e18
-        """r_circ = 28.74
-        plt.plot(x, np.sqrt(r_circ**2-np.square(x)),  c='b',ls='--')
-        plt.plot(x, -np.sqrt(r_circ**2-np.square(x)), c='b',ls='--')"""
+        """
+        r_circ = 103.9
+        plt.plot(x, np.sqrt(r_circ**2-np.square(x))+7.2,  c='b',ls='--')
+        plt.plot(x, -np.sqrt(r_circ**2-np.square(x))+7.2, c='b',ls='--')
+        plt.plot([-103.9,103.9],[7.2,7.2], c='r',ls='--')
+        """
         plt.savefig(path+'Title_Wake.png')
         plt.show()
     
@@ -399,8 +481,9 @@ def wake_cross_section(params):
                 theta[z] = theta[z] + np.pi
             rhoPol[z] = rhoYZ[i,j]
             z = z+1
-            
-    threshset = np.array(np.where(r < 40)[0])
+    
+    threshold = params['threshold']
+    threshset = np.array(np.where(r < threshold)[0])
     theta = theta[threshset]; r = r[threshset]; rhoPol = rhoPol[threshset]
     sort = np.argsort(theta)
     theta = theta[sort]; r = r[sort]; rhoPol = rhoPol[sort]
@@ -420,13 +503,60 @@ def wake_cross_section(params):
             if rhosheath[i] < rhoPol[k]:
                 rhosheath[i] = rhoPol[k]
                 rsheath[i] = r[k]
-                """
+            """
             k=k+1
             
     return (thetabins[1:]+.5*(thetabins[2]-thetabins[1])), rsheath
     #return r, theta, rhoPol
 
-def wake_cross_section_efield(params):
+def wake_cross_section_densityslice(params):
+    e = const.physical_constants['elementary charge'][0]
+
+    path = params['path']
+    simName = params['simName']
+    ind = params['dumpInd']
+    central_off = params['centralOff']
+    tranExtent = params['tranExtent']
+    plot = params['plot']
+    
+    def alpha_colormap(cmap, cutoff, flip=True):
+        N = cmap.N
+        cmapt = cmap(np.arange(N))
+        alpha = np.ones(N)
+        if flip:
+            temp = alpha[:int(cutoff*N)]
+            M = len(temp)
+            alpha[:int(cutoff*N)] = np.linspace(0, 1, M)
+        else:
+            alpha[int((1-cutoff)*N):] = 0.0
+        cmapt[:, -1] = alpha
+        cmapt = colors.ListedColormap(cmapt)
+        return cmapt
+    
+    # Load in plasma density
+    rho, rhoAttrs = load.load_field(path, simName, 'rhoPlasma')
+    #print(rho); print(np.shape(rho))
+    #print(rhoAttrs); print(np.shape(rhoAttrs))
+    Nx, Ny, Nz = analyze.get_shape(rho[ind])
+    #rhoYZ = -np.transpose(rho[ind][int(Nx+1)/2+central_off, :, :, 0]/e/1e6)+2
+    rhoYZ = -(rho[ind][int(Nx+1)/2+central_off, :, :, 0]/e/1e6)+2
+    y = np.linspace(-tranExtent, tranExtent, Ny)
+    
+    rho_grad = rhoYZ[:,int((Ny+1)/2)]
+    for i in range(len(rho_grad)):
+        if rho_grad[i]<0:
+            rho_grad[i]=0
+    if plot is True:
+        plt.plot(-y,rho_grad)
+        #print(rho_grad)
+        plt.title("Plasma Electron Density on Vertical Axis")
+        plt.xlabel(r'$x (\mu m)$')
+        plt.ylabel(r'$n_p (cm^{-3})$')
+        plt.grid();plt.show()
+    
+    return y, rho_grad
+
+def wake_cross_section_field(params):
     e = const.physical_constants['elementary charge'][0]
 
     path = params['path']
@@ -436,12 +566,14 @@ def wake_cross_section_efield(params):
     tranExtent = params['tranExtent']
     plot = params['plot']
     vec = params['vector']
+    field = params['field']
     
     # Load in plasma density
-    efield, efieldAttrs = load.load_field(path, simName, 'ElecFieldPlasma')
+    efield, efieldAttrs = load.load_field(path, simName, field)
     Nx, Ny, Nz = analyze.get_shape(efield[ind])
     #rhoYZ = -np.transpose(rho[ind][int(Nx+1)/2+central_off, :, :, 0]/e/1e6)+2
-    eYZ = -(efield[ind][int(Nx+1)/2+central_off, :, :, vec])
+    ###minus sign was below###
+    eYZ = (efield[ind][int(Nx+1)/2+central_off, :, :, vec])
 
     if plot is True:
         # Plot the plasma density
@@ -454,13 +586,137 @@ def wake_cross_section_efield(params):
         plt.colorbar(h)
         plt.show()
     
-    evx = np.flip(eYZ[int((Nz+1)/2),:],0)
+    evx = np.flip(eYZ[int((Nz+1)/2)-0,:],0)
     evy = np.flip(eYZ[:,int((Nz+1)/2)],0)
     x = np.linspace(-tranExtent,tranExtent,Nz)
     y = np.linspace(-tranExtent,tranExtent,Ny)
 
     return x, y, evx, evy, eYZ
 
+def wake_cross_section_sheath(params):
+    e = const.physical_constants['elementary charge'][0]
+
+    path = params['path']
+    simName = params['simName']
+    ind = params['dumpInd']
+    central_off = params['centralOff']
+    tranExtent = params['tranExtent']
+    plot = params['plot']
+    radmax = params['radmax']
+    yoff = params['yoff']
+    
+    def alpha_colormap(cmap, cutoff, flip=True):
+        N = cmap.N
+        cmapt = cmap(np.arange(N))
+        alpha = np.ones(N)
+        if flip:
+            temp = alpha[:int(cutoff*N)]
+            M = len(temp)
+            alpha[:int(cutoff*N)] = np.linspace(0, 1, M)
+        else:
+            alpha[int((1-cutoff)*N):] = 0.0
+        cmapt[:, -1] = alpha
+        cmapt = colors.ListedColormap(cmapt)
+        return cmapt
+    
+    # Load in plasma density
+    rho, rhoAttrs = load.load_field(path, simName, 'rhoPlasma')
+    #print(rho); print(np.shape(rho))
+    #print(rhoAttrs); print(np.shape(rhoAttrs))
+    Nx, Ny, Nz = analyze.get_shape(rho[ind])
+    #rhoYZ = -np.transpose(rho[ind][int(Nx+1)/2+central_off, :, :, 0]/e/1e6)+2
+    rhoYZ = -(rho[ind][int(Nx+1)/2+central_off, :, :, 0]/e/1e6)+2
+    x = np.linspace(-tranExtent, tranExtent, Nz)
+    y = np.linspace(-tranExtent, tranExtent, Ny)
+    
+    x_arr = np.array(range(-int(Nz/4),int(Nz/4), 1))+int(Nz/2)
+    y_arr = np.array(range(0,int(Ny/4)))+int(Ny/2)
+    stop_arr = np.zeros(len(x_arr))
+    sbot_arr = np.zeros(len(x_arr))
+    ytop_arr = np.zeros(len(x_arr))
+    ybot_arr = np.zeros(len(x_arr))
+    xtop_arr = np.zeros(len(x_arr))
+    xbot_arr = np.zeros(len(x_arr))
+
+    for k in range(len(x_arr)):
+        if np.abs(x[x_arr[k]]) < radmax:
+            for m in range(len(y_arr)):
+                if stop_arr[k] < rhoYZ[y_arr[m],x_arr[k]]:
+                    stop_arr[k] = rhoYZ[y_arr[m],x_arr[k]]
+                    ytop_arr[k] = y[y_arr[m]]
+                    xtop_arr[k] = x[x_arr[k]]
+                if sbot_arr[k] < rhoYZ[-y_arr[m],x_arr[k]]:
+                    sbot_arr[k] = rhoYZ[-y_arr[m],x_arr[k]]
+                    ybot_arr[k] = y[-y_arr[m]]
+                    xbot_arr[k] = x[x_arr[k]]
+    
+    botset = np.array(np.where((ybot_arr < -0.001))[0])
+    ybot_arr = ybot_arr[botset]
+    sbot_arr = sbot_arr[botset]
+    xbot_arr = xbot_arr[botset]
+    
+    topset = np.array(np.where((ytop_arr < radmax))[0])
+    ytop_arr = ytop_arr[topset]
+    xtop_arr = xtop_arr[topset]
+    stop_arr = stop_arr[topset]
+    topset = np.array(np.where((ytop_arr > 1))[0])
+    ytop_arr = ytop_arr[topset]
+    xtop_arr = xtop_arr[topset]
+    stop_arr = stop_arr[topset]
+    
+    y_arr = np.array(range(-int(Ny/4),int(Ny/4), 1))+int(Ny/2)
+    x_arr = np.array(range(0,int(Nz/4)))+int(Nz/2)
+    srig_arr = np.zeros(len(y_arr))
+    slef_arr = np.zeros(len(y_arr))
+    yrig_arr = np.zeros(len(y_arr))
+    ylef_arr = np.zeros(len(y_arr))
+    xrig_arr = np.zeros(len(y_arr))
+    xlef_arr = np.zeros(len(y_arr))
+    for k in range(len(y_arr)): 
+        if np.abs(y[y_arr[k]]+yoff) < radmax:
+            for m in range(len(x_arr)):
+                if srig_arr[k] < rhoYZ[y_arr[k],x_arr[m]]:
+                    srig_arr[k] = rhoYZ[y_arr[k],x_arr[m]]
+                    xrig_arr[k] = x[x_arr[m]]
+                    yrig_arr[k] = y[y_arr[k]]
+                if slef_arr[k] < rhoYZ[y_arr[k],-x_arr[m]]:
+                    slef_arr[k] = rhoYZ[y_arr[k],-x_arr[m]]
+                    xlef_arr[k] = x[-x_arr[m]]
+                    ylef_arr[k] = y[y_arr[k]]
+    
+    lefset = np.array(np.where((xlef_arr < -0.001))[0])
+    ylef_arr = ylef_arr[lefset]
+    xlef_arr = xlef_arr[lefset]
+    slef_arr = slef_arr[lefset]
+    
+    rigset = np.array(np.where((xrig_arr > 0.001))[0])
+    yrig_arr = yrig_arr[rigset]
+    xrig_arr = xrig_arr[rigset]
+    srig_arr = srig_arr[rigset]
+    
+    if plot == True:
+        plt.scatter(ylef_arr,slef_arr)
+        plt.scatter(yrig_arr,srig_arr)
+        plt.scatter(ybot_arr,sbot_arr)
+        plt.scatter(ytop_arr,stop_arr)
+        plt.title("Sheath densities vs y (both)")
+        plt.xlabel("y coordinate "+r'$(\mu m)$')
+        plt.ylabel("Density "+r'$(cm^{-3})$')
+        plt.show()
+        
+        plt.scatter(xlef_arr,slef_arr)
+        plt.scatter(xrig_arr,srig_arr)
+        plt.scatter(xbot_arr,sbot_arr)
+        plt.scatter(xtop_arr,stop_arr)
+        plt.title("Sheath densities vs x (both)")
+        plt.xlabel("x coordinate "+r'$(\mu m)$')
+        plt.ylabel("Density "+r'$(cm^{-3})$')
+        plt.show()
+        
+    xret = np.concatenate((xlef_arr,xrig_arr,xbot_arr,xtop_arr))
+    yret = np.concatenate((ylef_arr,yrig_arr,ybot_arr,ytop_arr))
+    nret = np.concatenate((slef_arr,srig_arr,sbot_arr,stop_arr))
+    return xret,yret,nret
 def drive_witness_animation(params):
     """ Creates an animation of the electron wake and beam density evolution.
 
