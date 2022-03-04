@@ -263,7 +263,7 @@ def plasma_refraction_energy(double complex[:, :, :] E, double[:] x, double[:] y
 def plasma_refraction_energy_second(double complex[:, :, :] E, double[:] x, double[:] y,
                       double[:] z, double[:] t, double lam, double n0, 
                       double z0, fft, ifft, saveE, saven, atom, atomp,
-                      loadn, loadne, int num_threads, double temp=0.0,
+                      loadn, loadne, loadne2, int num_threads, double temp=0.0,
                       double n2=0.0, ionization='adk'):
     """ Propagate a laser pulse through a plasma accounting for refraction. Counting its second ionization. 
 
@@ -310,6 +310,8 @@ def plasma_refraction_energy_second(double complex[:, :, :] E, double[:] x, doub
         Function that loads the initial gas density in 10^17 cm^-3 when passed an index.
     loadne : func
         Function that loads the initial plasma density in 10^17 cm^-3 when passed an index.
+    loadne2 : func
+        Function that loads the initial plasma density from second ionization in 10^17 cm^-3 when passed an index.
     temp : double, optional
         The final temperature of the plasma in eV for energy loss. Currently taken
         out of the field locally.
@@ -343,13 +345,15 @@ def plasma_refraction_energy_second(double complex[:, :, :] E, double[:] x, doub
     # Note, this assumes the plasma density is well below the critical density
     cdef double[:, :] n = np.zeros((Nx, Ny), dtype='double')
     cdef double[:, :] ne = np.zeros((Nx, Ny), dtype='double')
+    cdef double[:, :] ne2 = np.zeros((Nx, Ny), dtype='double')
+    cdef double[:, :] ne_tot = np.zeros((Nx, Ny), dtype='double')
     cdef double ngas = atom['alpha'] * 6.283e-07
     cdef double nplasma = plasma_index(1.0, lam) - 1.0
     cdef double nh = 1.0 + ngas*n0
     cdef double dn = nplasma - ngas
     # n2 is measured at atmospheric pressure, calculate it per 1e17cm^-3
     cdef double dn2 = n2 * 3.99361e-3
-    dn2 = dn2 * 1.32721e11 # Convert so we can multiply be GeV^2 later
+    dn2 = dn2 * 1.32721e11 # Convert so we can multiply by GeV^2 later
     # Pre-calculate the spatial frequencies
     cdef double[:] fx = fftfreq(Nx, dx)
     cdef double[:] fy = fftfreq(Ny, dy)
@@ -360,12 +364,14 @@ def plasma_refraction_energy_second(double complex[:, :, :] E, double[:] x, doub
         rate_func = rate_lithium
     cdef double complex arg
     cdef double rate1
-    cdef double Eavg1
+    cdef double Eavg
     cdef double rate2
-    cdef double Eavg2
     cdef double dz
-    cdef double ne_new
-    cdef double dE
+    cdef double ne_new1
+    cdef double ne_new2
+    cdef double plus
+    cdef double dE1
+    cdef double dE2
     cdef double ng
     cdef double e_abs
     cdef double complex arg_kerr
@@ -373,6 +379,7 @@ def plasma_refraction_energy_second(double complex[:, :, :] E, double[:] x, doub
     for i in range(1, Nz):
         n = loadn(i-1)
         ne = loadne(i-1)
+        ne2 = loadne2(i-1)
         dz = z[i] - z[i-1]
         arg = 1j*2*np.pi*dz*dn / lam
         arg_kerr = 1j*2*np.pi*dz*dn2 / lam 
@@ -382,34 +389,36 @@ def plasma_refraction_energy_second(double complex[:, :, :] E, double[:] x, doub
             with nogil:
                 for k in prange(Nx, num_threads=num_threads):
                     for l in range(Ny):
-                        ng = n[k, l] - ne[k, l]
-                        e_abs = cabs(e[k, l])
-                        e[k, l] *= cexp(arg*ne[k, l] + arg_kerr*ng*e_abs*e_abs)
+                        ng = n[k, l] - ne[k, l]#neutral density
+                        e_abs = cabs(e[k, l]) #electric field
+                        e[k, l] *= cexp(arg*ne_tot[k, l] + arg_kerr*ng*e_abs*e_abs) #E field counting kerr effect
                         # Ionize the gas
-#TODO This is the right one!
-		  #Ionize the first electron
-                        Eavg1 = 0.5*(cabs(E[j, k, l]) + e_abs)
-                        rate1 = rate_func(EI1, Eavg1, Z1, ll1, m1)
-                        ne_new = n[k, l]-ng*exp(-rate1*dt)
-                        # Remove energy from the laser
-                        dE = energy_loss(ne[k, l], ne_new, EI1+temp, dz, dt, e[k, l])
-                        e[k, l] *= dE
-                       
-            #Ionize the second electron
-                        e_abs = cabs(e[k, l])
-                        e[k, l] *= cexp(arg*ne[k, l] + arg_kerr*ng*e_abs*e_abs)
-                        Eavg2 = 0.5*(cabs(E[j, k, l]) + e_abs)
-                        rate2 = rate_func(EI2, Eavg2, Z2, ll2, m2)
-                        ne_new = n[k, l]-ng*exp(-rate2*dt)
-                        # Remove energy from the laser
-                        dE = energy_loss(ne[k, l], ne_new, EI2+temp, dz, dt, e[k, l])
-                        e[k, l] *= dE
-                        ne[k, l] = ne_new
+
+		  #Ionize the first electron based on initial field strength from neutral gas
+                        Eavg = 0.5*(cabs(E[j, k, l]) + e_abs) #avg e field
+                        rate1 = rate_func(EI1, Eavg, Z1, ll1, m1) #first ionization rate
+                        ne_new1 = n[k, l] -ng*exp(-rate1*dt) #electron density from first ionization
+                                                            #first ionization moved neutral -> ion+
+           #Ionize the second electron based on initial field strength from singly ionized gas
+                        plus = ne[k, l] - ne2[k, l]
+                        rate2 = rate_func(EI2, Eavg, Z2, ll2, m2)
+                        ne_new2 = ne[k, l] -plus*exp(-rate2*dt) #electron density from second ionization
+                                                               #second ionization moved ion+ -> ion++
+
+           #Remove energy from both ionization
+                        dE1 = energy_loss(ne[k, l], ne_new1, EI1+temp, dz, dt, e[k, l])
+                        e[k, l] *= dE1
+                        dE2 = energy_loss(ne2[k, l], ne_new2, EI2+temp, dz, dt, e[k, l])
+                        e[k, l] *= dE2
                         
+           #update electron density
+                        ne[k, l] = ne_new1
+                        ne2[k, l] = ne_new2
+                        ne_tot[k, l]= ne[k, l]+ ne2[k, l]
 
             E[j, :, :] = e
-        saveE(E, z[i]+z0)
-        saven(ne, i-1)
+        saveE(E, z[i]+z0)        
+        saven(ne_tot, i-1)
     return E
 
 

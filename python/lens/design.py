@@ -445,8 +445,84 @@ def plasma_refraction(X, Nx, Z, Nz, beam0, pulseParams, species, n, start, m_e, 
         ne = ne*1e17
         return pulse, I, ne
 
+def load_laser_plasma(Nx, Nz, Nt, path, PulseName=None, PlasmaName= None):
+    """ Load laser intensity from Refracted_Beam_field 
+        and plasma density from Plasma_Source_numberDensity
+    
+    Parameters
+    ----------
+    path : string
+        Path to save the data at (in that dir, there are beams and elements two sub-dir)
+    PulseName : string, optional
+        Name of the pulse from the plasma source, defaults to 'Refracted_Beam'.
+    PlasmaName : string, optional
+        Name of the plasma source, defaults to 'Plasma_Source'.
+    
+    Returns
+    -------
+    pulse : Pulse object
+        The laser pulse object from the refraction simulation.
+    I : array of doubles
+        Laser intensity.
+    ne : array of doubles
+        plasma density.
+    """
+    def load_plasma_density(path, PlasmaName, ind):
+        """ Load the plasma density at the specified index. 
+        
+        Parameters
+        ----------
+        ind : int
+            The save index to load the field at.
+        
+        Returns
+        -------
+        ne : array-like
+            The plasma density at the specified index.
+        z : double
+            The z coordinate of the density.
+        """
+        ne = np.load(path+ 'elements/element_Plasma_Source/'+ PlasmaName+ '_plasmaDensity_' + str(ind) + '.npy')
+        return ne
+    
+    def load_field(path, PulseName, ind):
+        """ Load the electric field at the specified index. 
+        
+        Parameters
+        ----------
+        ind : int
+            The save index to load the field at.
+        
+        Returns
+        -------
+        e : array-like
+            The electric field at the specified index.
+        z : double
+            The z coordinate of the field.
+        """
+        e = np.load(path+ 'beams/beam_Refracted_Beam/'+ PulseName+ '_field_' + str(ind) + '.npy')
+        return e
 
-def plot_laser_plasma(I, ne, ext):
+    if PulseName is None:
+        PulseName = 'Refracted_Beam'
+
+    if PlasmaName is None:
+        PlasmaName = 'Plasma_Source'
+
+    e = np.zeros((Nz, Nx), dtype='complex128')
+    ne = np.zeros((Nz, Nx))
+    for i in range(0, Nz-1):
+        ne[i, :] = load_plasma_density(path, PlasmaName, i)
+    for i in range(Nz):
+#        e[i, :] = np.sum(load_field(path, PulseName, i), axis= 0)/Nt
+        e[i, :] = load_field(path, PulseName, i)[int(Nt/2), :]
+#        e[i, :] = load_field(path, PulseName, i)[16, :]
+    I = ionization.intensity_from_field(e)
+    ne = ne*1e17
+    return I, ne
+
+
+def plot_laser_plasma(I, ne, ext, name= None):
     """ Plot the laser intensity at z=0 and the final plasma density.
     
     Parameters
@@ -457,10 +533,12 @@ def plot_laser_plasma(I, ne, ext):
         The x-z slice of the plasma density array.
     ext : array of doubles
         The extent of the image for imshow extent.
+    name : string, optional
+        Name and path for the image to be saved to.
     """
     plt.figure(figsize=(16, 4), dpi=150)
     plt.subplot(121)
-    plt.imshow(np.flipud(np.transpose(I)), aspect='auto', extent=ext, cmap='viridis')
+    plt.imshow(np.flipud(np.transpose(I)), aspect='auto', extent=ext, cmap='viridis')#, vmax= 18)
     cb = plt.colorbar()
     cb.set_label(r'Laser Intensity ($10^{14} W/cm^2$)')
     plt.xlabel('z (cm)')
@@ -468,13 +546,15 @@ def plot_laser_plasma(I, ne, ext):
     plt.ylim(-500, 500)
 
     plt.subplot(122)
-    plt.imshow(np.flipud(np.transpose(ne)), aspect='auto', extent=ext, cmap='plasma')
+    plt.imshow(np.flipud(np.transpose(ne)), aspect='auto', extent=ext, cmap='plasma')#, vmax= 1e17)
     cb = plt.colorbar()
     cb.set_label(r'$n_e$ ($\mathrm{cm^{-3}}$)')
     plt.xlabel('$z$ (cm)')
     plt.ylabel(r'$x$ ($\mathrm{\mu m}$)')
     plt.ylim(-500, 500)
     plt.tight_layout()
+    if name is not None:
+        plt.savefig(name+'.png')
     plt.show()
 
 def plot_plasma_density(pulse, ne, ne0, ext, lines=[20, 40, 60], name=None, xlim=None, ylim=None, xlim2=None, yticks=None):
@@ -525,7 +605,7 @@ def plot_plasma_density(pulse, ne, ne0, ext, lines=[20, 40, 60], name=None, xlim
     ax3 = plt.subplot(gs[3, 0], sharex=ax1)
     plt.plot(np.array(pulse.z)/1e4, ne[:, int(pulse.Nx/2)]/1e16, c=orange)
     plt.xlim(xlim)
-    plt.ylim(0, 1.1*ne0*10)
+    plt.ylim(0, 2.1*ne0*10)
     plt.xlabel(r'$z$ (cm)')
     plt.ylabel(r'$n_e$')
     plt.grid(True)
@@ -539,22 +619,25 @@ def plot_plasma_density(pulse, ne, ne0, ext, lines=[20, 40, 60], name=None, xlim
     ax01 = plt.subplot(gs2[0, 2])
     plt.plot(ne[int(Nz*lines[2]/Z), :]/1e16, pulse.x, c=orange)
     plt.plot([ne0*10, ne0*10], xlim2, '-', c=grey2, linewidth=linewidth)
+    plt.plot([ne0*20, ne0*20], xlim2, '-', c=grey2, linewidth=linewidth)
     plt.grid(True, axis='y')
-    plt.xlim(0, 1.1*ne0*10)
+    plt.xlim(0, 2.1*ne0*10)
     plt.xlabel(r'$n_e$')
 
     ax02 = plt.subplot(gs2[0, 1], sharey=ax01)
     plt.plot(ne[int(Nz*lines[1]/Z), :]/1e16, pulse.x, c=orange)
     plt.plot([ne0*10, ne0*10], xlim2, '-', c=grey2, linewidth=linewidth)
+    plt.plot([ne0*20, ne0*20], xlim2, '-', c=grey2, linewidth=linewidth)
     plt.grid(True, axis='y')
-    plt.xlim(0, 1.1*ne0*10)
+    plt.xlim(0, 2.1*ne0*10)
     plt.xlabel(r'$n_e$')
 
     ax03 = plt.subplot(gs2[0, 0], sharey=ax02)
     plt.plot(ne[int(Nz*lines[0]/Z), :]/1e16, pulse.x, c=orange)
     plt.plot([ne0*10, ne0*10], xlim2, '-', c=grey2, linewidth=linewidth)
+    plt.plot([ne0*20, ne0*20], xlim2, '-', c=grey2, linewidth=linewidth)
     plt.grid(True, axis='y')
-    plt.xlim(0, 1.1*ne0*10)
+    plt.xlim(0, 2.1*ne0*10)
     plt.xlabel(r'$n_e$')
     plt.ylim(xlim2)
     plt.ylabel(r'$x$ ($\mathrm{\mu m}$)')
@@ -565,7 +648,7 @@ def plot_plasma_density(pulse, ne, ne0, ext, lines=[20, 40, 60], name=None, xlim
         plt.savefig(name+'.png')
     plt.show()
     
-def plot_pulse(pulse, ind, ylim=None, log=False, smooth=False):
+def plot_pulse(pulse, ind, ylim=None, log=False, smooth=False, name=None):
     """ Plot the pulse intensity in t-x space.
     
     Parameters
@@ -578,6 +661,8 @@ def plot_pulse(pulse, ind, ylim=None, log=False, smooth=False):
         The y limits of the plot.
     log : optional, bool
         Plot the intensity on a log scale.
+    name : string, optional
+        Name and path for the image to be saved to.
     """
     Nt = pulse.Nt
     T = pulse.T
@@ -605,6 +690,8 @@ def plot_pulse(pulse, ind, ylim=None, log=False, smooth=False):
     plt.ylabel(r'x ($\mathrm{\mu m}$)')
     if ylim is not None:
         plt.ylim(ylim)
+    if name is not None:
+        plt.savefig(name+'.png')
     plt.show()
     
 def pulse_evolution(pulse, name, ylim=None, log=False, smooth=False):

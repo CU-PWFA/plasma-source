@@ -80,7 +80,7 @@ def pulse_plasma_energy_second(pulse, plasma, plasma2, temp=0.0, n2=0.0, ionizat
                       plasma.z, pulse.t, pulse.lam, plasma.n0, pulse.z[-1],
                       pulse.fft, pulse.ifft, pulse.save_field, 
                       plasma.save_plasma_density, plasma.atom, plasma2.atom,
-                      plasma.load_num_den, plasma.load_plasma_den,
+                      plasma.load_num_den, plasma.load_plasma_den, plasma2.load_plasma_den,
                       pulse.threads, temp, n2, ionization))
 
 
