@@ -293,7 +293,7 @@ def domain_test(X, Nx, Z, Nz, beam0, pulseParams, z_target, I_target, start, yli
     return I
     
 def plasma_refraction(X, Nx, Z, Nz, beam0, pulseParams, species, n, start, m_e, ne0, name=None, t=0.0, n2=0.0, 
-                      ionization_type='adk', multispecies= False, species2= None):
+                      ionization_type='adk', load_beam_profile= False, e_load= None, multispecies= False, species2= None):
     """ Propagate the laser pulse through the gas profile.
     
     Parameters
@@ -324,6 +324,10 @@ def plasma_refraction(X, Nx, Z, Nz, beam0, pulseParams, species, n, start, m_e, 
         The nonlinear index of refraction at atmospheric pressure. In cm^2/W.
     ionization_type : string, optional
         Function to use for the ionization model.
+    load_beam_profile : bool
+        Whether to load the beam profile (e.g. from experiments) or not. 
+    e_load : 2D array
+        The beam profile (e.g. from experiments) loaded for plasma refraction.
     multispecies : boolean
         turn multispecies on or not
     species2: dict
@@ -338,6 +342,7 @@ def plasma_refraction(X, Nx, Z, Nz, beam0, pulseParams, species, n, start, m_e, 
         pulseParams['Ny'] = Nx
         pulseParams['X'] = X
         pulseParams['Y'] = X
+        pulseParams['cyl'] = not load_beam_profile
         plasmaParams = {
             'Nx' : Nx,
             'Ny' : Nx,
@@ -348,13 +353,16 @@ def plasma_refraction(X, Nx, Z, Nz, beam0, pulseParams, species, n, start, m_e, 
             'atom' : species,
             'path' : pulseParams['path'],
             'load' : False,
-            'cyl' : True,
+            'cyl' : not load_beam_profile,
             'name' : 'Plasma_Source',
             'n0' : ne0
         }
         tau = pulseParams['tau']
         pulse = laserpulse.Pulse(pulseParams)
-        e = np.sqrt(m_e)*pulse.reconstruct_from_cyl(beam0.x, np.array(beam0.e)[:, int(beam0.Ny/2)], pulse.x, pulse.y)
+        if load_beam_profile== False:
+            e = np.sqrt(m_e)*pulse.reconstruct_from_cyl(beam0.x, np.array(beam0.e)[:, int(beam0.Ny/2)], pulse.x, pulse.y)
+        else:
+            e= e_load
         e = e[None, :, :]*np.exp(-pulse.t[:, None, None]**2*np.pi/(2*tau**2))
         pulse.initialize_field(e)
         print('Initial pulse energy %0.2fmJ' % (pulse.pulse_energy()*1e3))
@@ -371,10 +379,16 @@ def plasma_refraction(X, Nx, Z, Nz, beam0, pulseParams, species, n, start, m_e, 
         print('Final pulse energy %0.2fmJ' % (pulse.pulse_energy()*1e3))
         e = np.zeros((Nz, Nx), dtype='complex128')
         ne = np.zeros((Nz, Nx))
-        for i in range(0, Nz-1):
-            ne[i, :] = plasma_source.load_plasma_density(i)[0]
-        for i in range(Nz):
-            e[i, :] = pulse.load_field(i)[0][int(pulseParams['Nt']/2), :]
+        if load_beam_profile== False:
+            for i in range(0, Nz-1):
+                ne[i, :] = plasma_source.load_plasma_density(i)[0]
+            for i in range(Nz):
+                e[i, :] = pulse.load_field(i)[0][int(pulseParams['Nt']/2), :]
+        else:
+            for i in range(0, Nz-1):
+                ne[i, :] = plasma_source.load_plasma_density(i)[0][int(plasmaParams['Nx']/2)]
+            for i in range(Nz):
+                e[i, :] = pulse.load_field(i)[0][int(pulseParams['Nt']/2), int(pulseParams['Nx']/2), :]
         I = ionization.intensity_from_field(e)
         ne = ne*1e17
         return pulse, I, ne
@@ -388,6 +402,7 @@ def plasma_refraction(X, Nx, Z, Nz, beam0, pulseParams, species, n, start, m_e, 
         pulseParams['Ny'] = Nx
         pulseParams['X'] = X
         pulseParams['Y'] = X
+        pulseParams['cyl'] = not load_beam_profile
         plasmaParams = {
             'Nx' : Nx,
             'Ny' : Nx,
@@ -398,7 +413,7 @@ def plasma_refraction(X, Nx, Z, Nz, beam0, pulseParams, species, n, start, m_e, 
             'atom' : species,
             'path' : pulseParams['path'],
             'load' : False,
-            'cyl' : True,
+            'cyl' : not load_beam_profile,
             'name' : 'Plasma_Source',
             'n0' : ne0
         }
@@ -412,14 +427,17 @@ def plasma_refraction(X, Nx, Z, Nz, beam0, pulseParams, species, n, start, m_e, 
             'atom' : species2,
             'path' : pulseParams['path'],
             'load' : False,
-            'cyl' : True,
+            'cyl' : not load_beam_profile,
             'name' : 'Plasma_Source',
             'n0' : ne0
         }
         
         tau = pulseParams['tau']
         pulse = laserpulse.Pulse(pulseParams)
-        e = np.sqrt(m_e)*pulse.reconstruct_from_cyl(beam0.x, np.array(beam0.e)[:, int(beam0.Ny/2)], pulse.x, pulse.y)
+        if load_beam_profile== False:
+            e = np.sqrt(m_e)*pulse.reconstruct_from_cyl(beam0.x, np.array(beam0.e)[:, int(beam0.Ny/2)], pulse.x, pulse.y)
+        else:
+            e= e_load
         e = e[None, :, :]*np.exp(-pulse.t[:, None, None]**2*np.pi/(2*tau**2))
         pulse.initialize_field(e)
         print('Initial pulse energy %0.2fmJ' % (pulse.pulse_energy()*1e3))
@@ -437,15 +455,22 @@ def plasma_refraction(X, Nx, Z, Nz, beam0, pulseParams, species, n, start, m_e, 
         print('Final pulse energy %0.2fmJ' % (pulse.pulse_energy()*1e3))
         e = np.zeros((Nz, Nx), dtype='complex128')
         ne = np.zeros((Nz, Nx))
-        for i in range(0, Nz-1):
-            ne[i, :] = plasma_source.load_plasma_density(i)[0]
-        for i in range(Nz):
-            e[i, :] = pulse.load_field(i)[0][int(pulseParams['Nt']/2), :]
+        if load_beam_profile== False:
+            for i in range(0, Nz-1):
+                ne[i, :] = plasma_source.load_plasma_density(i)[0]
+            for i in range(Nz):
+                e[i, :] = pulse.load_field(i)[0][int(pulseParams['Nt']/2), :]
+        else:
+            for i in range(0, Nz-1):
+                ne[i, :] = plasma_source.load_plasma_density(i)[0][int(plasmaParams['Nx']/2)]
+            for i in range(Nz):
+                e[i, :] = pulse.load_field(i)[0][int(pulseParams['Nt']/2), int(pulseParams['Nx']/2), :]
         I = ionization.intensity_from_field(e)
         ne = ne*1e17
         return pulse, I, ne
 
 def load_laser_plasma(Nx, Nz, Nt, path, PulseName=None, PlasmaName= None):
+#TODO fix this badly coded functions in functions
     """ Load laser intensity from Refracted_Beam_field 
         and plasma density from Plasma_Source_numberDensity
     
@@ -619,7 +644,6 @@ def plot_plasma_density(pulse, ne, ne0, ext, lines=[20, 40, 60], name=None, xlim
     ax01 = plt.subplot(gs2[0, 2])
     plt.plot(ne[int(Nz*lines[2]/Z), :]/1e16, pulse.x, c=orange)
     plt.plot([ne0*10, ne0*10], xlim2, '-', c=grey2, linewidth=linewidth)
-    plt.plot([ne0*20, ne0*20], xlim2, '-', c=grey2, linewidth=linewidth)
     plt.grid(True, axis='y')
     plt.xlim(0, 2.1*ne0*10)
     plt.xlabel(r'$n_e$')
@@ -627,7 +651,6 @@ def plot_plasma_density(pulse, ne, ne0, ext, lines=[20, 40, 60], name=None, xlim
     ax02 = plt.subplot(gs2[0, 1], sharey=ax01)
     plt.plot(ne[int(Nz*lines[1]/Z), :]/1e16, pulse.x, c=orange)
     plt.plot([ne0*10, ne0*10], xlim2, '-', c=grey2, linewidth=linewidth)
-    plt.plot([ne0*20, ne0*20], xlim2, '-', c=grey2, linewidth=linewidth)
     plt.grid(True, axis='y')
     plt.xlim(0, 2.1*ne0*10)
     plt.xlabel(r'$n_e$')
@@ -635,7 +658,6 @@ def plot_plasma_density(pulse, ne, ne0, ext, lines=[20, 40, 60], name=None, xlim
     ax03 = plt.subplot(gs2[0, 0], sharey=ax02)
     plt.plot(ne[int(Nz*lines[0]/Z), :]/1e16, pulse.x, c=orange)
     plt.plot([ne0*10, ne0*10], xlim2, '-', c=grey2, linewidth=linewidth)
-    plt.plot([ne0*20, ne0*20], xlim2, '-', c=grey2, linewidth=linewidth)
     plt.grid(True, axis='y')
     plt.xlim(0, 2.1*ne0*10)
     plt.xlabel(r'$n_e$')
@@ -669,7 +691,11 @@ def plot_pulse(pulse, ind, ylim=None, log=False, smooth=False, name=None):
     Nx = pulse.Nx
     X = pulse.X
     e = np.zeros((Nt, Nx), dtype='complex128')
-    e[:, :] = pulse.load_field(ind)[0]
+    dim= len(pulse.load_field(ind)[0].shape)
+    if dim==3:
+        e[:, :] = pulse.load_field(ind)[0][:, :, int(Nx/2)]
+    else:
+        e[:, :] = pulse.load_field(ind)[0]
     I = ionization.intensity_from_field(e)
     I_max = np.amax(I)
     
