@@ -18,28 +18,31 @@ import matplotlib.pyplot as plt
 superpath = '/media/chris/New Volume/VSimRuns/NonuniformPlasma/'
 
 """
-#path = '/home/chris/Desktop/10e16/'
-path = '/home/chris/Desktop/NERSC_Deflection_Test/'
-path = '/home/chris/Desktop/NERSC_Deflection_July/'
-npcase = 2e16
-multfac = 2
-vmax = 1e18*(npcase/3.7e17)*multfac
-vmin = 3e16*(npcase/3.7e17)/multfac/7
-params = {'drive' : 'rhoDrive',
-          'witness' : 'rhoWitness',
-          'plasma' : 'electrons',
-          'dumpInd' : 10,
-          'path' : path,
-          #'simName' : 'ThinPlasmaLens3D',
-          'simName' : 'PTPL_Gradient',
-          'zoom' : 4.0,
-          'alphaCutoff' : 0.05,
-          'vmax' : vmax,
-          'vmin' : vmin
-          }
-plot.drive_witness_density_new(params)
-"""
+ind_arr = np.arange(0,40,1)
+for i in range(len(ind_arr)):
+    #path = '/home/chris/Desktop/10e16/'
+    path = '/home/chris/Desktop/NERSC_Deflection_Test/'
+    path = '/home/chris/Desktop/NERSC_Deflection_July/'
+    path =  '/media/chris/New Volume/VSimRuns/AugustLinearGradient/Deflection_HighDumps/'
+    npcase = 2e16
+    multfac = 2
+    vmax = 1e18*(npcase/3.7e17)*multfac
+    vmin = 3e16*(npcase/3.7e17)/multfac/7
+    params = {'drive' : 'rhoDrive',
+              'witness' : 'rhoWitness',
+              'plasma' : 'electrons',
+              'dumpInd' : ind_arr[i],
+              'path' : path,
+              #'simName' : 'ThinPlasmaLens3D',
+              'simName' : 'PTPL_Gradient',
+              'zoom' : 4.0,
+              'alphaCutoff' : 0.05,
+              'vmax' : vmax,
+              'vmin' : vmin
+              }
+    plot.drive_witness_density_new(params)
 
+"""
 #path = '/home/chris/Desktop/WakeShape_LinGrad/'
 #path = superpath + 'NERSC_Sep_Grad/'
 #path = '/home/chris/Desktop/NERSC_LongiFieldFix1/'
@@ -48,19 +51,22 @@ path =  '/media/chris/New Volume/VSimRuns/AugustLinearGradient/NERSC_n2e16_g8e17
 #path =  '/media/chris/New Volume/VSimRuns/AugustLinearGradient/Tests/NERSC_n3e17_g0/'
 #path =  '/media/chris/New Volume/VSimRuns/AugustLinearGradient/NERSC_n1e17_g0/'
 #path = superpath + 'NERSC_Dec_Grad/'
+path = '/home/chris/Desktop/singlebunch/'
 params = {'drive' : 'rhoDrive',
           'witness' : 'rhoWitness',
           'plasma' : 'electrons',
           'path' : path,
-          'dumpInd' : 5,
+          'dumpInd' : 10,
           #'simName' : 'ThinPlasmaLens3D',
-          'simName' : 'MatchedBeams',
-          #'simName' : 'PTPL_Gradient',
+          #'simName' : 'MatchedBeams',
+          'simName' : 'PTPL_Gradient',
           'zoom' : 4.0,
-          'alphaCutoff' : 0.05
+          'alphaCutoff' : 0.05,
+          'vmax' : 1e18,
+          'vmin' : 1e16
           }
-#plot.drive_witness_density_new(params)
-plot.drive_witness_density_paperplot(params)
+plot.drive_witness_density_new(params)
+#plot.drive_witness_density_paperplot(params)
 
 """
 path = '/home/chris/Desktop/SimulationRepo/TestCases/3D/SingleBunch/5e17/200um/'

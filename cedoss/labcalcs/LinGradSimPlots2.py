@@ -41,8 +41,11 @@ rp_bot=np.array([72.58,75.20,76.07,76.137,47.03,47.84,86.97])
 lhalf = np.array([114,114,114,114,61.5,61.5,131.7])
 #FROM BEFORE FIX dndys = np.array([8.64e17,1.47e17,6.01e16,3.96e16,1.21e19,6.54e18,7.96e17])
 #FROM BEFORE FIX dndys_std = np.array([1.90e17,1.34e17,5.43e16,2.65e16,4.93e18,2.81e18,1.88e17])
-dndys = np.array([1.76e18,4.33e17,6.05e16,6.07e15,1.12e19,4.96e18,7.96e17])
-dndys_std = np.array([1.18e17,4.44e16,4.02e16,4.65e15,3.03e18,3.15e18,1.88e17])
+#dndys = np.array([1.76e18,4.33e17,6.05e16,6.07e15,1.12e19,4.96e18,7.96e17])
+#dndys_std = np.array([1.18e17,4.44e16,4.02e16,4.65e15,3.03e18,3.15e18,1.88e17])
+#AFTER FIXING SHEATH ALGORITHM
+dndys = np.array([1.76e18,4.44e17,7.69e16,2.60e15,1.09e19,4.99e18,9.02e17])
+dndys_std = np.array([1.18e17,4.35e16,4.05e16,1.75e16,1.53e18,1.36e18,6.15e16])
 #ering = np.array([8.833e8,3.0025e8,1.2321e8,1.0337e8,1.8627e9,1.1623e9,5.8867e8])
 #ering = np.array([7.808e8,1.867e8,2.048e7,9.196e5,1.608e9,9.568e8,5.429e8])
 
@@ -222,6 +225,9 @@ e = 1.602e-19
 empB = 2.482
 delta = 0.134
 
+#empB = 2.715
+#delta = 0.1107
+
 facB_arr = np.array([empB])
 fitB_arr = np.zeros(1)
 facD_arr = np.array([delta])
@@ -276,8 +282,8 @@ if doLoop:
     plt.plot(facB_arr,fitB_arr)
     plt.show()
     print("facB --> ", facB_arr[np.argmin(fitB_arr)])
-"""
-"""
+
+
 ering_norm_righthand = e/2/eps*delta*((dndys-dndy)*100**4)
 plt.title("Ering using AVERAGED dndy_sheath")
 plt.xlabel(r'$\langle E_{ring}/R_p^2\rangle \ (V/m^3)$')
@@ -288,8 +294,7 @@ plt.scatter(ering_norm[yset],ering_norm_righthand[yset],c='y', label="1e16 cm-3"
 plt.scatter(ering_norm[bset],ering_norm_righthand[bset],c='b', label="1e17 cm-3")
 plt.plot([0,max(ering_norm)],[0,max(ering_norm)],label="1:1", ls='--')
 plt.grid(); plt.legend(); plt.show()
-"""
-"""
+
 #empB = 2.786
 if doLoop:
     facD_arr = np.linspace(0.07,0.2,100)
@@ -322,8 +327,8 @@ if doLoop:
     plt.plot(facD_arr,fitD_arr)
     plt.show()
     print("facD --> ", facD_arr[np.argmin(fitD_arr)])
-
 """
+
 x = np.linspace(min(dndy),max(dndy),50)
 sh = x * empB
 y = e/2/eps*delta*(((empB-1)*x)*100**4)
@@ -338,11 +343,11 @@ ax0.scatter(dndy[gset],dndys[gset],c='g', label=r'$\mathrm{n_0 = 2e16 \ cm^{-3}}
 ax0.scatter(dndy[yset],dndys[yset],c='y', label=r'$\mathrm{n_0 = 1e16 \ cm^{-3}}$')
 ax0.scatter(dndy[bset],dndys[bset],c='b', label=r'$\mathrm{n_0 = 1e17 \ cm^{-3}}$')
 ax0.set_ylabel(r'$\langle\partial n / \partial y\rangle_{sh} \ \mathrm{(cm^{-3})}$')
-ax0.legend()
+ax0.legend(title="(a)")
 
 E_si_to_cgs = (1/3)*10**(-4)
 L_si_to_cgs = 100
-factor = E_si_to_cgs/L_si_to_cgs/1e9
+factor = 1/1e17#E_si_to_cgs/L_si_to_cgs/1e9
 ering_norm = ering_norm*factor
 ering_norm_std=ering_norm_std*factor
 y = y*factor
@@ -352,9 +357,10 @@ ax1.errorbar(dndy,ering_norm,yerr=ering_norm_std,xerr=None,linewidth = 0,elinewi
 ax1.scatter(dndy[gset],ering_norm[gset],c='g', label=r'$\mathrm{n_0 = 2e16 \ cm^{-3}}$')
 ax1.scatter(dndy[yset],ering_norm[yset],c='y', label=r'$\mathrm{n_0 = 1e16 \ cm^{-3}}$')
 ax1.scatter(dndy[bset],ering_norm[bset],c='b', label=r'$\mathrm{n_0 = 1e17 \ cm^{-3}}$')
-ax1.set_ylabel(r'$\langle E_{ring}/R_p^2\rangle \ \mathrm{(GstatV/cm^3)}$')
+#ax1.set_ylabel(r'$\langle E_{ring}/R_p^2\rangle \ \mathrm{(GstatV/cm^3)}$')
+ax1.set_ylabel(r'$\langle E_{ring}/R_p^2\rangle \ \mathrm{(10^{17}\times V/cm^3)}$')
 ax1.set_xlabel(r'$(\partial n / \partial y)_i \ \mathrm{(cm^{-3})}$')
-ax1.legend()
+ax1.legend(title="(b)")
 
 fig.subplots_adjust(hspace=0)
 

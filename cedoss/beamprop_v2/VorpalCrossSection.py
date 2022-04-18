@@ -126,11 +126,11 @@ tranExtent = 200        #tranextent for the sim
 threshold = 100
 npcase = 2e16           #central density for the sim
 dx=1.2                  #dx for the sim
-central_off = -125#-20
+central_off = -120#-20
 simname = 'MatchedBeams'
 efield = 'edgeE'
 bfield = 'faceB'
-setno = 1
+setno = 2
 if setno == 1:
     path = superpath + 'NERSC_n2e16_g8e17/'
     grad = 8e17

@@ -24,7 +24,7 @@ import scipy.constants as const
 path = '/media/chris/New Volume/VSimRuns/AugustLinearGradient/NERSC_n2e16_g8e17/'
 #path = '/media/chris/New Volume/VSimRuns/AugustLinearGradient/NERSC_n2e16_g0/'
 ind=5
-central_off = -20
+central_off = -20#-100
 tranExtent = 200
 c = const.speed_of_light
 
@@ -32,7 +32,7 @@ flip = True
 
 vecarr = np.array([1,2])
 for i in range(len(vecarr)):
-
+    
     vector = vecarr[i] # 0 for Ez, 1 for Ey, 2 for Ex
     
     params = {'plasma' : 'electrons',
@@ -94,13 +94,13 @@ for i in range(len(vecarr)):
             exvy_2 = np.array(eYZ[:,int((Nz+1)/2)-2])
             exvx = (exvx_1 + exvx_2)/2
             exvy = (exvy_1 + exvy_2)/2
- 
+    
     pi = np.pi
     e = const.physical_constants['elementary charge'][0]
     error= 0
     
     #Sep Grad
-    radius = 76.15e-6 #m
+    radius = 76.15e-6 #m #41.97e-6 for -100
     n_cent = 2e16*100**3#*0.95 #m-3
     slope = 8e17*100**4 #m-4
     if flip:
@@ -112,9 +112,10 @@ for i in range(len(vecarr)):
     rpl = radius*np.sqrt((n_cent-facA*radius*slope)/n_cent) #sign flip b/c slope is wack
     rmn = radius*np.sqrt((n_cent+facA*radius*slope)/n_cent)
     yoff = zsi_max*(rpl-rmn)/(2*zsi_max)
-    
+    #yoff = 210e-6*(rpl-rmn)/(2*zsi_max)
+    #yoff = 8.43e-6# for -100
     n_cent = n_cent+slope*yoff
-    
+    #radius = 41.97e-6
     ybar = 1/4*radius**2*slope/n_cent
     #yoff = 4.2188366149411554e-6 #m
     ysi = y*1e-6
@@ -127,6 +128,7 @@ for i in range(len(vecarr)):
 
     
     sheathslope = slope*facB
+    #sheathslope = 6.739e18*-1e8
     L_sh = delta*radius
     ring = -(slope - sheathslope)*(L_sh)*(radius)*e/2/eps
     

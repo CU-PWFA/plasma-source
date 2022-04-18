@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Jun  2 11:04:17 2021
+Created on Tue Apr 12 16:16:36 2022
 
 Wanted to plot the sheath density vs theta
 
 This for fig 2 in paper 2
+
+This version fits weird stuff in back of the wake
 
 @author: chris
 """
@@ -17,6 +19,8 @@ import numpy as np
 from vsim import plot
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
+sys.path.insert(0,"../")
+from modules import ThreeDimensionAnalysis as ThrDim
 
 #path = '/home/chris/Desktop/NERSC_Sep_Grad/'
 #ind = 9
@@ -26,12 +30,12 @@ path = '/media/chris/New Volume/VSimRuns/AugustLinearGradient/NERSC_n2e16_g8e17/
 #path = '/media/chris/New Volume/VSimRuns/AugustLinearGradient/NERSC_n2e16_g2.5e16/'
 
 ind=5
-central_off = -20#-100
+central_off = -100#-20#-100
 npcase = 2e16#
 tranExtent = 200
 
 #82 for 2e16, 122 for 1e16, 37 for 3e17
-radmax = 78#40
+radmax = 40#78#40
 yoff = 10
 
 """
@@ -52,7 +56,7 @@ params = {'plasma' : 'electrons',
           'alphaCutoff' : 0.05,
           'centralOff' : central_off,
           'tranExtent' : tranExtent,
-          'plot' : True,
+          'plot' : False,
           'radmax' : radmax,
           'yoff' : yoff,
           'drive' : 'rhoBeam',
@@ -62,7 +66,8 @@ params = {'plasma' : 'electrons',
 x,y,n = plot.wake_cross_section_sheath(params)
 y2, nvy = plot.wake_cross_section_densityslice(params)
 #r, theta, rhoPol = plot.wake_cross_section(params)
-sfit = np.polyfit(y,n,1)
+#p = ThrDim.FitDataDoubleTanh(n,y+50)
+sfit = np.polyfit(y,n,2)
 yfull = np.linspace(min(y),max(y),20)
 print("n_s0 = ",sfit[1] , " (cm^-3)")
 print("dn/dy_s = ",sfit[0]*1e4 , " (cm^-4)")
@@ -93,7 +98,7 @@ ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
 ax.scatter(y,n,s=10,marker='o', facecolors='none', edgecolors='grey',label='Sheath Density')
 ax.plot(y2,nvy,c='k',label='Electrons')
 ax.plot(y2,y2*ion[0]/1e4+ion[1],c='b',label='Ions')
-ax.plot(y2,y2*sfit[0]+sfit[1],c='r',label='Sheath Fit')
+ax.plot(y2,np.square(y2)*sfit[0]+y2*sfit[1]+sfit[2],c='r',label='Sheath Fit')
 ax.set_ylabel("Density "+r'$(cm^{-3})$')
 ax.set_xlabel("y Axis "+r'$(\mu m)$')
 ax.set_ylim([-1e15,1.2*max(n)])
@@ -105,14 +110,14 @@ y=np.flip(y,0)*-1
 n=np.flip(n,0)
 nvy = np.flip(nvy,0)
 ion[0]=ion[0]*-1
-sfit[0]=sfit[0]*-1
+sfit[1]=sfit[1]*-1
 
 fig = plt.figure(figsize=(5,3.3))
 ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
 ax.scatter(y,n,s=10,marker='o', facecolors='none', edgecolors='grey',label='Sheath Density')
 ax.plot(y2,nvy,c='k',label='Electrons')
 ax.plot(y2,y2*ion[0]/1e4+ion[1],c='b',label='Ions')
-ax.plot(y2,y2*sfit[0]+sfit[1],c='r',label='Sheath Fit')
+ax.plot(y2,np.square(y2)*sfit[0]+y2*sfit[1]+sfit[2],c='r',label='Sheath Fit')
 ax.set_ylabel("Density "+r'$(cm^{-3})$')
 ax.set_xlabel("y Axis "+r'$(\mu m)$')
 ax.set_ylim([-1e15,1.2*max(n)])

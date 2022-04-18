@@ -280,12 +280,12 @@ def drive_witness_density_new(params):
     rho, rhoAttrs = load.load_field(path, simName, 'rhoDrive')
     Nx, Ny, Nz = analyze.get_shape(rho[ind])
     rhoBXY = -np.transpose(rho[ind][:, :, int(Nz+1)/2, 0]/e/1e6)
-    
+    """
     #Load in witness beam density
     rho, rhoAttrs = load.load_field(path, simName, 'rhoWitness')
     Nx, Ny, Nz = analyze.get_shape(rho[ind])
     rhoWXY = -np.transpose(rho[ind][:, :, int(Nz+1)/2, 0]/e/1e6)
-    
+    """
     def alpha_colormap(cmap, cutoff, flip=True):
         N = cmap.N
         cmapt = cmap(np.arange(N))
@@ -312,7 +312,7 @@ def drive_witness_density_new(params):
     # Plot the witness beam
     #cmapW = alpha_colormap(plt.cm.get_cmap('nipy_spectral'), 0.1, True)
     cmapW = alpha_colormap(plt.cm.get_cmap('rainbow'), 0.1, True)
-    ax.imshow(rhoWXY, interpolation='gaussian', extent=[-125, 125, -125, 125], cmap=cmapW)
+    #ax.imshow(rhoWXY, interpolation='gaussian', extent=[-125, 125, -125, 125], cmap=cmapW)
     
     vmax = params['vmax']
     vmin = params['vmin']
@@ -322,7 +322,7 @@ def drive_witness_density_new(params):
     ax.imshow(rhoXY, interpolation='gaussian', aspect='auto', extent=[-125, 125, -125, 125],
                norm=colors.LogNorm(vmin=vmin, vmax=vmax), cmap=cmapP)#1e16,2e18
     
-    plt.savefig(path+'Title_Wake.png')
+    plt.savefig(path+'t'+str(ind)+'.png')
     plt.show()
 
 def drive_witness_density_paperplot(params):
@@ -628,16 +628,15 @@ def wake_cross_section_sheath(params):
     rhoYZ = -(rho[ind][int(Nx+1)/2+central_off, :, :, 0]/e/1e6)+2
     x = np.linspace(-tranExtent, tranExtent, Nz)
     y = np.linspace(-tranExtent, tranExtent, Ny)
-    
     x_arr = np.array(range(-int(Nz/4),int(Nz/4), 1))+int(Nz/2)
-    y_arr = np.array(range(0,int(Ny/4)))+int(Ny/2)
+    y_arr = np.array(range(0,int(Ny/2)))+int(Ny/2)
+    y2_arr = -y_arr+2*y_arr[0]
     stop_arr = np.zeros(len(x_arr))
     sbot_arr = np.zeros(len(x_arr))
     ytop_arr = np.zeros(len(x_arr))
     ybot_arr = np.zeros(len(x_arr))
     xtop_arr = np.zeros(len(x_arr))
     xbot_arr = np.zeros(len(x_arr))
-
     for k in range(len(x_arr)):
         if np.abs(x[x_arr[k]]) < radmax:
             for m in range(len(y_arr)):
@@ -645,9 +644,9 @@ def wake_cross_section_sheath(params):
                     stop_arr[k] = rhoYZ[y_arr[m],x_arr[k]]
                     ytop_arr[k] = y[y_arr[m]]
                     xtop_arr[k] = x[x_arr[k]]
-                if sbot_arr[k] < rhoYZ[-y_arr[m],x_arr[k]]:
-                    sbot_arr[k] = rhoYZ[-y_arr[m],x_arr[k]]
-                    ybot_arr[k] = y[-y_arr[m]]
+                if sbot_arr[k] < rhoYZ[y2_arr[m],x_arr[k]]:
+                    sbot_arr[k] = rhoYZ[y2_arr[m],x_arr[k]]
+                    ybot_arr[k] = y[y2_arr[m]]
                     xbot_arr[k] = x[x_arr[k]]
     
     botset = np.array(np.where((ybot_arr < -0.001))[0])
@@ -655,17 +654,14 @@ def wake_cross_section_sheath(params):
     sbot_arr = sbot_arr[botset]
     xbot_arr = xbot_arr[botset]
     
-    topset = np.array(np.where((ytop_arr < radmax))[0])
-    ytop_arr = ytop_arr[topset]
-    xtop_arr = xtop_arr[topset]
-    stop_arr = stop_arr[topset]
-    topset = np.array(np.where((ytop_arr > 1))[0])
+    topset = np.array(np.where((ytop_arr < radmax) & (ytop_arr > 1))[0])
     ytop_arr = ytop_arr[topset]
     xtop_arr = xtop_arr[topset]
     stop_arr = stop_arr[topset]
     
     y_arr = np.array(range(-int(Ny/4),int(Ny/4), 1))+int(Ny/2)
-    x_arr = np.array(range(0,int(Nz/4)))+int(Nz/2)
+    x_arr = np.array(range(0,int(Nz/2)))+int(Nz/2)
+    x2_arr = -x_arr+2*x_arr[0]
     srig_arr = np.zeros(len(y_arr))
     slef_arr = np.zeros(len(y_arr))
     yrig_arr = np.zeros(len(y_arr))
@@ -679,9 +675,9 @@ def wake_cross_section_sheath(params):
                     srig_arr[k] = rhoYZ[y_arr[k],x_arr[m]]
                     xrig_arr[k] = x[x_arr[m]]
                     yrig_arr[k] = y[y_arr[k]]
-                if slef_arr[k] < rhoYZ[y_arr[k],-x_arr[m]]:
-                    slef_arr[k] = rhoYZ[y_arr[k],-x_arr[m]]
-                    xlef_arr[k] = x[-x_arr[m]]
+                if slef_arr[k] < rhoYZ[y_arr[k],x2_arr[m]]:
+                    slef_arr[k] = rhoYZ[y_arr[k],x2_arr[m]]
+                    xlef_arr[k] = x[x2_arr[m]]
                     ylef_arr[k] = y[y_arr[k]]
     
     lefset = np.array(np.where((xlef_arr < -0.001))[0])

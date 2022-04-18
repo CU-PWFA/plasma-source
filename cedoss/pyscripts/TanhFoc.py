@@ -16,6 +16,8 @@ import matplotlib.pyplot as plt
 from modules import ThreeDimensionAnalysis as ThrDim
 from modules import TPLFocalLength as Foc
 
+from scipy.signal import find_peaks, savgol_filter
+
 gam = Foc.gam_def
 
 """

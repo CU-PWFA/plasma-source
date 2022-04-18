@@ -89,10 +89,10 @@ def get_current(ind, fpath):
         shots = sio.loadmat(fpath + "current2.mat")["ipcurrent"]
     dz    = ipdz[ind][0]
     I_ka  = shots[ind]; # kA
-    print(I_ka)
-    print(np.shape(I_ka))
-    import matplotlib.pyplot as plt
-    plt.plot(I_ka)
+    #print(I_ka)
+    #print(np.shape(I_ka))
+    #import matplotlib.pyplot as plt
+    #plt.plot(I_ka)
     z     = np.array([0 + (i * dz) for i in range(len(I_ka))])
     ti    = (z * 1e-6) / c
 

@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Tue Oct 19 10:59:32 2021
+Created on Wed Feb 23 09:45:45 2022
 
-Plotting some data from the 2bunch sims in Aug-Oct 2021
+Plotting some data from the 2bunch sims in Feb 2022
+
+This is the low gradient case
 
 @author: chris
 """
@@ -24,15 +26,11 @@ x0 = np.array([0.02,0.05,-0.003,-0.006,0.02])
 x0_c = 0.02
 sigy = np.array([3.92,3.95,3.94,3.92,4.0])
 sigy_c = np.array([3.95])
-y0 = -1*np.array([1.96,1.28,0.01,-1.99,-5.05]) #Fitted
+y0 = -1*np.array([0.0313,0.0294,0.0226,-0.0601,-0.1739])#Average
+#y0 = -1*np.array([0.0432,0.0073,0.0250,-0.0433,-0.1581])#Fit
 y0_c = -1*-0.02
 ef = np.array([3.12,3.12,3.13,3.13,3.13])
 ef_c = 3.11
-
-#Averaged y0 is basically the same
-#y0 = -1*np.array([1.91,1.26,-0.03,-2.05,-5.10]) #Average
-
-#yp0 = -1*np.array([0.017,0.011,-0.0003,-0.018,-0.047]) #Average y'
 
 flip = True
 
@@ -78,7 +76,7 @@ left = 25
 right = 65
 z_arr = (np.flip(offset_arr[left:right],0)*dx*-1+start)
 radarr = np.flip(rcontr_arr[left:right],0)
-ey_simey0 = np.flip(e0_arr[left:right],0)
+ey_simey0 = np.flip(e0_arr[left:right],0)-1.1e8
 """
 print(z_arr) #to get between 114 and 200
 sys.exit()
@@ -97,7 +95,7 @@ c = const.physical_constants['speed of light in vacuum'][0]
 #n2e16, g8e17
 rp = 76.15e-6 #m  #MAXIMUM radius
 n_cent0 = 2e16*100**3#*0.95 #m-3
-slope = 8e17*100**4 #m-4
+slope = 2.5e16*100**4 #m-4
 if flip:
     slope = slope*-1
     ey_simey0 = ey_simey0*-1
@@ -190,7 +188,6 @@ ax1.plot([zsi[0]*1e6,zsi[-1]*1e6],[y0_c/prop_dist,y0_c/prop_dist],c='k',ls='--',
 ax1.plot(zsi*1e6,deflection_fullemp*1e6/prop_dist,c = 'red',label = 'Empirical Model')
 ax1.plot(zsi*1e6,deflection_simey0*1e6/prop_dist,c = 'b',label = 'Single-Bunch Simulation')
 ax1.scatter(separ,y0/prop_dist,c='black',label = "Two-Bunch Simulations")
-#ax1.scatter(separ,yp0*1e3,c='black',label = "Two-Bunch Simulations")
 ax1.set_xlabel("Drive-Witness Separation " + r'$(\mu m)$')
 ax1.set_ylabel("Deflection Angle "+r'$\mathrm{(\mu rad)}$')
 ax2=ax1.twinx()
@@ -199,6 +196,5 @@ ax2.plot([zsi[0]*1e6,zsi[-1]*1e6],[y0_c,y0_c],c='k',ls='--')
 ax2.plot(zsi*1e6,deflection_fullemp*1e6,c = 'red')
 ax2.plot(zsi*1e6,deflection_simey0*1e6,c = 'b')
 ax2.scatter(separ,y0,c='black')
-#ax2.scatter(separ,yp0*1e3*prop_dist,c='black')
 
-ax1.legend(loc=0);plt.show()
+ax1.legend(loc=2);plt.show()

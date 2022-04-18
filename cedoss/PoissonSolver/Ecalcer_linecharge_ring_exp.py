@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Tue Mar  9 11:24:29 2021
+Created on Tue Apr 12 12:17:56 2022
 
 Calculating the electric field from a ring of negative charge with a linear gradient in y.
 Testing the hypothesis that my field error is due to the asymmetric sheaths
+
+This version uses the exponential profile at the back of the wake
 
 @author: chris
 """
@@ -53,22 +55,24 @@ deltax = deltay = 4.6e-6 * 1e2  #cm
 
 #OctGrad
 n_cent = -7.0e16#-3.5e16  #cm-3
-radius = 80.00e-6 *1e2 #cm
-thickness = 10e-6*1e2 #cm
+radius = 40.00e-6 *1e2 #cm
+thickness = 5e-6*1e2 #cm
 slope  = 1.2e18#5.0e17#1.0e18 #cm-4
-xwindow = ywindow = 182e-6 * 1e2  #cm
-deltax = deltay = 1e-6 * 1e2  #cm
+xwindow = ywindow = 91e-6 * 1e2  #cm
+deltax = deltay = 0.5e-6 * 1e2  #cm
 
 X = np.arange(-1/2*xwindow, 1/2*xwindow, deltax)
 Y = np.arange(-1/2*ywindow, 1/2*ywindow, deltay)
 
 lenX = len(X); lenY = len(Y)
+sfit = np.array([  7.27075482e+12,  -7.88423309e+14,   6.53718198e+16])
 
 dengrid = np.zeros((lenX, lenY))
 for i in range(len(X)):
     for j in range(len(Y)):
         if (np.sqrt(np.square(X[i])+np.square(Y[j])) > radius) & (np.sqrt(np.square(X[i])+np.square(Y[j])) < radius+thickness):
-            dengrid[i][j] = n_cent + Y[j]*slope
+            #dengrid[i][j] = n_cent + Y[j]*slope
+            dengrid[i][j] = -1*(sfit[2] + Y[j]*sfit[1]*1e4 + Y[j]*Y[j]*sfit[0]*1e8)
         else:
             dengrid[i][j] = 0
 
@@ -81,7 +85,7 @@ plt.register_cmap(cmap=map_object)
 #plt.title("Density")
 plt.imshow(np.transpose(dengrid), extent=(X[0]*1e4,X[-1]*1e4,Y[0]*1e4,Y[-1]*1e4), origin = 'lower', cmap='alpha_adj')
 plt.colorbar(label='Charge Density '+r'$(cm^{-3})$')
-plt.clim(n_cent+slope*radius*1.2,n_cent-slope*radius*1.2)#2.6e16,3.4e16)
+plt.clim(-1.8e17,-3e16)
 plt.xlabel("x " + r'$(\mu m)$')
 plt.ylabel("y " + r'$(\mu m)$')
 plt.show()

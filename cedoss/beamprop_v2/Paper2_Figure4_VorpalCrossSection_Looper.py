@@ -24,6 +24,7 @@ import scipy.integrate as integrate
 #trunc = 0#15
 #offset_arr = np.arange(-120,100.5,2)
 path = '/media/chris/New Volume/VSimRuns/AugustLinearGradient/NERSC_n2e16_g8e17/'
+path = '/media/chris/New Volume/VSimRuns/AugustLinearGradient/NERSC_n2e16_g2.5e16/'
 ind=5
 offset_arr = np.arange(-140,90.5,2)
 tranExtent = 200
@@ -82,8 +83,8 @@ rp = 84.81
 rm = 76.36
 halfloc = 100
 """
-rp = 80.41
-rm = 72.58
+rp = 80.41#76.266
+rm = 72.58#76.031
 halfloc = 114
 emp = 1/2*(rp-rm)/(halfloc)*z
 
@@ -106,6 +107,7 @@ ax1.set_xlabel("Distance Behind Drive Beam "+r'$(\mu m)$')
 ax1.set_ylabel("Wake Vertical Offset "+r'$(\mu m)$')
 ax1.text(-27,14.7,"(b)",color='black')
 ax1.legend(loc=9)
+#ax1.set_ylim([-0.1,1])
 #ax1.grid()
 
 #ax0.get_shared_x_axes().join(ax0, ax1)

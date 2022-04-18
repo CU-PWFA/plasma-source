@@ -148,10 +148,10 @@ wanchor = -9            #for finding where r=0 to anchor yoff fit
 superpath = '/media/chris/New Volume/VSimRuns/AugustLinearGradient/'
 cont_path = superpath + 'NERSC_n1e17_g0/'
 cont_ind=5
-path = superpath + 'NERSC_n1e17_g4e18/'
-grad = 4e18
-#path = superpath + 'NERSC_n1e17_g2e18/'
-#grad = 2e18
+#path = superpath + 'NERSC_n1e17_g4e18/'
+#grad = 4e18
+path = superpath + 'NERSC_n1e17_g2e18/'
+grad = 2e18
 
 ind = 5
 tranExtent = 95
@@ -336,7 +336,7 @@ for i in range(len(offset_arr)):
         
         ey_v_y_theory_0[i] = 1/(2*eps)*e*n_cent*(-2*ybar-yoff) + 1/(8*eps)*e*slope*(3*(-yoff)**2)
         ey_v_x_theory_0[i] = 1/(8*eps)*e*slope*(3*yoff**2) + 1/eps*e*n_cent*(-ybar-1/2*yoff)
-        
+      
 varA = 0.3239 #Empirical Constant
 varB = 2.482
 delta = 0.134
@@ -524,12 +524,13 @@ ax0.plot([offset_arr[leftend]*dx*-1+start,offset_arr[rightend]*dx*-1+start],[dnd
 #ax0.vlines((offset_arr[leftend]*dx*-1+start,offset_arr[rightend]*dx*-1+start),min(dndysh_arr[trunc:]),max(dndysh_arr[trunc:]),colors='r')
 ax0.vlines((offset_arr[leftend]*dx*-1+start,offset_arr[rightend]*dx*-1+start),dndysh_ave-dndysh_std,dndysh_ave+dndysh_std,colors='r')
 ax0.set_ylim([-1e17,5e18])
-ax0.set_ylabel("Sheath density gradient "+r'$(cm^{-4})$')
-ax0.legend()
+#ax0.set_ylabel("Sheath density gradient "+r'$(cm^{-4})$')
+ax0.set_ylabel(r'$(\partial n / \partial y )_{sh} \ \mathrm{cm^{-4})}$')
+ax0.legend(title="(a)")
 
 E_si_to_cgs = (1/3)*10**(-4)
 L_si_to_cgs = 100
-factor = E_si_to_cgs/L_si_to_cgs/1e9
+factor = 1/1e17#E_si_to_cgs/L_si_to_cgs/1e9
 func_scl = func*factor
 ering_ave_scl = ering_ave*factor
 ering_emp_scl = e/2/eps*delta*(((varB-1)*grad)*100**4)*factor
@@ -542,8 +543,9 @@ ax1.plot([offset_arr[leftend]*dx*-1+start,offset_arr[rightend]*dx*-1+start],[eri
 ax1.plot([offset_arr[leftend]*dx*-1+start,offset_arr[rightend]*dx*-1+start],[ering_emp_scl,ering_emp_scl],c='g',ls='--',label="Empirical Model")
 #plt.ylabel("Electric Field "+r'$(V/m)$')
 ax1.set_xlabel("Distance behind drive beam "+r'$(\mu m)$')
-ax1.set_ylabel(r'$\langle E_{ring}/R_p^2\rangle \ \mathrm{(GstatV/cm^3)}$')
-ax1.legend()
+#ax1.set_ylabel(r'$\langle E_{ring}/R_p^2\rangle \ \mathrm{(GstatV/cm^3)}$')
+ax1.set_ylabel(r'$E_{ring}/R_p^2 \ \mathrm{(10^{17}\times V/m^3)}$')
+ax1.legend(title="(b)")
 
 fig.subplots_adjust(hspace=0)
 

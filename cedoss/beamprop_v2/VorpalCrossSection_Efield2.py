@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 import scipy.constants as const
 
-"""
+
 #August 2021 n=2e16 runs
 superpath = '/media/chris/New Volume/VSimRuns/AugustLinearGradient/'
 path = superpath + 'NERSC_n2e16_g0/'
@@ -36,7 +36,7 @@ central_off = -20
 simname = 'MatchedBeams'
 efield = 'edgeE'
 bfield = 'faceB'
-setno = 4
+setno = 1
 if setno == 1:
     path = superpath + 'NERSC_n2e16_g8e17/'
     grad = 8e17
@@ -67,7 +67,7 @@ elif setno == 4:
     grad = 2.5e15
     yoff = 0.0167e-6 #m
     radius = 76.154e-6 #m
-"""
+
 
 """
 #August Linear Gradients, n=1e16 sims
@@ -89,7 +89,7 @@ dx = 1.233 #um
 npcase = 1e16
 central_off = -20
 """
-
+"""
 
 #August Linear Gradients, n=1e17 sims
 superpath = '/media/chris/New Volume/VSimRuns/AugustLinearGradient/'
@@ -114,9 +114,11 @@ tranExtent = 95
 dx = 0.5 #um
 npcase = 1e17
 central_off = -33
-
+"""
 
 vector = 1 # 0 for Ez, 1 for Ey, 2 for Ex
+flip = True
+c = const.speed_of_light
 
 params = {'plasma' : 'electrons',
           'dumpInd' : ind,
@@ -150,19 +152,41 @@ else:
     evx = evx + bvx*3e8
     evy = evy + bvy*3e8
 """
-if vector == 1:
-    eYZ = eYZ - bYZ*3e8
-else:
-    eYZ = eYZ + bYZ*3e8
-
 Nz = len(x)
-
-evx1 = np.array(np.flip(eYZ[int((Nz+1)/2)-1,:],0))
-evx2 = np.array(np.flip(eYZ[int((Nz+1)/2)-2,:],0))
-evx = (evx1+evx2)/2
-evy1 = np.array(np.flip(eYZ[:,int((Nz+1)/2)-1],0))
-evy2 = np.array(np.flip(eYZ[:,int((Nz+1)/2)-2],0))
-evy = (evy1+evy2)/2
+if flip:
+    if vector == 1:
+        eYZ = -1*(eYZ - bYZ*c)
+        eyvx_1 = np.array(np.flip(eYZ[int((Nz+1)/2)-1,:],0))
+        eyvy_1 = np.array(np.flip(eYZ[:,int((Nz+1)/2)-1],0))
+        eyvx_2 = np.array(np.flip(eYZ[int((Nz+1)/2)-2,:],0))
+        eyvy_2 = np.array(np.flip(eYZ[:,int((Nz+1)/2)-2],0))
+        evx = (eyvx_1 + eyvx_2)/2
+        evy = (eyvy_1 + eyvy_2)/2
+    else:
+        eYZ = -1*(eYZ + bYZ*c)
+        exvx_1 = np.array(np.flip(eYZ[int((Nz+1)/2)-1,:],0))
+        exvy_1 = np.array(np.flip(eYZ[:,int((Nz+1)/2)-1],0))
+        exvx_2 = np.array(np.flip(eYZ[int((Nz+1)/2)-2,:],0))
+        exvy_2 = np.array(np.flip(eYZ[:,int((Nz+1)/2)-2],0))
+        evx = (exvx_1 + exvx_2)/2
+        evy = (exvy_1 + exvy_2)/2
+else:
+    if vector == 1:
+        eYZ = eYZ - bYZ*c
+        eyvx_1 = np.array(eYZ[int((Nz+1)/2)-1,:])
+        eyvy_1 = np.array(eYZ[:,int((Nz+1)/2)-1])
+        eyvx_2 = np.array(eYZ[int((Nz+1)/2)-2,:])
+        eyvy_2 = np.array(eYZ[:,int((Nz+1)/2)-2])
+        evx = (eyvx_1 + eyvx_2)/2
+        evy = (eyvy_1 + eyvy_2)/2
+    else:
+        eYZ = eYZ + bYZ*c
+        exvx_1 = np.array(eYZ[int((Nz+1)/2)-1,:])
+        exvy_1 = np.array(eYZ[:,int((Nz+1)/2)-1])
+        exvx_2 = np.array(eYZ[int((Nz+1)/2)-2,:])
+        exvy_2 = np.array(eYZ[:,int((Nz+1)/2)-2])
+        evx = (exvx_1 + exvx_2)/2
+        evy = (exvy_1 + exvy_2)/2
 
 slope = -grad*100**4 #m-4
 n_cent =  npcase*100**3#*0.95 #m-3
@@ -172,7 +196,11 @@ xsi = x*1e-6
 eps = 8.854e-12
 pi = np.pi
 e = const.physical_constants['elementary charge'][0]
-ring = -0 # -1.21e9 #V/m
+facB = 2.482
+delta = 0.134
+sheathslope = slope*facB
+L_sh = delta*radius
+ring = -(slope - sheathslope)*(L_sh)*(radius)*e/2/eps
 error = 0
 
 if vector == 0:
