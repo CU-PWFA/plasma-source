@@ -57,7 +57,7 @@ def calculate_tran_field(z, I, R, width, lam, path, dk=None, xlim=None, rlim=Non
         The electric field at each radius.
     """
     # Calculate and display the kz spectrum
-    #--------------------------------------------------------------------------
+    #-------------------------------------------------------------------------
     params = {
         'Nr' : 5000,
         'R' : R,
