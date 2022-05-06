@@ -231,7 +231,49 @@ class Laser(beam.Beam):
             data = self.reconstruct_from_cyl(x, e, x, y)
         im = self.plot_intensity(data, z, lim)
         plt.show(im)
-    
+
+    def plot_intensity_along_z(self, z, z0=0, axis=0, ylim=None):
+        """ Plots the intensity alone z with chosen axis. 
+        
+        Parameters
+        ----------
+        axis : int, 0 or 1
+            0 being x; 1 being y
+        """
+        Nz= len(z)
+        Z= z[-1]
+        Nz0= z0*(Nz-1)/Z
+        print(Nz, Z, Nz0)
+        if axis== 0:
+            Nk= self.Nx
+            K= self.X
+        elif axis== 1:
+            Nk= self.Ny
+            K= self.Y
+        e1 = np.zeros((Nz, Nk), dtype='complex128')
+        for i in range(int(Nz0), Nz):
+            if axis== 0:
+                e1[i, :] = self.load_field(i+1)[0][:, int(self.Ny/2)]
+            elif axis== 1:
+                e1[i, :] = self.load_field(i+1)[0][int(self.Nx/2), :]
+                
+        I = self.intensity_from_field(e1)
+
+        ext = [z0/1e4, z[-1]/1e4, -K/2, K/2]
+        plt.figure(figsize=(8, 2), dpi=150)
+        plt.imshow(np.flipud(np.transpose(I[int(Nz0): Nz, :])), aspect='auto', extent=ext, cmap='viridis')
+        cb = plt.colorbar()
+        cb.set_label(r'Laser Intensity ($10^{14} W/cm^2$)')
+        plt.xlabel('z (cm)')
+        plt.ylabel(r'x or y ($\mathrm{\mu m}$)')
+        if ylim is not None:
+            plt.ylim(ylim)
+
+        plt.twinx()
+        plt.plot(z[int(Nz0): Nz]/1e4, I[int(Nz0): Nz, int(Nk/2)], 'c--', label='Simulated')
+        plt.xlim(z0/1e4, z[-1]/1e4)
+        plt.show()
+        
     def plot_intensity(self, e, z, lim=None):
         """ Create an intensity plot. """
         X = self.X

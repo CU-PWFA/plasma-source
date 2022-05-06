@@ -288,3 +288,28 @@ class Annulus(Intensity):
         sel = np.logical_and(r2 < self.r_out**2, r2 > self.r_in**2)
         t[sel] = 1.0
         super().initialize_t(t)
+
+class Mirror(Phase):
+    """ A transmission mask formed from a concave mirror, counting aberration from off axis incident.
+    
+    Parameters
+    ----------
+    f : double
+        The focal length of the lens.
+        Positive for concave; negtive for convex 
+    theta : double
+        The incident angle to the mirror in degrees. 
+        The angle between the incident ray and the principle axis. 0 is normal incident.
+    """
+    
+    def __init__(self, params):
+        self.keys.extend(
+                ['f', 
+                 'theta_i'])
+        super().__init__(params)
+    
+    def initialize_phase(self):
+        fx= self.f* (1/np.cos(np.deg2rad(self.theta_i))-1)+ self.f
+        fy= self.f
+        phi = -self.k * (self.x[:, None]**2/ (2*fx)+self.y[None, :]**2/ (2*fy))
+        super().initialize_phase(phi)
