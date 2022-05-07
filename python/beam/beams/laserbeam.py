@@ -144,6 +144,12 @@ class Laser(beam.Beam):
         fx = fftfreq(self.Nx, dx)
         fy = fftfreq(self.Ny, dy)
         return fx, fy
+    
+    def get_If(self):
+        """ Get the intensity in frequency domain."""
+        beam = self
+        If = abs(fftshift(beam.fft(beam.e)))**2
+        return If
         
     # File managment
     #--------------------------------------------------------------------------
@@ -251,6 +257,7 @@ class Laser(beam.Beam):
             Nk= self.Ny
             K= self.Y
         e1 = np.zeros((Nz, Nk), dtype='complex128')
+        #TODO This now only works for 2D beam, set it so that it also works for cyl beam
         for i in range(int(Nz0), Nz):
             if axis== 0:
                 e1[i, :] = self.load_field(i+1)[0][:, int(self.Ny/2)]
@@ -374,7 +381,7 @@ class Laser(beam.Beam):
         plt.subplot(133)
         plt.plot(fx, If[:, indy], label='x')
         plt.plot(fy, If[indx, :], '--', label='y')
-        plt.legend()
+        plt.legend()    
         plt.xlabel(r'$f_x$ (um$^{-1}$)')
         plt.ylabel(r'Intensity (arb unit)')
         if flim != None:

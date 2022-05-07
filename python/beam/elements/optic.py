@@ -309,7 +309,8 @@ class Mirror(Phase):
         super().__init__(params)
     
     def initialize_phase(self):
-        fx= self.f* (1/np.cos(np.deg2rad(self.theta_i))-1)+ self.f
+        fx= self.f- self.f*(np.sin(np.deg2rad(self.theta_i))*np.tan(np.deg2rad(self.theta_i)))
+#        fx= self.f- self.f* (1/np.cos(np.deg2rad(self.theta_i))-1)
         fy= self.f
         phi = -self.k * (self.x[:, None]**2/ (2*fx)+self.y[None, :]**2/ (2*fy))
         super().initialize_phase(phi)
