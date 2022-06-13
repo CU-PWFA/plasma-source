@@ -9,6 +9,7 @@ Created on Wed Oct 11 17:33:15 2017
 import numpy as np
 from beam.elements import element
 import matplotlib.pyplot as plt
+from scipy import ndimage
 
 
 class Phase(element.Element):
@@ -289,6 +290,34 @@ class Annulus(Intensity):
         t[sel] = 1.0
         super().initialize_t(t)
 
+
+class Annulus_Filtered(Intensity):
+    """ A transmission mask formed from an annulus includes a filter to improve edge performance.
+
+    Parameters
+    ----------
+    r_in : double
+        The inner radius of the aperture.
+    r_out : double
+        The outer radius of th aperture.
+    """
+    def __init__(self, params):
+        self.keys = self.keys.copy()
+        self.keys.extend(
+                ['r_in',
+                 'r_out',
+                 'sigma'])
+        super().__init__(params)
+
+    def initialize_t(self):
+        t = np.zeros((self.Nx, self.Ny), dtype='double')
+        r2 = self.x[:, None]**2+self.y[None, :]**2
+        sel = np.logical_and(r2 < self.r_out**2, r2 > self.r_in**2)
+        t[sel] = 1.0
+        t = ndimage.gaussian_filter(t, self.sigma)
+        super().initialize_t(t)
+
+
 class Mirror(Phase):
     """ A transmission mask formed from a concave mirror, counting aberration from off axis incident.
     
@@ -314,3 +343,4 @@ class Mirror(Phase):
         fy= self.f
         phi = -self.k * (self.x[:, None]**2/ (2*fx)+self.y[None, :]**2/ (2*fy))
         super().initialize_phase(phi)
+

@@ -250,7 +250,7 @@ def domain_test(X, Nx, Z, Nz, beam0, pulseParams, z_target, I_target, start, yli
     I : array of doubles
         The x-z intensity from the simulation.
     """
-    z = np.linspace(0, Z, Nz)
+    z, dz = np.linspace(0, Z, Nz, retstep=True)
     pulseParams['name'] = 'Test_Beam'
     pulseParams['Nx'] = Nx
     pulseParams['Ny'] = Nx
@@ -267,7 +267,8 @@ def domain_test(X, Nx, Z, Nz, beam0, pulseParams, z_target, I_target, start, yli
     I = ionization.intensity_from_field(e1)
     I_max = np.amax(I)
     if plot:
-        ext = [0, Z/1e4, -X/2, X/2]
+        dx = beam1.get_dx()
+        ext = [(-0.5*dz)/1e4, (Z+0.5*dz)/1e4, (beam1.x[0]-dx/2), (beam1.x[-1]+dx/2)]
         plt.figure(figsize=(8, 2), dpi=150)
         if log:
             norm = colors.LogNorm(vmin=I_max*1e-4, vmax=I_max)
@@ -285,9 +286,11 @@ def domain_test(X, Nx, Z, Nz, beam0, pulseParams, z_target, I_target, start, yli
         plt.twinx()
         plt.plot((z_target-start-dz)/1e4, I_target, 'w-', label='Target')
         plt.plot(np.array(beam1.z[:-1])/1e4, I[:, int(Nx/2)], 'c--', label='Simulated')
+        plt.ylim(0, 1.1*I_max)
         if legend:
             plt.legend(loc=8)
         plt.xlim(0, Z/1e4)
+        plt.tight_layout()
         plt.show()
     
     return I
@@ -614,7 +617,7 @@ def plot_plasma_density(pulse, ne, ne0, ext, lines=[20, 40, 60], name=None, xlim
     if yticks is None:
         yticks = [-200, 0, 200]
     orange = '#EE7733'
-    fig = plt.figure(figsize=(10, 7), dpi=150)
+    fig = plt.figure(figsize=(8, 5.5), dpi=150)
     gs = gridspec.GridSpec(4, 2, height_ratios=(1.5, 0.5, 3, 1), width_ratios=(40, 1),
                            hspace=0)
     ax1 = plt.subplot(gs[2, 0])
@@ -704,7 +707,9 @@ def plot_pulse(pulse, ind, ylim=None, log=False, smooth=False, name=None):
     I = ionization.intensity_from_field(e)
     I_max = np.amax(I)
     
-    ext = [-T/2, T/2, -X/2, X/2]
+    dx = pulse.get_dx()
+    dt = pulse.get_dt()
+    ext = [(pulse.t[0]-dt/2), (pulse.t[-1]+dt/2), (pulse.x[0]-dx/2), (pulse.x[-1]+dx/2)]
     plt.figure(figsize=(4, 2), dpi=150)
     if smooth == True:
         interp = 'Spline16'
@@ -1312,5 +1317,103 @@ def propagate_down_beampipe(pulse, apertures, diameters, X, Nx, Nz, ret_pulse=No
     else:
         return I_bl, pulse_bl
     
-    
+def get_energy(beam, tau):
+    I = beam.intensity_from_field(beam.e)
+    T = 4*tau
+    Nt = 1000
+    t, dt = np.linspace(-T/2, T/2, Nt, False, True, dtype='double')
+    dx = beam.x[1] - beam.x[0]
+    dy = beam.y[1] - beam.y[0]
+    I_perp = np.sum(I)*dx*dy*1e-9
+    return I_perp*np.sum(np.exp(-t**2*np.pi/(2*tau**2)))*dt
         
+def get_energy_FWHM(beam, tau):
+    I = beam.intensity_from_field(beam.e)
+    T = 4*tau
+    Nt = 1000
+    t, dt = np.linspace(-T/2, T/2, Nt, False, True, dtype='double')
+    dx = beam.get_dx()
+    dy = beam.get_dy()
+    I_perp = np.sum(I)*dx*dy*1e-9
+    return I_perp*np.sum(np.exp(-t**2*(4*np.log(2))/(tau**2)))*dt
+
+def plasma_refraction_FWHM(X, Nx, Z, Nz, beam0, pulseParams, species, n, start, m_e, ne0, name=None, t=0.0, n2=0.0, 
+                      ionization_type='adk'):
+    """ Propagate the laser pulse through the gas profile.
+    
+    Parameters
+    ----------
+    X : double
+        Transverse domain size in um.
+    Nx : int
+        Number of cells in the transverse dimension.
+    Z : double
+        Distance to propogate.
+    Nz : int
+        Number of z steps in the propogation.
+    beam0 : laserBeam object
+        The beam object to pull the field from.
+    pulseParams : dict
+        The pulse params from the beam0 object.
+    species : dict
+        Ionization species dict from ionization.ionization.
+    n : func
+        Function that returns the gas density as a function of z.
+    m_e : double
+        Multiplier for the intensity.
+    name : string, optional
+        Name for the pulse, defaults to Refracted_Beam.
+    t : double, optional
+        Plasma heating energy to remove from the field, in eV.
+    n2 : double, optional
+        The nonlinear index of refraction at atmospheric pressure. In cm^2/W.
+    ionization_type : string, optional
+        Function to use for the ionization model.
+    """
+    if name is None:
+        name = 'Refracted_Beam'
+    pulseParams['name'] = name
+    pulseParams['Nx'] = Nx
+    pulseParams['Ny'] = Nx
+    pulseParams['X'] = X
+    pulseParams['Y'] = X
+    plasmaParams = {
+        'Nx' : Nx,
+        'Ny' : Nx,
+        'Nz' : Nz,
+        'X' : X,
+        'Y' : X,
+        'Z' : Z,
+        'atom' : species,
+        'path' : pulseParams['path'],
+        'load' : False,
+        'cyl' : True,
+        'name' : 'Plasma_Source',
+        'n0' : ne0
+    }
+    tau = pulseParams['tau']
+    pulse = laserpulse.Pulse(pulseParams)
+    e = np.sqrt(m_e)*pulse.reconstruct_from_cyl(beam0.x, np.array(beam0.e)[:, int(beam0.Ny/2)], pulse.x, pulse.y)
+    e = e[None, :, :]*np.exp(-pulse.t[:, None, None]**2*(2*np.log(2))/(tau**2))
+    pulse.initialize_field(e)
+    print('Initial pulse energy %0.2fmJ' % (pulse.pulse_energy()*1e3))
+    plasma_source = plasma.Plasma(plasmaParams)
+
+    # Initialize gas density
+    n_gas = np.zeros((Nx, Nx, Nz), dtype='double')
+    ne = np.zeros((Nx, Nx, Nz), dtype='double')
+    for i in range(Nz):
+        n_gas[:, :, i] = n(plasma_source.z[i]+start)
+    plasma_source.initialize_plasma(n_gas, ne)
+    # Propagate the laser beam through the oven
+    interactions.pulse_plasma_energy(pulse, plasma_source, temp=t, n2=n2, ionization=ionization_type)
+    print('Final pulse energy %0.2fmJ' % (pulse.pulse_energy()*1e3))
+    e = np.zeros((Nz, Nx), dtype='complex128')
+    ne = np.zeros((Nz, Nx))
+    for i in range(0, Nz-1):
+        ne[i, :] = plasma_source.load_plasma_density(i)[0]
+    for i in range(Nz):
+        e[i, :] = pulse.load_field(i)[0][int(pulseParams['Nt']/2), :]
+    I = ionization.intensity_from_field(e)
+    ne = ne*1e17
+    return pulse, I, ne

@@ -24,7 +24,7 @@ import matplotlib.colors as colors
 import matplotlib.gridspec as gridspec
 plt.rcParams['animation.ffmpeg_path'] = '/home/robert/anaconda3/envs/CU-PWFA/bin/ffmpeg'
 import matplotlib.animation as animation
-
+from scipy.interpolate import interp2d
 
 #TODO see if you want to use this for e field calculation
 def calculate_tran_field(z, I, R, width, lam, path, dk=None, xlim=None, rlim=None):
@@ -370,7 +370,7 @@ def plasma_refraction(X, Nx, Z, Nz, beam0, pulseParams, species, n, start, m_e, 
         if load_beam_profile== False:
             e = np.sqrt(m_e)*pulse.reconstruct_from_cyl(beam0.x, np.array(beam0.e)[:, int(beam0.Ny/2)], pulse.x, pulse.y)
         else:
-            e= e_load
+            e= interpolate_2D(beam0.x, beam0.y, e_load, X, X, Nx, Nx)
         e = e[None, :, :]*np.exp(-pulse.t[:, None, None]**2*np.pi/(2*tau**2))
         pulse.initialize_field(e)
         print('Initial pulse energy %0.2fmJ' % (pulse.pulse_energy()*1e3))
@@ -446,7 +446,8 @@ def plasma_refraction(X, Nx, Z, Nz, beam0, pulseParams, species, n, start, m_e, 
         if load_beam_profile== False:
             e = np.sqrt(m_e)*pulse.reconstruct_from_cyl(beam0.x, np.array(beam0.e)[:, int(beam0.Ny/2)], pulse.x, pulse.y)
         else:
-            e= e_load
+#            e= e_load
+            e= interpolate_2D(beam0.x, beam0.y, e_load, X, X, Nx, Nx)
         e = e[None, :, :]*np.exp(-pulse.t[:, None, None]**2*np.pi/(2*tau**2))
         pulse.initialize_field(e)
         print('Initial pulse energy %0.2fmJ' % (pulse.pulse_energy()*1e3))
@@ -477,7 +478,18 @@ def plasma_refraction(X, Nx, Z, Nz, beam0, pulseParams, species, n, start, m_e, 
         I = ionization.intensity_from_field(e)
         ne = ne*1e17
         return pulse, I, ne
+def interpolate_2D(oldx, oldy, e, newX, newY, newNx, newNy):
+    """"""
+    #TODO check e.shape[0] is x or y
 
+    interpolator_Amp = interp2d(oldx, oldy, abs(e))
+    interpolator_Phase = interp2d(oldx, oldy, np.unwrap(np.angle(e)))
+    def interpolator_complex(x, y):
+        return interpolator_Amp(x, y)*np.exp(1j*interpolator_Phase(x, y))
+    xn= np.linspace(-newX/2, newX/2, newNx)
+    yn= np.linspace(-newY/2, newY/2, newNy)
+    return interpolator_complex(xn, yn)
+    
 def load_laser_plasma(Nx, Nz, Nt, path, timeIdx= 'sum', axis= 'xz', PulseName= None, PlasmaName= None):
     """ Load laser intensity from Refracted_Beam_field 
         and plasma density from Plasma_Source_numberDensity

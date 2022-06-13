@@ -124,6 +124,34 @@ class Plasma(element.Element):
             ne = interpolate.splev(z, tck, ext=1) # Return 0 if out of range
         return ne
     
+    def get_long_density_center(self):
+        """ Get the plasma density in an x-z plane at y=0. """
+        Nz = self.Nz
+        ne = np.zeros((Nz, self.Nx))
+        if not self.cyl:
+            for i in range(0, Nz-1):
+                ne[i, :]= self.load_plasma_density(i)[0][:, int(self.Ny/2)]
+        else:
+            for i in range(0, Nz-1):
+                ne[i, :] = self.load_plasma_density(i)[0]
+        return ne
+
+    def set_3D_plasma(self, ne_2d, n_2d):
+        """Convert a 2D (xz) plasma to a 3D plasma"""
+        x= np.linspace(-self.X/2, self.X/2, self.Nx)
+        y= np.linspace(-self.Y/2, self.Y/2, self.Ny)
+        xx, yy= np.meshgrid(x, y)
+        rr= np.sqrt(xx**2+yy**2)
+        for idx in range(0, self.Nz):
+            f= interpolate.interp1d(x, ne_2d[:, idx], fill_value="extrapolate")
+            ne= np.transpose(f(rr))
+            self.save_plasma_density(ne, idx)
+
+            g= interpolate.interp1d(x, n_2d[:, idx], fill_value="extrapolate")
+            n= np.transpose(g(rr))
+            self.save_num_density(n, idx)
+        
+    
     #File managment
     #--------------------------------------------------------------------------
     

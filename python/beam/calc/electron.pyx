@@ -107,6 +107,8 @@ def electron_propagation_plasma_Ez(double[:, :] ptcls, double[:] z, double z0,
         f_dgammadz = dgammadz_ramped_linear
     if dgammadz == 'ramped_linear_simple':
         f_dgammadz = dgammadz_ramped_linear_simple
+    if dgammadz == 'ramped_linear_2':
+        f_dgammadz = dgammadz_ramped_linear_2
     # Calculate parameters for each z-slice
     for i in range(Nz-1):
         kp = 5.95074e4 * sqrt(ne[i])
@@ -313,6 +315,13 @@ cdef double dgammadz_ramped_linear_simple(double ne, double xi, double E0, doubl
     cdef double multi = 2*eta-sqrt(eta)
     cdef double E0_n = E0*multi
     cdef double E1_n = E1*multi
+    cdef double E = E0_n + E1_n*xi
+    return E*1.956957e-6
+
+cdef double dgammadz_ramped_linear_2(double ne, double xi, double E0, double E1, double ne0) nogil:
+    cdef double eta = ne/ne0
+    cdef double E0_n = E0*(2*eta-sqrt(eta))
+    cdef double E1_n = E1*eta
     cdef double E = E0_n + E1_n*xi
     return E*1.956957e-6
 
