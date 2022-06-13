@@ -313,7 +313,7 @@ class Laser(beam.Beam):
         plt.figure(figsize=(16, 4), dpi=150)
         plt.subplot(131)
         plt.plot(x, I[:, indy], label='y')
-        plt.plot(y, I[indx, :], '--', label='x')
+        plt.plot(y, I[indx, :], 'm--', label='x')
         plt.legend()
         plt.xlabel(r'$x$ (um)')
         plt.ylabel(r'Intensity ($10^{14}$ W/cm^2)')
@@ -322,7 +322,7 @@ class Laser(beam.Beam):
 
         plt.subplot(132)
         plt.plot(x, np.unwrap(phase[:, indy]), label='x')
-        plt.plot(y, np.unwrap(phase[indx, :]), '--', label='y')
+        plt.plot(y, np.unwrap(phase[indx, :]), 'm--', label='y')
         plt.legend()
         plt.xlabel(r'$x$ (um)')
         plt.ylabel(r'Phase (rad)')
@@ -331,7 +331,7 @@ class Laser(beam.Beam):
 
         plt.subplot(133)
         plt.plot(fx, If[:, indy], label='x')
-        plt.plot(fy, If[indx, :], '--', label='y')
+        plt.plot(fy, If[indx, :], 'm--', label='y')
         plt.legend()
         plt.xlabel(r'$f_x$ (um$^{-1}$)')
         plt.ylabel(r'Intensity (arb unit)')
@@ -346,7 +346,7 @@ class Laser(beam.Beam):
             plt.figure(figsize=(16, 4), dpi=150)
             plt.subplot(131)
             plt.plot(x, I[:, indy], label='x')
-            plt.plot(y, I[indx, :], '--', label='y')
+            plt.plot(y, I[indx, :], 'm--', label='y')
             plt.legend()
             plt.xlabel(r'$x$ (um)')
             plt.ylabel(r'Intensity ($10^{14}$ W/cm^2)')
@@ -356,7 +356,7 @@ class Laser(beam.Beam):
 
             plt.subplot(132)
             plt.plot(x, np.unwrap(phase[:, indy]), label='x')
-            plt.plot(y, np.unwrap(phase[indx, :]), '--', label='y')
+            plt.plot(y, np.unwrap(phase[indx, :]), 'm--', label='y')
             plt.legend()
             plt.xlabel(r'$x$ (um)')
             plt.ylabel(r'Phase (rad)')
@@ -366,7 +366,7 @@ class Laser(beam.Beam):
 
             plt.subplot(133)
             plt.plot(fx, If[:, indy], label='x')
-            plt.plot(fy, If[indx, :], '--', label='y')
+            plt.plot(fy, If[indx, :], 'm--', label='y')
             plt.legend()
             plt.xlabel(r'$f_x$ (um$^{-1}$)')
             plt.ylabel(r'Intensity (arb unit)')

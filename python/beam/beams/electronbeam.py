@@ -911,7 +911,7 @@ class GaussianElectronBeam(ElectronBeam):
         ptcls[:, 5] = gamma * (1 + self.dE*np.random.uniform(-1, 1, N))
         super().initialize_particles(ptcls)
         
-class GaussianElectronBeam_GaussianEnergy(GaussianElectronBeam):
+class GaussianElectronBeam_GaussianEnergy(ElectronBeam):
     """ A electron beam with a Gaussian transverse profile. 
     
     Parameters
@@ -933,6 +933,51 @@ class GaussianElectronBeam_GaussianEnergy(GaussianElectronBeam):
     dE : double
         The RMS energy spread of the beam as a fraction, 0.01 = +-1% energy spread.
     """
+    def __init__(self, params):
+        self.keys = self.keys.copy()
+        self.keys.extend(
+                ['gamma',
+                 'emittance',
+                 'betax',
+                 'betay',
+                 'alphax',
+                 'alphay',
+                 'sigmaz',
+                 'dE'])
+        super().__init__(params)
+        
+    def action_angle_distribution(self):
+        """ Initialize particles in action-angle coordinates. 
+        
+        Returns
+        -------
+        ux : array of double
+            Particle positions in ux.
+        vx : array of double
+            Particle positions in vx.
+        uy : array of double
+            Particle positions in uy.
+        vy : array of double
+            Particle positions in vy.
+        """
+        N = self.N
+        gamma = self.gamma
+        emittance = self.emittance
+        # Calculate arrays of random numbers
+        x1r = np.random.uniform(0, 1, N)
+        x2r = np.random.uniform(0, 1, N)
+        y1r = np.random.uniform(0, 1, N)
+        y2r = np.random.uniform(0, 1, N)
+        # Choose the particles from a distribution
+        Jx = -emittance * np.log(x1r) / gamma
+        Jy = -emittance * np.log(y1r) / gamma
+        phix = 2*np.pi*x2r
+        phiy = 2*np.pi*y2r
+        ux = np.sqrt(2*Jx)*np.cos(phix)
+        vx = -np.sqrt(2*Jx)*np.sin(phix)
+        uy = np.sqrt(2*Jy)*np.cos(phiy)
+        vy = -np.sqrt(2*Jy)*np.sin(phiy)
+        return ux, vx, uy, vy
     
     def initialize_particles(self, offset_x=0.0, offset_y=0.0, offset_xp=0.0, offset_yp=0.0):
         """ Initialize the particles in a 6D distribution. """
@@ -952,6 +997,20 @@ class GaussianElectronBeam_GaussianEnergy(GaussianElectronBeam):
         super().initialize_particles(ptcls)
 
 class OffsetGaussianElectronBeam(GaussianElectronBeam):
+    def __init__(self, params):
+        self.keys = self.keys.copy()
+        self.keys.extend(
+                ['offset_x',
+                 'offset_y',
+                 'offset_xp',
+                 'offset_yp'])
+        super().__init__(params)
+        
+    def initialize_particles(self):
+        """ Initialize the particles in a 6D distribution. """
+        super().initialize_particles(self.offset_x, self.offset_y, self.offset_xp, self.offset_yp)
+        
+class OffsetGaussianElectronBeam_GaussianEnergy(GaussianElectronBeam_GaussianEnergy):
     def __init__(self, params):
         self.keys = self.keys.copy()
         self.keys.extend(
