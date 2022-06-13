@@ -211,6 +211,13 @@ class Laser(beam.Beam):
                                     self.z[-1], self.fft, self.ifft,
                                     self.save_field)
         self.e = np.array(self.e, dtype='complex128')
+        
+    def calc_total_power(self):
+        """ Calculate the total power in the beam. """
+        I = self.intensity_from_field(self.e)
+        dx = self.get_dx()
+        dy = self.get_dy()
+        return np.sum(I)*dx*dy*1e-8*100
     
     # Visualization functions
     #--------------------------------------------------------------------------
@@ -570,6 +577,42 @@ class SuperGaussianLaser(Laser):
         e = E0 * np.exp(-(r/w0)**n)
         super().initialize_field(e)
 
+
+class SuperGaussianLaser2(Laser):
+    """ A laser beam class that creates a super-Gaussian electric field. 
+    
+    Parameters
+    ----------
+    E0 : double
+        The peak value of the electric field on the flattop in GV/m. 
+    waist : double
+        The spot size of the flattop region.
+    order : int
+        The order of the super Gaussian.
+    """
+    
+    def __init__(self, params):
+        self.keys = self.keys.copy()
+        self.keys.extend(
+                ['E0',
+                 'waist',
+                 'order'])
+        super().__init__(params)
+    
+    def initialize_field(self):
+        """ Create the array to store the electric field values in. 
+        
+        Fills the field array with the field of a Gaussian pulse.
+        """
+        w0 = self.waist
+        E0 = self.E0
+        n = self.order
+        x2 = np.reshape(self.x, (self.Nx, 1))**2
+        y2 = np.reshape(self.y, (1, self.Ny))**2
+        # Calculate all the parameters for the Gaussian beam
+        r = np.sqrt(x2 + y2)
+        e = E0 * np.exp(-((r/w0)**2**n))
+        super().initialize_field(e)
 
 class GeneralSuperGaussianLaser(Laser):
     """ A laser beam class that creates a super-Gaussian electric field. 

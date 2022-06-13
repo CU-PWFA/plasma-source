@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import matplotlib.colors as colors
 from scipy.optimize import curve_fit
+import scipy.io
 import libtiff
 import glob
 import os
@@ -32,6 +33,18 @@ cal = {
 #FF = '18085362'
 #SC = '17583372' # Rail cam, M=0.1 camera
 #BC = '17571186' # Rail cam, direct
+
+def set_calibration(cam_name, calibration):
+    """ Add/update the passed camera in the calibration list. 
+    
+    Parameters
+    ----------
+    cam_name : int, string
+        Name of the camera, must match the name in the metadata.
+    cal : float
+        Pixel calibration in mm/px.
+    """
+    cal[str(cam_name)] = calibration
 
 def get_filename(instr, dataset, shot):
     """ Get the filename for an instrument, dataset number, and shot number.
@@ -119,7 +132,10 @@ class IMAGE():
         self.image = self.load_image()
         self.meta = self.get_image_meta()
         self.data = np.array(self.image, dtype='float')
-        self.cal = cal[str(camera)] # In mm/px
+        if self.camera not in cal:
+            set_calibration(self.camera, 1)
+            print("Warning, calibration was not defined for camera {!s}, defaulting to 1.".format(self.camera))
+        self.cal = cal[self.camera] # In mm/px
         self.gain = self.meta['Gain']
         self.shutter = self.meta['Shutter']
         self.width = self.image.width
@@ -173,7 +189,45 @@ class IMAGE():
             print("Tiff meta data width {:d} does not match image width {:d}".format(self.meta['Pixel'][0], self.width))
         if self.meta['Pixel'][1] != self.height:
             print("Tiff meta data height {:d} does not match image height {:d}".format(self.meta['Pixel'][0], self.width))
+            
+    def refresh_calibration(self):
+        """ Update the camera calibration if it has been changed. """
+        self.cal = cal[self.camera]
     
+    # Modification functions --------------------------------------------------
+    #--------------------------------------------------------------------------
+    def rotate(self, angle):
+        """ Rotate the image. 
+        
+        Parameters
+        ----------
+        angle : float
+            Angle to rotate the image by, in deg.
+        """
+        self.image = self.image.rotate(angle)
+        self.data = np.array(self.image, dtype='float')
+        
+    def center_image(self, strategy, o, **kwargs):
+        """ Center the image by non-uniformaly padding it. Meta will no longer match class parameters.
+        
+        Parameters
+        ----------
+        strategy : string
+            See calculate_center for available strategies and **kwargs.
+        o : int
+            Padding on each side of returned array, in px.
+        """
+        cen_image, center = self.get_center_image(strategy, o, **kwargs)
+        self.data = cen_image
+        self.image = Image.fromarray(cen_image)
+        self.width = self.image.width
+        self.height = self.image.height
+        self.center = (self.width/2, self.height/2)
+        self.xp = np.arange(0, self.width, 1)
+        self.yp = np.arange(0, self.height, 1)
+        self.x = self.cal*self.xp
+        self.y = self.cal*self.yp
+        
     # Calculation functions ---------------------------------------------------
     #--------------------------------------------------------------------------
     def calculate_center(self, strategy='cm', threshold=12, f=None, p0=None, center=None):
@@ -231,9 +285,41 @@ class IMAGE():
         """ Calculate the total sum of all the pixels. """
         return np.sum(self.data)
     
+    def get_center_image(self, strategy, o, **kwargs):
+        """ Return a version of the image that is centered. 
+        
+        Parameters
+        ----------
+        strategy : string
+            See calculate_center for available strategies and **kwargs.
+        o : int
+            Padding on each side of returned array, in px.
+            
+        Returns
+        -------
+        cen_image : array of floats
+            Padded image with the actual image shifted to be centered.
+        center : tuple of floats
+            The location of the image center in pixel coordinates.
+        """
+        self.calculate_center(strategy, **kwargs)
+        cen = np.array([self.width/2+o, self.height/2+o], dtype='int')
+        center = self.center
+        if center is None:
+            center = (self.width/2, self.height/2)
+        shift = np.array(np.rint(cen-center), dtype='int')
+        cen_image = np.zeros((self.height+2*o, self.width+2*o))
+        start_y = shift[1]
+        end_y = start_y+self.height
+        start_x = shift[0]
+        end_x = start_x+self.width
+        cen_image[start_y:end_y, start_x:end_x] = self.data
+        return cen_image, center
+    
     # Visualization functions -------------------------------------------------
     #--------------------------------------------------------------------------
     def get_ext(self, cal=True):
+        """ Helper function to get the extent for imshow. """
         if cal:
             ext = self.cal*np.array([-0.5, self.width+0.5, self.height+0.5, -0.5])
         else:
@@ -302,7 +388,7 @@ class IMAGE():
     
     def plot_dataset_text(self, ax):
         """ Add text at the top of the figure stating the dataset and shot number. """
-        ax.text(0.02, 0.95, r"DS: {:0d}".format(int(self.dataset)), color='w', transform=ax.transAxes)
+        ax.text(0.02, 0.95, r"DS: {!s}".format(self.dataset), color='w', transform=ax.transAxes)
         ax.text(0.77, 0.95, r"Shot: {:04d}".format(self.shot), color='w', transform=ax.transAxes)
     
     def plot_metadata_text(self, ax):
@@ -438,9 +524,9 @@ class Dataset():
             if strategy=='adapt_mask':
                 high = np.max(image.data)
                 level = int(adapt*high)
-                cen_image, centers[i, :] = self.center_image(image, 'mask', o, threshold=level, **kwargs)
+                cen_image, centers[i, :] = image.get_center_image('mask', o, threshold=level, **kwargs)
             else:
-                cen_image, centers[i, :] = self.center_image(image, strategy, o, **kwargs)
+                cen_image, centers[i, :] = image.get_center_image(strategy, o, **kwargs)
             sum_image += cen_image
         
         sum_image *= (M/(M-len(fails)))
@@ -474,22 +560,6 @@ class Dataset():
             return False
         return True
     
-    def center_image(self, image, strategy, o, **kwargs):
-        """ Call the image function that calculates the beam center. """
-        image.calculate_center(strategy, **kwargs)
-        cen = np.array([image.width/2+o, image.height/2+o], dtype='int')
-        center = image.center
-        if center is None:
-            center = (image.width/2, image.height/2)
-        shift = np.array(np.rint(cen-center), dtype='int')
-        cen_image = np.zeros((image.height+2*o, image.width+2*o))
-        start_y = shift[1]
-        end_y = start_y+image.height
-        start_x = shift[0]
-        end_x = start_x+image.width
-        cen_image[start_y:end_y, start_x:end_x] = image.data
-        return cen_image, center
-    
     def save_center(self, camera, sum_image):
         """ Save the calculated image info. """
         name = self.save_path + '{!s}_{!s}_centered.tiff'.format(self.dataset, camera)
@@ -513,7 +583,79 @@ class Dataset():
         self.center_std = np.loadtxt(name)
     
     def load_image(self, camera):
+        # TODO: Load this as an instance of the IMAGE class rather than a pillow object
         name = self.save_path + '{!s}_{!s}_centered.tiff'.format(self.dataset, camera)
         image = Image.open(name)
         return image
 
+
+class MatImage(IMAGE):
+    def load_image(self):
+        """ Load an image from a given data set. 
+        
+        Returns
+        -------
+        image : obj
+            Pillow image object for the tiff.
+        """
+        self.path = PATH
+        self.filename = "ProfMon-CAMR_{!s}-{!s}.mat".format(self.camera, self.dataset)
+        name = self.path + self.filename
+        self.mat = scipy.io.loadmat(name)
+        image = Image.fromarray(self.mat['data'][0][0][1])
+        return image
+    
+    def get_image_meta(self):
+        """ Return the meta data dictionary from a pillow image object.
+        
+        Returns
+        -------
+        meta : dict
+            The meta data dictionary contained in the tiff image.
+        """
+        # You can see the name of each field in the mat at mat['data'].dtype.names
+        mat_meta = self.mat['data'][0][0]
+        meta = {}
+        meta['Gain'] = 0.0
+        meta['Shutter'] = 0.0
+        meta['Offset'] = [mat_meta[10][0][0], mat_meta[11][0][0]]
+        meta['Dataset'] = self.dataset
+        meta['Shot number'] = self.shot
+        meta['Serial number'] = self.camera
+        meta['Pixel'] = [mat_meta[6][0][0], mat_meta[7][0][0]]
+        return meta
+
+
+class TiffImage(IMAGE):
+    def load_image(self):
+        """ Load an image from a given data set. 
+        
+        Returns
+        -------
+        image : obj
+            Pillow image object for the tiff.
+        """
+        self.path = PATH
+        self.filename = self.dataset
+        name = self.path + self.filename
+        image = Image.open(name)
+        return image
+    
+    def get_image_meta(self):
+        """ Return the meta data dictionary from a pillow image object.
+        
+        Returns
+        -------
+        meta : dict
+            The meta data dictionary contained in the tiff image.
+        """
+        # You can see the name of each field in the mat at mat['data'].dtype.names
+        meta = {}
+        meta['Gain'] = 0.0
+        meta['Shutter'] = 0.0
+        meta['Offset'] = [0, 0]
+        meta['Dataset'] = self.dataset
+        meta['Shot number'] = self.shot
+        meta['Serial number'] = self.camera
+        meta['Pixel'] = [self.image.width, self.image.height]
+        return meta
