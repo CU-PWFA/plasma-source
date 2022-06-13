@@ -17,14 +17,18 @@ sys.path.insert(0, "../")
 from modules import TPLFocalLength as Foc
 from modules import CalcEmitGrowth as W2
 from modules import OideCalc as Oide
-
-tpl_n = 1e18    # cm^-3
-tpl_l = 50    # um
-tpl_offset = 0.0  # m
+"""
+tpl_n = 2e16 #1e18    # cm^-3
+tpl_l = 300    # um
+tpl_offset = 0.0 #0.0  # m
 
 gam = Foc.gam_def
-emit = 3e-6     # m-rad
-beta_i = 5.0   # m
+emit = 3.1e-6     # m-rad
+#beta_i = 0.01 #5.0   # m
+
+beta_star = 0.198
+beta_i = beta_star + tpl_offset**2/beta_star
+print(beta_i)
 
 #nbeam  = 6e9
 #OR
@@ -36,6 +40,29 @@ sigz = 5.2e-6*100 #cm
 #sigma_E = np.sqrt(1/3) * delta_E
 #OR
 sigma_E = 0.001
+"""
+tpl_n = 5e16 #1e18    # cm^-3
+tpl_l = 01e-9    # um
+tpl_offset = 0.0 #0.0  # m
+
+gam = Foc.gam_def * 9/10
+emit = 5e-6     # m-rad
+beta_i = 0.20 #5.0   # m
+
+#beta_star = 0.198
+#beta_i = beta_star + tpl_offset**2/beta_star
+#print(beta_i)
+
+#nbeam  = 6e9
+#OR
+charge = 1.5e-9 #C
+nbeam = charge / 1.6022e-19
+sigz = 50e-6*100 #cm
+
+#delta_E = 0.0025
+#sigma_E = np.sqrt(1/3) * delta_E
+#OR
+sigma_E = 0.01
 
 rho_max = nbeam/(2*np.pi)**(3/2)/sigz/(beta_i*100*emit*100/gam)
 

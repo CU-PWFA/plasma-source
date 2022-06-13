@@ -16,6 +16,8 @@ import matplotlib.pyplot as plt
 from modules import ThreeDimensionAnalysis as ThrDim
 from modules import TPLFocalLength as Foc
 
+from scipy.signal import find_peaks, savgol_filter
+
 gam = Foc.gam_def
 
 """
@@ -26,6 +28,10 @@ n_0 = 0.502043587936
 a = 35.9713173965
 b = 2.67654175646
 n_0 = 5.09212414537# / 1e17
+
+a = 150
+b = 20
+n_0 = 0.2# / 1e17
 
 fit = [a,b,n_0]
 edge = 1/2*(3*a+6*b)

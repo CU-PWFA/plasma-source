@@ -70,7 +70,7 @@ def Efunc(x,y,params):
 
 # Temporal pulse
 def Tfunc(t):
-    tau = 35
+    tau = 50
     return np.exp(-1.38629*t**2 / (tau**2))
 
 def PlotInitialIntensity(params):

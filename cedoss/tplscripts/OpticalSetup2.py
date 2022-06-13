@@ -42,7 +42,7 @@ zi = 7.5e-3             #Offset from small waist to plane we want to save params
 zoom=int(round(zi/l_step))
 
 path = '/home/chris/Desktop/DataLoads/PulseFilesNp/'
-filename = 'pulseParams_oct20_20mj.npy'
+filename = 'pulseParams_april11_1mj_400nm.npy'
 
 save = 1             #Set to 1 to save anything
 calcdensity = 0 #SLOW   #Set to 1 to calc resulting plasma density w/out refraction
@@ -52,7 +52,7 @@ offsetlooper = 0
 foc_dom_fac = 2
 radscl = 1   #Set to larger to increase the beasm axis domain
 
-choice=5952         #Set to one of the setups below
+choice=5953#5952         #Set to one of the setups below
 
 if choice == 595:  #Single Spherical Lens, same as above but zoomed in more
                     #More details with respect to immenent FACET-II
@@ -103,6 +103,38 @@ if choice == 5952:  #Single Spherical Lens, same as above but zoomed in more
     #P = 148e9 #For He, 10 mm
     
     P = 500e9
+    radscl = 1.5
+    
+    q_x = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    q_y = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,.1,l_step)
+    
+    GB.Prop_CylindricalLens(q_y,q_x,2*f0)
+    GB.Prop_CylindricalLens(q_x,q_y,2*f0)
+
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,Lmax,l_step)
+    
+if choice == 5953:  #Single Spherical Lens, same as above but zoomed in more
+                    #More details with respect to immenent FACET-II
+    setupTitle = "1Spherical"
+    M2 = 1.0
+    w0 = 13.6e-3 #calculated from 30mm diameter flattop estimation
+    #w0 = 4.77e-3 #10mm
+    reverse = 0
+    zi = 1.5e-2#1.5e-2#3.5e-2#0.50e-2#0.75e-2#2e-2
+    zoom = int(round(zi/l_step))
+    radscl = 0.5#0.3
+    
+    f0 = 0.646
+    Lmax = 1.0
+    #P = 17.2e9 #For H, 30mm
+    #P = 125e9 #For He, 30mm
+    #P = 20e9 #For H, 10 mm
+    #P = 148e9 #For He, 10 mm
+    
+    P = 100e9 * 2/5 * 0.5 #2/5 for 10 mJ, 0.5 for 400 nm
+    fs_duration = 50e-15
+    wavelength = 400.0e-9
     radscl = 1.5
     
     q_x = GB.Prop_Init_q(wavelength, w0, -.1, 1)
@@ -285,6 +317,27 @@ if choice == 602:  #Single Spherical Lens, same as above but zoomed in more
     GB.Prop_Cylindrical_FreeSpace(q_x,q_y,.1,l_step)
     GB.Prop_CylindricalLens(q_x,q_y,2*f1)
     GB.Prop_Cylindrical_FreeSpace(q_x,q_y,1.7,l_step)
+    GB.Prop_CylindricalLens(q_y,q_x,2*f2)
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,0.4,l_step)
+
+if choice == 603:  #Single Spherical Lens, same as above but zoomed in more
+    setupTitle = "1Spherical"
+    w0 = 8.0e-3#4.2e-3
+    reverse = 0
+    zi = 0.30e-2#0.75e-2#2e-2
+    zoom = int(round(zi/l_step))
+    radscl = 0.3
+    
+    f1 = 0.250
+    f2 = 0.250
+    Lmax = 1.0
+    #P = 12.5e9
+    P = 25e9
+    
+    q_x = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    q_y = GB.Prop_Init_q(wavelength, w0, -.1, 1)
+    GB.Prop_Cylindrical_FreeSpace(q_x,q_y,.1,l_step)
+    GB.Prop_CylindricalLens(q_x,q_y,2*f1)
     GB.Prop_CylindricalLens(q_y,q_x,2*f2)
     GB.Prop_Cylindrical_FreeSpace(q_x,q_y,0.4,l_step)
 

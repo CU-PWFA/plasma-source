@@ -17,29 +17,69 @@ import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 from scipy import optimize
 import scipy.integrate as integrate
-"""
 
+path = '/home/chris/Desktop/WakeShape_LinGrad/'
+path = '/home/chris/Desktop/SimulationRepo/emittance_preservation/simulations/LinearGradient/'
 #offset_arr = np.arange(-200,201,5)
 offset_arr = np.arange(-120,100.5,2) #SepGrad Full
+
+"""
+path = '/home/chris/Desktop/NERSC_Jan_Grad/'
+offset_arr = np.arange(-80,220.5,5) #JanGrad Full
+tranExtent = 400 #Jan
+npcase = 1e16 #jan
+ind = 8
+"""
+
+#path = '/home/chris/Desktop/NERSC_Sep_Control2/'
+#ind = 5
+path = '/home/chris/Desktop/NERSC_Sep_Grad/'
+ind = 9
+#path = '/home/chris/Desktop/NERSC_Mar_Grad0.001/'
+#path = '/home/chris/Desktop/NERSC_Mar_Grad0.01/'
+#ind = 10
+#path = '/home/chris/Desktop/NERSC_Dec_Grad/'
+#ind = 9
+offset_arr = np.arange(-120,100.5,2)
+tranExtent = 200
+npcase = 2e16
+
+"""
+path = '/media/chris/New Volume/VSimRuns/NonuniformPlasma/NERSC_LIN_Aug/'
+offset_arr = np.arange(-74,40.5,2)
+npcase = 3e17#
+tranExtent = 75
+ind = 7
+"""
+"""
+path = '/media/chris/New Volume/VSimRuns/NonuniformPlasma/LowRes_HighGradient_August/LinearGradient/'
+offset_arr = np.arange(-60,50.5,2)
+npcase = 3e17#
+tranExtent = 75
+ind = 5
+"""
+"""
+path = '/home/chris/Desktop/VELA_Oct_Grad/'
+npcase = 2e16#
+tranExtent = 200
+offset_arr = np.arange(-120,100.5,2)
+ind = 5
+"""
+
 #offset_arr = np.arange(-80,90.5,2)
 rmajor_arr = np.zeros(len(offset_arr))
 rminor_arr = np.zeros(len(offset_arr))
 
 for i in range(len(offset_arr)):
-    path = '/home/chris/Desktop/WakeShape_LinGrad/'
-    path = '/home/chris/Desktop/SimulationRepo/emittance_preservation/simulations/LinearGradient/'
-    path = '/home/chris/Desktop/NERSC_Sep_Grad/'
-    #path = '/home/chris/Desktop/NERSC_Dec_Grad/'
-    #path = '/home/chris/Desktop/VELA_Oct_Grad/'
-    npcase = 2e16
     vmax = 1e18*(npcase/3.7e17)
     vmin = 1e16*(npcase/3.7e17)
     central_off = offset_arr[i]
-    tranExtent = 200
+    
+    
     params = {'vmin' : vmin,
               'vmax' : vmax,
               'plasma' : 'electrons',
-              'dumpInd' : 9,
+              'dumpInd' : ind,
               'path' : path,
               'simName' : 'MatchedBeams',
               'zoom' : 4.0,
@@ -62,39 +102,40 @@ for i in range(len(offset_arr)):
     xcoeff, var_matrix = curve_fit(coslike, theta, r, p0=p0)
     rmajor_arr[i] = xcoeff[0]
     rminor_arr[i] = xcoeff[2]
-"""
+
 dx=1.2#0.25
-plt.plot(offset_arr*dx*-1+47,rmajor_arr)
+start = 97 #um
+
+plt.plot(offset_arr*dx*-1+start,rmajor_arr)
 plt.title("Wake radius in first bucket")
 plt.xlabel("Distance behind drive beam "+r'$(\mu m)$')
 plt.ylabel("Wake radius "+r'$(\mu m)$')
 plt.grid(); plt.show();
 
-x = offset_arr*dx*-1+47
-y = rminor_arr
+trunc = 15
+x = offset_arr[trunc:]*dx*-1+47
+y = rminor_arr[trunc:]
 h = np.polyfit(x,y,1)
 
-kp = 266.123 #cm-1
-fac = 1.05
-
 #plt.plot(offset_arr*dx*-1+97,rminor_arr2, label = 'Sim2')
-plt.plot(offset_arr*dx*-1+97,rminor_arr, label = 'Sim')
-plt.plot(offset_arr*dx*-1+97,x*h[0]+h[1],ls='--', label = 'Fit')
-plt.plot(offset_arr*dx*-1+97,x*0.039+h[1],ls='--', label = 'Guess')
+plt.plot(offset_arr[trunc:]*dx*-1+start,rminor_arr[trunc:], label = 'Sim')
+plt.plot(offset_arr[trunc:]*dx*-1+start,x*h[0]+h[1],ls='--', label = 'Fit')
+#plt.plot(offset_arr*dx*-1+97,x*0.039+h[1],ls='--', label = 'Guess')
 plt.title("Wake vertical offset in first bucket")
 plt.xlabel("Distance behind drive beam "+r'$(\mu m)$')
 plt.ylabel("Wake vertical offset "+r'$(\mu m)$')
 plt.legend(); plt.grid(); plt.show();
 
-dx=1.2#0.25
-plt.plot(offset_arr*dx*-1+97,rmajor_arr-rminor_arr)
-plt.plot(offset_arr*dx*-1+97,rmajor_arr+rminor_arr)
+plt.plot(offset_arr*dx*-1+start,rmajor_arr-rminor_arr)
+plt.plot(offset_arr*dx*-1+start,rmajor_arr+rminor_arr)
 #plt.plot(offset_arr*dx*-1+97,rmajor_arr2-rminor_arr2)
 #plt.plot(offset_arr*dx*-1+97,rmajor_arr2+rminor_arr2)
 plt.title("Wake radius in first bucket")
 plt.xlabel("Distance behind drive beam "+r'$(\mu m)$')
 plt.ylabel("Wake radius "+r'$(\mu m)$')
 plt.grid(); plt.show();
+
+sys.exit()
 
 def Stupakov(p, x):
     """
@@ -163,6 +204,11 @@ result = np.trapz(rtop[np.where(rtop>trh)]-trh, xaxs[np.where(rtop>trh)])
 print(result)
 
 plt.plot([min(xaxs),max(xaxs)],[trh,trh],ls='--',label = "Half-Volume (r= 0.807)")
+plt.grid(); plt.legend(); plt.show()
+
+t1 = 4
+t2 = 45
+plt.plot(xaxs[t1:t2],rtop[t1:t2],label="VSim Simulation")
 plt.grid(); plt.legend(); plt.show()
 """
 #plt.plot(offset_arr*dx*-1+97,rminor_arr2, label = 'Sim2')

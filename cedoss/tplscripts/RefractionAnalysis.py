@@ -65,7 +65,7 @@ n0_lens = 3e12
 y_window = 120
 z_window = 400
 """
-
+"""
 #folder = '/home/chris/Desktop/FourierPlots/spherical_caseb_he10e16/'
 #folder = '/home/chris/Desktop/FourierPlots/spherical_caseb_he1e18_gasjet/'
 folder = '/home/chris/Desktop/FourierPlots/spherical_casea_he37e16_highpz_mr2/'
@@ -74,7 +74,7 @@ n0_lens = 3.7e17
 n0_lens = 3e12
 y_window = 90
 z_window = 400
-
+"""
 """
 folder = '/home/chris/Desktop/FourierPlots/crosscylafterglow_case3/'
 folder = '/home/chris/Desktop/FourierPlots/pulseParams_spherical_largeM2/'
@@ -82,6 +82,12 @@ n0_lens = 1e18
 y_window = 400
 z_window = 400
 """
+
+folder = '/home/chris/Desktop/FourierPlots/april8_10mj/'
+n0_lens = 3e16
+y_window = 400
+z_window = 400
+
 directory = 'case_1/'
 #directory = 'Ar1_Big/'
 
@@ -143,7 +149,7 @@ print("Total Charge: ",ThrDim.TotalCharge(den,x,y,z)," C")
 
 #ThrDim.ImageCut_xy_Production(den,x,y,z,x_off,y_off,z_off,1e-3,
 #                '(mm)',r'$n_p$',r'$\mathrm{\ (10^{16} cm^{-3}})$',1)
-sys.exit()
+#sys.exit()
 #Perform variance cuts to investigate density profiles on-and off-axis
 if cuts == 1:
     x_step=x[1]-x[0]
@@ -215,19 +221,20 @@ if focalfit == 1:
         print(thick,"um equivalent thickness at z= ", plus*z_step, " percent: ", (100*(thick-thick0)/thick0),"%")
         print(thickm,"um equivalent thickness at z= ", -plus*z_step, " percent: ", (100*(thickm-thick0)/thick0),"%")
     print();print("Now for horizontal variation:");print()
-    for plus in range(15):
-        den_vs_y = den[round(len(x)/2)+x_off + plus,:,round(len(z)/2)]
+    for plus in (np.arange(15)*2):
+        den_vs_y = den[round(len(x)/2)+x_off + int(plus),:,round(len(z)/2)]
         focal = Foc.Calc_Focus(den_vs_y,y)
         thick = Foc.Calc_Square_Lens(n0_lens, focal, Foc.gam_def)
-        den_vs_ym = den[round(len(x)/2)+x_off - plus,:,round(len(z)/2)]
+        den_vs_ym = den[round(len(x)/2)+x_off - int(plus),:,round(len(z)/2)]
         focalm = Foc.Calc_Focus(den_vs_ym,y)
         thickm = Foc.Calc_Square_Lens(n0_lens, focalm, Foc.gam_def)
-        print(thick,"um equivalent thickness at x= ", plus*x_step, " percent: ", (100*(thick-thick0)/thick0),"%")
-        print(thickm,"um equivalent thickness at x= ", -plus*x_step, " percent: ", (100*(thickm-thick0)/thick0),"%")
+        print(thick,"um equivalent thickness at x= ", int(plus)*x_step, " percent: ", (100*(thick-thick0)/thick0),"%")
+        print(thickm,"um equivalent thickness at x= ", -int(plus)*x_step, " percent: ", (100*(thickm-thick0)/thick0),"%")
     
 #Fit the data to tanh in y, an elliptical tanh in yz, and Gaussian in x
 if getfit == 1:
-    den_vs_y=den[round(len(x)/2)+x_off,:,round(len(z)/2)]
+    horiz_offset = -6#-50
+    den_vs_y=den[round(len(x)/2)+x_off+horiz_offset,:,round(len(z)/2)]
     
     if calc_focal == 1:
         Foc.Calc_Focus(den_vs_y,y)

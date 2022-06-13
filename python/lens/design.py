@@ -296,7 +296,7 @@ def domain_test(X, Nx, Z, Nz, beam0, pulseParams, z_target, I_target, start, yli
     return I
     
 def plasma_refraction(X, Nx, Z, Nz, beam0, pulseParams, species, n, start, m_e, ne0, name=None, t=0.0, n2=0.0, 
-                      ionization_type='adk'):
+                      ionization_type='adk', multispecies= False, species2= None):
     """ Propagate the laser pulse through the gas profile.
     
     Parameters
@@ -327,56 +327,231 @@ def plasma_refraction(X, Nx, Z, Nz, beam0, pulseParams, species, n, start, m_e, 
         The nonlinear index of refraction at atmospheric pressure. In cm^2/W.
     ionization_type : string, optional
         Function to use for the ionization model.
+    multispecies : boolean
+        turn multispecies on or not
+    species2: dict
+        Ionization species dict from ionization.ionization. 
+        If multispecies is on, second sepcies is specified here
     """
-    if name is None:
-        name = 'Refracted_Beam'
-    pulseParams['name'] = name
-    pulseParams['Nx'] = Nx
-    pulseParams['Ny'] = Nx
-    pulseParams['X'] = X
-    pulseParams['Y'] = X
-    plasmaParams = {
-        'Nx' : Nx,
-        'Ny' : Nx,
-        'Nz' : Nz,
-        'X' : X,
-        'Y' : X,
-        'Z' : Z,
-        'atom' : species,
-        'path' : pulseParams['path'],
-        'load' : False,
-        'cyl' : True,
-        'name' : 'Plasma_Source',
-        'n0' : ne0
-    }
-    tau = pulseParams['tau']
-    pulse = laserpulse.Pulse(pulseParams)
-    e = np.sqrt(m_e)*pulse.reconstruct_from_cyl(beam0.x, np.array(beam0.e)[:, int(beam0.Ny/2)], pulse.x, pulse.y)
-    e = e[None, :, :]*np.exp(-pulse.t[:, None, None]**2*np.pi/(2*tau**2))
-    pulse.initialize_field(e)
-    print('Initial pulse energy %0.2fmJ' % (pulse.pulse_energy()*1e3))
-    plasma_source = plasma.Plasma(plasmaParams)
+    if multispecies == False:        
+        if name is None:
+            name = 'Refracted_Beam'
+        pulseParams['name'] = name
+        pulseParams['Nx'] = Nx
+        pulseParams['Ny'] = Nx
+        pulseParams['X'] = X
+        pulseParams['Y'] = X
+        plasmaParams = {
+            'Nx' : Nx,
+            'Ny' : Nx,
+            'Nz' : Nz,
+            'X' : X,
+            'Y' : X,
+            'Z' : Z,
+            'atom' : species,
+            'path' : pulseParams['path'],
+            'load' : False,
+            'cyl' : True,
+            'name' : 'Plasma_Source',
+            'n0' : ne0
+        }
+        tau = pulseParams['tau']
+        pulse = laserpulse.Pulse(pulseParams)
+        e = np.sqrt(m_e)*pulse.reconstruct_from_cyl(beam0.x, np.array(beam0.e)[:, int(beam0.Ny/2)], pulse.x, pulse.y)
+        e = e[None, :, :]*np.exp(-pulse.t[:, None, None]**2*np.pi/(2*tau**2))
+        pulse.initialize_field(e)
+        print('Initial pulse energy %0.2fmJ' % (pulse.pulse_energy()*1e3))
+        plasma_source = plasma.Plasma(plasmaParams)
+    
+        # Initialize gas density
+        n_gas = np.zeros((Nx, Nx, Nz), dtype='double')
+        ne = np.zeros((Nx, Nx, Nz), dtype='double')
+        for i in range(Nz):
+            n_gas[:, :, i] = n(plasma_source.z[i]+start)
+        plasma_source.initialize_plasma(n_gas, ne)
+        # Propagate the laser beam through the oven
+        interactions.pulse_plasma_energy(pulse, plasma_source, temp=t, n2=n2, ionization=ionization_type)
+        print('Final pulse energy %0.2fmJ' % (pulse.pulse_energy()*1e3))
+        e = np.zeros((Nz, Nx), dtype='complex128')
+        ne = np.zeros((Nz, Nx))
+        for i in range(0, Nz-1):
+            ne[i, :] = plasma_source.load_plasma_density(i)[0]
+        for i in range(Nz):
+            e[i, :] = pulse.load_field(i)[0][int(pulseParams['Nt']/2), :]
+        I = ionization.intensity_from_field(e)
+        ne = ne*1e17
+        return pulse, I, ne
+    
+    else:
+#TODO check if species2 is none, if so, throw error
+        if name is None:
+            name = 'Refracted_Beam'
+        pulseParams['name'] = name
+        pulseParams['Nx'] = Nx
+        pulseParams['Ny'] = Nx
+        pulseParams['X'] = X
+        pulseParams['Y'] = X
+        plasmaParams = {
+            'Nx' : Nx,
+            'Ny' : Nx,
+            'Nz' : Nz,
+            'X' : X,
+            'Y' : X,
+            'Z' : Z,
+            'atom' : species,
+            'path' : pulseParams['path'],
+            'load' : False,
+            'cyl' : True,
+            'name' : 'Plasma_Source',
+            'n0' : ne0
+        }
+        plasmaParams2 = {
+            'Nx' : Nx,
+            'Ny' : Nx,
+            'Nz' : Nz,
+            'X' : X,
+            'Y' : X,
+            'Z' : Z,
+            'atom' : species2,
+            'path' : pulseParams['path'],
+            'load' : False,
+            'cyl' : True,
+            'name' : 'Plasma_Source',
+            'n0' : ne0
+        }
+        
+        tau = pulseParams['tau']
+        pulse = laserpulse.Pulse(pulseParams)
+        e = np.sqrt(m_e)*pulse.reconstruct_from_cyl(beam0.x, np.array(beam0.e)[:, int(beam0.Ny/2)], pulse.x, pulse.y)
+        e = e[None, :, :]*np.exp(-pulse.t[:, None, None]**2*np.pi/(2*tau**2))
+        pulse.initialize_field(e)
+        print('Initial pulse energy %0.2fmJ' % (pulse.pulse_energy()*1e3))
+        plasma_source = plasma.Plasma(plasmaParams)
+        plasma_source2 = plasma.Plasma(plasmaParams2)
+    
+        # Initialize gas density
+        n_gas = np.zeros((Nx, Nx, Nz), dtype='double')
+        ne = np.zeros((Nx, Nx, Nz), dtype='double')
+        for i in range(Nz):
+            n_gas[:, :, i] = n(plasma_source.z[i]+start)
+        plasma_source.initialize_plasma(n_gas, ne)
+        # Propagate the laser beam through the oven
+        interactions.pulse_plasma_energy_second(pulse, plasma_source, plasma_source2, temp=t, n2=n2, ionization=ionization_type)
+        print('Final pulse energy %0.2fmJ' % (pulse.pulse_energy()*1e3))
+        e = np.zeros((Nz, Nx), dtype='complex128')
+        ne = np.zeros((Nz, Nx))
+        for i in range(0, Nz-1):
+            ne[i, :] = plasma_source.load_plasma_density(i)[0]
+        for i in range(Nz):
+            e[i, :] = pulse.load_field(i)[0][int(pulseParams['Nt']/2), :]
+        I = ionization.intensity_from_field(e)
+        ne = ne*1e17
+        return pulse, I, ne
 
-    # Initialize gas density
-    n_gas = np.zeros((Nx, Nx, Nz), dtype='double')
-    ne = np.zeros((Nx, Nx, Nz), dtype='double')
-    for i in range(Nz):
-        n_gas[:, :, i] = n(plasma_source.z[i]+start)
-    plasma_source.initialize_plasma(n_gas, ne)
-    # Propagate the laser beam through the oven
-    interactions.pulse_plasma_energy(pulse, plasma_source, temp=t, n2=n2, ionization=ionization_type)
-    print('Final pulse energy %0.2fmJ' % (pulse.pulse_energy()*1e3))
+def load_laser_plasma(Nx, Nz, Nt, path, timeIdx= 'sum', axis= 'xz', PulseName= None, PlasmaName= None):
+#TODO see if you can replace this function by load=True
+    """ Load laser intensity from Refracted_Beam_field 
+        and plasma density from Plasma_Source_numberDensity
+    
+    Parameters
+    ----------
+    Nx : int
+        Number of cells in the transverse dimension.
+    Nz : int
+        Number of z steps in the propogation.
+    Nt : int
+        Number of t steps in the pulse.
+    path : string
+        Path to save the data (in that dir, there are beams and elements two sub-dir).
+    timeIdx : string or int, optional
+        Time index of the loaded laser pulse. 
+        'sum': sum over all time index.
+        'mid': the middle index of the pulse.
+        int: index number. 
+    PulseName : string, optional
+        Name of the pulse from the plasma source, defaults to 'Refracted_Beam'.
+    PlasmaName : string, optional
+        Name of the plasma source, defaults to 'Plasma_Source'.
+    
+    Returns
+    -------
+    pulse : Pulse object
+        The laser pulse object from the refraction simulation.
+    I : array of doubles
+        Laser intensity.
+    ne : array of doubles
+        plasma density.
+    """
+    def load_plasma_density(path, PlasmaName, ind):
+        """ Load the plasma density at the specified index. 
+        
+        Parameters
+        ----------
+        ind : int
+            The save index to load the field at.
+        
+        Returns
+        -------
+        ne : array-like
+            The plasma density at the specified index.
+        z : double
+            The z coordinate of the density.
+        """
+        ne = np.load(path+ 'elements/element_Plasma_Source/'+ PlasmaName+ '_plasmaDensity_' + str(ind) + '.npy')
+        return ne
+    
+    def load_field(path, PulseName, ind):
+        """ Load the electric field at the specified index. 
+        
+        Parameters
+        ----------
+        ind : int
+            The save index to load the field at.
+        
+        Returns
+        -------
+        e : array-like
+            The electric field at the specified index.
+        z : double
+            The z coordinate of the field.
+        """
+        e = np.load(path+ 'beams/beam_Refracted_Beam/'+ PulseName+ '_field_' + str(ind) + '.npy')
+        return e
+
+    if PulseName is None:
+        PulseName = 'Refracted_Beam'
+
+    if PlasmaName is None:
+        PlasmaName = 'Plasma_Source'
+
     e = np.zeros((Nz, Nx), dtype='complex128')
     ne = np.zeros((Nz, Nx))
-    for i in range(0, Nz-1):
-        ne[i, :] = plasma_source.load_plasma_density(i)[0]
+    dim= len(load_plasma_density(path, PlasmaName, 0).shape)
     for i in range(Nz):
-        e[i, :] = pulse.load_field(i)[0][int(pulseParams['Nt']/2), :]
+        if timeIdx== 'sum':
+            e[i, :] = np.sum(load_field(path, PulseName, i), axis= 0)/Nt
+        elif timeIdx== 'mid':
+            e[i, :] = load_field(path, PulseName, i)[int(Nt/2), :]
+        else:
+            e[i, :] = load_field(path, PulseName, i)[int(timeIdx), :]
+            
+    if dim== 1:
+        for i in range(0, Nz-1):
+            ne[i, :] = load_plasma_density(path, PlasmaName, i)
+    else:
+        for i in range(0, Nz-1):
+#TODO check if below axis is correct
+            if axis== 'xz': #x-z plane
+                ne[i, :] = load_plasma_density(path, PlasmaName, i)[int(Nx/2), :]
+            else: #y-z plane              
+                ne[i, :] = load_plasma_density(path, PlasmaName, i)[:, int(Nx/2)]
+    
     I = ionization.intensity_from_field(e)
     ne = ne*1e17
-    return pulse, I, ne
+    return I, ne
 
-def plot_laser_plasma(I, ne, ext):
+
+def plot_laser_plasma(I, ne, ext, name= None):
     """ Plot the laser intensity at z=0 and the final plasma density.
     
     Parameters
@@ -387,10 +562,13 @@ def plot_laser_plasma(I, ne, ext):
         The x-z slice of the plasma density array.
     ext : array of doubles
         The extent of the image for imshow extent.
+    name : string, optional
+        Name and path for the image to be saved to.
     """
+#TODO add choise to choose which axis to plot
     plt.figure(figsize=(16, 4), dpi=150)
     plt.subplot(121)
-    plt.imshow(np.flipud(np.transpose(I)), aspect='auto', extent=ext, cmap='viridis')
+    plt.imshow(np.flipud(np.transpose(I)), aspect='auto', extent=ext, cmap='viridis')#, vmax= 18)
     cb = plt.colorbar()
     cb.set_label(r'Laser Intensity ($10^{14} W/cm^2$)')
     plt.xlabel('z (cm)')
@@ -398,16 +576,19 @@ def plot_laser_plasma(I, ne, ext):
     plt.ylim(-500, 500)
 
     plt.subplot(122)
-    plt.imshow(np.flipud(np.transpose(ne)), aspect='auto', extent=ext, cmap='plasma')
+    plt.imshow(np.flipud(np.transpose(ne)), aspect='auto', extent=ext, cmap='plasma')#, vmax= 1e17)
     cb = plt.colorbar()
     cb.set_label(r'$n_e$ ($\mathrm{cm^{-3}}$)')
     plt.xlabel('$z$ (cm)')
     plt.ylabel(r'$x$ ($\mathrm{\mu m}$)')
     plt.ylim(-500, 500)
     plt.tight_layout()
+    if name is not None:
+        plt.savefig(name+'.png')
     plt.show()
 
-def plot_plasma_density(pulse, ne, ne0, ext, lines=[20, 40, 60], name=None, xlim=None, ylim=None, xlim2=None, yticks=None):
+def plot_plasma_density(pulse, ne, ne0, ext, lines=[20, 40, 60], name=None, xlim=None, ylim=None, xlim2=None, yticks=None, axis=0):
+
     """ Plot the plasma desnity with line outs.
 
     Parameters
@@ -424,7 +605,9 @@ def plot_plasma_density(pulse, ne, ne0, ext, lines=[20, 40, 60], name=None, xlim
         The locations of the transverse lineouts in cm.
     name : string, optional
         Name and path for the image to be saved to.
+    axis :
     """
+#TODO add choise to plot which axis
     if xlim is None:
         xlim = [ext[0], ext[1]]
     if ylim is None:
@@ -455,7 +638,7 @@ def plot_plasma_density(pulse, ne, ne0, ext, lines=[20, 40, 60], name=None, xlim
     ax3 = plt.subplot(gs[3, 0], sharex=ax1)
     plt.plot(np.array(pulse.z)/1e4, ne[:, int(pulse.Nx/2)]/1e16, c=orange)
     plt.xlim(xlim)
-    plt.ylim(0, 1.1*ne0*10)
+    plt.ylim(0, 2.1*ne0*10)
     plt.xlabel(r'$z$ (cm)')
     plt.ylabel(r'$n_e$')
     plt.grid(True)
@@ -470,21 +653,21 @@ def plot_plasma_density(pulse, ne, ne0, ext, lines=[20, 40, 60], name=None, xlim
     plt.plot(ne[int(Nz*lines[2]/Z), :]/1e16, pulse.x, c=orange)
     plt.plot([ne0*10, ne0*10], xlim2, '-', c=grey2, linewidth=linewidth)
     plt.grid(True, axis='y')
-    plt.xlim(0, 1.1*ne0*10)
+    plt.xlim(0, 2.1*ne0*10)
     plt.xlabel(r'$n_e$')
 
     ax02 = plt.subplot(gs2[0, 1], sharey=ax01)
     plt.plot(ne[int(Nz*lines[1]/Z), :]/1e16, pulse.x, c=orange)
     plt.plot([ne0*10, ne0*10], xlim2, '-', c=grey2, linewidth=linewidth)
     plt.grid(True, axis='y')
-    plt.xlim(0, 1.1*ne0*10)
+    plt.xlim(0, 2.1*ne0*10)
     plt.xlabel(r'$n_e$')
 
     ax03 = plt.subplot(gs2[0, 0], sharey=ax02)
     plt.plot(ne[int(Nz*lines[0]/Z), :]/1e16, pulse.x, c=orange)
     plt.plot([ne0*10, ne0*10], xlim2, '-', c=grey2, linewidth=linewidth)
     plt.grid(True, axis='y')
-    plt.xlim(0, 1.1*ne0*10)
+    plt.xlim(0, 2.1*ne0*10)
     plt.xlabel(r'$n_e$')
     plt.ylim(xlim2)
     plt.ylabel(r'$x$ ($\mathrm{\mu m}$)')
@@ -495,7 +678,7 @@ def plot_plasma_density(pulse, ne, ne0, ext, lines=[20, 40, 60], name=None, xlim
         plt.savefig(name+'.png')
     plt.show()
     
-def plot_pulse(pulse, ind, ylim=None, log=False, smooth=False):
+def plot_pulse(pulse, ind, ylim=None, log=False, smooth=False, name=None):
     """ Plot the pulse intensity in t-x space.
     
     Parameters
@@ -508,13 +691,19 @@ def plot_pulse(pulse, ind, ylim=None, log=False, smooth=False):
         The y limits of the plot.
     log : optional, bool
         Plot the intensity on a log scale.
+    name : string, optional
+        Name and path for the image to be saved to.
     """
     Nt = pulse.Nt
     T = pulse.T
     Nx = pulse.Nx
     X = pulse.X
     e = np.zeros((Nt, Nx), dtype='complex128')
-    e[:, :] = pulse.load_field(ind)[0]
+    dim= len(pulse.load_field(ind)[0].shape)
+    if dim==3:
+        e[:, :] = pulse.load_field(ind)[0][:, :, int(Nx/2)]
+    else:
+        e[:, :] = pulse.load_field(ind)[0]
     I = ionization.intensity_from_field(e)
     I_max = np.amax(I)
     
@@ -537,9 +726,80 @@ def plot_pulse(pulse, ind, ylim=None, log=False, smooth=False):
     plt.ylabel(r'x ($\mathrm{\mu m}$)')
     if ylim is not None:
         plt.ylim(ylim)
+    if name is not None:
+        plt.savefig(name+'.png')
     plt.show()
     
+def plot_pulse_from_files(T, X, Nx, Nt, ind, path, ylim=None, log=False, smooth=False, name=None, PulseName= None):
+#TODO fix the description
+    """ Plot the pulse intensity in t-x space.
+    
+    Parameters
+    ----------
+    pulse : Pulse object
+        The laser pulse to plot the evolution for.
+    ind : int
+        The z index to plot the pulse at.
+    ylim : optional, array or tuple
+        The y limits of the plot.
+    log : optional, bool
+        Plot the intensity on a log scale.
+    name : string, optional
+        Name and path for the image to be saved to.
+    """
+    if PulseName is None:
+        PulseName = 'Refracted_Beam'
+
+    def load_field(path, PulseName, ind):
+        """ Load the electric field at the specified index. 
+        
+        Parameters
+        ----------
+        ind : int
+            The save index to load the field at.
+        
+        Returns
+        -------
+        e : array-like
+            The electric field at the specified index.
+        z : double
+            The z coordinate of the field.
+        """
+        e = np.load(path+ 'beams/beam_Refracted_Beam/'+ PulseName+ '_field_' + str(ind) + '.npy')
+        return e
+
+    e = np.zeros((Nt, Nx), dtype='complex128')
+    dim= len(load_field(path, PulseName, ind)[0].shape)
+    if dim==3:
+        e[:, :] = load_field(path, PulseName, ind)[0][:, :, int(Nx/2)]
+    else:
+        e[:, :] = load_field(path, PulseName, ind)
+    I = ionization.intensity_from_field(e)
+    I_max = np.amax(I)
+    
+    ext = [-T/2, T/2, -X/2, X/2]
+    plt.figure(figsize=(4, 2), dpi=150)
+    if smooth == True:
+        interp = 'Spline16'
+    else:
+        interp = None
+    if log:
+        norm = colors.LogNorm(vmin=I_max*1e-4, vmax=I_max)
+        plt.imshow(np.fliplr(np.flipud(np.transpose(I))), aspect='auto', extent=ext, cmap='viridis', norm=norm, interpolation=interp)
+    else:
+        plt.imshow(np.fliplr(np.flipud(np.transpose(I))), aspect='auto', extent=ext, cmap='viridis', interpolation=interp)
+    cb = plt.colorbar(format="%0.2f")
+    cb.set_label(r'Laser Intensity ($10^{14} W/cm^2$)')
+    plt.xlabel('t (fs)')
+    plt.ylabel(r'x ($\mathrm{\mu m}$)')
+    if ylim is not None:
+        plt.ylim(ylim)
+    if name is not None:
+        plt.savefig(name+'.png')
+    plt.show()    
+    
 def pulse_evolution(pulse, name, ylim=None, log=False, smooth=False):
+#TODO Figure out why this is not working
     """ Create an animation of the pulse evolution.
     
     Parameters

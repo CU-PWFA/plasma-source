@@ -778,9 +778,9 @@ class ElectronBeam(beam.Beam):
         rdata = np.array(histdata[1])*1e-6
         rdata = rdata[0:-1]+.5*(rdata[1]-rdata[0])
         
-        out = 2
+        out = 1
         if out==1:#Gaussian
-            p = FitDataSomething(wdata, rdata, GaussPlusGauss, [signum/2, signum, max(histdata[0]), max(histdata[0])/100])
+            p = FitDataSomething(wdata, rdata, GaussPlusGauss, [signum/2, signum*2, max(histdata[0]), max(histdata[0])/10])
             print("G+G: ",p)
             llabel = "G+G: "+r'$\sigma_1=$'+("%0.2f"%(np.abs(p[0])*1e6))+r'$\ \mu m$'+" & "+r'$\sigma_2=$'+("%0.2f"%(np.abs(p[1])*1e6))+r'$\ \mu m$'
             fxg = GaussPlusGauss(p,x)
@@ -1256,7 +1256,8 @@ def GaussPlusLorentz(p, x):
 
 def GaussPlusGauss(p, x):
     gauss1 = np.exp(-.5*np.square(x)/np.square(p[0]))
-    gauss2 = np.exp(-.5*np.square(x)/np.square(p[1]))
+    #gauss2 = np.exp(-.5*np.square(x)/np.square(p[1]))
+    gauss2 = np.exp(-.5*np.square(x)/np.square(7.54e-6))
     return p[2]*gauss1 + p[3]*gauss2
 
 def GaussPlusExp(p, x):

@@ -17,13 +17,13 @@ import sys
 
 e = 4.8032e-10
 pi = np.pi
-
+"""
 n_cent = 3.0e16  #cm-3
 radius = 250e-6 *1e2 #cm
 slope  = -9.91e16 #cm-4
 xwindow = ywindow = 550e-6 * 1e2  #cm
 deltax = deltay = 10e-6 * 1e2  #cm
-
+"""
 """
 n_cent = 3.0e16  #cm-3
 radius = 43.55e-6 *1e2 #cm
@@ -38,13 +38,13 @@ slope  = 6e18 #cm-4
 xwindow = ywindow = 60e-6 * 1e2  #cm
 deltax = deltay = 0.5e-6 * 1e2  #cm
 """
-"""
-n_cent = 3.4e16  #cm-3
-radius = 5.00e-6 *1e2 #cm
-slope  = -6.7e19 #cm-4
-xwindow = ywindow = 10e-6 * 1e2  #cm
-deltax = deltay = 0.1e-6 * 1e2  #cm
-"""
+
+n_cent = 2e16  #cm-3
+radius = 80.00e-6 *1e2 #cm
+slope  = 0#-8e17 #cm-4
+xwindow = ywindow = 200e-6 * 1e2  #cm
+deltax = deltay = 1e-6 * 1e2 *10  #cm
+
 X = np.arange(-1/2*xwindow, 1/2*xwindow, deltax)
 Y = np.arange(-1/2*ywindow, 1/2*ywindow, deltay)
 

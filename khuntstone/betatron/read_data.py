@@ -28,14 +28,20 @@ def read_data(path, nDumps, N):
          Particle lorentz factor
     """
     x      = np.zeros((nDumps, N))
+    xp     = np.zeros((nDumps, N))
     y      = np.zeros((nDumps, N))
+    yp     = np.zeros((nDumps, N))
+    z      = np.zeros((nDumps, N))
     gb     = np.zeros((nDumps, N))    
     
     for i in range(nDumps):
         ptcls   = np.load(path + "_ptcls_" + str(i) + ".npy")
         x[i,:]  = ptcls[:, 0]
+        xp[i,:] = ptcls[:, 1]
         y[i,:]  = ptcls[:, 2]
+        yp[i,:] = ptcls[:, 3]
+        z[i, :] = ptcls[:, 4]
         gb[i,:] = ptcls[:, 5] 
         
         
-    return x, y, gb
+    return x, xp, y, yp, z, gb

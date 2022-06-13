@@ -15,18 +15,24 @@ from modules import CalcEmitGrowth as W2
 import numpy as np
 import matplotlib.pyplot as plt
 
+
 #2020 Parameter Scans
 n0 = 1e18 #cm^-3
 emit = 3e-6 *100#cm-rad
-beta_i = 10*10 #cm
-gam = Foc.gam_def/10
+beta_i = 500 #cm  #10*10
+gam = Foc.gam_def  #/10
 sigmaE = 0.001
 delta = sigmaE/np.sqrt(1/3)
 #delta = 0.0025
 len_arr = np.linspace(10,200,101)/1e4 #cm
 ymode = 0 #1 for nm, 0 for um
 sigmaE = np.sqrt(1/3) * delta
+
+charge = 1.5e-9 #C
+nbeam = charge / 1.6022e-19
+sigz = 5.2e-6*100 #cm
 lumi=0
+
 """
 #FACET II
 n0 = 1e18 #cm^-3
@@ -53,9 +59,9 @@ delta = np.sqrt(3)*sigmaE
 len_arr = np.linspace(50,500,101)/1e4 #cm
 ymode = 1 #1 for nm, 0 for um
 lumi=1
-
-emit = emitx
 """
+#emit = emitx
+
 d_set = 0
 
 
@@ -152,14 +158,19 @@ plt.xlabel(r'$\sqrt{K}l$')
 plt.ylabel(label)
 plt.grid(); plt.legend(); plt.show()
 
-plt.semilogy(len_arr*np.sqrt(k_arr), sigo_arr*scale, label="Synch. Rad.", linewidth = lwid)
-plt.plot(len_arr*np.sqrt(k_arr), sigi_arr*scale, label="Ideal", linewidth = lwid)
+plt.semilogy(len_arr*np.sqrt(k_arr), sigo_arr*scale, label="Synchrotron Radiation", linewidth = lwid)
+plt.plot(len_arr*np.sqrt(k_arr), sigi_arr*scale, label="Ideal Focusing", linewidth = lwid)
 plt.plot(len_arr*np.sqrt(k_arr), sigm_arr*scale, label="Oide Limit", linewidth = lwid, ls='dotted')
 plt.plot(len_arr*np.sqrt(k_arr), sigc_arr*scale, label="Chromaticity", linewidth = lwid, ls='--')
-plt.title("Beam sizes vs TPL thickness")
+#plt.title("Beam sizes vs TPL thickness")
 plt.xlabel(r'$\sqrt{K}L$')
 plt.ylabel(label)
 plt.grid(); plt.legend(); plt.show()
+
+sigr = np.sqrt(beta_i*emit/gam)*1e4
+print("Sig_r: ",sigr," um")
+rho_max = nbeam/(2*np.pi)**(3/2)/sigz/(beta_i*emit/gam)
+print("Rho Max: ",rho_max," cm-3")
 
 if lumi ==1:
     plt.plot(len_arr, sig_product_arr)
