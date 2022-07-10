@@ -23,7 +23,7 @@ def E_from_energy(energy, tau, w_0, m, n=1.0):
     w_0 : float
         Spot size of the pulse, m.
     m : int
-        Super-Gaussian order of the transverse pulse shape, must be even.
+        Super-Gaussian order of the transverse pulse shape.
     n : float, optional
         Index of refraction of the medium the wave is in, defaults to 1.0.
     
@@ -50,3 +50,60 @@ def fluence_from_intensity(I_0, tau):
         Laser fluence of the pulse, J/m^2.
     """
     return I_0*tau*np.sqrt(np.pi/(4*np.log(2)))
+
+def tran_super_gaussian(x, y, E_0, w_0, m, phi_0=None):
+    """ Calculate the field of a super-Gaussian pulse on a transverse grid.
+    
+    Parameters
+    ----------
+    x : array of floats
+        Location of each x grid point.
+    y : array of floats
+        Location of each y grid point.
+    E_0 : float
+        Peak electric field amplitude.
+    w_0 : float
+        Spot size of the pulse, m.
+    m : int
+        Super-Gaussian order of the transverse pulse shape, must be even.
+    phi_0 : array of floats, optional
+        Initial phase of the pulse, shape (Nx, Ny), defaults to 0, rad.
+        
+    Returns
+    -------
+    
+    """
+    r = np.sqrt(x[:, None]**2 + y[None, :]**2)
+    if phi_0 is None:
+        return E_0*np.exp(-(r/w_0)**m)
+    else:
+        return E_0*np.exp(-(r/w_0)**m)*np.exp(1j*phi_0)
+    
+def tran_super_gaussian_fit(x, y, E_0, w_0, m, phi_0=None):
+    """ Calculate the field of a super-Gaussian pulse on a transverse grid.
+    m can be any positive value, designed for when fitting a super-Gaussian
+    
+    Parameters
+    ----------
+    x : array of floats
+        Location of each x grid point.
+    y : array of floats
+        Location of each y grid point.
+    E_0 : float
+        Peak electric field amplitude.
+    w_0 : float
+        Spot size of the pulse, m.
+    m : int
+        Super-Gaussian order of the transverse pulse shape (half of the normal definition).
+    phi_0 : array of floats, optional
+        Initial phase of the pulse, shape (Nx, Ny), defaults to 0, rad.
+        
+    Returns
+    -------
+    
+    """
+    r = np.sqrt(x[:, None]**2 + y[None, :]**2)
+    if phi_0 is None:
+        return E_0*np.exp(-((r/w_0)**2)**m)
+    else:
+        return E_0*np.exp(-((r/w_0)**2)**m)*np.exp(1j*phi_0)
