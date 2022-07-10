@@ -23,7 +23,7 @@ def E_from_energy(energy, tau, w_0, m, n=1.0):
     w_0 : float
         Spot size of the pulse, m.
     m : int
-        Super-Gaussian order of the transverse pulse shape.
+        Super-Gaussian order of the transverse pulse shape. If using m from a fit, enter 2*m.
     n : float, optional
         Index of refraction of the medium the wave is in, defaults to 1.0.
     
@@ -100,10 +100,49 @@ def tran_super_gaussian_fit(x, y, E_0, w_0, m, phi_0=None):
         
     Returns
     -------
-    
+    E : array of complex
+        Electric field on the x-y grid.
     """
     r = np.sqrt(x[:, None]**2 + y[None, :]**2)
     if phi_0 is None:
         return E_0*np.exp(-((r/w_0)**2)**m)
     else:
         return E_0*np.exp(-((r/w_0)**2)**m)*np.exp(1j*phi_0)
+    
+def temporal_gaussian(t, tau, omega_0, b=0):
+    """ Calculate the field of a Gaussian pulse on a temporal grid.
+
+    Parameters
+    ----------
+    t : array of floats
+        Time of each t grid point.
+    tau : float
+        FWHM intensity pulse length.
+    omega_0 : float
+        The pulses center angular frequency.
+    b : float, optional
+        Chirp parameter, defaults to 0.
+
+    Returns
+    -------
+    E : array of complex
+        Electric field on the t grid.
+    """
+    return np.exp(-2*np.log(2)*(t)**2/(tau**2))*np.exp(1j*(-b*t**2-omega_0*t))
+
+def temporal_gaussian_envelope(t, tau):
+    """ Calculate the field amplitude of a Gaussian pulse on a temporal grid.
+
+    Parameters
+    ----------
+    t : array of floats
+        Time of each t grid point.
+    tau : float
+        FWHM intensity pulse length.
+
+    Returns
+    -------
+    E : array of float
+        Electric field amplitude on the t grid.
+    """
+    return np.exp(-2*np.log(2)*(t)**2/(tau**2))
