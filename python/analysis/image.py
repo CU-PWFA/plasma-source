@@ -193,6 +193,8 @@ class IMAGE():
     def refresh_calibration(self):
         """ Update the camera calibration if it has been changed. """
         self.cal = cal[self.camera]
+        self.x = self.cal*self.xp
+        self.y = self.cal*self.yp
     
     # Modification functions --------------------------------------------------
     #--------------------------------------------------------------------------
