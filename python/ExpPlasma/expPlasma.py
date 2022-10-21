@@ -302,7 +302,8 @@ def domain_test(X, Nx, Z, Nz, beam0, pulseParams, z_target, I_target, start, yli
     return I
     
 def plasma_refraction(X, Nx, Z, Nz, beam0, pulseParams, species, n, start, m_e, ne0, name=None, t=0.0, n2=0.0, 
-                      ionization_type='adk', load_beam_profile= False, e_load= None, multispecies= False, species2= None):
+                      ionization_type='adk', load_beam_profile= False, e_load= None, 
+                      multispecies= False, species2= None, saveseq= 1):
     """ Propagate the laser pulse through the gas profile.
     
     Parameters
@@ -333,15 +334,18 @@ def plasma_refraction(X, Nx, Z, Nz, beam0, pulseParams, species, n, start, m_e, 
         The nonlinear index of refraction at atmospheric pressure. In cm^2/W.
     ionization_type : string, optional
         Function to use for the ionization model.
-    load_beam_profile : bool
+    load_beam_profile : bool, optional
         Whether to load the beam profile (e.g. from experiments) or not. 
-    e_load : 2D array
+    e_load : 2D array, optional
         The beam profile (e.g. from experiments) loaded for plasma refraction.
-    multispecies : boolean
+    multispecies : boolean, optional
         turn multispecies on or not
-    species2: dict
+    species2 : dict, optional
         Ionization species dict from ionization.ionization. 
         If multispecies is on, second sepcies is specified here
+    saveseq :  int, optional 
+        E field and plasma density save sequence. 
+        e.g. saveseq= 3, E field and plasma density are saved every 3 steps. 
     """
     if multispecies == False:        
         if name is None:
@@ -370,7 +374,7 @@ def plasma_refraction(X, Nx, Z, Nz, beam0, pulseParams, species, n, start, m_e, 
         if load_beam_profile== False:
             e = np.sqrt(m_e)*pulse.reconstruct_from_cyl(beam0.x, np.array(beam0.e)[:, int(beam0.Ny/2)], pulse.x, pulse.y)
         else:
-            e= interpolate_2D(beam0.x, beam0.y, e_load, X, X, Nx, Nx)
+            e= e_load
         e = e[None, :, :]*np.exp(-pulse.t[:, None, None]**2*np.pi/(2*tau**2))
         pulse.initialize_field(e)
         print('Initial pulse energy %0.2fmJ' % (pulse.pulse_energy()*1e3))
@@ -385,6 +389,7 @@ def plasma_refraction(X, Nx, Z, Nz, beam0, pulseParams, species, n, start, m_e, 
         # Propagate the laser beam through the oven
         interactions.pulse_plasma_energy(pulse, plasma_source, temp=t, n2=n2, ionization=ionization_type)
         print('Final pulse energy %0.2fmJ' % (pulse.pulse_energy()*1e3))
+
         e = np.zeros((Nz, Nx), dtype='complex128')
         ne = np.zeros((Nz, Nx))
         if load_beam_profile== False:
@@ -446,8 +451,8 @@ def plasma_refraction(X, Nx, Z, Nz, beam0, pulseParams, species, n, start, m_e, 
         if load_beam_profile== False:
             e = np.sqrt(m_e)*pulse.reconstruct_from_cyl(beam0.x, np.array(beam0.e)[:, int(beam0.Ny/2)], pulse.x, pulse.y)
         else:
-#            e= e_load
-            e= interpolate_2D(beam0.x, beam0.y, e_load, X, X, Nx, Nx)
+            e= e_load
+#            e= interpolate_2D(beam0.x, beam0.y, e_load, X, X, Nx, Nx)
         e = e[None, :, :]*np.exp(-pulse.t[:, None, None]**2*np.pi/(2*tau**2))
         pulse.initialize_field(e)
         print('Initial pulse energy %0.2fmJ' % (pulse.pulse_energy()*1e3))
@@ -461,20 +466,58 @@ def plasma_refraction(X, Nx, Z, Nz, beam0, pulseParams, species, n, start, m_e, 
             n_gas[:, :, i] = n(plasma_source.z[i]+start)
         plasma_source.initialize_plasma(n_gas, ne)
         # Propagate the laser beam through the oven
-        interactions.pulse_plasma_energy_second(pulse, plasma_source, plasma_source2, temp=t, n2=n2, ionization=ionization_type)
+        interactions.pulse_plasma_energy_second(pulse, plasma_source, plasma_source2, temp=t, n2=n2, ionization=ionization_type, saveseq=saveseq)
         print('Final pulse energy %0.2fmJ' % (pulse.pulse_energy()*1e3))
-        e = np.zeros((Nz, Nx), dtype='complex128')
-        ne = np.zeros((Nz, Nx))
+
+        e = np.zeros((int((Nz-1)/saveseq)+1, Nx), dtype='complex128')
+        ne = np.zeros((int((Nz-1)/saveseq)+1, Nx))
         if load_beam_profile== False:
             for i in range(0, Nz-1):
-                ne[i, :] = plasma_source.load_plasma_density(i)[0]
+                if i%saveseq==0:
+                    ne[int(i/saveseq), :] = plasma_source.load_plasma_density(i)[0]
             for i in range(Nz):
-                e[i, :] = pulse.load_field(i)[0][int(pulseParams['Nt']/2), :]
+                if i%saveseq==0:
+                    e[int(i/saveseq), :] = pulse.load_field(i)[0][int(pulseParams['Nt']/2), :]
         else:
             for i in range(0, Nz-1):
-                ne[i, :] = plasma_source.load_plasma_density(i)[0][int(plasmaParams['Nx']/2)]
+                if i%saveseq==0:
+                    ne[int(i/saveseq), :] = plasma_source.load_plasma_density(i)[0][int(plasmaParams['Nx']/2)]
             for i in range(Nz):
-                e[i, :] = pulse.load_field(i)[0][int(pulseParams['Nt']/2), :]
+                if i%saveseq==0:
+                    e[int(i/saveseq), :] = pulse.load_field(i)[0][int(pulseParams['Nt']/2), :]
+                
+                
+                
+                
+                
+#        e = np.zeros((int(Nz/saveseq), Nx), dtype='complex128')
+#        ne = np.zeros((int(Nz/saveseq), Nx))
+#        if load_beam_profile== False:
+#            for i in range(0, Nz-1):
+#                if i%saveseq== 0:
+#                    ne[int(i/saveseq), :] = plasma_source.load_plasma_density(i)[0]
+#            for i in range(0, Nz-1):
+#                if saveseq== 1:
+#                    e[i, :] = pulse.load_field(i)[0][int(pulseParams['Nt']/2), :]
+#                elif saveseq!=1 and i%saveseq== 0:
+#                    e[int(i/saveseq), :] = pulse.load_field(int(i-1))[0][int(pulseParams['Nt']/2), :]
+#        else:
+#            if saveseq== 1:
+#                for i in range(0, Nz-1):
+#                    ne[i, :] = plasma_source.load_plasma_density(i)[0][int(plasmaParams['Nx']/2)]
+#                for i in range(Nz):
+#                    e[i, :] = pulse.load_field(i)[0][int(pulseParams['Nt']/2), :]
+#            else:
+#                cne= 0
+#                ce= 0
+#                for i in range(0, Nz-saveseq):
+#                    if i%saveseq== 0:
+#                        ne[cne, :] = plasma_source.load_plasma_density(int(i+1))[0][int(plasmaParams['Nx']/2)]
+#                        cne= cne+1
+#                for i in range(1, Nz-saveseq):
+#                    if i%saveseq== 0:
+#                        e[ce, :] = pulse.load_field(int(i-1))[0][int(pulseParams['Nt']/2), :]
+#                        ce= ce+1
         I = ionization.intensity_from_field(e)
         ne = ne*1e17
         return pulse, I, ne
@@ -628,7 +671,7 @@ def plot_laser_plasma(I, ne, ext, name= None):
         plt.savefig(name+'.png')
     plt.show()
 
-def plot_plasma_density(pulse, ne, ne0, ext, lines=[20, 40, 60], name=None, xlim=None, ylim=None, xlim2=None, yticks=None, axis=0):
+def plot_plasma_density(pulse, ne, ne0, ext, lines=[20, 40, 60], name=None, xlim=None, ylim=None, xlim2=None, yticks=None, axis=0, saveseq= 1):
 
     """ Plot the plasma desnity with line outs.
 
@@ -647,6 +690,7 @@ def plot_plasma_density(pulse, ne, ne0, ext, lines=[20, 40, 60], name=None, xlim
     name : string, optional
         Name and path for the image to be saved to.
     axis :
+    saveseq :
     """
 #TODO add choise to plot which axis
     if xlim is None:
@@ -677,7 +721,7 @@ def plot_plasma_density(pulse, ne, ne0, ext, lines=[20, 40, 60], name=None, xlim
     cb.set_label(r'$n_e$ ($10^{16}\mathrm{cm^{-3}}$)')
 
     ax3 = plt.subplot(gs[3, 0], sharex=ax1)
-    plt.plot(np.array(pulse.z)/1e4, ne[:, int(pulse.Nx/2)]/1e16, c=orange)
+    plt.plot(np.array(pulse.z[0::saveseq])/1e4, ne[:, int(pulse.Nx/2)]/1e16, c=orange)
     plt.xlim(xlim)
     plt.ylim(0, 2.1*ne0*10)
     plt.xlabel(r'$z$ (cm)')

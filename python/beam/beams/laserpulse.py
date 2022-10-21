@@ -175,11 +175,12 @@ class Pulse(beam.Beam):
         np.save(self.filePre + '_x.npy', self.x)
         np.save(self.filePre + '_y.npy', self.y)
     
-    def save_field(self, e, z):
+    def save_field(self, e, z, save= True):
         """ Save the current electric field to file and adavnce z. """
         if self.cyl:
             e = e[:, :, int(self.Ny/2)]
-        np.save(self.filePre + '_field_' + str(self.saveInd) + '.npy', e)
+        if save== True:
+            np.save(self.filePre + '_field_' + str(self.saveInd) + '.npy', e)
         self.saveInd += 1
         self.z.append(z)
         self.save_z()
