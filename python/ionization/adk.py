@@ -164,7 +164,7 @@ def ionization_frac(EI, E, t, Z, l=0, m=0, envelope=True):
     return frac
 
 
-def gaussian_frac(EI, E, tau, Z, l=0, m=0):
+def gaussian_frac(EI, E, tau, Z, l=0, m=0, envelope=True):
     """ Calculates the ionization fraction from a Gaussian laser pulse.
 
     Parameters
@@ -189,7 +189,10 @@ def gaussian_frac(EI, E, tau, Z, l=0, m=0):
     frac : array_like
         Fraction of gas atoms ionized.
     """
-    rate = rate_static(EI, E, Z, l, m)
+    if envelope:
+        rate = rate_linear(EI, E, Z, l, m)
+    else:
+        rate = rate_static(EI, E, Z, l, m)
     frac = 1 - np.exp(-0.165188 * E * tau * rate / np.power(EI, 3/2))
     return frac
 
