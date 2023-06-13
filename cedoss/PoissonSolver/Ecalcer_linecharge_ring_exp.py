@@ -59,13 +59,14 @@ radius = 40.00e-6 *1e2 #cm
 thickness = 5e-6*1e2 #cm
 slope  = 1.2e18#5.0e17#1.0e18 #cm-4
 xwindow = ywindow = 91e-6 * 1e2  #cm
-deltax = deltay = 0.5e-6 * 1e2  #cm
+deltax = deltay = 0.5e-6 * 1e2 *2 #cm
 
 X = np.arange(-1/2*xwindow, 1/2*xwindow, deltax)
 Y = np.arange(-1/2*ywindow, 1/2*ywindow, deltay)
 
 lenX = len(X); lenY = len(Y)
-sfit = np.array([  7.27075482e+12,  -7.88423309e+14,   6.53718198e+16])
+sfit = np.array([  1.71891496e+13,  -1.73386919e+15,   8.91755461e+16])
+#sfit = np.array([  0,  -1.40483241e+15,   9.85641676e+16])
 
 dengrid = np.zeros((lenX, lenY))
 for i in range(len(X)):

@@ -120,7 +120,7 @@ relset = ovenext + leftext + start
 waistloc = waistloc + relset
 tpl_offset = tpl_offset + relset
 
-print(tpl_n0)
+#print(tpl_n0)
 
 if tanhlens_option == 0:
     argon = PProp.CustomPlasma_ThinPlasmaLens(argon_params, narr, tpl_offset*1e6, tpl_n, tpl_l, debug)

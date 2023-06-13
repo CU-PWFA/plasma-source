@@ -28,7 +28,7 @@ n=1.                    #Refractive index
 epsilon0 = 8.854e-12    #Dielectric constant
 wavelength = 800.0e-9 #785.3e-9   #Laser wavelength in m
 w0 = 5e-3               #Initial spot size in m
-E_ion = 13.6#24.6           #Ionization Energy:  13.6 for H, 15.8 for Ar, 24.6 for He 27.6 for Ar++
+E_ion = 15.4#13.6#24.6           #Ionization Energy:  13.6 for H, 15.8 for Ar, 24.6 for He 27.6 for Ar++
 setupTitle = ""         #Name the setup 
 reverse = 0
 fs_duration = 40e-15
@@ -42,17 +42,17 @@ zi = 7.5e-3             #Offset from small waist to plane we want to save params
 zoom=int(round(zi/l_step))
 
 path = '/home/chris/Desktop/DataLoads/PulseFilesNp/'
-filename = 'pulseParams_april11_1mj_400nm.npy'
+filename = 'pulseParams_cylindrical_ex_thesis2.npy'
 
-save = 1             #Set to 1 to save anything
-calcdensity = 0 #SLOW   #Set to 1 to calc resulting plasma density w/out refraction
-calcfocal = 0
+save = 0            #Set to 1 to save anything
+calcdensity = 1 #SLOW   #Set to 1 to calc resulting plasma density w/out refraction
+calcfocal = 1
 offsetlooper = 0
 
 foc_dom_fac = 2
 radscl = 1   #Set to larger to increase the beasm axis domain
 
-choice=5953#5952         #Set to one of the setups below
+choice=83#5952         #Set to one of the setups below
 
 if choice == 595:  #Single Spherical Lens, same as above but zoomed in more
                     #More details with respect to immenent FACET-II
@@ -87,22 +87,23 @@ if choice == 595:  #Single Spherical Lens, same as above but zoomed in more
 if choice == 5952:  #Single Spherical Lens, same as above but zoomed in more
                     #More details with respect to immenent FACET-II
     setupTitle = "1Spherical"
-    M2 = 1.0
+    M2 = 2.0
     w0 = 13.6e-3 #calculated from 30mm diameter flattop estimation
     #w0 = 4.77e-3 #10mm
     reverse = 0
-    zi = 3.5e-2#0.50e-2#0.75e-2#2e-2
+    zi = 1e-2#0.6e-1#3.5e-2#0.50e-2#0.75e-2#2e-2
     zoom = int(round(zi/l_step))
     radscl = 0.5#0.3
     
-    f0 = 0.646
-    Lmax = 1.0
+    f0 = 0.646#0.646
+    Lmax = 1.000#1.0
     #P = 17.2e9 #For H, 30mm
     #P = 125e9 #For He, 30mm
     #P = 20e9 #For H, 10 mm
     #P = 148e9 #For He, 10 mm
     
-    P = 500e9
+    P = 1.43e11#500e9 /2
+    fs_duration = 70e-15
     radscl = 1.5
     
     q_x = GB.Prop_Init_q(wavelength, w0, -.1, 1)
@@ -148,12 +149,13 @@ if choice == 5953:  #Single Spherical Lens, same as above but zoomed in more
 
 if choice == 83:  #To be designed for the limits of a window at 38.67 cm or 21.27 cm for <1e12 W/cm2
     setupTitle = "Spherical_2Cylindrical_reversed"
-    w0 = 8.66e-3 #calculated from 30mm diameter flattop estimation
+    #w0 = 8.66e-3 #calculated from 30mm diameter flattop estimation
+    w0 = 4.77e-3 #10mm
     reverse = 0
-    zi = 1.0e-2#2e-2#38.67e-2            #Offset from small waist to plane we want to save params at
+    zi = 6.0e-2#2e-2#38.67e-2            #Offset from small waist to plane we want to save params at
     zoom=int(round(zi/l_step))
-    radscl = 0.4
-    M2 = 4.6
+    radscl = 1.0
+    M2 = 1
     setupTitle = "Spherical_2Cylindrical"
 
     f0 = 0.20
@@ -162,11 +164,12 @@ if choice == 83:  #To be designed for the limits of a window at 38.67 cm or 21.2
     L2 = 0.109
 
     f1 = 0.700 #m
-    L1 = 0.420
+    L1 = 0.420-0.00275
 
-    Lmax = 2.5
+    Lmax = 1.7
 
-    P = 300e9
+    P = 1.43e11#500e9 /2
+    fs_duration = 70e-15
 
      #  0.00625 0.0125 0.025 0.050 0.100
     #  0.015 0.020 0.030 0.040 0.075 0.150
@@ -349,24 +352,28 @@ zrange_tot=GB.Prop_GetRange(q_x)
 wtotx=GB.Prop_SpotList(q_x,wavelength)
 wtoty=GB.Prop_SpotList(q_y,wavelength)
 
+single=False
+
 #Plots spot size
 fig, ax1 = plt.subplots(figsize=(14,4))
 #plt.rcParams.update({'font.size': 12})
 plt.subplot(121)
 if reverse == 1:
-    plt.plot(zrange_tot,wtoty,c='orange',ls='solid',label="Wide Waist Spot Size")
-    if M2 != 1:
-        plt.plot(zrange_tot,np.array(wtoty)*np.sqrt(M2),c='orange',ls='--',label="Wide M2")
-plt.plot(zrange_tot,wtotx,c='blue',ls='solid',label="Narrow Waist Spot Size")
+    if not single:
+        plt.plot(zrange_tot,wtoty,c='orange',ls='solid',label="Transverse Waist Spot Size")
+        if M2 != 1:
+            plt.plot(zrange_tot,np.array(wtoty)*np.sqrt(M2),c='orange',ls='--',label="Transverse with M2")
+plt.plot(zrange_tot,wtotx,c='blue',ls='solid',label="Longitudinal Waist Spot Size")#"Narrow Waist Spot Size")
 if M2 != 1:
-    plt.plot(zrange_tot,np.array(wtotx)*np.sqrt(M2),c='blue',ls='--',label="Narrow M2")
-plt.title("Spot size from q parameter")
-plt.ylabel(r'Spot Size [$m$]')
-plt.xlabel(r'Laser Axis (x) [$m$]')
+    plt.plot(zrange_tot,np.array(wtotx)*np.sqrt(M2),c='blue',ls='--',label="Longitudinal with M2")#"Narrow M2")
+#plt.title("Spot size from q parameter")
+plt.ylabel(r'Spot Size [$mm$]')
+plt.xlabel(r'Laser Axis [$m$]')
 if reverse != 1:
-    plt.plot(zrange_tot,wtoty,c='orange',ls='solid',label="Wide Waist Spot Size")
-    if M2 != 1:
-        plt.plot(zrange_tot,np.array(wtoty)*np.sqrt(M2),c='orange',ls='--',label="Wide M2")
+    if not single:
+        plt.plot(zrange_tot,wtoty,c='orange',ls='solid',label="Transverse Waist Spot Size")
+        if M2 != 1:
+            plt.plot(zrange_tot,np.array(wtoty)*np.sqrt(M2),c='orange',ls='--',label="Transverse with M2")
 plt.legend()
 plt.grid()#; plt.show()
 
@@ -386,15 +393,16 @@ if reverse == 1:
 
 #Plots spot size zoomed in around waist
 plt.subplot(122)
-plt.plot(xrange,wx*1e6,c='blue',ls='solid',label="Beam Axis Waist (x)")
+plt.plot(xrange,wx*1e6,c='blue',ls='solid',label="Longitudinal Waist Spot Size")#"Beam Axis Waist (x)")
 if M2 != 1:
-    plt.plot(xrange,wx*np.sqrt(M2)*1e6,c='blue',ls='--',label="Beam Axis w/ M2 (x)")
-plt.title("Spot size from q parameter")
-plt.ylabel("Spot Size (um)")
-plt.xlabel("Laser Axis (x)")
-plt.plot(xrange,wy*1e6,c='orange',ls='solid',label="Transverse Waist (y)")
-if M2 != 1:
-    plt.plot(xrange,wy*np.sqrt(M2)*1e6,c='orange',ls='--',label="Transverse w/ M2 (y)")
+    plt.plot(xrange,wx*np.sqrt(M2)*1e6,c='blue',ls='--',label="Longitudinal with M2")#"Beam Axis w/ M2 (x)")
+#plt.title("Spot size from q parameter")
+plt.ylabel("Spot Size [$\mu m$]")
+plt.xlabel("Laser Axis [$m$]")
+if not single:
+    plt.plot(xrange,wy*1e6,c='orange',ls='solid',label="Transverse Waist Spot Size")
+    if M2 != 1:
+        plt.plot(xrange,wy*np.sqrt(M2)*1e6,c='orange',ls='--',label="Transverse with M2")
 plt.legend()
 plt.grid(); plt.show()
 
@@ -471,7 +479,7 @@ if calcfocal == 1:
         for i in range(len(l_arr)):
             wz_current = wy[i]
             wy_current = wx[i]
-            I = GB.IntensityFromSpotSizes_1D(wy_current,wz_current,y,I0/1e4,w0)
+            I = GB.IntensityFromSpotSizes_1D(wy_current,wz_current,y,I0/1e4,w0)            
             params['EI'] = E_ion
             H = ThrDim.IonFracFromIntensity_1D(I,params['EI'],fs_duration)*den
             focal = Foc.Calc_Focus(H, y*1e6)
@@ -492,6 +500,7 @@ if calcfocal == 1:
     
     
     I = GB.IntensityFromSpotSizes_1D(wy_center,wz_center,y,I0/1e4,w0)
+    print(wy_center,wz_center,w0,I0/1e4)
 
     plt.plot(y*1e6,I)
     plt.title("Intensity along beam axis")
@@ -537,7 +546,7 @@ if calcdensity == 1:
     ThrDim.ImageCut(I,x,y,z,0,0,0,1e-3,'(mm)','Intensity','W/cm^2',0)
     params['EI'] = E_ion
     H = ThrDim.IonFracFromIntensity(I,params['EI'],fs_duration)
-    ThrDim.ImageCut(H,x,y,z,0,0,0,1e-3,'(mm)','Ion. Frac.','%',0)
+    ThrDim.ImageCut(H,x,y,z,0,0,0,1e-3,'(mm)','Ionization Fraction','',0)
     H = H * den
     #H = ThrDim.RobertRoll(ThrDim.RobertRoll(H))
     ThrDim.ImageCut(H,x,y,z,0,0,0,1e-3,'(mm)','Plasma Density','e17(cm^-3)',1)

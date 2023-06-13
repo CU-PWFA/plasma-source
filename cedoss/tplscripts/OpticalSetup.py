@@ -43,14 +43,14 @@ filename = 'pulseParams_spherical_casea_highpz.npy'
 path = '/home/chris/Desktop/DataLoads/PulseFilesNp/'
 filename = 'pulseParams_testm2.npy'
 
-save = 1             #Set to 1 to save anything
+save = 0             #Set to 1 to save anything
 calcdensity = 1 #SLOW   #Set to 1 to calc resulting plasma density w/out refraction
 calcfocal = 1
 
 foc_dom_fac = 2
 radscl = 1   #Set to larger to increase the beasm axis domain
 
-choice=592         #Set to one of the setups below
+choice=50#592         #Set to one of the setups below
 
 if choice == 591:  #Single Spherical Lens
     setupTitle = "1Spherical"

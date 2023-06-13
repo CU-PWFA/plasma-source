@@ -40,7 +40,9 @@ filename = '/media/chris/New Volume/VSimRuns/AugustLinearGradient/NERSC_Deflecti
 #filename = '/media/chris/New Volume/VSimRuns/AugustLinearGradient/Feb_190um_separation/PTPL_Gradient_WitnessBeam_10.h5'
 #filename = '/media/chris/New Volume/VSimRuns/AugustLinearGradient/NERSC_Control_114um/PTPL_Gradient_WitnessBeam_10.h5'
 
-filename = '/home/chris/Desktop/singlebunch/PTPL_Gradient_ElectronBeam_20.h5' #z_arr to 0.08, ind 41, thresh 0.001
+filename = '/home/chris/Desktop/singlebunch_200um_1e16/PTPL_Gradient_ElectronBeam_20.h5' #z_arr to 0.08, ind 41, thresh 0.001
+
+filename = '/media/chris/New Volume/VSimRuns/2019_2ndBucket/37e16/PTPLDoubleTanh_WitnessBeam_10.h5'
 
 debug = 1
 
@@ -52,9 +54,9 @@ threshold = 0.001#0.00001
 beam = PProp.VorpalBeam(path, filename, threshold, debug=debug)
 print("N: ",beam.N)
 
-#z_arr = np.linspace(0, 0.03, 1000 + 1)
+z_arr = np.linspace(0, 0.03, 1000 + 1)
 #z_arr = np.linspace(0, 0.15, 1000 + 1)
-z_arr = np.linspace(0, 0.08, 1000 + 1)
+#z_arr = np.linspace(0, 0.40, 1000 + 1)
 n_arr = np.zeros(len(z_arr))#+1e-9
 
 argon_params = PProp.ReturnDefaultPlasmaParams(path)
@@ -79,5 +81,9 @@ print("index: ", minloc, "|  position [cm]: ", s_arr[minloc],"|  size [um]: ", s
 print(beam.get_sigmar_frac(minloc, 58.82e-6))#90% of beam at ind 41 for 5e15
 
 beam.plot_hist_at(minloc)
-GaussPlusGauss_Percent([6.54905155e-07,   6.65681022e-06,   8.06943422e+04,   3.06225426e+03])
+
+insig = 1.40859275e-06
+inper = 2.00086671e+04
+ouper = 6.21696247e+03
+GaussPlusGauss_Percent([insig,   6.65681022e-06,   inper,   ouper])
 #beam.plot_phase_hist_at(minloc,fitted=True)

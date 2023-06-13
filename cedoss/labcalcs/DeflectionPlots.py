@@ -103,11 +103,11 @@ if flip:
     ey_simey0 = ey_simey0*-1
 prop_dist = 0.1112 #m
 ltpl = 300e-6
-gamma = 2e4
-zsi_max = 114e-6 #m
-sheath_slope_ave = 1.76e18*100**4#-8.64e17 * 100**4
+gamma = 19569.5
+zsi_max = 112.2e-6 #m
+sheath_slope_ave = 2.40e18*100**4#-8.64e17 * 100**4
 #adj_fac = 2.4
-ring_adj = 883344572.88*0.94
+#ring_adj = 883344572.88*0.94
 isProd = True
 
 """
@@ -124,19 +124,22 @@ ring_adj = -123211303.056
 isProd = False
 """
 
-facA = 0.3239
+facA = 0.3112#0.3239
 rpl = rp*np.sqrt((n_cent0-facA*rp*slope)/n_cent0) #sign flip b/c slope is wack
 rmn = rp*np.sqrt((n_cent0+facA*rp*slope)/n_cent0)
 yoff = zsi*(rpl-rmn)/(2*zsi_max)
 #yoff = 4.2188366149411554e-6 #m
 
-facB = 2.482
+facB = 3.19089#4.059#2.482
+#facB = 4.059
+
 slope_cgs = slope/100**4
 #slope_cgs_sh = -4.748e-37*slope_cgs**3  + 2.750e-18*slope_cgs**2 - 0.39*slope_cgs + 5.429e16
 slope_cgs_sh = slope_cgs*facB
 sheath_slope_emp = slope_cgs_sh * 100**4
 
-facD = 0.134
+facD = 0.090421#0.0651#0.134
+#facD = 0.0651
 L_sh = facD*rp
 
 #ring_adj = (sheath_slope_ave)*(L_sh)*(radius_arr)*e/2/eps * adj_fac #To match the error
@@ -148,7 +151,7 @@ n_cent = n_cent0 + slope*yoff
 
 ybar = 1/4*np.power(radius_arr,2)*slope/n_cent
 ey_emp = 1/(2*eps)*e*n_cent*(ysi-2*ybar-yoff) + 1/(8*eps)*e*slope*(3*np.power(ysi-yoff,2)) + ring_emp
-ey_adjring = 1/(2*eps)*e*n_cent*(ysi-2*ybar-yoff) + 1/(8*eps)*e*slope*(3*np.power(ysi-yoff,2)) + ring_adj
+#ey_adjring = 1/(2*eps)*e*n_cent*(ysi-2*ybar-yoff) + 1/(8*eps)*e*slope*(3*np.power(ysi-yoff,2)) + ring_adj
 ey_noring = 1/(2*eps)*e*n_cent*(ysi-2*ybar-yoff) + 1/(8*eps)*e*slope*(3*np.power(ysi-yoff,2))
 ey_fullemp = 1/(2*eps)*e*n_cent*(ysi-2*ybar-yoff) + 1/(8*eps)*e*slope*(3*np.power(ysi-yoff,2)) + ring_fullemp
 ey_noyoff = 1/(2*eps)*e*n_cent*(-2*ybar)
@@ -156,14 +159,14 @@ ey_noyoff = 1/(2*eps)*e*n_cent*(-2*ybar)
 
 angle_emp = -e*ey_emp*ltpl/(gamma*me*c**2)
 angle_fullemp = -e*ey_fullemp*ltpl/(gamma*me*c**2)
-angle_adjring = -e*ey_adjring*ltpl/(gamma*me*c**2)
+#angle_adjring = -e*ey_adjring*ltpl/(gamma*me*c**2)
 angle_noring = -e*ey_noring*ltpl/(gamma*me*c**2)
 angle_simey0 = -e*ey_simey0*ltpl/(gamma*me*c**2)
 angle_noyoff = -e*ey_noyoff*ltpl/(gamma*me*c**2)
 
 deflection_emp = angle_emp * prop_dist 
 deflection_fullemp = angle_fullemp * prop_dist 
-deflection_adjring = angle_adjring * prop_dist 
+#deflection_adjring = angle_adjring * prop_dist 
 deflection_noring = angle_noring * prop_dist 
 deflection_simey0 = angle_simey0 * prop_dist 
 deflection_noyoff = angle_noyoff * prop_dist 
@@ -193,12 +196,13 @@ ax1.scatter(separ,y0/prop_dist,c='black',label = "Two-Bunch Simulations")
 #ax1.scatter(separ,yp0*1e3,c='black',label = "Two-Bunch Simulations")
 ax1.set_xlabel("Drive-Witness Separation " + r'$(\mu m)$')
 ax1.set_ylabel("Deflection Angle "+r'$\mathrm{(\mu rad)}$')
-ax2=ax1.twinx()
-ax2.set_ylabel("y Centroid " + r'$(\mu m)$')
-ax2.plot([zsi[0]*1e6,zsi[-1]*1e6],[y0_c,y0_c],c='k',ls='--')
-ax2.plot(zsi*1e6,deflection_fullemp*1e6,c = 'red')
-ax2.plot(zsi*1e6,deflection_simey0*1e6,c = 'b')
-ax2.scatter(separ,y0,c='black')
+#ax2=ax1.twinx()
+#ax2.set_ylabel("y Centroid " + r'$(\mu m)$')
+#ax2.plot([zsi[0]*1e6,zsi[-1]*1e6],[y0_c,y0_c],c='k',ls='--')
+#ax2.plot(zsi*1e6,deflection_fullemp*1e6,c = 'red')
+#ax2.plot(zsi*1e6,deflection_simey0*1e6,c = 'b')
+#ax2.scatter(separ,y0,c='black')
 #ax2.scatter(separ,yp0*1e3*prop_dist,c='black')
-
-ax1.legend(loc=0);plt.show()
+ax1.legend(loc=0)
+plt.savefig("/home/chris/Desktop/figs/fig8.eps",bbox_inches='tight')
+plt.show()

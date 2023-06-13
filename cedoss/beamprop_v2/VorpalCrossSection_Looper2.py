@@ -18,11 +18,15 @@ import numpy as np
 from vsim import plot
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
+from scipy import stats
 #from scipy import optimize
 #import scipy.integrate as integrate
 #import scipy.constants as const
 import scipy.interpolate as interp
 import scipy.constants as const
+
+c = const.physical_constants['speed of light in vacuum'][0]
+e = const.physical_constants['elementary charge'][0]
 
 #superpath = /home/chris/Desktop/'
 superpath = '/media/chris/New Volume/VSimRuns/NonuniformPlasma/'
@@ -101,7 +105,8 @@ wanchor = -14            #for finding where r=0 to anchor yoff fit
 
 #August 2021 n=2e16 runs
 
-superpath = '/media/chris/New Volume/VSimRuns/AugustLinearGradient/'
+#superpath = '/media/chris/New Volume/VSimRuns/AugustLinearGradient/'
+superpath = '/media/chris/New Volume/VSimRuns/Oct2022_FinalSims/'
 cont_path = superpath + 'NERSC_n2e16_g0/'
 cont_ind = 5
 path = superpath + 'NERSC_n2e16_g8e17/'
@@ -114,19 +119,22 @@ grad = 8e17
 #grad = 2.5e15
 ind = 5
 
+#offset_arr = np.arange(-140,90.5,1)
 offset_arr = np.arange(-140,90.5,2)
+##offset_arr = np.arange(-141,91.5,2)
 tranExtent = 200        #tranextent for the sim
 threshold = 150         #for use in cross section algorithm, make larger than rp and smaller than plasma extent
 npcase = 2e16           #central density for the sim
 dx=1.2                  #dx for the sim
-start = 90 #um         #for correcting where drive beam is
-trunc = 20              #for trimming the back of the wake
+start = 87 #um         #for correcting where drive beam is
+trunc = 40              #for trimming the back of the wake
 left = 0; right = 200   #for plotting r+ and r-
 wanchor = -9            #for finding where r=0 to anchor yoff fit
 
 """
 #August Linear Gradients, n=1e16 sims
-superpath = '/media/chris/New Volume/VSimRuns/AugustLinearGradient/'
+#superpath = '/media/chris/New Volume/VSimRuns/AugustLinearGradient/'
+superpath = '/media/chris/New Volume/VSimRuns/Oct2022_FinalSims/'
 cont_path = superpath + 'NERSC_n1e16_g0/'
 cont_ind=5
 path = superpath + 'NERSC_n1e16_g4e17/'
@@ -135,17 +143,18 @@ grad = 4e17
 
 tranExtent = 200
 dx = 1.233 #um
-start = 107 #um
+start = 132 #um
 threshold = 150
 npcase = 1e16
-offset_arr = np.arange(-140,90.5,2)
+offset_arr = np.arange(-150,130.5,1)
 trunc = 5              #for trimming the back of the wake
 left = 0; right = 200   #for plotting r+ and r-
 wanchor = -9            #for finding where r=0 to anchor yoff fit
 """
 """
 #August Linear Gradients, n=1e17 sims
-superpath = '/media/chris/New Volume/VSimRuns/AugustLinearGradient/'
+#superpath = '/media/chris/New Volume/VSimRuns/AugustLinearGradient/'
+superpath = '/media/chris/New Volume/VSimRuns/Oct2022_FinalSims/'
 cont_path = superpath + 'NERSC_n1e17_g0/'
 cont_ind=5
 #path = superpath + 'NERSC_n1e17_g4e18/'
@@ -156,10 +165,10 @@ grad = 2e18
 ind = 5
 tranExtent = 95
 dx = 0.5 #um
-start = 45 #um
+start = 50 #um
 threshold = 70
 npcase = 1e17
-offset_arr = np.arange(-190,115.5,3)#np.arange(-210,140.5,3)
+offset_arr = np.arange(-172,115.5,1)#np.arange(-210,140.5,3)
 trunc = 23              #for trimming the back of the wake
 left = 0; right = 120   #for plotting r+ and r-
 wanchor = -6#-15            #for finding where r=0 to anchor yoff fit
@@ -177,6 +186,7 @@ rmajor_arr = np.zeros(len(offset_arr))
 rminor_arr = np.zeros(len(offset_arr))
 n0sh_arr = np.zeros(len(offset_arr))
 dndysh_arr = np.zeros(len(offset_arr))
+dndysh_jz = np.zeros(len(offset_arr))
 dndysh_o2 = np.zeros(len(offset_arr))
 if reset:
     rcontr_arr = np.zeros(len(offset_arr))
@@ -218,7 +228,7 @@ for i in range(len(offset_arr)):
     rmajor_arr[i] = xcoeff[0]
     rminor_arr[i] = xcoeff[2]
     
-    if xcoeff[0] > 0: #Otherwise there is no wake
+    if xcoeff[0] > 1e-10: #Otherwise there is no wake
         radmax = xcoeff[0]*1.02
         yoff = xcoeff[2]
     
@@ -244,6 +254,64 @@ for i in range(len(offset_arr)):
         pfit = np.polyfit(y,n,2)
         dndysh_o2[i] = pfit[0]
     
+        #Here is where I load in Jz and Rho
+        Jz_plasma = 'JPlasma'
+        rho_plasma = 'rhoPlasma'
+        vector = 0
+        params = {'plasma' : 'electrons',
+          'dumpInd' : ind,
+          'path' : path,
+          'simName' : 'MatchedBeams',
+          'zoom' : 4.0,
+          'alphaCutoff' : 0.05,
+          'centralOff' : central_off,
+          'tranExtent' : tranExtent,
+          'plot' : False,
+          'vector' : vector,
+          'field' : Jz_plasma
+        }
+        xa, ya, evx, evy, JzYZ = plot.wake_cross_section_field(params)
+        params['field'] = rho_plasma
+        params['vector'] = 0
+        xb, yb, bvx, bvy, rhoYZ = plot.wake_cross_section_field(params)
+        
+        sumDen = -(rhoYZ-JzYZ/c) / (e*1e6)#(e*npcase*100**3)
+        
+        den_v_x = np.flip(sumDen[int(len(evx)*1/4):int(len(evx)*3/4),int(len(evx)/2)],0)
+        axis1 = np.where(den_v_x==0)[0]+int(len(evx)*1/4)
+        nvals1 = np.zeros(len(axis1)*2)
+        yvals1 = np.zeros(len(axis1)*2)
+        for k in range(len(axis1)):
+            den_v_y = np.flip(sumDen[:,axis1[k]],0)
+            left_ind = np.argmax(den_v_y[:int(len(den_v_y)/2)])
+            right_ind = np.argmax(den_v_y[int(len(den_v_y)/2):])+int(len(den_v_y)/2)
+            nvals1[2*k] = den_v_y[left_ind]
+            nvals1[2*k+1] = den_v_y[right_ind]
+            yvals1[2*k] = ya[left_ind]
+            yvals1[2*k+1] = ya[right_ind]
+            
+        den_v_x = np.flip(sumDen[int(len(evx)/2),int(len(evx)*1/4):int(len(evx)*3/4)],0)
+        axis2 = np.where(den_v_x==0)[0]+int(len(evx)*1/4)
+        nvals2 = np.zeros(len(axis2)*2)
+        yvals2 = np.zeros(len(axis2)*2)
+        for k in range(len(axis2)):
+            den_v_y = np.flip(sumDen[axis2[k],:],0)
+            left_ind = np.argmax(den_v_y[:int(len(den_v_y)/2)])
+            right_ind = np.argmax(den_v_y[int(len(den_v_y)/2):])+int(len(den_v_y)/2)
+            nvals2[2*k] = den_v_y[left_ind]
+            nvals2[2*k+1] = den_v_y[right_ind]
+            yvals2[2*k] = -ya[axis2[k]]
+            yvals2[2*k+1] = -ya[axis2[k]]
+        
+        nvals = np.append(nvals1,nvals2)
+        yvals = np.append(yvals1,yvals2)
+        
+        if len(nvals) == 0:
+            dndysh_jz[i] = 0
+        else:
+            sfit_jz = np.polyfit(yvals,nvals,1)
+            dndysh_jz[i] = sfit_jz[0]*1e4
+    
     if reset:
         params = {'vmin' : vmin,
                   'vmax' : vmax,
@@ -268,7 +336,7 @@ for i in range(len(offset_arr)):
         rcontr_arr[i] = xcoeff[0]
         rerror_arr[i] = xcoeff[2]
         
-        if xcoeff[0] > 0: #Otherwise there is no wake
+        if xcoeff[0] > 1e-10: #Otherwise there is no wake
             radmax = xcoeff[0]*1.05
             yoff = xcoeff[2]
         
@@ -336,10 +404,10 @@ for i in range(len(offset_arr)):
         
         ey_v_y_theory_0[i] = 1/(2*eps)*e*n_cent*(-2*ybar-yoff) + 1/(8*eps)*e*slope*(3*(-yoff)**2)
         ey_v_x_theory_0[i] = 1/(8*eps)*e*slope*(3*yoff**2) + 1/eps*e*n_cent*(-ybar-1/2*yoff)
-      
-varA = 0.3239 #Empirical Constant
-varB = 2.482
-delta = 0.134
+
+varA = 0.3112 #Empirical Constant
+varB = 3.19089#4.059
+delta = 0.090421#0.0651
 e = 1.602e-19
 eps = 8.854e-12
 
@@ -352,15 +420,19 @@ plt.xlabel("Distance behind drive beam "+r'$(\mu m)$')
 plt.ylabel("Wake radius "+r'$(\mu m)$')
 plt.grid(); plt.legend(); plt.show();
 
-x = offset_arr[trunc:]*dx*-1
-y = rminor_arr[trunc:]
-#weights = None
-weights = np.zeros(len(offset_arr))+1; weights[wanchor]= 10; weights = weights[trunc:]
-h = np.polyfit(x,y,1,w = weights)
+centloc = np.argmax(rcontr_arr)
+offdlt = offset_arr[1]-offset_arr[0] #Since we don't load every slice
+leftend = centloc + int(0.5*(offset_arr[centloc]*dx*-1+start)/(offdlt*dx))
+rightend = centloc - int(0.5*(offset_arr[centloc]*dx*-1+start)/(offdlt*dx))
+
+x = offset_arr[rightend:leftend]*dx*-1
+y = rminor_arr[rightend:leftend]
+weights = None
+#weights = np.zeros(len(offset_arr))+1; weights[wanchor]= 10; weights = weights[trunc:]
+h, residuals, rank, singular_values, rcond = np.polyfit(x,y,1,w = weights, full=True)
 
 radmax = max(rcontr_arr)
 
-#varA = 0.30
 rpl = radmax*np.sqrt((npcase + varA*1e-4*radmax*grad)/npcase)
 rmn = radmax*np.sqrt((npcase - varA*1e-4*radmax*grad)/npcase)
 
@@ -405,10 +477,12 @@ plt.plot((offset_arr[trunc:-bound]*dx*-1+start),pl-mn,ls='--')
 plt.show()
 """
 
+x_plot = offset_arr[trunc:]*dx*-1
+
 plt.plot(offset_arr[trunc:]*dx*-1+start,rminor_arr[trunc:], label = 'Sim')
 plt.plot(offset_arr[trunc:]*dx*-1+start,rerror_arr[trunc:], c='k',ls='dotted',label = 'Control')
-plt.plot(offset_arr[trunc:]*dx*-1+start,x*h[0]+h[1],ls='--', label = 'Fit')
-plt.plot(offset_arr[trunc:]*dx*-1+start,x*yoff+start*yoff,ls='--', label = 'Emperical')
+plt.plot(offset_arr[trunc:]*dx*-1+start,x_plot*h[0]+h[1],ls='--', label = 'Fit')
+plt.plot(offset_arr[trunc:]*dx*-1+start,x_plot*yoff+start*yoff,ls='--', label = 'Emperical')
 #plt.plot((offset_arr[trunc:-bound]*dx*-1+start),0.5*(pl-mn),ls='dashdot',label='Spline Subtration')
 plt.ylim([(offset_arr[-1]*dx*-1+start)*yoff*1.1,(offset_arr[trunc]*dx*-1+start)*yoff*1.5])
 #plt.ylim([-0.05,2.5])
@@ -417,6 +491,8 @@ plt.xlabel("Distance behind drive beam "+r'$(\mu m)$')
 plt.ylabel("Wake vertical offset "+r'$(\mu m)$')
 plt.legend(); plt.grid(); plt.show();
 
+yoff_slope, yoff_intercept, yoff_r_value, yoff_p_value, yoff_std_err = stats.linregress(offset_arr[rightend:leftend]*dx*-1,rminor_arr[rightend:leftend])
+
 plt.plot(offset_arr[trunc:]*dx*-1+start,n0sh_arr[trunc:],label="Simulation")
 plt.plot(offset_arr[trunc:]*dx*-1+start,n0sh_arr_cont[trunc:],c='k',ls='dotted',label="Control")
 plt.title("Sheath's central density longitudinally")
@@ -424,13 +500,8 @@ plt.xlabel("Distance behind drive beam "+r'$(\mu m)$')
 plt.ylabel("Sheath's central density "+r'$(cm^{-3})$')
 plt.grid(); plt.legend(); plt.show();
 
-centloc = np.argmax(rcontr_arr)
-offdlt = offset_arr[1]-offset_arr[0] #Since we don't load every slice
-leftend = centloc + int(0.5*(offset_arr[centloc]*dx*-1+start)/(offdlt*dx))
-rightend = centloc - int(0.5*(offset_arr[centloc]*dx*-1+start)/(offdlt*dx))
-
-dndysh_ave = np.average(dndysh_arr[rightend:leftend])
-dndysh_std = np.std(dndysh_arr[rightend:leftend])
+dndysh_ave = np.average(-dndysh_jz[rightend:leftend])   #USED TO BE _arr
+dndysh_std = np.std(-dndysh_jz[rightend:leftend])       #USED TO BE _arr
 #var3 =-4.748e-37 #-3.0789e-38#-3.1006e-38
 #var2 = 2.750e-18 # 6.1568e-19#6.1973e-19
 #var1 =-0.0390    # 1.0266#1.0085
@@ -440,7 +511,8 @@ dndysh_mod = grad*varB
 
 trunc_sub = 5 #for when trunc doesnt get to the end of the wake
 
-plt.plot(offset_arr[trunc-trunc_sub:]*dx*-1+start,dndysh_arr[trunc-trunc_sub:],label="Simulation")
+#plt.plot(offset_arr[trunc-trunc_sub:]*dx*-1+start,dndysh_arr[trunc-trunc_sub:],label="Simulation")
+plt.plot(offset_arr[trunc-trunc_sub:]*dx*-1+start,-dndysh_jz[trunc-trunc_sub:],label="Using Jz")
 plt.plot([offset_arr[leftend]*dx*-1+start,offset_arr[rightend]*dx*-1+start],[dndysh_ave,dndysh_ave],c='r',ls='-',label="Selected Average")
 plt.plot([offset_arr[leftend]*dx*-1+start,offset_arr[rightend]*dx*-1+start],[dndysh_mod,dndysh_mod],c='g',ls='--',label="Empirical Model")
 plt.plot(offset_arr[trunc-trunc_sub:]*dx*-1+start,dndysh_arr_cont[trunc-trunc_sub:],c='k',ls='dotted',label="Control")
@@ -464,11 +536,11 @@ plt.ylabel("Electric Field "+r'$(V/m)$')
 plt.xlabel("Distance behind drive beam "+r'$(\mu m)$')
 plt.grid();plt.legend();plt.show()
 
-leftend = centloc + int(0.5*(offset_arr[centloc]*dx*-1+start)/(offdlt*dx))
-rightend = centloc - int(0.3*(offset_arr[centloc]*dx*-1+start)/(offdlt*dx))
+#leftend = centloc + int(0.5*(offset_arr[centloc]*dx*-1+start)/(offdlt*dx))
+#rightend = centloc - int(0.5*(offset_arr[centloc]*dx*-1+start)/(offdlt*dx))
 
-ering_ave = np.average(ey0_arr[rightend:leftend])
-ering_std = np.std(ey0_arr[rightend:leftend])
+#ering_ave = np.average(ey0_arr[rightend:leftend])
+#ering_std = np.std(ey0_arr[rightend:leftend])
 
 func = (ey_v_x_theory_0-ey0_arr)/((rcontr_arr*1e-6)**(2))*-1
 ering_ave = np.average(func[rightend:leftend])
@@ -517,15 +589,36 @@ plt.grid();plt.legend();plt.show()
 
 fig, (ax0,ax1) = plt.subplots(nrows=2,ncols=1,sharex=True)
 fig.set_size_inches(5,6)
+pltfac = 1e18
+dndysh_arr_plt = -dndysh_jz/pltfac
+dndysh_ave_plt = dndysh_ave/pltfac
+dndysh_mod_plt = dndysh_mod/pltfac
+dndysh_std_plt = dndysh_std/pltfac
 
-pl0 = ax0.plot(offset_arr[trunc-trunc_sub:]*dx*-1+start,dndysh_arr[trunc-trunc_sub:],label="Simulation")
-ax0.plot([offset_arr[leftend]*dx*-1+start,offset_arr[rightend]*dx*-1+start],[dndysh_ave,dndysh_ave],c='r',ls='-',label="Selected Average")
-ax0.plot([offset_arr[leftend]*dx*-1+start,offset_arr[rightend]*dx*-1+start],[dndysh_mod,dndysh_mod],c='g',ls='--',label="Empirical Model")
+window_width = 11
+
+cumsum_vec = np.cumsum(np.insert(-dndysh_jz, 0, 0)) 
+ma_vec = (cumsum_vec[window_width:] - cumsum_vec[:-window_width]) / window_width
+padding = np.zeros(int((window_width-1)/2))
+ma_vec_plt = np.append(np.append(padding,ma_vec),padding)/pltfac
+
+dndysh_ave = np.average(-dndysh_jz[rightend:leftend])
+smooth_ave = np.average(ma_vec_plt[rightend:leftend])
+smooth_std =     np.std(ma_vec_plt[rightend:leftend])
+
+#pl0 = ax0.plot(offset_arr[trunc-trunc_sub:]*dx*-1+start,dndysh_arr_plt[trunc-trunc_sub:],label="Simulation")
+pl0 = ax0.plot(offset_arr[trunc-trunc_sub:]*dx*-1+start,ma_vec_plt[trunc-trunc_sub:],label="Simulation")
+#ax0.plot([offset_arr[leftend]*dx*-1+start,offset_arr[rightend]*dx*-1+start],[dndysh_ave_plt,dndysh_ave_plt],c='r',ls='-',label="Selected Average")
+ax0.plot([offset_arr[leftend]*dx*-1+start,offset_arr[rightend]*dx*-1+start],[smooth_ave,smooth_ave],c='r',ls='-',label="Selected Average")
+ax0.plot([offset_arr[leftend]*dx*-1+start,offset_arr[rightend]*dx*-1+start],[dndysh_mod_plt,dndysh_mod_plt],c='g',ls='--',label="Empirical Model")
 #ax0.vlines((offset_arr[leftend]*dx*-1+start,offset_arr[rightend]*dx*-1+start),min(dndysh_arr[trunc:]),max(dndysh_arr[trunc:]),colors='r')
-ax0.vlines((offset_arr[leftend]*dx*-1+start,offset_arr[rightend]*dx*-1+start),dndysh_ave-dndysh_std,dndysh_ave+dndysh_std,colors='r')
-ax0.set_ylim([-1e17,5e18])
+#ax0.vlines((offset_arr[leftend]*dx*-1+start,offset_arr[rightend]*dx*-1+start),dndysh_ave_plt-dndysh_std_plt,dndysh_ave_plt+dndysh_std_plt,colors='r')
+ax0.vlines((offset_arr[leftend]*dx*-1+start,offset_arr[rightend]*dx*-1+start),smooth_ave-smooth_std,smooth_ave+smooth_std,colors='r')
+#ax0.set_ylim([-1e17/pltfac,2e18/pltfac])#For g2e17
+ax0.set_ylim([-1e17/pltfac,5.8e18/pltfac])#For g8e17
+#ax0.set_ylim([-1e17/pltfac,3e19/pltfac])#For others
 #ax0.set_ylabel("Sheath density gradient "+r'$(cm^{-4})$')
-ax0.set_ylabel(r'$(\partial n / \partial y )_{sh} \ \mathrm{cm^{-4})}$')
+ax0.set_ylabel(r'$(\partial n / \partial y )_{sh} \ \mathrm{(10^{18}\times cm^{-4})}$')
 ax0.legend(title="(a)")
 
 E_si_to_cgs = (1/3)*10**(-4)
@@ -535,19 +628,33 @@ func_scl = func*factor
 ering_ave_scl = ering_ave*factor
 ering_emp_scl = e/2/eps*delta*(((varB-1)*grad)*100**4)*factor
 
-pl0 = ax1.plot(offset_arr[trunc:]*dx*-1+start,func_scl[trunc:],label='Normalized Field')
-ax1.set_ylim([0,(func_scl[int(len(func_scl)/2)])*2])
+func[np.where((np.abs(func))>1e20)[0]]=0
+
+cumsum_vec2 = np.cumsum(np.insert(func, 0, 0)) 
+na_vec = (cumsum_vec2[window_width:] - cumsum_vec2[:-window_width]) / window_width
+padding = np.zeros(int((window_width-1)/2))
+na_vec_plt = np.append(np.append(padding,na_vec),padding)*factor
+
+smooth_e_ave = np.average(na_vec_plt[rightend:leftend])
+smooth_e_std =     np.std(na_vec_plt[rightend:leftend])
+
+#pl0 = ax1.plot(offset_arr[trunc:]*dx*-1+start,func_scl[trunc:],label='Normalized Field')
+pl0 = ax1.plot(offset_arr[trunc:]*dx*-1+start,na_vec_plt[trunc:],label='Normalized Field')
+ax1.set_ylim([0.1,(func_scl[int(len(func_scl)/2)])*2])
 #ax1.vlines((offset_arr[leftend]*dx*-1+start,offset_arr[rightend]*dx*-1+start),20,60,colors='r')
-ax1.vlines((offset_arr[leftend]*dx*-1+start,offset_arr[rightend]*dx*-1+start),ering_ave_scl-ering_std*factor,ering_ave_scl+ering_std*factor,colors='r')
-ax1.plot([offset_arr[leftend]*dx*-1+start,offset_arr[rightend]*dx*-1+start],[ering_ave_scl,ering_ave_scl],c='r',ls='-',label="Selected Average")
+#ax1.vlines((offset_arr[leftend]*dx*-1+start,offset_arr[rightend]*dx*-1+start),ering_ave_scl-ering_std*factor,ering_ave_scl+ering_std*factor,colors='r')
+#ax1.plot([offset_arr[leftend]*dx*-1+start,offset_arr[rightend]*dx*-1+start],[ering_ave_scl,ering_ave_scl],c='r',ls='-',label="Selected Average")
+ax1.vlines((offset_arr[leftend]*dx*-1+start,offset_arr[rightend]*dx*-1+start),smooth_e_ave-smooth_e_std,smooth_e_ave+smooth_e_std,colors='r')
+ax1.plot([offset_arr[leftend]*dx*-1+start,offset_arr[rightend]*dx*-1+start],[smooth_e_ave,smooth_e_ave],c='r',ls='-',label="Selected Average")
 ax1.plot([offset_arr[leftend]*dx*-1+start,offset_arr[rightend]*dx*-1+start],[ering_emp_scl,ering_emp_scl],c='g',ls='--',label="Empirical Model")
 #plt.ylabel("Electric Field "+r'$(V/m)$')
 ax1.set_xlabel("Distance behind drive beam "+r'$(\mu m)$')
 #ax1.set_ylabel(r'$\langle E_{ring}/R_p^2\rangle \ \mathrm{(GstatV/cm^3)}$')
-ax1.set_ylabel(r'$E_{ring}/R_p^2 \ \mathrm{(10^{17}\times V/m^3)}$')
+ax1.set_ylabel(r'$W_{y,sh}/R^2 \ \mathrm{(10^{17}\times V/m^3)}$')
 ax1.legend(title="(b)")
 
 fig.subplots_adjust(hspace=0)
+plt.savefig("/home/chris/Desktop/figs/fig5.eps",bbox_inches='tight')
 
 plt.show()
 
@@ -561,11 +668,73 @@ print("y_off = ",rminor_arr[np.argmax(rcontr_arr)])
 print("R_+ = ",max(rmajor_arr+rminor_arr)," um")
 print("R_- = ",max(rmajor_arr-rminor_arr)," um")
 print("yoff_fit = ",h[0])
+print("y_off std.err = ",yoff_std_err)
 print("dn/dy_sh average = ",dndysh_ave," cm-4")
 print("dn/dy_sh std.dev. = ",dndysh_std," cm-4")
 print("ering/rp2 average = ",ering_ave," V/m 1/m^2")
 print("ering/rp2 std.dev. = ",ering_std," V/m 1/m^2")
 
+sys.exit()
+#Testing Smoothing Algorithm
 
+window_width = 11
 
+cumsum_vec = np.cumsum(np.insert(-dndysh_jz, 0, 0)) 
+ma_vec = (cumsum_vec[window_width:] - cumsum_vec[:-window_width]) / window_width
+padding = np.zeros(int((window_width-1)/2))
+ma_vec_plt = np.append(np.append(padding,ma_vec),padding)/pltfac
 
+dndysh_ave = np.average(-dndysh_jz[rightend:leftend])
+smooth_ave = np.average(ma_vec_plt[rightend:leftend])
+smooth_std =     np.std(ma_vec_plt[rightend:leftend])
+
+plt.plot(offset_arr[trunc-trunc_sub:]*dx*-1+start,dndysh_arr_plt[trunc-trunc_sub:],label="Simulation")
+plt.plot(offset_arr[(trunc-trunc_sub):]*dx*-1+start,ma_vec_plt[trunc-trunc_sub:],label="Smoothed")
+#plt.plot([offset_arr[leftend]*dx*-1+start,offset_arr[rightend]*dx*-1+start],[dndysh_ave_plt,dndysh_ave_plt],c='r',ls='-',label="Selected Average")
+#plt.vlines((offset_arr[leftend]*dx*-1+start,offset_arr[rightend]*dx*-1+start),dndysh_ave_plt-dndysh_std_plt,dndysh_ave_plt+dndysh_std_plt,colors='r')
+plt.plot([offset_arr[leftend]*dx*-1+start,offset_arr[rightend]*dx*-1+start],[smooth_ave,smooth_ave],c='r',ls='-',label="Selected Average")
+plt.vlines((offset_arr[leftend]*dx*-1+start,offset_arr[rightend]*dx*-1+start),smooth_ave-smooth_std,smooth_ave+smooth_std,colors='r')
+#plt.hlines(ma_vec_plt[rightend],0,200,colors='k',linestyle='dashed')
+#plt.hlines(ma_vec_plt[leftend],0,200,colors='k',linestyle='dashed')
+plt.plot([offset_arr[leftend]*dx*-1+start,offset_arr[rightend]*dx*-1+start],[dndysh_mod_plt,dndysh_mod_plt],c='g',ls='--',label="Empirical Model")
+plt.ylim([smooth_ave-20*smooth_std,smooth_ave+20*smooth_std])
+plt.xlabel("Distance behind drive beam "+r'$(\mu m)$')
+plt.ylabel(r'$(\partial n / \partial y )_{sh} \ \mathrm{(10^{18}\times cm^{-4})}$')
+plt.legend(); plt.show()
+
+#ering_ave = np.average(func[rightend:leftend])
+#ering_std = np.std(func[rightend:leftend])
+
+func[np.where((np.abs(func))>1e20)[0]]=0
+
+cumsum_vec2 = np.cumsum(np.insert(func, 0, 0)) 
+na_vec = (cumsum_vec2[window_width:] - cumsum_vec2[:-window_width]) / window_width
+padding = np.zeros(int((window_width-1)/2))
+na_vec_plt = np.append(np.append(padding,na_vec),padding)*factor
+
+smooth_e_ave = np.average(na_vec_plt[rightend:leftend])
+smooth_e_std =     np.std(na_vec_plt[rightend:leftend])
+
+plt.plot(offset_arr[trunc:]*dx*-1+start,func_scl[trunc:],label='Normalized Field')
+plt.plot(offset_arr[trunc:]*dx*-1+start,na_vec_plt[trunc:],label='Smoothed')
+plt.ylim([smooth_e_ave-25*smooth_e_std,smooth_e_ave+25*smooth_e_std])
+plt.vlines((offset_arr[leftend]*dx*-1+start,offset_arr[rightend]*dx*-1+start),smooth_e_ave-smooth_e_std,smooth_e_ave+smooth_e_std,colors='r')
+plt.plot([offset_arr[leftend]*dx*-1+start,offset_arr[rightend]*dx*-1+start],[smooth_e_ave,smooth_e_ave],c='r',ls='-',label="Selected Average")
+plt.plot([offset_arr[leftend]*dx*-1+start,offset_arr[rightend]*dx*-1+start],[ering_emp_scl,ering_emp_scl],c='g',ls='--',label="Empirical Model")
+plt.xlabel("Distance behind drive beam "+r'$(\mu m)$')
+plt.ylabel(r'$W_{y,sh}/R^2 \ \mathrm{(10^{17}\times V/m^3)}$')
+plt.legend();plt.show()
+
+print("Sheath Gradient Average:")
+print(" Not Smoothed: ",dndysh_ave," cm-4")
+print(" Smoothed    : ",smooth_ave*pltfac," cm-4")
+print("Sheath Gradient Errors:")
+print(" Not Smoothed: ",dndysh_std," cm-4")
+print(" Smoothed    : ",smooth_std*pltfac," cm-4")
+print()
+print("Ring Field Average:")
+print(" Not Smoothed: ",ering_ave," cm-4")
+print(" Smoothed    : ",smooth_e_ave/factor," cm-4")
+print("Ring Field Errors:")
+print(" Not Smoothed: ",ering_std," cm-4")
+print(" Smoothed    : ",smooth_e_std/factor," cm-4")

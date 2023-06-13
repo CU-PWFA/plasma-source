@@ -335,7 +335,7 @@ def drive_witness_density_paperplot(params):
     drive = params['drive']
     plasma = params['plasma']
     
-    offset = 85
+    offset = 90
     longext = 352
     tranext = 400
     
@@ -398,6 +398,8 @@ def drive_witness_density_paperplot(params):
     
     plt.savefig(path+'Title_Wake.png')
     plt.show()
+    
+    return rhoBXY, rhoXY, longext/2+offset, -longext/2+offset, -tranext/2, tranext/2
 
 def wake_cross_section(params):
     e = const.physical_constants['elementary charge'][0]

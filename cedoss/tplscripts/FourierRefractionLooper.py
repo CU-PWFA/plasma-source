@@ -23,14 +23,14 @@ double_x = 0
 reducer = 0
 
 load_density = 0
-constant_density = 0.3
+constant_density = 0.01
 
 #DONT FORGET TO CHECK THE DIRECTORY AND ITS STUFF!
 # initDensity only knows its shape, not dimensions
-denfile = '/home/chris/Desktop/DataLoads/DensityFilesNp/gasjet_He1e17_20x20x2000_offset/gasdensity.npy'#60x24x800 for 996um case
+denfile = '/home/chris/Desktop/DataLoads/DensityFilesNp/gasjet_He1e20_20x10x1200/gasdensity.npy'#60x24x800 for 996um case
 #pulsefile = '/home/chris/Desktop/DataLoads/PulseFilesNp/pulseParams_oct20_20mj.npy'
-pulsefile = '/home/chris/Desktop/DataLoads/PulseFilesNp/pulseParams_april11_1mj_400nm.npy'
-path = '/home/chris/Desktop/FourierPlots/april11_1mj_400nm/'
+pulsefile = '/home/chris/Desktop/DataLoads/PulseFilesNp/pulseParams_cylindrical_ex_thesis2.npy'
+path = '/home/chris/Desktop/FourierPlots/cylindrical_ex_thesis_1e15/'
 """
 params_orig = {'Nx' : 2**(9-reducer)  * (1+double_x),
                'Ny' : 2**(9-reducer),
@@ -83,10 +83,10 @@ params_orig['lam']=0.800
 """
 
 params_orig['X']=20e2#50e2
-params_orig['Y']=20e2#50e2
-params_orig['Z']=3.0e4#7.0e4
-params_orig['EI']=13.6
-params_orig['lam']=0.400
+params_orig['Y']=10e2#50e2
+params_orig['Z']=12.0e4#7.0e4
+params_orig['EI']=15.4
+params_orig['lam']=0.800
 params_orig['T']=230
 
 var_loop = [1]#, 2, 3, 5, 8, 10, 15, 20]

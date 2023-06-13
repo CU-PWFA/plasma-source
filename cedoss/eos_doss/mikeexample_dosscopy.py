@@ -45,9 +45,9 @@ def get_E(Q, sigz, r):
 
 # Figure: EOS-BPM vs BPM comparison
 # Beam paramters
-Q    = 1.200e-9 
-sigz = 20e-6
-r0   = 1.3e-3
+Q    = 2.000e-9 
+sigz = 100e-6
+r0   = 20.3e-3
 
 # Create setup dictionary
 # NOTE: remember to change fpath to your local machine's directory
@@ -55,10 +55,10 @@ r0   = 1.3e-3
 # cpath = "/mnt/md0/Data/currents/"
 cpath = "/home/chris/Desktop/DataLoads/EOSBeamProfiles/"
 setup = {
-    "ctype"   : "gap",
-    "d"       : 100e-6,
+    "ctype"   : "ZnTe",
+    "d"       : 1000e-6,
     "y0"      : 800e-9,
-    "tp"      : 40e-15,
+    "tp"      : 70e-15,
     "r0"      : r0,
     "fpath"   : cpath,
     "nslice"  : 100,
@@ -72,6 +72,7 @@ setup = {
 
 # Get Electric field for plotting
 E, te  = get_E(Q, sigz, r0)
+print(E)
 setup["tau"] = te
 sig, tsig, gamma, tgamma = eos.E_signal(E, te, setup)
 plot_signal(E, te, sig, tsig)
