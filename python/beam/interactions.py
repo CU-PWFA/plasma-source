@@ -58,7 +58,7 @@ def pulse_plasma_energy(pulse, plasma, temp=0.0, n2=0.0, ionization='adk'):
                       pulse.threads, temp, n2, ionization))
     
     
-def pulse_plasma_energy_second(pulse, plasma, plasma2, temp=0.0, n2=0.0, ionization='adk'):
+def pulse_plasma_energy_second(pulse, plasma, plasma2, temp=0.0, n2=0.0, ionization='adk', saveseq= 1):
     """ Propagates a pulse through a gas, ionizing and refracting as it goes. Counting the second inoization
     
     Parameters
@@ -75,13 +75,16 @@ def pulse_plasma_energy_second(pulse, plasma, plasma2, temp=0.0, n2=0.0, ionizat
         The ionization model, options are:
             adk
             lithium
+    saveseq :  int, optional 
+        E field and plasma density save sequence. 
+        e.g. saveseq= 3, E field and plasma density are saved every 3 steps. 
     """
     pulse.e = np.array(pcalc.plasma_refraction_energy_second(pulse.e, pulse.x, pulse.y,
                       plasma.z, pulse.t, pulse.lam, plasma.n0, pulse.z[-1],
                       pulse.fft, pulse.ifft, pulse.save_field, 
                       plasma.save_plasma_density, plasma.atom, plasma2.atom,
                       plasma.load_num_den, plasma.load_plasma_den, plasma2.load_plasma_den,
-                      pulse.threads, temp, n2, ionization))
+                      pulse.threads, temp, n2, ionization, saveseq))
 
 
 

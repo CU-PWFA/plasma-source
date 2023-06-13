@@ -264,7 +264,7 @@ def plasma_refraction_energy_second(double complex[:, :, :] E, double[:] x, doub
                       double[:] z, double[:] t, double lam, double n0, 
                       double z0, fft, ifft, saveE, saven, atom, atomp,
                       loadn, loadne, loadne2, int num_threads, double temp=0.0,
-                      double n2=0.0, ionization='adk'):
+                      double n2=0.0, ionization='adk', saveseq= 1):
     """ Propagate a laser pulse through a plasma accounting for refraction. Counting its second ionization. 
 
     Propogates a laser pulse through a region of partially ionized gas. This
@@ -319,6 +319,9 @@ def plasma_refraction_energy_second(double complex[:, :, :] E, double[:] x, doub
         The nonlinear index of refraction at atmospheric pressure. In cm^2/W.
     ionization : string, optional
         Function to use for the ionization model.
+    saveseq :  int, optional 
+        E field and plasma density save sequence. 
+        e.g. saveseq= 3, E field and plasma density are saved every 3 steps. 
     """
     cdef int i, j, k, l
     # TODO abstract this into its own function
@@ -376,10 +379,13 @@ def plasma_refraction_energy_second(double complex[:, :, :] E, double[:] x, doub
     cdef double e_abs
     cdef double complex arg_kerr
     cdef double complex[:, :] e = np.zeros((Nx, Ny), dtype='complex128')
+
+    ne = loadne(0)
+    ne2 = loadne2(0)
     for i in range(1, Nz):
         n = loadn(i-1)
-        ne = loadne(i-1)
-        ne2 = loadne2(i-1)
+#        ne = loadne(i-1)
+#               ne2 = loadne2(i-1)
         dz = z[i] - z[i-1]
         arg = 1j*2*np.pi*dz*dn / lam
         arg_kerr = 1j*2*np.pi*dz*dn2 / lam 
@@ -417,8 +423,17 @@ def plasma_refraction_energy_second(double complex[:, :, :] E, double[:] x, doub
                         ne_tot[k, l]= ne[k, l]+ ne2[k, l]
 
             E[j, :, :] = e
-        saveE(E, z[i]+z0)        
-        saven(ne_tot, i-1)
+#        print('seq', saveseq)
+        if (i-1)%saveseq== 0:
+#            print('i', i) 
+            saven(ne_tot, i-1)
+        if i%saveseq== 0:
+            save= True
+        else:
+            save= False
+        saveE(E, z[i]+z0, save= save)
+#        saveE(E, z[i]+z0)        
+#        saven(ne_tot, i-1)
     return E
 
 

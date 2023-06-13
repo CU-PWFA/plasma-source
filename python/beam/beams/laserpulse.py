@@ -11,7 +11,7 @@ import numpy as np
 from beam.beams import beam
 from beam.calc import laser
 import matplotlib.pyplot as plt
-from numpy.fft import fftfreq
+from numpy.fft import fftfreq, fftshift
 
 
 class Pulse(beam.Beam):
@@ -152,6 +152,11 @@ class Pulse(beam.Beam):
         """ Get the grid spacing. """
         y = self.y
         return y[1] - y[0]
+    
+    def get_dt(self):
+        """ Get the grid spacing. """
+        t = self.t
+        return t[1] - t[0]
         
     def get_f(self):
         """ Get the spatial frequencies of the fft of e. """
@@ -170,11 +175,12 @@ class Pulse(beam.Beam):
         np.save(self.filePre + '_x.npy', self.x)
         np.save(self.filePre + '_y.npy', self.y)
     
-    def save_field(self, e, z):
+    def save_field(self, e, z, save= True):
         """ Save the current electric field to file and adavnce z. """
         if self.cyl:
             e = e[:, :, int(self.Ny/2)]
-        np.save(self.filePre + '_field_' + str(self.saveInd) + '.npy', e)
+        if save== True:
+            np.save(self.filePre + '_field_' + str(self.saveInd) + '.npy', e)
         self.saveInd += 1
         self.z.append(z)
         self.save_z()
@@ -313,6 +319,134 @@ class Pulse(beam.Beam):
         plt.ylabel(r'x')
         plt.title('Longitudinal intensity at z='+str(z))
         return im
+    
+    def plot_current_field(self, xlim=None, flim=None, log=False, wrap_order=0):
+        beam = self
+        # XXX Not sure why I have to copy, I suspect the fft
+        e = np.copy(beam.e[int(self.Nt/2), :, :])
+        I = beam.intensity_from_field(e)
+        If = abs(fftshift(beam.fft(e)))**2
+        fx, fy = beam.get_f()
+        fx = fftshift(fx)
+        fy = fftshift(fy)
+        phase = np.angle(e)
+
+        # Images
+        X = beam.X
+        Y = beam.Y
+        ext = [-X/2, X/2, -Y/2, Y/2]
+        extf = [fx[0], fx[-1], fy[0], fy[-1]]
+        plt.figure(figsize=(16, 4), dpi=150)
+        plt.subplot(131)
+        plt.imshow(beam.prep_data(I), aspect='auto', extent=ext, cmap='viridis')
+        cb = plt.colorbar()
+        cb.set_label(r'Intensity ($10^{14}$ W/cm^2)')
+        plt.xlabel(r'$x$ (um)')
+        plt.ylabel(r'$y$ (um)')
+        if xlim != None:
+            plt.xlim(xlim)
+            plt.ylim(xlim)
+        
+        if wrap_order == 0:
+            axis0 = 0
+            axis1 = 1
+        elif wrap_order == 1:
+            axis0 = 1
+            axis1 = 0
+        plt.subplot(132)
+        plt.imshow(np.unwrap(np.unwrap(beam.prep_data(phase), axis=axis0), axis=axis1), aspect='auto', extent=ext, cmap='viridis')
+        cb = plt.colorbar()
+        cb.set_label(r'Phase (rad)')
+        plt.xlabel(r'$x$ (um)')
+        plt.ylabel(r'$y$ (um)')
+        if xlim != None:
+            plt.xlim(xlim)
+            plt.ylim(xlim)
+
+        plt.subplot(133)
+        plt.imshow(beam.prep_data(If), aspect='auto', extent=extf, cmap='viridis')
+        cb = plt.colorbar()
+        cb.set_label(r'Intensity (arb unit)')
+        plt.xlabel(r'$f_x$ (um$^{-1}$)')
+        plt.ylabel(r'$f_y$ (um$^{-1}$)')
+        if flim != None:
+            plt.xlim(flim)
+            plt.ylim(flim)
+
+        plt.tight_layout()
+        plt.show()
+        # Lineouts
+        # We've already taken the transpose so y is the first index
+        indy = int(beam.Ny/2)
+        indx = int(beam.Nx/2)
+        x = beam.x
+        y = beam.y
+        plt.figure(figsize=(16, 4), dpi=150)
+        plt.subplot(131)
+        plt.plot(x, I[:, indy], label='y')
+        plt.plot(y, I[indx, :], 'm--', label='x')
+        plt.legend()
+        plt.xlabel(r'$x$ (um)')
+        plt.ylabel(r'Intensity ($10^{14}$ W/cm^2)')
+        if xlim != None:
+            plt.xlim(xlim)
+
+        plt.subplot(132)
+        plt.plot(x, np.unwrap(phase[:, indy]), label='x')
+        plt.plot(y, np.unwrap(phase[indx, :]), 'm--', label='y')
+        plt.legend()
+        plt.xlabel(r'$x$ (um)')
+        plt.ylabel(r'Phase (rad)')
+        if xlim != None:
+            plt.xlim(xlim)
+
+        plt.subplot(133)
+        plt.plot(fx, If[:, indy], label='x')
+        plt.plot(fy, If[indx, :], 'm--', label='y')
+        plt.legend()
+        plt.xlabel(r'$f_x$ (um$^{-1}$)')
+        plt.ylabel(r'Intensity (arb unit)')
+        if flim != None:
+            plt.xlim(flim)
+
+        plt.tight_layout()
+        plt.show()
+        
+        if log == True:
+            # Lineouts
+            plt.figure(figsize=(16, 4), dpi=150)
+            plt.subplot(131)
+            plt.plot(x, I[:, indy], label='x')
+            plt.plot(y, I[indx, :], 'm--', label='y')
+            plt.legend()
+            plt.xlabel(r'$x$ (um)')
+            plt.ylabel(r'Intensity ($10^{14}$ W/cm^2)')
+            plt.yscale('log')
+            if xlim != None:
+                plt.xlim(xlim)
+
+            plt.subplot(132)
+            plt.plot(x, np.unwrap(phase[:, indy]), label='x')
+            plt.plot(y, np.unwrap(phase[indx, :]), 'm--', label='y')
+            plt.legend()
+            plt.xlabel(r'$x$ (um)')
+            plt.ylabel(r'Phase (rad)')
+            plt.yscale('log')
+            if xlim != None:
+                plt.xlim(xlim)
+
+            plt.subplot(133)
+            plt.plot(fx, If[:, indy], label='x')
+            plt.plot(fy, If[indx, :], 'm--', label='y')
+            plt.legend()
+            plt.xlabel(r'$f_x$ (um$^{-1}$)')
+            plt.ylabel(r'Intensity (arb unit)')
+            plt.yscale('log')
+            if flim != None:
+                plt.xlim(flim)
+
+            plt.tight_layout()
+            plt.show()
 
 
 class GaussianPulse(Pulse):
