@@ -8,6 +8,9 @@ Trying to plot out the beam envelope as it propagates through the spectrometer.
 Just an early version for general spot sizes.  A later implementation into
 WARGSim should also try to calculate the beam loss.
 
+Sorry, finished the thesis and then never got around to this :(
+I'll at least leave the spectrometer apertures from Doug S. somewhere
+
 @author: chris
 """
 

@@ -5,6 +5,8 @@ Created on Mon Oct  3 14:16:52 2022
 
 I want to load a Matlab file and just print out all the bs
 
+It didn't work, just use Matlab
+
 @author: chris
 """
 

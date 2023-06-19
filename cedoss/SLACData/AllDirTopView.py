@@ -168,12 +168,13 @@ for i in range(len(dataset_arr)):
             #slice_arr = np.append(np.append(padding,ma_vec),padding)
             slice_arr = ma_vec
             
-            #window_width = 9
-            cumsum_vec = np.cumsum(np.insert(slice_arr2, 0, 0)) 
-            ma_vec = (cumsum_vec[window_width:] - cumsum_vec[:-window_width]) / window_width
-            #padding = np.zeros(int((window_width-1)/2))+.8*slice_arr2[0]
-            #slice_arr2 = np.append(np.append(padding,ma_vec),padding)
-            slice_arr2 = ma_vec
+            if compareBeam:
+                #window_width = 9
+                cumsum_vec = np.cumsum(np.insert(slice_arr2, 0, 0)) 
+                ma_vec = (cumsum_vec[window_width:] - cumsum_vec[:-window_width]) / window_width
+                #padding = np.zeros(int((window_width-1)/2))+.8*slice_arr2[0]
+                #slice_arr2 = np.append(np.append(padding,ma_vec),padding)
+                slice_arr2 = ma_vec
             
             slice_axs = slice_axs[int(window_width/2):-int(window_width/2)]
             

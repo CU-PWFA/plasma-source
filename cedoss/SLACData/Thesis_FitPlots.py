@@ -5,7 +5,7 @@ Created on Tue May  2 11:45:56 2023
 
 With the betatron fits I got by manually recording all the good ones, make some presentation plots
 
-This versino is using the set energy slices for my thesis
+This version is using the set energy slices for my thesis
 
 @author: chris
 """

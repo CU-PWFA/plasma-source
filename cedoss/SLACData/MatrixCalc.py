@@ -3,7 +3,7 @@
 """
 Created on Fri Oct 14 15:00:29 2022
 
-M Calculations
+Magnification calculations from the imaging spectrometer
 
 @author: chris
 """
@@ -147,21 +147,22 @@ def getM11ForAllSteps(superpath,day,dataset,gamma):
         
     return m_arr
 
-"""
-superpath = '/media/chris/New Volume/SLACData/'
-day = '20220812/'
-dataset = 'E308_02493'
-gamma = 19569.5
-m_arr = getM11ForAllSteps(superpath,day,dataset,gamma)
-print(m_arr)
-"""
-
-Q01 = -1.020636901855469e+02
-Q02 = 1.635670928955078e+02
-Q03 = -1.020625762939453e+02
-
-gamma = 19569.5*9.8/10
-loc = 1992
-
-test = FACET_Espec_Matrix([Q01,Q02,Q03],gamma,loc)
-print(test)
+if __name__ == '__main__':
+    """
+    superpath = '/media/chris/New Volume/SLACData/'
+    day = '20220812/'
+    dataset = 'E308_02493'
+    gamma = 19569.5
+    m_arr = getM11ForAllSteps(superpath,day,dataset,gamma)
+    print(m_arr)
+    """
+    
+    Q01 = -1.020636901855469e+02
+    Q02 = 1.635670928955078e+02
+    Q03 = -1.020625762939453e+02
+    
+    gamma = 19569.5*9.8/10
+    loc = 1992
+    
+    test = FACET_Espec_Matrix([Q01,Q02,Q03],gamma,loc)
+    print(test)

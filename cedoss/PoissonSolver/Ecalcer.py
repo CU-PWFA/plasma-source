@@ -6,6 +6,8 @@ Created on Wed Nov 20 09:56:04 2019
 Given a charge density distribution in 2D, simply sum up the electric field contributions
 in all 3 dimensions for every point.
 
+THIS ONE IS INCORRECT, USE THE 'LINCHARGE' ONE INSTEAD.
+
 @author: chris
 """
 

@@ -5,6 +5,11 @@ Created on Fri Oct 14 13:08:24 2022
 
 Loading images of DTOTR2, trying to make a nice plot
 
+OUTDATED: USE FACETPlotter INSTEAD!!
+
+This was just to quickly make some movies back when I was first making these scripts,
+ and I didn't correctly make the energy lines yet.  They are still square and bad
+
 @author: chris
 """
 
@@ -17,6 +22,8 @@ import sys
 from scipy.optimize import curve_fit
 import scipy.io as sio
 import matplotlib.colors as colors
+
+sys.exit()
 
 """
 def FitDataSomething(data, axis, function, guess = [0.,0.,0.]):

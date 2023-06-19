@@ -18,7 +18,7 @@ e = const.physical_constants['elementary charge'][0]
 
 superpath = '/media/chris/New Volume/SLACData/'
 day = '20220812/'
-"""
+
 #For lowres simulations
 dataset_arr = np.array([
         'E308_02493',
@@ -58,7 +58,7 @@ for i in range(len(dataset_arr)):
         var_arr[i][j] = np.sqrt(np.var(toro[np.where(toro > 0)[0]]))
         
     #Plot average toroid signal vs toroid position
-    """
+    
 colors = plt.cm.Set1(np.linspace(0, 1, len(toro_arr)))
 plt.figure(figsize=(4.5,3.5))
 for j in range(len(toro_arr)):

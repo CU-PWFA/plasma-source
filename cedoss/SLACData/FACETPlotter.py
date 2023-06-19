@@ -16,15 +16,14 @@ import os as os
 #dtotr2_dx = 30.3e-6*1e3
 #ybeam = 3.1
 
+#This was because in my shift the spectrometer wasn't aligned correctly,
+# and when there was no plasma and the object plane was scanned the
+# energy centroid of the beam would shift.
 #Using DTOTR2_ybeamcalibration.py for the values at 10 GeV
 def DTOTR2_ybeamFunc(zval):
     a0 = 1022.04328885
     a1 = -0.51128705777
     return zval*a1 + a0
-
-#Given a ybeam, return an energy
-#def DTOTR2_ybeamFunc_Inverse(ybeam):
-#    f
 
 #Requires the usual 3 strings for the dataset
 #Returns a 1d array for the z position of each step
@@ -44,16 +43,16 @@ def getZarr(superpath, day, dataset):
     f.close()
     return np.linspace(func_start,func_end,n_step)
 
-#requires the y axis value and the ybeam from DTOTR2_ybeamFunc
-#other inputs are constants from Doug S.
-#returns the approximate Energy in GeV
+#Requires the y axis value (yscreen) and the ybeam from DTOTR2_ybeamFunc
+#Other inputs are constants from Doug S.
+#Returns the approximate Energy in GeV
 def DTOTR2_ECali(yscreen, ybeam, dtotr2_dnom = 60, dtotr2_ebend = 10):
     dy = dtotr2_dnom-ybeam
     return dtotr2_dnom*dtotr2_ebend/(yscreen + dy)
 
-#requires the usual 3 strings for the dataset, as well as the specific step and shot
-#threshold is an optional parameter for cutting out low noise
-#returns the background-subtracted 2d array for the image, as well as the pixel-um calibration
+#Requires the usual 3 strings for the dataset, as well as the specific step and shot
+#Threshold is an optional parameter for cutting out low noise
+#Returns the background-subtracted 2d array for the image, as well as the pixel-um calibration
 def loadDTOTR2(superpath, day, dataset, step, nimg, threshold = 20):
     mat_path = superpath + day + '/' + dataset + '/' + dataset +'.mat'
     mat = sio.loadmat(mat_path)
@@ -155,31 +154,32 @@ def plotDTOTR2_rawData(im_arr, dx, ybeam, annotation="Test"):
     plt.show()
     return
 
-#testing:
-tsuperpath = '/media/chris/New Volume/SLACData/'
-tday = '20220812'
-tdataset = 'E308_02493';tpsi=0 #no gas
-tdataset = 'E308_02512';tpsi=1 #1 psig
-#tdataset = 'E308_02513';tpsi=1 #1psig with high res scan
-#tdataset = 'E308_02492';tpsi=6 #6 psig
-#tdataset = 'E308_02498';tpsi=24 #24 psi
-#tdataset = 'E308_02501';tpsi=57.8 #5 bar over 0, 57.8 psi
-#tdataset = 'E308_02506';tpsi=115.8 #9 bar over 0, 115.8 psi
-
-tstep = 1#+tstep
-tnimg = 1# + tnimg
-
-im_arr, pixelcal = loadDTOTR2(tsuperpath, tday, tdataset, tstep, tnimg)
-
-pixelcal = pixelcal * 1e-6*1e3 #to get to mm
-z_arr = getZarr(tsuperpath, tday, tdataset)
-ybeam = DTOTR2_ybeamFunc(z_arr[tstep-1])
-
-gasjet = 1993.27
-annotation = "Backing Pressure: "+str(tpsi)+" psi"+'\n'+"Object Plane: "+str(z_arr[tstep-1]-1993.27)+" m"
-annotation = "Backing Pressure: "+str(tpsi)+" psi"+'\n'+"Object Plane: "+("%.2f" % (z_arr[tstep-1]-1993.27))+" m"
-
-
-plotDTOTR2_withProjection(im_arr, pixelcal, ybeam, annotation)
-plotDTOTR2_rawData(im_arr, pixelcal, ybeam, annotation)
-#print(DTOTR2_ECali(1.0, ybeam))
+if __name__ == '__main__':
+    #testing:
+    tsuperpath = '/media/chris/New Volume/SLACData/'
+    tday = '20220812'
+    tdataset = 'E308_02493';tpsi=0 #no gas
+    tdataset = 'E308_02512';tpsi=1 #1 psig
+    #tdataset = 'E308_02513';tpsi=1 #1psig with high res scan
+    #tdataset = 'E308_02492';tpsi=6 #6 psig
+    #tdataset = 'E308_02498';tpsi=24 #24 psi
+    #tdataset = 'E308_02501';tpsi=57.8 #5 bar over 0, 57.8 psi
+    #tdataset = 'E308_02506';tpsi=115.8 #9 bar over 0, 115.8 psi
+    
+    tstep = 1#+tstep
+    tnimg = 1# + tnimg
+    
+    im_arr, pixelcal = loadDTOTR2(tsuperpath, tday, tdataset, tstep, tnimg)
+    
+    pixelcal = pixelcal * 1e-6*1e3 #to get to mm
+    z_arr = getZarr(tsuperpath, tday, tdataset)
+    ybeam = DTOTR2_ybeamFunc(z_arr[tstep-1])
+    
+    gasjet = 1993.27
+    annotation = "Backing Pressure: "+str(tpsi)+" psi"+'\n'+"Object Plane: "+str(z_arr[tstep-1]-1993.27)+" m"
+    annotation = "Backing Pressure: "+str(tpsi)+" psi"+'\n'+"Object Plane: "+("%.2f" % (z_arr[tstep-1]-1993.27))+" m"
+    
+    
+    plotDTOTR2_withProjection(im_arr, pixelcal, ybeam, annotation)
+    plotDTOTR2_rawData(im_arr, pixelcal, ybeam, annotation)
+    #print(DTOTR2_ECali(1.0, ybeam))
