@@ -10,16 +10,27 @@ Greetings!  I am writing this in the brief window of June 2023 between finishing
 
 ### Table of Contents
 -01- Generic Modules - '/modules/'
+
 -02- Complex Q Parameter Propagation - '/UpdatedCodes/QParamProp.py'
+
 -03- Calling Robert's Fourier Refraction - '/UpdatedCodes/FourierRefractionSetup.py'
+
 -04- Plotting results of Fourier Refraction - '/UpdatedCodes/RefractionAnalysisAndPlots.py'
+
 -05- Plotting the Oide Limit - '/UpdatedCodes/SampleOideCalculation_SigVsL.py'
+
 -06- Restricted TPL Matching - '/pyscripts/RestrictedTPLMatching.py'
+
 -07- Plasma Lens Calculations - '/tplscripts/PlasmaLensCalc.py'
+
 -08- Numerical Beam Propagation - '/beamprop_v2/'
+
 -09- Poisson Solver for Electric Fields -/PoissonSolver/'
+
 -10- Generic SLAC Data Analysis Code - '/SLACData/'
+
 -11- Plasma Lens Commissioning Shift Analysis - '/SLACData/'
+
 
 
 -----------------------------------------------------------------
