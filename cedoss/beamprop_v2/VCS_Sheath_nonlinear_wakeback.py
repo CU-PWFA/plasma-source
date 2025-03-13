@@ -27,10 +27,12 @@ from modules import ThreeDimensionAnalysis as ThrDim
 #central_off = 0
 
 path = '/media/chris/New Volume/VSimRuns/AugustLinearGradient/NERSC_n2e16_g8e17/'
+#path = '/media/chris/New Volume/VSimRuns/AugustLinearGradient/NERSC_n2e16_g2e17/'
+
 #path = '/media/chris/New Volume/VSimRuns/AugustLinearGradient/NERSC_n2e16_g2.5e16/'
 
 ind=5
-central_off = -100#-20#-100
+central_off = -110#-20#-100
 npcase = 2e16#
 tranExtent = 200
 
@@ -42,7 +44,7 @@ yoff = 10
 path = '/media/chris/New Volume/VSimRuns/AugustLinearGradient/NERSC_n1e17_g2e18/'
 
 ind = 5
-central_off = -33
+central_off = -120
 tranExtent = 95
 npcase = 1e17
 radmax = 50
@@ -68,6 +70,7 @@ y2, nvy = plot.wake_cross_section_densityslice(params)
 #r, theta, rhoPol = plot.wake_cross_section(params)
 #p = ThrDim.FitDataDoubleTanh(n,y+50)
 sfit = np.polyfit(y,n,2)
+print(sfit)
 yfull = np.linspace(min(y),max(y),20)
 print("n_s0 = ",sfit[1] , " (cm^-3)")
 print("dn/dy_s = ",sfit[0]*1e4 , " (cm^-4)")

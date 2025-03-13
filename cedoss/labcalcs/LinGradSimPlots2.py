@@ -29,12 +29,13 @@ dndys = np.array([0,8.64e17,1.47e17,6.01e16,3.96e16,0,1.21e19,6.54e18,0,7.96e17]
 ering = np.array([0,8.833e8,3.0025e8,1.2321e8,1.0337e8,0,1.8627e9,1.1623e9,0,5.8867e8])
 """
 
-#This set does NOT include the control cases
+"""#This set does NOT include the control cases
 np_0=np.array([2e16,2e16,2e16,2e16,1e17,1e17,1e16])
 dndy=np.array([8e17,2e17,2.5e16,2.5e15,4e18,2e18,4e17])
 rp_ave=np.array([76.15,76.15,76.15,76.15,48.67,48.67,91.86])
 yoff=np.array([0.0346,0.00866,0.00107,0.000129,0.0261,0.0121,0.0403])
-garr = np.array([0.305,0.076,0.010,0.001,0.065,0.032,0.367])
+yoff_err=np.array([4.37e-4,1.71e-4,1.42e-4,1.11e-4,3.65e-4,2.62e-4,5.41e-4])
+garr = np.array([0.305,0.076,0.010,0.001,0.195,0.097,0.367])
 
 rp_top=np.array([80.41,77.09,76.24,76.171,50.56,49.59,98.04])
 rp_bot=np.array([72.58,75.20,76.07,76.137,47.03,47.84,86.97])
@@ -51,11 +52,30 @@ dndys_std = np.array([1.18e17,4.35e16,4.05e16,1.75e16,1.53e18,1.36e18,6.15e16])
 
 ering_norm = np.array([1.33e17,3.52e16,4.18e15,4.44e14,7.12e17,3.69e17,5.98e16])
 ering_norm_std = np.array([7.86e15,3.91e15,1.64e15,4.28e14,5.92e16,6.18e16,6.53e15])
+"""
+#This Set uses the October 2022 Jz Dumped Numbers
+np_0=np.array([2e16,2e16,2e16,2e16,1e17,1e17,1e16])
+dndy=np.array([8e17,2e17,2.5e16,2.5e15,4e18,2e18,4e17])
+rp_ave=np.array([76.15,76.15,76.15,76.15,48.83,48.83,91.91])
+yoff=np.array([.0309, .00793, .00103, .000104, .0198, .00994, .0346])
+yoff_err=np.array([2.5e-4, 1.15e-4, 1.17e-4, 5.42e-5, 2.23e-4, 1.16e-4, 2.14e-4])
+#garr = np.array([3.05e-1, 7.62e-2, 9.52e-3, 9.52e-4, 1.95e-1, 9.77e-2, 3.68e-1])
+garr = dndy/np_0*5.31e5/np.sqrt(np_0)
+
+rp_top=np.array([80.42, 77.09, 76.24, 76.171, 50.49, 49.57, 98.27])
+rp_bot=np.array([72.58, 75.20, 76.06, 76.137, 47.21, 47.94, 86.95])
+lhalf = np.array([112.2, 112.2, 112.2, 112.2, 68, 68, 160.4])
+
+dndys = np.array([2.40e18, 5.84e17, 7.35e16, 1.56e15, 1.60e19, 7.92e18, 1.17e18])
+dndys_std = np.array([2.67e17, 8.44e16, 6.66e16, 7.52e15, 3.14e18, 2.36e18, 1.46e17])
+ering_norm = np.array([1.33e17, 3.48e16, 4.29e15, 3.49e14, 7.15e17, 3.62e17, 5.84e16])
+ering_norm_std = np.array([8.13e15, 3.73e15, 1.87e15, 4.91e14, 8.31e16, 7.71e16, 6.26e15])
 
 doPlot = True
 doLoop = False
 
-facA = 0.3239
+#facA = 0.3239
+facA = 0.3112
 #rptop_emp = np.sqrt((np_0+1/3*rp_ave*1e-4*dndy)/np_0)*rp_ave
 rptop_emp = np.sqrt((np_0+facA*rp_ave*1e-4*dndy)/np_0)*rp_ave
 rpbot_emp = np.sqrt((np_0-facA*rp_ave*1e-4*dndy)/np_0)*rp_ave
@@ -73,7 +93,7 @@ fitqt_arr = np.zeros(1)
 fitqb_arr = np.zeros(1)
 """
 if doLoop:
-    facA_arr = np.linspace(0.24,0.4,50)
+    facA_arr = np.linspace(0.24,0.46,50)
     fitqt_arr = np.zeros(len(facA_arr))
     fitqb_arr = np.zeros(len(facA_arr))
     
@@ -181,7 +201,6 @@ if doLoop:
     print("facA --> ", facA_arr[np.argmin(fitqo_arr)])
 """
 
-
 x = np.logspace(np.log10(min(dndy)),np.log10(max(dndy)),50)
 y = np.zeros(len(x))
 """#We done with this, only need 1 scalar
@@ -222,11 +241,22 @@ e = 1.602e-19
 #empB = 2.2
 #delta = 0.15
 
-empB = 2.482
-delta = 0.134
+#empB = 2.482
+#delta = 0.134
 
 #empB = 2.715
 #delta = 0.1107
+
+#Kinda sucks, 4.051 fits to 1e17, but 3.0 fits to everything else
+
+empB = 4.059
+delta = 0.0651
+
+#empB = 3.051
+#delta = 0.134
+
+#empB = 3.5
+#delta = 0.134
 
 facB_arr = np.array([empB])
 fitB_arr = np.zeros(1)
@@ -250,8 +280,16 @@ ering_norm = np.array([1.33e17,3.52e16,4.18e15,4.44e14,5.98e16])
 ering_norm_std = np.array([7.86e15,3.91e15,1.64e15,4.28e14,6.53e15])
 """
 """
+#With NO 1e17, October 2022
+dndy=np.array([8e17,2e17,2.5e16,2.5e15,4e17])
+dndys = np.array([2.40e18, 5.84e17, 7.35e16, 1.56e15, 1.17e18])
+dndys_std = np.array([2.67e17, 8.44e16, 6.66e16, 7.52e15, 1.46e17])
+ering_norm = np.array([1.33e17, 3.48e16, 4.29e15, 3.49e14, 5.84e16])
+ering_norm_std = np.array([8.13e15, 3.73e15, 1.87e15, 4.91e14, 6.26e15])
+"""
+"""
 if doLoop:
-    facB_arr = np.linspace(2.1,2.8,100)
+    facB_arr = np.linspace(2.2,4.2,100)
     fitB_arr = np.zeros(len(facB_arr))
     
 for i in range(len(facB_arr)):
@@ -282,7 +320,7 @@ if doLoop:
     plt.plot(facB_arr,fitB_arr)
     plt.show()
     print("facB --> ", facB_arr[np.argmin(fitB_arr)])
-
+"""
 
 ering_norm_righthand = e/2/eps*delta*((dndys-dndy)*100**4)
 plt.title("Ering using AVERAGED dndy_sheath")
@@ -297,7 +335,7 @@ plt.grid(); plt.legend(); plt.show()
 
 #empB = 2.786
 if doLoop:
-    facD_arr = np.linspace(0.07,0.2,100)
+    facD_arr = np.linspace(0.065,0.0652,100)
     fitD_arr = np.zeros(len(facD_arr))
     
 for i in range(len(facD_arr)):
@@ -327,7 +365,41 @@ if doLoop:
     plt.plot(facD_arr,fitD_arr)
     plt.show()
     print("facD --> ", facD_arr[np.argmin(fitD_arr)])
-"""
+
+#first for the yoff fit fig
+
+fig, ax = plt.subplots(nrows=1,ncols=1,sharex=True)
+fig.set_size_inches(5,3)
+
+rmax = np.array((rp_ave[gset[0]],rp_ave[yset[0]],rp_ave[bset[0]]))
+ximax = np.array((lhalf[gset[0]],lhalf[yset[0]],lhalf[bset[0]]))
+A_val = 0.3149
+#g_array = np.linspace(0.001,0.4)
+#galpha = rmax[0]/2/ximax[0]*(np.sqrt(1+g_array*A_val)-np.sqrt(1-g_array*A_val))
+#yalpha = rmax[1]/2/ximax[1]*(np.sqrt(1+g_array*A_val)-np.sqrt(1-g_array*A_val))
+#balpha = rmax[2]/2/ximax[2]*(np.sqrt(1+g_array*A_val)-np.sqrt(1-g_array*A_val))
+
+g_array = np.linspace(0.001,0.25)
+galpha = rmax[0]/2/ximax[0]*(np.sqrt(1+g_array*rmax[0]*1e-4*np.sqrt(2e16)/5.31e5*A_val)-np.sqrt(1-g_array*rmax[0]*1e-4*np.sqrt(2e16)/5.31e5*A_val))
+yalpha = rmax[1]/2/ximax[1]*(np.sqrt(1+g_array*rmax[1]*1e-4*np.sqrt(1e16)/5.31e5*A_val)-np.sqrt(1-g_array*rmax[1]*1e-4*np.sqrt(1e16)/5.31e5*A_val))
+balpha = rmax[2]/2/ximax[2]*(np.sqrt(1+g_array*rmax[2]*1e-4*np.sqrt(1e17)/5.31e5*A_val)-np.sqrt(1-g_array*rmax[2]*1e-4*np.sqrt(1e17)/5.31e5*A_val))
+
+pl = ax.plot(g_array,galpha,label="Empirical "+r'$y_c(\xi)$',ls='--',c='k')
+pl = ax.plot(g_array,galpha,ls='--',c='g')
+pl = ax.plot(g_array,yalpha,ls='--',c='y')
+pl = ax.plot(g_array,balpha,ls='--',c='b')
+ax.errorbar(garr,yoff,yerr=yoff_err,xerr=None,linewidth = 0,elinewidth = 1,ecolor='k',barsabove = True)
+ax.scatter(garr[gset],yoff[gset],c='g', label=r'$\mathrm{n_0 = 2\times 10^{16} \ cm^{-3}}$')
+ax.scatter(garr[yset],yoff[yset],c='y', label=r'$\mathrm{n_0 = 1\times 10^{16} \ cm^{-3}}$')
+ax.scatter(garr[bset],yoff[bset],c='b', label=r'$\mathrm{n_0 = 1\times 10^{17} \ cm^{-3}}$')
+ax.set_ylabel(r'$\alpha$')
+ax.set_xlabel(r'$g$')
+ax.legend()
+ax.set_ylim([-0.005,0.045])
+plt.savefig("/home/chris/Desktop/figs/fig4.eps",bbox_inches='tight')
+plt.show()
+
+#Now for the sheath fit figs
 
 x = np.linspace(min(dndy),max(dndy),50)
 sh = x * empB
@@ -337,31 +409,64 @@ ering_norm_righthand = e/2/eps*delta*(((empB-1)*dndy)*100**4)
 fig, (ax0,ax1) = plt.subplots(nrows=2,ncols=1,sharex=True)
 fig.set_size_inches(5,6)
 
-pl0 = ax0.semilogx(x,sh,label="Empirical Sheath Gradient",ls='--')
-ax0.errorbar(dndy,dndys,yerr=dndys_std,xerr=None,linewidth = 0,elinewidth = 1,ecolor='k',barsabove = True)
-ax0.scatter(dndy[gset],dndys[gset],c='g', label=r'$\mathrm{n_0 = 2e16 \ cm^{-3}}$')
-ax0.scatter(dndy[yset],dndys[yset],c='y', label=r'$\mathrm{n_0 = 1e16 \ cm^{-3}}$')
-ax0.scatter(dndy[bset],dndys[bset],c='b', label=r'$\mathrm{n_0 = 1e17 \ cm^{-3}}$')
-ax0.set_ylabel(r'$\langle\partial n / \partial y\rangle_{sh} \ \mathrm{(cm^{-3})}$')
+loglog = True
+
+if loglog:
+    a_scale = 1
+    pl0 = ax0.loglog(x,sh/a_scale,label="Sheath Gradient Fit",ls='--')
+    dndys_std2=np.array(dndys_std)
+    dndys_std2[dndys_std>=dndys] = dndys[dndys_std>=dndys]*.999999
+    ax0.errorbar(dndy,dndys/a_scale,yerr=dndys_std2/a_scale,xerr=None,linewidth = 0,elinewidth = 1,ecolor='k',barsabove = True)
+    ax0.set_ylabel(r'$\langle\partial n / \partial y\rangle_{sh} \ \mathrm{(cm^{-4})}$')
+    ax0.set_ylim([8e14,2.5e19])
+else:
+    a_scale = 1e19
+    pl0 = ax0.semilogx(x,sh/a_scale,label="Sheath Gradient Fit",ls='--')
+    ax0.set_ylabel(r'$\langle\partial n / \partial y\rangle_{sh} \ \mathrm{(10^{19}\times cm^{-4})}$')
+    ax0.errorbar(dndy,dndys/a_scale,yerr=dndys_std/a_scale,xerr=None,linewidth = 0,elinewidth = 1,ecolor='k',barsabove = True)
+
+    
+ax0.scatter(dndy[gset],dndys[gset]/a_scale,c='g', label=r'$\mathrm{n_0 = 2\times 10^{16} \ cm^{-3}}$')
+ax0.scatter(dndy[yset],dndys[yset]/a_scale,c='y', label=r'$\mathrm{n_0 = 1\times 10^{16} \ cm^{-3}}$')
+ax0.scatter(dndy[bset],dndys[bset]/a_scale,c='b', label=r'$\mathrm{n_0 = 1\times 10^{17} \ cm^{-3}}$')
+
 ax0.legend(title="(a)")
 
-E_si_to_cgs = (1/3)*10**(-4)
-L_si_to_cgs = 100
-factor = 1/1e17#E_si_to_cgs/L_si_to_cgs/1e9
-ering_norm = ering_norm*factor
-ering_norm_std=ering_norm_std*factor
-y = y*factor
+if loglog:
+    E_si_to_cgs = (1/3)*10**(-4)
+    L_si_to_cgs = 100
+    factor = 1#E_si_to_cgs/L_si_to_cgs/1e9
+    ering_norm = ering_norm*factor
+    ering_norm_std=ering_norm_std*factor
+    ering_norm_std2=np.array(ering_norm_std)
+    ering_norm_std2[ering_norm_std>=ering_norm] = ering_norm[ering_norm_std>=ering_norm]*.999999
+    
+    y = y*factor
+    pl0 = ax1.loglog(x,y,label="Sheath Field Fit", ls='--')
+    ax1.errorbar(dndy,ering_norm,yerr=ering_norm_std2,xerr=None,linewidth = 0,elinewidth = 1,ecolor='k',barsabove = True)
+    ax1.set_ylabel(r'$\langle W_{y,sh}/R^2\rangle \ \mathrm{(V/cm^3)}$')
+    ax1.set_ylim([2e14,2e18])
 
-pl0 = ax1.semilogx(x,y,label="Empirical Sheath Field", ls='--')
-ax1.errorbar(dndy,ering_norm,yerr=ering_norm_std,xerr=None,linewidth = 0,elinewidth = 1,ecolor='k',barsabove = True)
-ax1.scatter(dndy[gset],ering_norm[gset],c='g', label=r'$\mathrm{n_0 = 2e16 \ cm^{-3}}$')
-ax1.scatter(dndy[yset],ering_norm[yset],c='y', label=r'$\mathrm{n_0 = 1e16 \ cm^{-3}}$')
-ax1.scatter(dndy[bset],ering_norm[bset],c='b', label=r'$\mathrm{n_0 = 1e17 \ cm^{-3}}$')
+else:
+    E_si_to_cgs = (1/3)*10**(-4)
+    L_si_to_cgs = 100
+    factor = 1/1e17#E_si_to_cgs/L_si_to_cgs/1e9
+    ering_norm = ering_norm*factor
+    ering_norm_std=ering_norm_std*factor
+    y = y*factor
+    pl0 = ax1.semilogx(x,y,label="Sheath Field Fit", ls='--')
+    ax1.set_ylabel(r'$\langle W_{y,sh}/R^2\rangle \ \mathrm{(10^{17}\times V/cm^3)}$')
+    ax1.errorbar(dndy,ering_norm,yerr=ering_norm_std,xerr=None,linewidth = 0,elinewidth = 1,ecolor='k',barsabove = True)
+
+
+
+ax1.scatter(dndy[gset],ering_norm[gset],c='g', label=r'$\mathrm{n_0 = 2\times 10^{16} \ cm^{-3}}$')
+ax1.scatter(dndy[yset],ering_norm[yset],c='y', label=r'$\mathrm{n_0 = 1\times 10^{16} \ cm^{-3}}$')
+ax1.scatter(dndy[bset],ering_norm[bset],c='b', label=r'$\mathrm{n_0 = 1\times 10^{17} \ cm^{-3}}$')
 #ax1.set_ylabel(r'$\langle E_{ring}/R_p^2\rangle \ \mathrm{(GstatV/cm^3)}$')
-ax1.set_ylabel(r'$\langle E_{ring}/R_p^2\rangle \ \mathrm{(10^{17}\times V/cm^3)}$')
-ax1.set_xlabel(r'$(\partial n / \partial y)_i \ \mathrm{(cm^{-3})}$')
+ax1.set_xlabel(r'$(\partial n / \partial y)_i \ \mathrm{(cm^{-4})}$')
 ax1.legend(title="(b)")
-
+plt.savefig("/home/chris/Desktop/figs/fig6.eps",bbox_inches='tight')
 fig.subplots_adjust(hspace=0)
 
 plt.show()

@@ -23,15 +23,39 @@ import scipy.integrate as integrate
 #start = 97 #um
 #trunc = 0#15
 #offset_arr = np.arange(-120,100.5,2)
-path = '/media/chris/New Volume/VSimRuns/AugustLinearGradient/NERSC_n2e16_g8e17/'
-path = '/media/chris/New Volume/VSimRuns/AugustLinearGradient/NERSC_n2e16_g2.5e16/'
+
+case = 1
+if case == 1:
+    path = '/media/chris/New Volume/VSimRuns/Oct2022_FinalSims/NERSC_n2e16_g8e17/'
+    rp = 80.42#80.41
+    rm = 72.58#72.58
+    halfloc = 112.2#114
+    r0 = 76.15
+    g = 3.05e-1
+"""
+if case == 2:
+    path = '/media/chris/New Volume/VSimRuns/AugustLinearGradient/NERSC_n2e16_g2e17/'
+    rp = 77.09
+    rm = 75.02
+    halfloc = 114
+if case == 3:
+    path = '/media/chris/New Volume/VSimRuns/AugustLinearGradient/NERSC_n2e16_g2.5e16/'
+    rp = 76.24
+    rm = 76.07
+    halfloc = 114
+if case == 4:
+    path = '/media/chris/New Volume/VSimRuns/AugustLinearGradient/NERSC_n2e16_g2.5e15/'
+    rp = 76.171
+    rm = 76.137
+    halfloc = 114
+"""
 ind=5
 offset_arr = np.arange(-140,90.5,2)
 tranExtent = 200
-start = 90
+start = 87#90
 trunc = 0#20
 npcase = 2e16
-"""
+
 rmajor_arr = np.zeros(len(offset_arr))
 rminor_arr = np.zeros(len(offset_arr))
 
@@ -68,7 +92,7 @@ for i in range(len(offset_arr)):
     xcoeff, var_matrix = curve_fit(coslike, theta, r, p0=p0)
     rmajor_arr[i] = xcoeff[0]
     rminor_arr[i] = xcoeff[2]
-"""
+
 dx=1.2#0.25
 dx=1.1972789115646258
 
@@ -83,10 +107,13 @@ rp = 84.81
 rm = 76.36
 halfloc = 100
 """
-rp = 80.41#76.266
-rm = 72.58#76.031
-halfloc = 114
+
+facA = 0.3112
+rp = r0 * np.sqrt(1+g*facA)
+rm = r0 * np.sqrt(1-g*facA)
+
 emp = 1/2*(rp-rm)/(halfloc)*z
+
 
 fig, (ax0,ax1) = plt.subplots(nrows=2,sharex=True)
 fig.set_size_inches(5,5)
@@ -112,7 +139,7 @@ ax1.legend(loc=9)
 
 #ax0.get_shared_x_axes().join(ax0, ax1)
 fig.subplots_adjust(hspace=0)
-
+plt.savefig("/home/chris/Desktop/figs/fig3.eps",bbox_inches='tight')
 plt.show();
 
 

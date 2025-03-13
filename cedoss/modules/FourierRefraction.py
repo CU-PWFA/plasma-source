@@ -59,6 +59,8 @@ def RunRefraction(density,params):
     plasma.summary_plot(params['path'])
 
 #Our Electric field is a function of the stuff above
+#The "params" here come from QParamProp to get a Gaussian beam E-field, and
+# are loaded in using LoadPulseParams from below.
 def Efunc(x,y,params):
     r2 = x**2 + y**2
     E = np.zeros(np.shape(r2))

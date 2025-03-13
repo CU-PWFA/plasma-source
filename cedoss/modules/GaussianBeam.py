@@ -10,7 +10,7 @@ the complex q parameter
 
 import numpy as np
 
-#Calculates a  gaussian beam in terms of intensity  (most useful)
+#Calculates a  gaussian beam in terms of intensity
 #  I_0 - Intensity at beam waist
 #  k - wavenumber
 #  w0 - waist size of beam
@@ -158,6 +158,15 @@ def Prop_ThinLens(q,f):
 #  R - radius of curvature in the radial direction
 def Prop_CylindricalLens(q_P,q_T,R):
     q_T[-1][0]=Prop_Evolve(1,0,-2/R,1,q_T[-1])
+
+#Propagates q through a spherical thin lens, returning list of q paramters 
+# with topmost q updates due to the lens
+#  q_P - list of q parameters Parallel to cyclindrical axis
+#  q_T - list of q parameters Transverse to cylindrical axis
+#  R - radius of curvature in the radial direction
+def Prop_SphericalLens(q_P,q_T,R):
+    Prop_CylindricalLens(q_P,q_T,R)
+    Prop_CylindricalLens(q_T,q_P,R)
 
 #Propagates q through a flat interface (normal to axis of propagation)
 #  q - list of q parameters
@@ -315,6 +324,8 @@ def Prop_EPhase(q_y, q_z, offset, lmba, E0, w0):
     return vals
 
 def Prop_EPhase_M2(q_y, q_z, offset, lmba, E0, w0, M2 = 1):
+    if M2 != 1.0:
+        print("BUG:  Prop_EPhase_M2 does not support M2 > 1")
     wy=Prop_SpotList(q_y,lmba)
     wz=Prop_SpotList(q_z,lmba)
     
@@ -346,6 +357,7 @@ def Prop_EPhase_M2(q_y, q_z, offset, lmba, E0, w0, M2 = 1):
     
     phase=2*np.pi/lmba*(2*xi-xoy-xoz)
     
+    #THIS IS WRONG, DOES NOT FIX THE PHASE ACCORDINGLY
     wy = np.array(wy)*np.sqrt(M2); wz = np.array(wz)*np.sqrt(M2)
     
     vals = [E0*w0/np.sqrt(wy[waist-offset]*wz[waist-offset]),

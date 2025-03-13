@@ -57,7 +57,7 @@ radius = 80.00e-6 *1e2 #cm
 thickness = 10e-6*1e2 #cm
 slope  = 1.2e18#5.0e17#1.0e18 #cm-4
 xwindow = ywindow = 182e-6 * 1e2  #cm
-deltax = deltay = 1e-6 * 1e2  #cm
+deltax = deltay = 1e-6 * 1e2  * 2 #cm
 
 X = np.arange(-1/2*xwindow, 1/2*xwindow, deltax)
 Y = np.arange(-1/2*ywindow, 1/2*ywindow, deltay)

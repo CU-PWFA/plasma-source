@@ -51,22 +51,22 @@ path =  '/media/chris/New Volume/VSimRuns/AugustLinearGradient/NERSC_n2e16_g8e17
 #path =  '/media/chris/New Volume/VSimRuns/AugustLinearGradient/Tests/NERSC_n3e17_g0/'
 #path =  '/media/chris/New Volume/VSimRuns/AugustLinearGradient/NERSC_n1e17_g0/'
 #path = superpath + 'NERSC_Dec_Grad/'
-path = '/home/chris/Desktop/singlebunch/'
+#path = '/home/chris/Desktop/singlebunch_200um_3e17/'
 params = {'drive' : 'rhoDrive',
           'witness' : 'rhoWitness',
           'plasma' : 'electrons',
           'path' : path,
-          'dumpInd' : 10,
+          'dumpInd' : 5,
           #'simName' : 'ThinPlasmaLens3D',
-          #'simName' : 'MatchedBeams',
-          'simName' : 'PTPL_Gradient',
+          'simName' : 'MatchedBeams',
+          #'simName' : 'PTPL_Gradient',
           'zoom' : 4.0,
           'alphaCutoff' : 0.05,
           'vmax' : 1e18,
           'vmin' : 1e16
           }
-plot.drive_witness_density_new(params)
-#plot.drive_witness_density_paperplot(params)
+#plot.drive_witness_density_new(params)
+plot.drive_witness_density_paperplot(params)
 
 """
 path = '/home/chris/Desktop/SimulationRepo/TestCases/3D/SingleBunch/5e17/200um/'

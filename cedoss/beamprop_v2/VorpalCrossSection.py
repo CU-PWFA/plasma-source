@@ -125,12 +125,13 @@ ind = 5
 tranExtent = 200        #tranextent for the sim
 threshold = 100
 npcase = 2e16           #central density for the sim
+start=90
 dx=1.2                  #dx for the sim
-central_off = -120#-20
+central_off = -20#-20 for 114 um, -50 for 150 um, -92 for 200 um, -110 for 222 um
 simname = 'MatchedBeams'
 efield = 'edgeE'
 bfield = 'faceB'
-setno = 2
+setno = 1
 if setno == 1:
     path = superpath + 'NERSC_n2e16_g8e17/'
     grad = 8e17
@@ -210,3 +211,35 @@ plt.ylabel("Radius of Wake Edge (um)")
 plt.grid(); plt.show()
 
 print(xcoeff)
+print(central_off*dx*-1+start)
+
+x = r*np.sin(theta+xcoeff[1])
+x=np.append(x,x[0])
+y = -r*np.cos(theta+xcoeff[1])
+y=np.append(y,y[0])
+
+th_rad = xcoeff[0]
+th_off = xcoeff[2]
+
+x_th = hist_fit*np.sin(theta+xcoeff[1])
+x_th=np.append(x_th,x_th[0])
+y_th = -hist_fit*np.cos(theta+xcoeff[1])
+y_th=np.append(y_th,y_th[0])
+
+x_th = th_rad*np.sin(theta+xcoeff[1])
+x_th=np.append(x_th,x_th[0])
+y_th = -th_rad*np.cos(theta+xcoeff[1])
+y_th=np.append(y_th,y_th[0])+th_off
+
+x_th2 = hist_fit*np.sin(theta+xcoeff[1])
+x_th2=np.append(x_th2,x_th2[0])
+y_th2 = -hist_fit*np.cos(theta+xcoeff[1])
+y_th2=np.append(y_th2,y_th2[0])
+
+fig = plt.figure()
+ax = fig.add_subplot(111)
+ax.plot(x,y,label='sim')
+ax.plot(x_th,y_th,linestyle='--',label='circle')
+ax.plot(x_th2,y_th2,linestyle='--',label='cos fit')
+ax.set_aspect('equal')
+plt.legend();plt.grid();plt.show()

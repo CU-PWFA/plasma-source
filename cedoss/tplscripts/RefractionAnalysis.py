@@ -82,12 +82,21 @@ n0_lens = 1e18
 y_window = 400
 z_window = 400
 """
-
+"""
 folder = '/home/chris/Desktop/FourierPlots/april8_10mj/'
 n0_lens = 3e16
 y_window = 400
 z_window = 400
+"""
 
+# cylindrical_ex_thesis_xxx  and  cylindrical_ex_thesis_jet_xxx
+# xxx = 1e15, 3e16, 1e17, and 1e18 for jet
+folder = '/home/chris/Desktop/FourierPlots/cylindrical_ex_thesis_jet_1e18/'
+n0_lens = 1e18
+n0latex = r'$1\times 10^{18}$'
+zaxis='Jet'
+y_window = 400
+z_window = 400
 directory = 'case_1/'
 #directory = 'Ar1_Big/'
 
@@ -142,9 +151,9 @@ if max_corrector == 1:
     print('-Corrected z plane at '+str(z[z_off + round(len(den[0,0,:])/2)])+' microns')
 
 #Plot density along the primary planes
-ThrDim.ImageCut(den,x,y,z,x_off,y_off,z_off,1e-3,
-                '(mm)','Plasma Density','e17(cm^-3)',1)
-
+#ThrDim.ImageCut(den,x,y,z,x_off,y_off,z_off,1e-3,'(mm)','Plasma Density','e17(cm^-3)',1)
+ThrDim.ImageCut_Scratch(den,x,y,z,x_off,y_off,z_off,1e-3,'(mm)','Plasma Density',r'$\times 10^{17}\mathrm{\ cm^{-3}}$',1,zaxis=zaxis,n0label=r'$n_0 \ = \ $' + n0latex + r'$\mathrm{\ cm^{-3}}$')
+sys.exit()
 print("Total Charge: ",ThrDim.TotalCharge(den,x,y,z)," C")
 
 #ThrDim.ImageCut_xy_Production(den,x,y,z,x_off,y_off,z_off,1e-3,
@@ -233,7 +242,7 @@ if focalfit == 1:
     
 #Fit the data to tanh in y, an elliptical tanh in yz, and Gaussian in x
 if getfit == 1:
-    horiz_offset = -6#-50
+    horiz_offset = 0#-6#-50
     den_vs_y=den[round(len(x)/2)+x_off+horiz_offset,:,round(len(z)/2)]
     
     if calc_focal == 1:

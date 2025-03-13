@@ -119,14 +119,14 @@ for x in range(len(projbeta_arr)):
 sigc_arr = np.sqrt(projbeta_arr*emit/gam)   
 
 plt.semilogy(len_arr*1e4, Fval_arr)
-plt.title("Dimensionless F function vs TPL thickness")
+#plt.title("Dimensionless F function vs TPL thickness")
 plt.xlabel(r'$L_{pl} \mathrm{\,[\mu m]}$')
 plt.ylabel(r'$F(\sqrt{K}L,\sqrt{K}l^*)$')
 plt.grid(); plt.show()
     
 plt.semilogy(len_arr*1e4, betaf_arr, label=r'$\beta_f^*$')
 plt.plot(len_arr*1e4, betam_arr, label=r'$\beta^*_{opt}$')
-plt.title("Beta function at waist vs TPL thickness")
+#plt.title("Beta function at waist vs TPL thickness")
 plt.xlabel(r'$L_{pl} \mathrm{\,[\mu m]}$')
 plt.ylabel(r'$\beta \mathrm{\,[cm]}$')
 plt.grid(); plt.legend(); plt.show()

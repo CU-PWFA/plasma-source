@@ -19,11 +19,12 @@ from modules import TPLFocalLength as Foc
 from modules import CalcEmitGrowth as W2
 
 path = '/media/chris/New Volume/BeamProp/Placeholder'
-debug = 1
+debug = 0#1
 zmult=2
-
+"""
 num = 101
 len_arr = np.linspace(500, 7000, num) #original is 200 to 1200 for 1e18 cm-3
+#len_arr = np.linspace(80, 1200, num)
 emit_arr = np.zeros(num)
 betamin_arr = np.zeros(num)
 tpl_f_arr = np.zeros(num)
@@ -40,7 +41,7 @@ gammab = PProp.def_gamma
 tpl_n = .3
 betastar = .05 #0.00213065326633
 
-delta = 0.01
+delta = 0.05#0.01
 
 for k in range(len(len_arr)):
     if k%2 == 0: print(k/len(len_arr)*100,"%");
@@ -102,7 +103,7 @@ kl = 1/tpl_f_arr
 bw_arr = betastar * kl
 dw = 0
 sigmaE = 0.577 * delta
-bmag_w2_arr = W2.CalcEmit(W2.ThinW2_Norm(bw_arr, dw),sigmaE)
+bmag_w2_arr = W2.CalcEmit_OLD(W2.ThinW2_Norm(bw_arr, dw),sigmaE)
 
 #Thick
 k = Foc.Calc_K(tpl_n*1e17, gammab)*100*100
@@ -121,14 +122,14 @@ for x in range(len(len_arr)):
 projbetathick_arr = np.zeros(len(len_arr))
 for x in range(len(len_arr)):
     projbetathick_arr[x] = W2.ProjBeta_Thick(k, len_arr[x]*1e-6, betastar, 0, delta)
-
+"""
 plt.figure(figsize=(3.4*1.5, 2*1.5))
 #plt.title("Emittance Growth vs Lens Thickness")
-plt.plot(len_arr*1e-6*np.sqrt(k), emit_arr, 'r-', label = "Beam Propagation",linewidth = lwid)
+plt.plot(len_arr*1e-6*np.sqrt(k), emit_arr, 'r-', label = "Simulated",linewidth = lwid)
 plt.plot(len_arr*1e-6*np.sqrt(k), bmag_w2_arr, 'g-.', label = "Thin Calculated",linewidth = lwid)
 plt.plot(len_arr*1e-6*np.sqrt(k), bmag_w2_arr_thick, 'b--', label = "Thick Calculated",linewidth = lwid)
 plt.ylabel(r'$\epsilon_f/\epsilon_0$')
-plt.xlabel(r'$\mathrm{Lens \ Thickness \ }\sqrt{K}l $')
-plt.ylim(1.0,1.0015)#1.0,1.01 for 1e18
+plt.xlabel(r'$\mathrm{Lens \ Thickness \ }\sqrt{K}L $')
+#plt.ylim(1.0,1.0015)#1.0,1.01 for 1e18
 plt.xlim(0.1, 1.1)#0.1, 1.5 for 1e18
 plt.grid(); plt.legend(); plt.show()

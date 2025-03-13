@@ -23,6 +23,7 @@ zmult=1
 
 num = 101
 len_arr = np.linspace(500, 100000, num) #original is 200 to 1200 for 1e18 cm-3
+len_arr = np.linspace(50, 1200, num)
 emit_arr = np.zeros(num)
 betamin_arr = np.zeros(num)
 tpl_f_arr = np.zeros(num)
@@ -33,8 +34,8 @@ centbet_arr = np.zeros(num)
 position_error = 0
 
 gammab = PProp.def_gamma
-tpl_n = .5
-betastar = .10 #0.00213065326633
+tpl_n = 10#.5
+betastar = .05 #0.00213065326633
 
 delta = 0.01
 
@@ -134,13 +135,25 @@ a0_arr = 0
 p_arr = np.sqrt(1+np.square(b0_arr*sigmaE/tpl_f_arr))
 sigp_arr = np.sqrt(b0_arr*3e-6/gammab)*p_arr/np.sqrt(np.square(p_arr)+np.square(a0_arr+b0_arr/tpl_f_arr))
 
+k = Foc.Calc_K(tpl_n*1e17, gammab)*100*100
+bmag_w2_arr_thick = np.zeros(len(len_arr))
+betastar_arr_thick = np.zeros(len(len_arr))
+for x in range(len(len_arr)):
+    w2 = W2.ThickW2_UnNormalized(k, len_arr[x]*1e-6, betastar, 0)
+    bmag_w2_arr_thick[x] = W2.CalcEmit(w2, sigmaE)
+    betastar_arr_thick[x] = Foc.Calc_ThickBetaStar_DeltaOff_UnNormalized(k, len_arr[x]*1e-6, betastar, 0)
+
 ##Nice plot of sigma r vs sqrt(k)l
 plt.figure(figsize=(3.4*1.5, 2*1.5))
 #plt.title("Beam spot size vs lens thickness")
 ##plt.semilogy(len_arr*1e-6*np.sqrt(k), sigm_arr*1e9, 'r-', label="Beam Propagation", linewidth = lwid)
-plt.semilogy(len_arr*1e-6*np.sqrt(k), np.sqrt(projbeta_arr*3e-6/gammab)*1e9, 'g-.', label="Thin Calculated", linewidth = lwid)
-plt.semilogy(len_arr*1e-6*np.sqrt(k), np.sqrt(projbetathick_arr*3e-6/gammab)*1e9, 'b--', label="Thick Calculated", linewidth = lwid)
-plt.semilogy(len_arr*1e-6*np.sqrt(k), np.sqrt(Foc.Calc_BetaStar_DeltaOff(betastar, tpl_f_arr, 0)*3e-6/gammab)*1e9, 'k:', label="Ideal", linewidth = lwid)
+plt.semilogy(len_arr*1e-6*np.sqrt(k), np.sqrt(Foc.Calc_BetaStar_DeltaOff(betastar, tpl_f_arr, 0)*3e-6/gammab)*1e6, 'k:', label="Thin: Ideal", linewidth = lwid)
+plt.semilogy(len_arr*1e-6*np.sqrt(k), np.sqrt(projbeta_arr*3e-6/gammab)*1e6, 'g-.', label="Thin: Projected Beta", linewidth = lwid)
+plt.semilogy(len_arr*1e-6*np.sqrt(k), np.sqrt(projbetathick_arr*3e-6/gammab)*1e6, 'b--', label="Thick: Projected Beta", linewidth = lwid)
+plt.semilogy(len_arr*1e-6*np.sqrt(k), np.sqrt(betastar_arr_thick*3e-6/gammab*bmag_w2_arr_thick)*1e6, c='orange',ls='dotted', label="Thick: W2 Calculation", linewidth = lwid)
+#plt.semilogy(len_arr*1e-6*np.sqrt(k), np.sqrt(projbeta_arr*3e-6/gammab)*1e9, 'g-.', label="Thin Calculated", linewidth = lwid)
+#plt.semilogy(len_arr*1e-6*np.sqrt(k), np.sqrt(projbetathick_arr*3e-6/gammab)*1e9, 'b--', label="Thick Calculated", linewidth = lwid)
+#plt.semilogy(len_arr*1e-6*np.sqrt(k), np.sqrt(Foc.Calc_BetaStar_DeltaOff(betastar, tpl_f_arr, 0)*3e-6/gammab)*1e9, 'k:', label="Ideal", linewidth = lwid)
 #plt.plot(len_arr*1e-6*np.sqrt(k), np.sqrt(Foc.Calc_ThickBetaStar_DeltaOff_UnNormalized(k,len_arr*1e-6,betastar, 0)*3e-6/gammab)*1e9, label="Thick Ideal "+r'$\sigma_r$')
 #plt.semilogy(len_arr*1e-6*np.sqrt(k), sigp_arr*1e9, 'k--',label="Chen 1989 "+r'$\sigma_r$')
 plt.ylabel(r'$\sigma_r\mathrm{\ [nm]}$')

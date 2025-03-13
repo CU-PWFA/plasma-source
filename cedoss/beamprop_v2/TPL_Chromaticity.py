@@ -23,10 +23,10 @@ zmult=1
 gammab = PProp.def_gamma
 tpl_n = 10.
 
-#tpl_f = 0.10
-#tpl_l = Foc.Calc_Square_Lens(tpl_n*1e17, tpl_f*100, gammab)
+tpl_f = 0.01#0.10
+tpl_l = Foc.Calc_Square_Lens(tpl_n*1e17, tpl_f*100, gammab)
 
-tpl_l = 1400
+#tpl_l = 1400
 
 tpl_f = Foc.Calc_Focus_Square_CM_UM(tpl_n*1e17, tpl_l, gammab)/100
 tpl_f_plus = Foc.Calc_Focus_Square_CM_UM(tpl_n*1e17, tpl_l, gammab*1.01)/100
@@ -64,7 +64,7 @@ argon_params['l_flattop'] = np.NaN; argon_params['sigma_in'] = np.NaN; argon_par
 argon = PProp.NoPlasma_ThinPlasmaLens(argon_params, n_arr, tpl_offset*1e6 + position_error, tpl_n, tpl_l, debug)
 
 fig, ax1 = plt.subplots()
-plt.title("Beta function evolution at "+r'$f=$'+'{:.3f}'.format(tpl_f*100)+r'$\,\mathrm{cm}$')
+#plt.title("Beta function evolution at "+r'$f=$'+'{:.3f}'.format(tpl_f*100)+r'$\,\mathrm{cm}$')
 ax1.set_ylabel(r'$\beta\,\mathrm{[cm]}$', color = 'b')
 ax1.tick_params('y', colors = 'b')
 ax1.set_xlabel('z [cm]')
@@ -84,7 +84,7 @@ ax2 = ax1.twinx()
 ax2.plot((z_arr-tpl_f)*1e2, n_arr, 'k-')
 ax2.set_ylabel(r'$n\,\mathrm{[10^{17}cm^{-3}]}$',color = 'k')
 ax2.tick_params('y', colors = 'k')
-ax1.grid(); ax1.legend(); plt.show()
+ax1.grid(); ax1.legend(loc=4); plt.show()
 
 ###############################################################################
 
@@ -118,7 +118,7 @@ ax3.grid(); ax3.legend(); plt.show()
 ###############################################################################
 
 fig, ax5 = plt.subplots()
-plt.title("Beta function evolution at "+r'$f=$'+'{:.3f}'.format(tpl_f*100)+r'$\,\mathrm{cm}$')
+#plt.title("Beta function evolution at "+r'$f=$'+'{:.3f}'.format(tpl_f*100)+r'$\,\mathrm{cm}$')
 ax5.set_ylabel(r'$\beta\,\mathrm{[cm]}$', color = 'k')
 ax5.tick_params('y', colors = 'k')
 ax5.set_xlabel('z [cm]')
@@ -144,9 +144,9 @@ for i in range(len(e_spec)):
     beta = beta[center-crange:center+crange]
     ax5.plot((z_arr[center-crange:center+crange]-tpl_f)*1e2, np.array(beta)*1e2, colors[i], label=r'$\gamma/\gamma_{b}$' + " = "+str(e_spec[i]))
 
-ax5.axvline(x=(centloc[0])*100, c='g')
-ax5.axvline(x=(centloc[1])*100, c='r')
-ax5.axvline(x=(centloc[2])*100, c='b')
+ax5.axvline(x=(centloc[0])*100, c='g', ls='--')
+ax5.axvline(x=(centloc[1])*100, c='r', ls='--')
+ax5.axvline(x=(centloc[2])*100, c='b', ls='--')
 
 ax5.grid(); ax5.legend(); plt.show()
 

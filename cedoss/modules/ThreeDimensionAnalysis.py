@@ -158,9 +158,9 @@ def ImageCut(data,x,y,z,x_off=0,y_off=0,z_off=0,zoom=1,units='',label='',label_u
                  aspect='auto')
     CB=plt.colorbar()
     CB.set_label(label+' '+label_units)
-    plt.ylabel('z '+units+' - Jet')
-    plt.xlabel('y '+units+' - Beam')
-    plt.title(label+'; x='+str(xrange_z[round(len(x)/2)+x_off])+' '+units)
+    plt.ylabel('y '+units)#+' - Jet')
+    plt.xlabel('z '+units+' - Beam')
+    #plt.title(label+'; x='+str(xrange_z[round(len(x)/2)+x_off])+' '+units)
 
     plt.subplot2grid(gridSize, (0,1), colspan=4)
     plt.imshow(data_xz, interpolation="none", origin="lower",
@@ -169,8 +169,8 @@ def ImageCut(data,x,y,z,x_off=0,y_off=0,z_off=0,zoom=1,units='',label='',label_u
     CB=plt.colorbar()
     CB.set_label(label+' '+label_units)
     plt.xlabel('x '+units+' - Laser')
-    plt.ylabel('z '+units+' - Jet')
-    plt.title(label+'; y='+str(yrange_z[round(len(y)/2)+y_off])+' '+units)
+    plt.ylabel('y '+units)#+' - Jet')
+    #plt.title(label+'; y='+str(yrange_z[round(len(y)/2)+y_off])+' '+units)
 
     plt.subplot2grid(gridSize, (1,1), colspan=4)
     plt.imshow(data_xy, interpolation="none", origin="lower",
@@ -179,8 +179,8 @@ def ImageCut(data,x,y,z,x_off=0,y_off=0,z_off=0,zoom=1,units='',label='',label_u
     CB=plt.colorbar()
     CB.set_label(label+' '+label_units)
     plt.xlabel('x '+units+' - Laser')
-    plt.ylabel('y '+units+' - Beam')
-    plt.title(label+'; z='+str(zrange_z[round(len(z)/2)+z_off])+' '+units)
+    plt.ylabel('z '+units+' - Beam')
+    #plt.title(label+'; z='+str(zrange_z[round(len(z)/2)+z_off])+' '+units)
     
     plt.tight_layout()
     plt.show()
@@ -216,6 +216,80 @@ def ImageCut_xy_Production(data,x,y,z,x_off=0,y_off=0,z_off=0,zoom=1,units='',la
     plt.title(label+'; y='+str(yrange_z[round(len(y)/2)+y_off])+' '+units)
     #plt.savefig('demo.png', transparent=True,bbox_inches='tight')
     plt.savefig('/home/chris/Desktop/fig_strip.png',transparent=True,bbox_inches='tight')
+    plt.show()
+
+#Takes a 3D array, and plots the 2D planes cut along the 3 axes
+#  data - 3D array in [laser,beam,jet]
+#  x,y,z - axes in x,y,z
+#  x,y,z_off - number of array indices to offset the axes by
+#  zoom - factor to multiply the axes by
+#  units - String for the units of the axes
+#  label - String for the data that is being plotted
+#  label_units - String for the units of the data being plotted
+#  color - set to 1 for 'plasma', otherwise defaults to 'viridis'
+def ImageCut_Scratch(data,x,y,z,x_off=0,y_off=0,z_off=0,zoom=1,units='',label='',label_units='',color=0, zaxis='Jet', n0label = ''):
+    xrange_z=[i*zoom for i in x]
+    yrange_z=[i*zoom for i in y]
+    zrange_z=[i*zoom for i in z]
+
+    data_yz=np.transpose(data[round(len(x)/2)+x_off,:,:])
+    data_xz=np.transpose(data[:,round(len(y)/2)+y_off,:])
+    data_xy=np.transpose(data[:,:,round(len(z)/2)+z_off])
+    
+    if color == 1:
+        plt.set_cmap('plasma')
+    else:
+        plt.set_cmap('viridis')
+    
+    gridSize = (2,5)
+    plt.figure(figsize=(16,9))
+    gridspec.GridSpec(gridSize[0], gridSize[1])
+    
+    data_yz_crop = data_yz[:,int(1/4*len(yrange_z)):int(3/4*len(yrange_z))]
+    
+    plt.subplot2grid(gridSize, (0,0), rowspan=1)
+    plt.imshow(data_yz_crop, interpolation="none", origin="lower",
+                 extent=[yrange_z[0]/2,yrange_z[-1]/2,zrange_z[0],zrange_z[-1]],
+                 aspect='equal')
+    CB=plt.colorbar()
+    CB.set_label(label+' '+label_units)
+    plt.ylabel('y '+units+' - '+zaxis)
+    plt.xlabel('z '+units+' - Beam')
+    plt.plot([-.06,.06],[0,0],c='w',ls='dashed',linewidth=2)
+    #plt.title(label+'; x='+str(xrange_z[round(len(x)/2)+x_off])+' '+units)
+    plt.figtext(0.03,0.44,n0label,fontsize='xx-large',fontweight='bold')
+
+    plt.subplot2grid(gridSize, (0,1), colspan=4)
+    plt.imshow(data_xz, interpolation="none", origin="lower",
+               extent=[xrange_z[0],xrange_z[-1],zrange_z[0],zrange_z[-1]],
+               aspect='auto')
+    CB=plt.colorbar()
+    CB.set_label(label+' '+label_units)
+    plt.xlabel('x '+units+' - Laser')
+    plt.ylabel('y '+units+' - '+zaxis)
+    
+    plt.plot([0,0],[-.19,.19],c='w',ls='dashed',linewidth=1)
+    plt.plot([-20,20],[0,0],c='w',ls='dashed',linewidth=1)
+    
+    plt.text(-1.24,-.009,r'$\otimes$',color='white',fontsize='xx-large')
+    #plt.title(label+'; y='+str(yrange_z[round(len(y)/2)+y_off])+' '+units)
+
+    plt.subplot2grid(gridSize, (1,1), colspan=4)
+    plt.imshow(data_xy, interpolation="none", origin="lower",
+               extent=[xrange_z[0],xrange_z[-1],yrange_z[0],yrange_z[-1],],
+               aspect='auto')
+    plt.plot([0,0],[-.14,.14],c='w',ls='dashed',linewidth=2)
+    CB=plt.colorbar()
+    CB.set_label(label+' '+label_units)
+    plt.xlabel('x '+units+' - Laser')
+    plt.ylabel('z '+units+' - Beam')
+    #plt.title(label+'; z='+str(zrange_z[round(len(z)/2)+z_off])+' '+units)
+    
+    plt.figtext(0.05,.925,"z-y Plane",color='white',fontsize='large',fontweight='bold')
+    plt.figtext(0.26,.953,"x-y Plane",color='white',fontsize='large',fontweight='bold')
+    plt.figtext(0.26,.455,"x-z Plane",color='white',fontsize='large',fontweight='bold')
+    
+    plt.tight_layout()
     plt.show()
 
 #Given the plasma density and 3D axes, return the total amount of charge in C

@@ -41,6 +41,8 @@ sigz = 5.2e-6*100 #cm
 #OR
 sigma_E = 0.001
 """
+
+"""#Nominal
 tpl_n = 5e16 #1e18    # cm^-3
 tpl_l = 01e-9    # um
 tpl_offset = 0.0 #0.0  # m
@@ -48,6 +50,33 @@ tpl_offset = 0.0 #0.0  # m
 gam = Foc.gam_def * 9/10
 emit = 5e-6     # m-rad
 beta_i = 0.20 #5.0   # m
+"""
+####
+#Axilens
+tpl_n = 1e15 #1e18    # cm^-3
+tpl_l = 5000    # um
+tpl_offset = 0.0 #0.0  # m
+
+tpl_n=.27e16
+tpl_l = 10000
+
+gam = Foc.gam_def #* 9/10
+emit = 38.1e-6     # m-rad
+beta_i = 0.50 #0.70 for 20 um beam, 2.8 for 40 um beam  # m
+
+beta_i = 1.51
+tpl_l = 10e3
+tpl_n = 0.27e16
+emit = 42.81e-6
+####
+
+#tpl_n = 2e15 #1e18    # cm^-3
+#tpl_l = 40000    # um
+#tpl_offset = 0.0 #0.0  # m
+
+#gam = Foc.gam_def * 9/10
+#emit = 10e-6     # m-rad
+#beta_i = 2.8 #0.70 for 20 um beam, 2.8 for 40 um beam  # m
 
 #beta_star = 0.198
 #beta_i = beta_star + tpl_offset**2/beta_star
@@ -57,12 +86,13 @@ beta_i = 0.20 #5.0   # m
 #OR
 charge = 1.5e-9 #C
 nbeam = charge / 1.6022e-19
-sigz = 50e-6*100 #cm
-
+sigz = 18.3e-6*100 #cm
+sigz = 27.86e-6*100
 #delta_E = 0.0025
 #sigma_E = np.sqrt(1/3) * delta_E
 #OR
 sigma_E = 0.01
+sigma_E = 0.02
 
 rho_max = nbeam/(2*np.pi)**(3/2)/sigz/(beta_i*100*emit*100/gam)
 
@@ -89,6 +119,7 @@ print("The following from Thick lens equations")
 print("Focusing strength K [m^-2]: ", tpl_k)
 print("Emittance growth: ", em_growth)
 print("Final Emittance [m-rad]: ", em_growth * emit)
+print("Initial rms size [m]: ", np.sqrt(beta_i*emit/gam))
 print("Centroid Focus location [m]: ", z_waist)
 print("Centorid Focus beta [m]: ", beta_star)
 print("Focus rms size [m]: ", np.sqrt(projbeta_thick*emit/gam))

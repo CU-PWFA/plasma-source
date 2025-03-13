@@ -6,7 +6,7 @@ Created on Wed Jun  2 10:04:49 2021
 Script to call a function that analyzes the electric field in the transverse
 plane of a wake
 
-Version for fig 3 in paper 2, using sep grad
+Version for fig 3 in paper 2, using sep grad (FIG 7)
 
 @author: chris
 """
@@ -21,10 +21,12 @@ import scipy.constants as const
 #path = '/home/chris/Desktop/NERSC_Sep_Grad/'
 #ind = 9
 #central_off = 0
-path = '/media/chris/New Volume/VSimRuns/AugustLinearGradient/NERSC_n2e16_g8e17/'
+#path = '/media/chris/New Volume/VSimRuns/AugustLinearGradient/NERSC_n2e16_g8e17/'
 #path = '/media/chris/New Volume/VSimRuns/AugustLinearGradient/NERSC_n2e16_g0/'
+path = '/media/chris/New Volume/VSimRuns/Oct2022_FinalSims/NERSC_n2e16_g8e17/'
+#path = '/media/chris/New Volume/VSimRuns/Oct2022_FinalSims/NERSC_n2e16_g0/'
 ind=5
-central_off = -20#-100
+central_off = -21#-100
 tranExtent = 200
 c = const.speed_of_light
 
@@ -105,10 +107,10 @@ for i in range(len(vecarr)):
     slope = 8e17*100**4 #m-4
     if flip:
         slope = slope*-1
-    zsi_max = 114e-6
-    facA = 0.3239
-    facB = 2.482
-    delta = 0.134
+    zsi_max = 112.2e-6#114e-6
+    facA = .3112#0.3239
+    facB = 3.19089#4.059#2.482
+    delta = 0.090421#0.0651#0.134
     rpl = radius*np.sqrt((n_cent-facA*radius*slope)/n_cent) #sign flip b/c slope is wack
     rmn = radius*np.sqrt((n_cent+facA*radius*slope)/n_cent)
     yoff = zsi_max*(rpl-rmn)/(2*zsi_max)
@@ -154,41 +156,52 @@ fig.set_size_inches(10,7.5)
 plxx = ax0.plot(y,exvx/Escale,c=simcol,label="Simulation")
 #ax0.set_title(r'$E_x$'+" vs x")
 if vector != 0:
-    ax0.plot(x,ex_v_x_theory/Escale,c=thecol,ls='dotted',label="Theory")
+    ax0.plot(x,ex_v_x_theory/Escale,c=thecol,ls='dotted',label="Model")
 ax0.set_ylim([min(exvx)*1.2/Escale,max(exvx)*1.2/Escale])
 #ax0.set_xlabel("x axis "+r'$(\mu m)$')
-ax0.set_ylabel(r'$E_x$'+" (GV/m)")
+ax0.set_ylabel(r'$E_x+cB_y$'+" (GV/m)")
 #ax0.grid()
-ax0.legend(title="(a)   "+r'$E_x$'+" vs x")
-
-plxy = ax1.plot(y,exvy/Escale,c=simcol,label="Simulation")
+ax0.legend(title="(a)   "+r'$W_x$'+" vs x")
+"""
+plxy = ax1.plot(y,exvy/Escale*1e13,c=simcol,label="Simulation"+r'$\ \times \ 10^{13}$')
 #ax1.set_title(r'$E_x$'+" vs y")
 if vector != 0:
-    ax1.plot(y,ex_v_y_theory/Escale,c=thecol,ls='dotted',label="Theory")
-ax1.set_ylim([min(exvy)*1.2/Escale,max(exvy)*1.2/Escale])
+    ax1.plot(y,ex_v_y_theory/Escale,c=thecol,ls='dotted',label="Model")
+ax1.set_ylim([min(exvy)*1.2*1e13/Escale,max(exvy)*1.2/Escale*1e13])
 #ax1.set_xlabel("y axis "+r'$(\mu m)$')
 #ax1.set_ylabel(r'$E_x$'+" (SI)")
 #ax1.grid()
-ax1.legend(title="(b)   "+r'$E_x$'+" vs y")
+ax1.legend(title="(b)  Magnified "+r'$W_x$'+" vs y")
+"""
+plxy = ax1.plot(y,exvy/Escale,c=simcol,label="Simulation")
+#ax1.set_title(r'$E_x$'+" vs y")
+if vector != 0:
+    ax1.plot(y,ex_v_y_theory/Escale,c=thecol,ls='dotted',label="Model")
+ax1.set_ylim([-.8,.8])
+#ax1.set_xlabel("y axis "+r'$(\mu m)$')
+#ax1.set_ylabel(r'$E_x$'+" (SI)")
+#ax1.grid()
+ax1.legend(title="(b)   "+r'$W_x$'+" vs y")
 
 plyx = ax2.plot(y,eyvx/Escale,c=simcol,label="Simulation")
 #ax2.set_title(r'$E_y$'+" vs x")
 if vector != 0:
-    ax2.plot(x,ey_v_x_theory/Escale,ls='dotted',c=thecol,label="Theory")
+    ax2.plot(x,ey_v_x_theory/Escale,ls='dotted',c=thecol,label="Model")
 ax2.set_ylim([min(eyvx)*1.2/Escale,max(eyvx)*1.2/Escale])
 ax2.set_xlabel("x Axis "+r'$(\mu m)$')
-ax2.set_ylabel(r'$E_y$'+" (GV/m)")
+ax2.set_ylabel(r'$E_y-cB_x$'+" (GV/m)")
 #ax2.grid()
-ax2.legend(title="(c)   "+r'$E_y$'+" vs x")
+ax2.legend(title="(c)   "+r'$W_y$'+" vs x")
 
 plyy = ax3.plot(y,eyvy/Escale,c=simcol,label="Simulation")
 #ax3.set_title(r'$E_y$'+" vs y")
 if vector != 0:
-    ax3.plot(y,ey_v_y_theory/Escale,ls='dotted',c=thecol,label="Theory")
+    ax3.plot(y,ey_v_y_theory/Escale,ls='dotted',c=thecol,label="Model")
 ax3.set_ylim([min(eyvy)*1.2/Escale,max(eyvy)*1.2/Escale])
 ax3.set_xlabel("y Axis "+r'$(\mu m)$')
 #ax3.set_ylabel(r'$E_y$'+" (SI)")
 #ax3.grid()
-ax3.legend(title="(d)   "+r'$E_y$'+" vs y")
+ax3.legend(title="(d)   "+r'$W_y$'+" vs y")
 fig.subplots_adjust(hspace=0)
+plt.savefig("/home/chris/Desktop/figs/fig7.eps",bbox_inches='tight')
 plt.show()

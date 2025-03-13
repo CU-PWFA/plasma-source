@@ -32,12 +32,12 @@ from modules import ThreeDimensionAnalysis as ThrDim
 
 def_startloc = 0.80
 def_lenflat = 0.50 #0.50
-def_nset = 0.5 #1203.7 for gas cell
+def_nset = 0.3 #1203.7 for gas cell
 def_betastar = 0.10
-def_betaoffs = -0.387
+def_betaoffs = 0#-0.387
 def_gamma = 19569.5 #10 GeV beam
 def_emit = 3e-6 #New value as of July 2018
-def_deltaE = 0.0025
+def_deltaE = 0.05#0.01#0.0025
 def_sigma_hw = 14.0e4
 
 def ReturnDefaultElectronParams(path, beta_star=def_betastar, beta_offset=def_betaoffs,
@@ -50,7 +50,7 @@ def ReturnDefaultElectronParams(path, beta_star=def_betastar, beta_offset=def_be
         'name' : 'TestBeam',
         'path' : path,
         'load' : False,
-        'N' : 10000,         #10000 for normal, 1000000 for production
+        'N' : 100000,#10000,         #10000 for normal, 1000000 for production
         'gamma' : gamma,
         'emittance' : emit,
         'betax' : beta_init,
@@ -584,9 +584,9 @@ def PlotSigmar(beam, z_arr, m):
     plt.plot(s, sig, label='average')
     plt.plot(s, sigx, label='x')
     plt.plot(s, sigy, label='y')
-    plt.title("Sigmar Evolution")
-    plt.xlabel("s [cm]")
-    plt.ylabel("sigmar [um]")
+    #plt.title("Sigmar Evolution")
+    plt.xlabel(r'$z \ \mathrm{(cm)}$')
+    plt.ylabel(r'$\sigma_{x,y} \ \mathrm{(\mu m)}$')
     plt.grid(); plt.legend(); plt.show()
     return sig, s
 
